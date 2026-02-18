@@ -257,7 +257,7 @@ export default function VisualizadorUniversalEntidade({
   const override = (typeof legacyQueryKey !== 'undefined' ? legacyQueryKey : queryKeyOverride);
   const queryKey = Array.isArray(override) ? override : [override || nomeEntidade.toLowerCase()];
 
-  const { getFiltroContexto, createInContext } = useContextoVisual();
+  const { getFiltroContexto, createInContext, updateInContext, deleteInContext } = useContextoVisual();
 
   React.useEffect(() => {
     const handler = setTimeout(() => {
@@ -485,7 +485,8 @@ export default function VisualizadorUniversalEntidade({
   
   const excluirSelecionados = async () => {
     if (selectedIds.size === 0) return;
-    await Promise.all(Array.from(selectedIds).map(id => base44.entities[nomeEntidade].delete(id)));
+    await Promise.all(Array.from(selectedIds).map(id => deleteInContext(nomeEntidade, id)));
+    try { await base44.entities.AuditLog.create({ acao: 'Exclusão', modulo: moduloPermissao, entidade: nomeEntidade, descricao: `Exclusão em massa: ${selectedIds.size} registro(s)`, data_hora: new Date().toISOString() }); } catch {}
     setSelectedIds(new Set());
     await invalidateAllRelated();
   };
@@ -512,6 +513,8 @@ export default function VisualizadorUniversalEntidade({
     a.href = url;
     a.download = `${nomeEntidade}_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
+    URL.revokeObjectURL(url);
+    try { base44.entities.AuditLog.create({ acao: 'Exportação', modulo: moduloPermissao, entidade: nomeEntidade, descricao: `Exportados ${dadosBuscadosEOrdenados.length} registro(s)`, data_hora: new Date().toISOString() }); } catch {}
   };
 
   const criarSugestoes = async () => {
@@ -556,13 +559,13 @@ export default function VisualizadorUniversalEntidade({
       const handleSubmitForm = async (formData) => {
         try {
           if (formData._action === 'delete') {
-            await base44.entities[nomeEntidade].delete(formData.id);
+            await deleteInContext(nomeEntidade, formData.id);
             toast({ title: `✅ ${nomeEntidade} excluído!` });
           } else if (formData.id) {
-            await base44.entities[nomeEntidade].update(formData.id, formData);
+            await updateInContext(nomeEntidade, formData.id, formData, nomeEntidade === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id');
             toast({ title: `✅ ${nomeEntidade} atualizado!` });
           } else {
-            await base44.entities[nomeEntidade].create(formData);
+            await createInContext(nomeEntidade, formData, nomeEntidade === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id');
             toast({ title: `✅ ${nomeEntidade} criado!` });
           }
           await invalidateAllRelated();
