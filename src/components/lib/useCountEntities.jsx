@@ -21,6 +21,18 @@ export function useCountEntities(entityName, filter = {}, options = {}) {
           filter
         });
 
+        // Se a entidade for Cliente e só houver empresa_id, incluir dono/compartilhado
+        if (entityName === 'Cliente' && filter?.empresa_id && response?.data?.count === 0) {
+          const empresaId = filter.empresa_id;
+          const rest = { ...filter };
+          delete rest.empresa_id;
+          const alt = await base44.functions.invoke('countEntities', {
+            entityName,
+            filter: { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: empresaId } ] }
+          });
+          if (alt.data?.count !== undefined) return alt.data.count;
+        }
+
         if (response.data?.count !== undefined) {
           return response.data.count;
         }
