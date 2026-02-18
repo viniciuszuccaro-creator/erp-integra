@@ -376,6 +376,7 @@ export default function VisualizadorUniversalEntidade({
       });
       return resp.data || [];
     },
+    enabled: !!empresaAtual?.id || !!getFiltroContexto('group_id', true)?.group_id,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
     refetchInterval: false
