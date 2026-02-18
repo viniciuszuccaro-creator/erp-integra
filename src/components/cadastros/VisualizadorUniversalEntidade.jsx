@@ -574,7 +574,9 @@ export default function VisualizadorUniversalEntidade({
             await updateInContext(nomeEntidade, formData.id, formData, campoEmpresa);
             toast({ title: `✅ ${nomeEntidade} atualizado!` });
           } else {
-            await createInContext(nomeEntidade, formData, nomeEntidade === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id');
+            const ENTITY_CONTEXT_FIELD = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
+            const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
+            await createInContext(nomeEntidade, formData, campoEmpresa);
             toast({ title: `✅ ${nomeEntidade} criado!` });
           }
           await invalidateAllRelated();
