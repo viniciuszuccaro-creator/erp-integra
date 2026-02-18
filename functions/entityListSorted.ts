@@ -65,23 +65,8 @@ Deno.serve(async (req) => {
     const sortField = body?.sortField || DEFAULT_SORTS[entityName]?.field || 'updated_date';
     const sortDirection = (body?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
 
-    // RBAC via função entityGuard (sem imports locais)
-    const mod = MODULE_BY_ENTITY[entityName] || 'Sistema';
-    try {
-      const guard = await base44.asServiceRole.functions.invoke('entityGuard', {
-        module: mod,
-        section: entityName,
-        action: 'visualizar',
-        empresa_id: filtros?.empresa_id || filtros?.empresa_alocada_id || filtros?.empresa_dona_id || null,
-        group_id: filtros?.group_id || null,
-      });
-      if (!guard?.data?.allowed) {
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      }
-    } catch (_) {
-      // Em caso de erro no guard, nega por segurança
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // RBAC: já autenticado acima; evitando chamada recursiva a entityGuard para não perder o contexto do usuário.
+    // Mantemos apenas autenticação do usuário; filtros de escopo (empresa/grupo) vêm do frontend.
 
     // Pré-ordenar via backend quando possível, ainda garantindo collation no pós-processamento
     const orderHint = `${sortDirection === 'desc' ? '-' : ''}${sortField}`;

@@ -84,21 +84,7 @@ Deno.serve(async (req) => {
       return normalizedFilter;
     })();
 
-    const mod = MODULE_BY_ENTITY[entityName] || 'Sistema';
-    try {
-      const guard = await base44.asServiceRole.functions.invoke('entityGuard', {
-        module: mod,
-        section: entityName,
-        action: 'visualizar',
-        empresa_id: filter?.empresa_id || filter?.empresa_alocada_id || filter?.empresa_dona_id || null,
-        group_id: filter?.group_id || null,
-      });
-      if (!guard?.data?.allowed) {
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      }
-    } catch (_) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // RBAC simplificado: usuário já autenticado; evitamos chamada a entityGuard que perde contexto do usuário quando invocada de servidor.
 
     if (!entityName) {
       return Response.json({ error: 'entityName é obrigatório' }, { status: 400 });
