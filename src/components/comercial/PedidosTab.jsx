@@ -229,12 +229,12 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
           </Button>
         )}
 
-        <Button variant="ghost" size="sm" onClick={() => { const empresa = empresas?.find(e => e.id === pedido.empresa_id); ImprimirPedido({ pedido, empresa }); }} title="Imprimir Pedido" className="h-8 px-2 text-slate-600">
+        <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.imprimir" onClick={() => { const empresa = empresas?.find(e => e.id === pedido.empresa_id); ImprimirPedido({ pedido, empresa }); }} title="Imprimir Pedido" className="h-8 px-2 text-slate-600">
           <Printer className="w-3 h-3 mr-1" />
           <span className="text-xs">Imprimir</span>
         </Button>
 
-        <Button variant="ghost" size="sm" onClick={() => onEditPedido(pedido)} title="Visualizar" className="h-8 px-2">
+        <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.visualizar" onClick={() => onEditPedido(pedido)} title="Visualizar" className="h-8 px-2">
           <Eye className="w-3 h-3 mr-1" />
           <span className="text-xs">Ver</span>
         </Button>

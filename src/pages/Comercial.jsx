@@ -68,7 +68,7 @@ export default function Comercial() {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         const data = await filterInContext('Pedido', {}, '-created_date', 100);
         if (!data || data.length === 0) {
-          return await base44.entities.Pedido.list('-created_date', 100);
+          return await base44.entities.Pedido.filter(getFiltroContexto('empresa_id', true), '-created_date', 100);
         }
         return data;
       } catch (err) {
@@ -89,7 +89,7 @@ export default function Comercial() {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         const data = await filterInContext('Comissao', {}, '-created_date', 50);
         if (!data || data.length === 0) {
-          return await base44.entities.Comissao.list('-created_date', 50);
+          return await base44.entities.Comissao.filter(getFiltroContexto('empresa_id', true), '-created_date', 50);
         }
         return data;
       } catch (err) {
@@ -109,7 +109,7 @@ export default function Comercial() {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         const data = await filterInContext('NotaFiscal', {}, '-created_date', 50, 'empresa_faturamento_id');
         if (!data || data.length === 0) {
-          return await base44.entities.NotaFiscal.list('-created_date', 50);
+          return await base44.entities.NotaFiscal.filter(getFiltroContexto('empresa_faturamento_id', true), '-created_date', 50);
         }
         return data;
       } catch (err) {
@@ -128,7 +128,7 @@ export default function Comercial() {
       try {
         const data = await filterInContext('TabelaPreco', {}, '-updated_date', 50);
         if (!data || data.length === 0) {
-          return await base44.entities.TabelaPreco.list('-updated_date', 50);
+          return await base44.entities.TabelaPreco.filter(getFiltroContexto('empresa_id', true), '-updated_date', 50);
         }
         return data;
       } catch (err) {
@@ -162,7 +162,7 @@ export default function Comercial() {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         const data = await filterInContext('PedidoExterno', {}, '-created_date', 30);
         if (!data || data.length === 0) {
-          return await base44.entities.PedidoExterno?.list ? await base44.entities.PedidoExterno.list('-created_date', 30) : [];
+          return await base44.entities.PedidoExterno?.filter ? await base44.entities.PedidoExterno.filter(getFiltroContexto('empresa_id', true), '-created_date', 30) : [];
         }
         return data;
       } catch (err) {
