@@ -379,6 +379,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                   }}>
                     <Download className="w-4 h-4 mr-2" /> Exportar CSV
                   </Button>
+                  </ProtectedAction>
                   <Button variant="ghost" onClick={() => setSelectedPedidos([])}>Limpar Seleção</Button>
                 </div>
               </AlertDescription>
