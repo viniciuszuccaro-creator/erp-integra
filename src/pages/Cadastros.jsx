@@ -232,7 +232,8 @@ export default function Cadastros() {
           const empresaId = fc.empresa_id;
           const rest = { ...fc };
           delete rest.empresa_id;
-          const filtro = { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } } ] };
+          const groupId = rest.group_id; if (groupId) delete rest.group_id;
+          const filtro = { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } }, ...(groupId ? [{ group_id: groupId }] : []) ] };
           const res = await base44.functions.invoke('entityListSorted', { entityName: 'Cliente', filter: filtro, sortField: 'updated_date', sortDirection: 'desc', limit: 100 });
           return res.data || [];
         }
@@ -253,10 +254,23 @@ export default function Cadastros() {
   // Clientes podem pertencer a empresa_id, empresa_dona_id ou estar compartilhados
   const fcClientes = getFiltroContexto('empresa_id', true) || {};
   const clienteEmpresaId = fcClientes?.empresa_id;
-  const filtroClientesCount = clienteEmpresaId ? {
-    ...(() => { const r = { ...fcClientes }; delete r.empresa_id; return r; })(),
-    $or: [ { empresa_id: clienteEmpresaId }, { empresa_dona_id: clienteEmpresaId }, { empresas_compartilhadas_ids: { $in: [clienteEmpresaId] } } ]
-  } : fcClientes;
+  const filtroClientesCount = (() => {
+    if (clienteEmpresaId) {
+      const rest = { ...fcClientes };
+      delete rest.empresa_id;
+      const groupId = rest.group_id; if (groupId) delete rest.group_id;
+      return {
+        ...rest,
+        $or: [
+          { empresa_id: clienteEmpresaId },
+          { empresa_dona_id: clienteEmpresaId },
+          { empresas_compartilhadas_ids: { $in: [clienteEmpresaId] } },
+          ...(groupId ? [{ group_id: groupId }] : [])
+        ]
+      };
+    }
+    return fcClientes;
+  })();
   const { count: totalClientes = 0 } = useCountEntities('Cliente', filtroClientesCount, { staleTime: 60000 });
 
   const { data: fornecedores = [] } = useQuery({

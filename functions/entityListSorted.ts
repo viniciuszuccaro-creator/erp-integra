@@ -119,7 +119,15 @@ Deno.serve(async (req) => {
       return normalizedTop;
     })();
 
-    const raw = await base44.asServiceRole.entities[entityName].filter(expandedTop, orderHint, fetchLimit);
+    const finalFilter = (() => {
+      if (expandedTop && expandedTop.$or && expandedTop.group_id) {
+        const { group_id, ...rest } = expandedTop;
+        return { ...rest, $or: [...expandedTop.$or, { group_id }] };
+      }
+      return expandedTop;
+    })();
+
+    const raw = await base44.asServiceRole.entities[entityName].filter(finalFilter, orderHint, fetchLimit);
     const rows = Array.isArray(raw) ? raw : [];
 
     // Case/acentos-insensível

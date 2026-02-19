@@ -30,10 +30,27 @@ function CountBadge({ entityName }) {
       const campo = campoMap[entityName] || 'empresa_id';
       const fc = getFiltroContexto(campo, true) || {};
 
-      // Cliente pode estar em empresa_id, empresa_dona_id ou empresas_compartilhadas_ids
-      const filtro = (entityName === 'Cliente' && fc?.empresa_id)
-        ? (() => { const empresaId = fc.empresa_id; const rest = { ...fc }; delete rest.empresa_id; return { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } } ] }; })()
-        : fc;
+      // Cliente pode estar em empresa_id, empresa_dona_id ou compartilhado; também considerar group_id sem forçar AND
+      let filtro = fc;
+      if (entityName === 'Cliente' && (fc?.empresa_id || fc?.group_id)) {
+        const empresaId = fc.empresa_id;
+        const groupId = fc.group_id;
+        const rest = { ...fc };
+        if ('empresa_id' in rest) delete rest.empresa_id;
+        if ('group_id' in rest) delete rest.group_id;
+        const orConds = [];
+        if (empresaId) {
+          orConds.push(
+            { empresa_id: empresaId },
+            { empresa_dona_id: empresaId },
+            { empresas_compartilhadas_ids: { $in: [empresaId] } }
+          );
+        }
+        if (groupId) {
+          orConds.push({ group_id: groupId });
+        }
+        filtro = { ...rest, $or: orConds };
+      }
 
       const resp = await base44.functions.invoke('countEntities', {
         entityName,

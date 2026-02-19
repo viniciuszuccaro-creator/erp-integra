@@ -95,11 +95,18 @@ Deno.serve(async (req) => {
     const BATCH_SIZE = 500;
     let skip = 0;
     let hasMore = true;
+    const finalFilter = (() => {
+      if (expandedFilter && expandedFilter.$or && expandedFilter.group_id) {
+        const { group_id, ...rest } = expandedFilter;
+        return { ...rest, $or: [...expandedFilter.$or, { group_id }] };
+      }
+      return expandedFilter;
+    })();
 
     try {
       // Busca em lotes até obter todos os registros
       while (hasMore) {
-        const batch = await base44.asServiceRole.entities[entityName].filter(expandedFilter, undefined, BATCH_SIZE, skip);
+        const batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, undefined, BATCH_SIZE, skip);
         
         if (!batch || batch.length === 0) {
           hasMore = false;

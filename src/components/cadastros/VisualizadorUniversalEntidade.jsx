@@ -322,18 +322,24 @@ export default function VisualizadorUniversalEntidade({
 
     // Ajuste especial para Cliente em contexto de empresa: considerar dono/compartilhado
     let filtroBase = { ...fc };
-    if (nomeEntidade === 'Cliente' && fc?.empresa_id) {
+    if (nomeEntidade === 'Cliente' && (fc?.empresa_id || fc?.group_id)) {
       const empresaId = fc.empresa_id;
+      const groupId = fc.group_id;
       const rest = { ...fc };
-      delete rest.empresa_id;
-      filtroBase = {
-        ...rest,
-        $or: [
+      if ('empresa_id' in rest) delete rest.empresa_id;
+      if ('group_id' in rest) delete rest.group_id;
+      const orConds = [];
+      if (empresaId) {
+        orConds.push(
           { empresa_id: empresaId },
           { empresa_dona_id: empresaId },
-          { empresas_compartilhadas_ids: empresaId }
-        ]
-      };
+          { empresas_compartilhadas_ids: { $in: [empresaId] } }
+        );
+      }
+      if (groupId) {
+        orConds.push({ group_id: groupId });
+      }
+      filtroBase = { ...rest, ...(orConds.length ? { $or: orConds } : {}) };
     }
     
     if (!buscaBackend.trim()) {
@@ -379,9 +385,7 @@ export default function VisualizadorUniversalEntidade({
     queryFn: async () => {
       const filtroBase = buildFilterWithSearch();
       // Ajuste especial Clientes: se só houver empresa_id, considerar dono/compartilhado
-      const filtro = (nomeEntidade === 'Cliente' && filtroBase?.empresa_id)
-        ? (() => { const empresaId = filtroBase.empresa_id; const rest = { ...filtroBase }; delete rest.empresa_id; return { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } } ] }; })()
-        : filtroBase;
+      const filtro = filtroBase;
 
       const skip = (currentPage - 1) * itemsPerPage;
       const def = getDefaultSortForEntity();
