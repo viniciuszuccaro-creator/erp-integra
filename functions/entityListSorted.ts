@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
 
     // Pré-ordenar via backend quando possível, ainda garantindo collation no pós-processamento
     const orderHint = `${sortDirection === 'desc' ? '-' : ''}${sortField}`;
+    const mod = MODULE_BY_ENTITY[entityName] || 'Sistema';
     // Sanitização leve de filtro (strings)
     const sanitize = (v) => typeof v === 'string' ? v.replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi,'').replace(/javascript:\s*/gi,'') : v;
     const safeFilter = Object.fromEntries(Object.entries(filtros).map(([k,v])=>[k, Array.isArray(v)? v.map(sanitize): (v && typeof v==='object'? v : sanitize(v))]));
