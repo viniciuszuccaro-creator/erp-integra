@@ -119,13 +119,36 @@ Deno.serve(async (req) => {
       return normalizedTop;
     })();
 
-    const finalFilter = (() => {
+    const preFinal = (() => {
       if (expandedTop && expandedTop.$or && expandedTop.group_id) {
         const { group_id, ...rest } = expandedTop;
         return { ...rest, $or: [...expandedTop.$or, { group_id }] };
       }
       return expandedTop;
     })();
+
+    // Expansão por grupo → incluir empresas do grupo quando não há empresa explícita
+    let finalFilter = preFinal;
+    if (finalFilter?.group_id && !finalFilter?.$or && !finalFilter?.empresa_id && !finalFilter?.empresa_dona_id && !finalFilter?.empresa_alocada_id) {
+      try {
+        const groupId = finalFilter.group_id;
+        const empresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, undefined, 1000);
+        const empresasIds = (empresas || []).map(e => e.id).filter(Boolean);
+        const rest = { ...finalFilter };
+        delete rest.group_id;
+        const ctxCampo = (entityName === 'Fornecedor' || entityName === 'Transportadora') ? 'empresa_dona_id' : (entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id');
+        if (EXPAND_SET.has(entityName)) {
+          finalFilter = { ...rest, $or: [
+            { [ctxCampo]: { $in: empresasIds } },
+            ...(ctxCampo !== 'empresa_id' ? [{ empresa_id: { $in: empresasIds } }] : []),
+            { empresas_compartilhadas_ids: { $in: empresasIds } },
+            { group_id: groupId }
+          ]};
+        } else {
+          finalFilter = { ...rest, $or: [ { [ctxCampo]: { $in: empresasIds } }, { group_id: groupId } ] };
+        }
+      } catch (_) {}
+    }
 
     const raw = await base44.asServiceRole.entities[entityName].filter(finalFilter, orderHint, fetchLimit);
     const rows = Array.isArray(raw) ? raw : [];
