@@ -233,7 +233,7 @@ export default function VisualizadorUniversalEntidade({
   const [hiddenCols, setHiddenCols] = useState(new Set());
   
   const { openWindow, closeWindow } = useWindow();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -342,11 +342,30 @@ export default function VisualizadorUniversalEntidade({
           // Itens compartilhados com a empresa atual
           orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
         }
-        if (groupId) orConds.push({ group_id: groupId });
+        if (groupId) {
+          orConds.push({ group_id: groupId });
+          // Contexto no grupo sem empresa selecionada → incluir todas empresas do grupo
+          if (!empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
+            const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
+            if (empresasIds.length) {
+              orConds.push(
+                { empresa_id: { $in: empresasIds } },
+                { empresa_dona_id: { $in: empresasIds } },
+                { empresas_compartilhadas_ids: { $in: empresasIds } }
+              );
+            }
+          }
+        }
       } else {
         // Genérico para entidades não compartilhadas: aceitar empresa OU grupo
         if (empresaId) orConds.push({ [campoEmpresa]: empresaId });
-        if (groupId) orConds.push({ group_id: groupId });
+        if (groupId) {
+          orConds.push({ group_id: groupId });
+          if (!empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
+            const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
+            if (empresasIds.length) orConds.push({ [campoEmpresa]: { $in: empresasIds } });
+          }
+        }
       }
 
       filtroBase = { ...rest, ...(orConds.length ? { $or: orConds } : {}) };

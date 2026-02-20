@@ -22,7 +22,7 @@ import SegmentoClienteForm from "@/components/cadastros/SegmentoClienteForm";
 import RegiaoAtendimentoForm from "@/components/cadastros/RegiaoAtendimentoForm";
 
 function CountBadge({ entityName }) {
-  const { getFiltroContexto } = useContextoVisual();
+const { getFiltroContexto, empresasDoGrupo } = useContextoVisual();
   const { data: count = 0 } = useQuery({
     queryKey: ['count', 'cadastros', entityName, (() => { const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; const c=m[entityName]||'empresa_id'; return getFiltroContexto(c, true); })()],
     queryFn: async () => {
@@ -49,7 +49,19 @@ function CountBadge({ entityName }) {
           }
           orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
         }
-        if (groupId) orConds.push({ group_id: groupId });
+        if (groupId) {
+          orConds.push({ group_id: groupId });
+          if (!empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
+            const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
+            if (empresasIds.length) {
+              orConds.push(
+                { empresa_id: { $in: empresasIds } },
+                { empresa_dona_id: { $in: empresasIds } },
+                { empresas_compartilhadas_ids: { $in: empresasIds } }
+              );
+            }
+          }
+        }
         filtro = { ...rest, $or: orConds };
       }
 
