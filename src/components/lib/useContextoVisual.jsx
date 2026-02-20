@@ -282,10 +282,42 @@ export function useContextoVisual() {
                     };
                     const ctxCampo = ENTITY_CONTEXT_FIELD[entityName] || campo || 'empresa_id';
 
-                    const filtro = { ...criterios, ...getFiltroContexto(ctxCampo, true) };
-                    if (!filtro.group_id && !filtro[ctxCampo]) {
+                    const scope = getFiltroContexto(ctxCampo, true) || {};
+                    const groupId = scope.group_id;
+                    const empresaId = scope[ctxCampo];
+
+                    if (!groupId && !empresaId) {
                       return [];
                     }
+
+                    // Constrói filtro com OR entre contexto de grupo e empresa
+                    const rest = { ...criterios };
+                    const orConds = [];
+
+                    const SHARED_SET = new Set(['Cliente','Fornecedor','Transportadora']);
+
+                    if (empresaId) {
+                      if (entityName === 'Cliente') {
+                        orConds.push(
+                          { empresa_id: empresaId },
+                          { empresa_dona_id: empresaId },
+                          { empresas_compartilhadas_ids: { $in: [empresaId] } }
+                        );
+                      } else {
+                        orConds.push({ [ctxCampo]: empresaId });
+                        if (SHARED_SET.has(entityName)) {
+                          orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
+                        }
+                      }
+                    }
+                    if (groupId) {
+                      orConds.push({ group_id: groupId });
+                    }
+
+                    const filtro = {
+                      ...rest,
+                      ...(orConds.length ? { $or: orConds } : {})
+                    };
 
                     // Derivar sort
                     let sortField, sortDirection;
