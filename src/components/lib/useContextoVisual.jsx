@@ -282,7 +282,18 @@ export function useContextoVisual() {
                    const groupId = scope.group_id;
                    const empresaId = scope[ctxCampo];
 
-                   if (!groupId && !empresaId) return [];
+                   // Detecta suporte a contexto via schema
+                   let hasGroupField = true;
+                   let hasCtxField = true;
+                   try {
+                     const sch = (base44.entities?.[entityName]?.schema ? await base44.entities[entityName].schema() : null);
+                     const props = sch?.properties || {};
+                     hasGroupField = Object.prototype.hasOwnProperty.call(props, 'group_id');
+                     hasCtxField = Object.prototype.hasOwnProperty.call(props, ctxCampo);
+                   } catch {}
+                   const noContext = !hasGroupField && !hasCtxField;
+
+                   if (!groupId && !empresaId && !noContext) return [];
 
                    const rest = { ...criterios };
                    const orConds = [];
@@ -327,7 +338,7 @@ export function useContextoVisual() {
                      }
                    }
 
-                   const filtro = { ...rest, ...(orConds.length ? { $or: orConds } : {}) };
+                   const filtro = noContext ? { ...rest } : { ...rest, ...(orConds.length ? { $or: orConds } : {}) };
 
                    // Derivar sort
                    let sortField, sortDirection;
