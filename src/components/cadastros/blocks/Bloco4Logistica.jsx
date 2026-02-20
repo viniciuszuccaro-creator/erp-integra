@@ -26,28 +26,26 @@ function CountBadge({ entityName }) {
       const campoMap = { Transportadora: 'empresa_dona_id' };
       const campo = campoMap[entityName] || 'empresa_id';
       const fc = getFiltroContexto(campo, true) || {};
-      let filtro = fc;
-      if ((entityName === 'Transportadora') && (fc?.[campo] || fc?.group_id)) {
-        const empresaId = fc[campo];
-        const groupId = fc.group_id;
-        const rest = { ...fc };
-        if (campo in rest) delete rest[campo];
-        if ('group_id' in rest) delete rest.group_id;
-        const orConds = [];
-        if (empresaId) {
-          orConds.push(
-            { [campo]: empresaId },
-            { empresas_compartilhadas_ids: { $in: [empresaId] } }
-          );
+      const empresaId = fc[campo];
+      const groupId = fc.group_id;
+      const rest = { ...fc };
+      if (campo in rest) delete rest[campo];
+      if ('group_id' in rest) delete rest.group_id;
+      const orConds = [];
+      if (empresaId) {
+        if (entityName === 'Transportadora') {
+          orConds.push({ [campo]: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } });
+        } else {
+          orConds.push({ [campo]: empresaId });
         }
-        if (groupId) orConds.push({ group_id: groupId });
-        filtro = { ...rest, $or: orConds };
       }
+      if (groupId) orConds.push({ group_id: groupId });
+      const filtro = orConds.length ? { ...rest, $or: orConds } : fc;
       const resp = await base44.functions.invoke('countEntities', { entityName, filter: filtro });
       return resp?.data?.count || 0;
     },
     staleTime: 60000,
-    enabled: (() => { const m={Transportadora:'empresa_dona_id'}; const c=m[entityName]||'empresa_id'; return Object.keys(getFiltroContexto(c, true)).length > 0; })(),
+    enabled: (() => { const m={Transportadora:'empresa_dona_id'}; const c=m[entityName]||'empresa_id'; const f=getFiltroContexto(c, true)||{}; return !!(f[c]||f.group_id); })(),
   });
   return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
 }

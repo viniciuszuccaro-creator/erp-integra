@@ -26,14 +26,21 @@ function CountBadge({ entityName }) {
   const { data: count = 0 } = useQuery({
     queryKey: ['count', 'cadastros', entityName, getFiltroContexto('empresa_id', true)],
     queryFn: async () => {
-      const resp = await base44.functions.invoke('countEntities', {
-        entityName,
-        filter: getFiltroContexto('empresa_id', true)
-      });
+      const fc = getFiltroContexto('empresa_id', true) || {};
+      const empresaId = fc.empresa_id;
+      const groupId = fc.group_id;
+      const rest = { ...fc };
+      if ('empresa_id' in rest) delete rest.empresa_id;
+      if ('group_id' in rest) delete rest.group_id;
+      const orConds = [];
+      if (empresaId) orConds.push({ empresa_id: empresaId });
+      if (groupId) orConds.push({ group_id: groupId });
+      const filtro = orConds.length ? { ...rest, $or: orConds } : fc;
+      const resp = await base44.functions.invoke('countEntities', { entityName, filter: filtro });
       return resp?.data?.count || 0;
     },
     staleTime: 60000,
-    enabled: Object.keys(getFiltroContexto('empresa_id', true)).length > 0,
+    enabled: !!(getFiltroContexto('empresa_id', true)?.group_id || getFiltroContexto('empresa_id', true)?.empresa_id),
   });
   return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
 }
