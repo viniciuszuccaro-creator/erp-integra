@@ -384,7 +384,6 @@ export default function VisualizadorUniversalEntidade({
     queryKey: [...queryKey, empresaAtual?.id, grupoAtual?.id, buscaBackend, currentPage, itemsPerPage, sortField, sortDirection, JSON.stringify(columnFilters)],
     queryFn: async () => {
       const filtroBase = buildFilterWithSearch();
-      // Ajuste especial Clientes: se só houver empresa_id, considerar dono/compartilhado
       const filtro = filtroBase;
 
       const skip = (currentPage - 1) * itemsPerPage;
@@ -401,7 +400,7 @@ export default function VisualizadorUniversalEntidade({
       });
       return resp.data || [];
     },
-    enabled: !!empresaAtual?.id || !!getFiltroContexto('group_id', true)?.group_id,
+    enabled: !!empresaAtual?.id || !!grupoAtual?.id,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
     refetchInterval: false
