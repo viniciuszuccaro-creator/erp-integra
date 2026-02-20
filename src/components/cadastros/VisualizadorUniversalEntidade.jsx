@@ -474,7 +474,16 @@ export default function VisualizadorUniversalEntidade({
         return 0;
       }
     },
-    enabled: (() => { const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; const c=m[nomeEntidade]||'empresa_id'; const fc=getFiltroContexto(c, true)||{}; return !!(fc[c]||fc.group_id); })(),
+    enabled: (() => { 
+      const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; 
+      const c=m[nomeEntidade]||'empresa_id'; 
+      const fc=getFiltroContexto(c, true)||{}; 
+      const props=(entitySchema&&entitySchema.properties)||{};
+      const hasGroupField=Object.prototype.hasOwnProperty.call(props,'group_id');
+      const hasCtxField=Object.prototype.hasOwnProperty.call(props,c);
+      if(!hasGroupField && !hasCtxField) return true; 
+      return !!(fc[c]||fc.group_id); 
+    })(),
     staleTime: Infinity,
     refetchOnWindowFocus: false
   });
