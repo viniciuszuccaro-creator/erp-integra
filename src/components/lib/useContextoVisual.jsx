@@ -274,72 +274,82 @@ export function useContextoVisual() {
           };
 
           const filterInContext = async (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
-                    // Mapeamento de campo de contexto por entidade (multiempresa)
-                    const ENTITY_CONTEXT_FIELD = {
-                      Fornecedor: 'empresa_dona_id',
-                      Transportadora: 'empresa_dona_id',
-                      Colaborador: 'empresa_alocada_id',
-                    };
-                    const ctxCampo = ENTITY_CONTEXT_FIELD[entityName] || campo || 'empresa_id';
+                   const ENTITY_CONTEXT_FIELD = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
+                   const SHARED_SET = new Set(['Cliente','Fornecedor','Transportadora']);
+                   const ctxCampo = ENTITY_CONTEXT_FIELD[entityName] || campo || 'empresa_id';
 
-                    const scope = getFiltroContexto(ctxCampo, true) || {};
-                    const groupId = scope.group_id;
-                    const empresaId = scope[ctxCampo];
+                   const scope = getFiltroContexto(ctxCampo, true) || {};
+                   const groupId = scope.group_id;
+                   const empresaId = scope[ctxCampo];
 
-                    if (!groupId && !empresaId) {
-                      return [];
-                    }
+                   if (!groupId && !empresaId) return [];
 
-                    // Constrói filtro com OR entre contexto de grupo e empresa
-                    const rest = { ...criterios };
-                    const orConds = [];
+                   const rest = { ...criterios };
+                   const orConds = [];
 
-                    const SHARED_SET = new Set(['Cliente','Fornecedor','Transportadora']);
+                   if (empresaId) {
+                     if (entityName === 'Cliente') {
+                       orConds.push(
+                         { empresa_id: empresaId },
+                         { empresa_dona_id: empresaId },
+                         { empresas_compartilhadas_ids: { $in: [empresaId] } }
+                       );
+                     } else {
+                       orConds.push({ [ctxCampo]: empresaId });
+                       if (SHARED_SET.has(entityName)) {
+                         orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
+                       }
+                     }
+                   }
+                   if (groupId) {
+                     orConds.push({ group_id: groupId });
+                     // Contexto do grupo sem empresa explícita → incluir todas empresas do grupo
+                     if (!empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
+                       const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
+                       if (empresasIds.length) {
+                         if (entityName === 'Cliente') {
+                           orConds.push(
+                             { empresa_id: { $in: empresasIds } },
+                             { empresa_dona_id: { $in: empresasIds } },
+                             { empresas_compartilhadas_ids: { $in: empresasIds } }
+                           );
+                         } else if (entityName === 'Fornecedor' || entityName === 'Transportadora') {
+                           orConds.push(
+                             { empresa_dona_id: { $in: empresasIds } },
+                             { empresas_compartilhadas_ids: { $in: empresasIds } }
+                           );
+                         } else if (entityName === 'Colaborador') {
+                           orConds.push({ empresa_alocada_id: { $in: empresasIds } });
+                         } else {
+                           orConds.push({ [ctxCampo]: { $in: empresasIds } });
+                         }
+                       }
+                     }
+                   }
 
-                    if (empresaId) {
-                      if (entityName === 'Cliente') {
-                        orConds.push(
-                          { empresa_id: empresaId },
-                          { empresa_dona_id: empresaId },
-                          { empresas_compartilhadas_ids: { $in: [empresaId] } }
-                        );
-                      } else {
-                        orConds.push({ [ctxCampo]: empresaId });
-                        if (SHARED_SET.has(entityName)) {
-                          orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
-                        }
-                      }
-                    }
-                    if (groupId) {
-                      orConds.push({ group_id: groupId });
-                    }
+                   const filtro = { ...rest, ...(orConds.length ? { $or: orConds } : {}) };
 
-                    const filtro = {
-                      ...rest,
-                      ...(orConds.length ? { $or: orConds } : {})
-                    };
+                   // Derivar sort
+                   let sortField, sortDirection;
+                   if (typeof order === 'string' && order.length) {
+                     sortDirection = order.startsWith('-') ? 'desc' : 'asc';
+                     sortField = order.replace(/^-/, '');
+                     setLastSort(entityName, { sortField, sortDirection });
+                   } else {
+                     const last = getLastSort(entityName);
+                     sortField = last?.sortField || DEFAULT_SORTS[entityName]?.field || 'updated_date';
+                     sortDirection = last?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc';
+                   }
 
-                    // Derivar sort
-                    let sortField, sortDirection;
-                    if (typeof order === 'string' && order.length) {
-                      sortDirection = order.startsWith('-') ? 'desc' : 'asc';
-                      sortField = order.replace(/^-/, '');
-                      setLastSort(entityName, { sortField, sortDirection });
-                    } else {
-                      const last = getLastSort(entityName);
-                      sortField = last?.sortField || DEFAULT_SORTS[entityName]?.field || 'updated_date';
-                      sortDirection = last?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc';
-                    }
-
-                    const res = await base44.functions.invoke('entityListSorted', {
-                      entityName,
-                      filter: filtro,
-                      sortField,
-                      sortDirection,
-                      limit: limit || 500,
-                    });
-                    return Array.isArray(res?.data) ? res.data : [];
-                  };
+                   const res = await base44.functions.invoke('entityListSorted', {
+                     entityName,
+                     filter: filtro,
+                     sortField,
+                     sortDirection,
+                     limit: limit || 500,
+                   });
+                   return Array.isArray(res?.data) ? res.data : [];
+                 };
 
   return {
     contexto,
