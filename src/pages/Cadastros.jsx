@@ -290,8 +290,27 @@ export default function Cadastros() {
     enabled: !bloqueadoSemEmpresa
   });
 
-  // Contagem consistente via hook (sempre mesmo campo por entidade)
-  const { count: totalFornecedores = 0 } = useCountEntities('Fornecedor', getFiltroContexto('empresa_dona_id', true), { staleTime: 60000 });
+  // Contagem consistente via hook com compartilhamento e grupo para Fornecedor
+  const fcFor = getFiltroContexto('empresa_dona_id', true) || {};
+  const fornecedorEmpresaId = fcFor?.empresa_dona_id;
+  const filtroFornecedoresCount = (() => {
+    if (fornecedorEmpresaId || fcFor?.group_id) {
+      const rest = { ...fcFor };
+      const groupId = rest.group_id; if (groupId) delete rest.group_id;
+      if ('empresa_dona_id' in rest) delete rest.empresa_dona_id;
+      const orConds = [];
+      if (fornecedorEmpresaId) {
+        orConds.push(
+          { empresa_dona_id: fornecedorEmpresaId },
+          { empresas_compartilhadas_ids: { $in: [fornecedorEmpresaId] } }
+        );
+      }
+      if (groupId) orConds.push({ group_id: groupId });
+      return { ...rest, $or: orConds };
+    }
+    return fcFor;
+  })();
+  const { count: totalFornecedores = 0 } = useCountEntities('Fornecedor', filtroFornecedoresCount, { staleTime: 60000 });
 
   const { data: transportadoras = [] } = useQuery({
     queryKey: ['transportadoras', empresaAtual?.id, grupoAtual?.id],
@@ -310,8 +329,27 @@ export default function Cadastros() {
     enabled: !bloqueadoSemEmpresa
   });
 
-  // Contagem consistente para Transportadora usando empresa_dona_id
-  const { count: totalTransportadoras = 0 } = useCountEntities('Transportadora', getFiltroContexto('empresa_dona_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
+  // Contagem consistente para Transportadora incluindo compartilhadas e grupo
+  const fcTransp = getFiltroContexto('empresa_dona_id', true) || {};
+  const transpEmpresaId = fcTransp?.empresa_dona_id;
+  const filtroTransportadorasCount = (() => {
+    if (transpEmpresaId || fcTransp?.group_id) {
+      const rest = { ...fcTransp };
+      const groupId = rest.group_id; if (groupId) delete rest.group_id;
+      if ('empresa_dona_id' in rest) delete rest.empresa_dona_id;
+      const orConds = [];
+      if (transpEmpresaId) {
+        orConds.push(
+          { empresa_dona_id: transpEmpresaId },
+          { empresas_compartilhadas_ids: { $in: [transpEmpresaId] } }
+        );
+      }
+      if (groupId) orConds.push({ group_id: groupId });
+      return { ...rest, $or: orConds };
+    }
+    return fcTransp;
+  })();
+  const { count: totalTransportadoras = 0 } = useCountEntities('Transportadora', filtroTransportadorasCount, { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
 
   const { data: colaboradores = [] } = useQuery({
         queryKey: ['colaboradores', empresaAtual?.id, grupoAtual?.id],

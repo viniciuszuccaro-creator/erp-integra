@@ -30,25 +30,26 @@ function CountBadge({ entityName }) {
       const campo = campoMap[entityName] || 'empresa_id';
       const fc = getFiltroContexto(campo, true) || {};
 
-      // Cliente pode estar em empresa_id, empresa_dona_id ou compartilhado; também considerar group_id sem forçar AND
+      // Entidades com compartilhamento: considerar campo da empresa, compartilhadas e group_id
+      const SHARED = new Set(['Cliente','Fornecedor','Transportadora']);
       let filtro = fc;
-      if (entityName === 'Cliente' && (fc?.empresa_id || fc?.group_id)) {
-        const empresaId = fc.empresa_id;
+      if (SHARED.has(entityName) && (fc?.[campo] || fc?.group_id)) {
+        const empresaId = fc[campo];
         const groupId = fc.group_id;
         const rest = { ...fc };
-        if ('empresa_id' in rest) delete rest.empresa_id;
+        if (campo in rest) delete rest[campo];
         if ('group_id' in rest) delete rest.group_id;
         const orConds = [];
         if (empresaId) {
-          orConds.push(
-            { empresa_id: empresaId },
-            { empresa_dona_id: empresaId },
-            { empresas_compartilhadas_ids: { $in: [empresaId] } }
-          );
+          if (entityName === 'Cliente' && campo !== 'empresa_dona_id') {
+            // Cliente pode estar em empresa_id OU empresa_dona_id
+            orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
+          } else {
+            orConds.push({ [campo]: empresaId });
+          }
+          orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
         }
-        if (groupId) {
-          orConds.push({ group_id: groupId });
-        }
+        if (groupId) orConds.push({ group_id: groupId });
         filtro = { ...rest, $or: orConds };
       }
 
