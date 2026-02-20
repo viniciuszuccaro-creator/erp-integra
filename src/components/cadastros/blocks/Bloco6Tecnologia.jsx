@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import useEntityContextInfo from "@/components/lib/useEntityContextInfo";
 
 import ApiExternaForm from "@/components/cadastros/ApiExternaForm";
 import WebhookForm from "@/components/cadastros/WebhookForm";
@@ -36,14 +37,19 @@ import SincronizacaoMarketplacesAtiva from "@/components/integracoes/Sincronizac
 
 function CountBadge({ entityName }) {
   const { getFiltroContexto } = useContextoVisual();
+  const { hasGroup, hasAnyEmpresa, ctxField } = useEntityContextInfo(entityName);
   const { data: count = 0 } = useQuery({
-    queryKey: ['count','cadastros',entityName, getFiltroContexto('empresa_id', true)],
+    queryKey: ['count','cadastros',entityName, getFiltroContexto(ctxField || 'empresa_id', true)],
     queryFn: async () => {
-      const resp = await base44.functions.invoke('countEntities', { entityName, filter: getFiltroContexto('empresa_id', true) });
+      if (!hasGroup && !hasAnyEmpresa) {
+        const resp = await base44.functions.invoke('countEntities', { entityName, filter: {} });
+        return resp?.data?.count || 0;
+      }
+      const resp = await base44.functions.invoke('countEntities', { entityName, filter: getFiltroContexto(ctxField || 'empresa_id', true) });
       return resp?.data?.count || 0;
     },
     staleTime: 60000,
-    enabled: Object.keys(getFiltroContexto('empresa_id', true)).length > 0,
+    enabled: true,
   });
   return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
 }

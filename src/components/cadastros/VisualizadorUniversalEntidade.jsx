@@ -258,6 +258,11 @@ export default function VisualizadorUniversalEntidade({
   const queryKey = Array.isArray(override) ? override : [override || nomeEntidade.toLowerCase()];
 
   const { getFiltroContexto, createInContext, updateInContext, deleteInContext } = useContextoVisual();
+  const { data: entitySchema } = useQuery({
+    queryKey: ['schema', nomeEntidade],
+    queryFn: () => (base44.entities?.[nomeEntidade]?.schema ? base44.entities[nomeEntidade].schema() : null),
+    staleTime: 600000,
+  });
 
   React.useEffect(() => {
     const handler = setTimeout(() => {
@@ -320,10 +325,21 @@ export default function VisualizadorUniversalEntidade({
     const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
     const fc = getFiltroContexto(campoEmpresa, true) || {};
 
+    // Detecção de campos de contexto via schema: se a entidade NÃO tem group_id nem campo de empresa, não filtrar por contexto
+    const schemaProps = (entitySchema && entitySchema.properties) || {};
+    const hasGroupField = Object.prototype.hasOwnProperty.call(schemaProps, 'group_id');
+    const hasEmpresaCtxField = Object.prototype.hasOwnProperty.call(schemaProps, campoEmpresa);
+    if (!hasGroupField && !hasEmpresaCtxField) {
+      // Apenas filtros de busca/colunas serão aplicados abaixo
+      let combinadoSemContexto = {};
+      if (!buscaBackend.trim()) return combinadoSemContexto;
+      // segue fluxo normal para busca, mas sem contexto
+    }
+
     // Ajuste para entidades compartilhadas (Cliente/Fornecedor/Transportadora)
     const SHARED = new Set(['Cliente','Fornecedor','Transportadora']);
     let filtroBase = { ...fc };
-    if ((fc?.[campoEmpresa] || fc?.group_id)) {
+    if ((fc?.[campoEmpresa] || fc?.group_id) && (hasGroupField || hasEmpresaCtxField)) {
       const empresaId = fc[campoEmpresa];
       const groupId = fc.group_id;
       const rest = { ...fc };

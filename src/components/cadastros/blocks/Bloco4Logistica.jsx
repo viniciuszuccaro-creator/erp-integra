@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import useEntityContextInfo from "@/components/lib/useEntityContextInfo";
 
 import VeiculoForm from "@/components/cadastros/VeiculoForm";
 import MotoristaForm from "@/components/cadastros/MotoristaForm";
@@ -20,17 +21,21 @@ import ModeloDocumentoForm from "@/components/cadastros/ModeloDocumentoForm";
 
 function CountBadge({ entityName }) {
   const { getFiltroContexto } = useContextoVisual();
+  const { hasGroup, hasAnyEmpresa, ctxField } = useEntityContextInfo(entityName);
   const { data: count = 0 } = useQuery({
-    queryKey: ['count','cadastros',entityName, (() => { const m={Transportadora:'empresa_dona_id'}; const c=m[entityName]||'empresa_id'; return getFiltroContexto(c, true); })()],
+    queryKey: ['count','cadastros',entityName, getFiltroContexto(ctxField || 'empresa_id', true)],
     queryFn: async () => {
-      const campoMap = { Transportadora: 'empresa_dona_id' };
-      const campo = campoMap[entityName] || 'empresa_id';
+      if (!hasGroup && !hasAnyEmpresa) {
+        const resp = await base44.functions.invoke('countEntities', { entityName, filter: {} });
+        return resp?.data?.count || 0;
+      }
+      const campo = ctxField || 'empresa_id';
       const fc = getFiltroContexto(campo, true) || {};
       const empresaId = fc[campo];
       const groupId = fc.group_id;
       const rest = { ...fc };
       if (campo in rest) delete rest[campo];
-      if ('group_id' in rest) delete rest.group_id;
+      const filtro = { ...rest, ...(groupId ? { group_id: groupId } : {}) };
       const orConds = [];
       if (empresaId) {
         if (entityName === 'Transportadora') {
@@ -39,13 +44,12 @@ function CountBadge({ entityName }) {
           orConds.push({ [campo]: empresaId });
         }
       }
-      if (groupId) orConds.push({ group_id: groupId });
-      const filtro = orConds.length ? { ...rest, $or: orConds } : fc;
+      if (orConds.length) filtro.$or = orConds;
       const resp = await base44.functions.invoke('countEntities', { entityName, filter: filtro });
       return resp?.data?.count || 0;
     },
     staleTime: 60000,
-    enabled: (() => { const m={Transportadora:'empresa_dona_id'}; const c=m[entityName]||'empresa_id'; const f=getFiltroContexto(c, true)||{}; return !!(f[c]||f.group_id); })(),
+    enabled: true,
   });
   return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
 }

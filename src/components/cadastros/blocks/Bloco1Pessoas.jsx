@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import useEntityContextInfo from "@/components/lib/useEntityContextInfo";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
@@ -33,36 +34,35 @@ const { getFiltroContexto, empresasDoGrupo } = useContextoVisual();
       // Entidades com compartilhamento: considerar campo da empresa, compartilhadas e group_id
       const SHARED = new Set(['Cliente','Fornecedor','Transportadora']);
       let filtro = fc;
-      if (SHARED.has(entityName) && (fc?.[campo] || fc?.group_id)) {
+      if (!hasGroup && !hasAnyEmpresa) {
+        filtro = {};
+      } else if (SHARED.has(entityName) && (fc?.[campo] || fc?.group_id)) {
         const empresaId = fc[campo];
         const groupId = fc.group_id;
         const rest = { ...fc };
         if (campo in rest) delete rest[campo];
-        if ('group_id' in rest) delete rest.group_id;
         const orConds = [];
         if (empresaId) {
           if (entityName === 'Cliente' && campo !== 'empresa_dona_id') {
-            // Cliente pode estar em empresa_id OU empresa_dona_id
             orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
           } else {
             orConds.push({ [campo]: empresaId });
           }
           orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
         }
-        if (groupId) {
-          orConds.push({ group_id: groupId });
-          if (!empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
-            const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
-            if (empresasIds.length) {
-              orConds.push(
-                { empresa_id: { $in: empresasIds } },
-                { empresa_dona_id: { $in: empresasIds } },
-                { empresas_compartilhadas_ids: { $in: empresasIds } }
-              );
-            }
+        // manter group_id top-level
+        const top = { ...rest, ...(groupId ? { group_id: groupId } : {}) };
+        if (!empresaId && groupId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
+          const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
+          if (empresasIds.length) {
+            orConds.push(
+              { empresa_id: { $in: empresasIds } },
+              { empresa_dona_id: { $in: empresasIds } },
+              { empresas_compartilhadas_ids: { $in: empresasIds } }
+            );
           }
         }
-        filtro = { ...rest, $or: orConds };
+        filtro = { ...top, ...(orConds.length ? { $or: orConds } : {}) };
       }
 
       const resp = await base44.functions.invoke('countEntities', {
