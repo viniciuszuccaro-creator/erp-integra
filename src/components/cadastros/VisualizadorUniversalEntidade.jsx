@@ -417,18 +417,10 @@ export default function VisualizadorUniversalEntidade({
         });
         return response.data?.count || 0;
       } catch (err) {
-        // Fallback específico Cliente: considerar empresa_dona/compartilhado
-        if (nomeEntidade === 'Cliente' && filtro?.empresa_id) {
-          const empresaId = filtro.empresa_id; const rest = { ...filtro }; delete rest.empresa_id;
-          try {
-            const alt = await base44.functions.invoke('countEntities', { entityName: nomeEntidade, filter: { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } } ] } });
-            return alt.data?.count || 0;
-          } catch (_) { return 0; }
-        }
         return 0;
       }
     },
-    enabled: !!empresaAtual?.id || !!getFiltroContexto('group_id', true)?.group_id,
+    enabled: !!empresaAtual?.id || !!grupoAtual?.id,
     staleTime: Infinity,
     refetchOnWindowFocus: false
   });
