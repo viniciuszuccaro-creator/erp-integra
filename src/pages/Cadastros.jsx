@@ -223,7 +223,7 @@ export default function Cadastros() {
 
   // QUERIES - BLOCO 1: PESSOAS & PARCEIROS
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id],
+    queryKey: ['clientes', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
         // Cliente pode estar em empresa_id, empresa_dona_id ou compartilhado
@@ -274,7 +274,7 @@ export default function Cadastros() {
   const { count: totalClientes = 0 } = useCountEntities('Cliente', filtroClientesCount, { staleTime: 60000 });
 
   const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores', empresaAtual?.id],
+    queryKey: ['fornecedores', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
         return await filterInContext('Fornecedor', {}, '-created_date', 100, 'empresa_dona_id');
@@ -294,7 +294,7 @@ export default function Cadastros() {
   const { count: totalFornecedores = 0 } = useCountEntities('Fornecedor', getFiltroContexto('empresa_dona_id', true), { staleTime: 60000 });
 
   const { data: transportadoras = [] } = useQuery({
-    queryKey: ['transportadoras', empresaAtual?.id],
+    queryKey: ['transportadoras', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
         return await filterInContext('Transportadora', {}, '-created_date', 100);
@@ -314,7 +314,7 @@ export default function Cadastros() {
   const { count: totalTransportadoras = 0 } = useCountEntities('Transportadora', getFiltroContexto('empresa_dona_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
 
   const { data: colaboradores = [] } = useQuery({
-        queryKey: ['colaboradores', empresaAtual?.id],
+        queryKey: ['colaboradores', empresaAtual?.id, grupoAtual?.id],
         queryFn: async () => {
           try {
             return await filterInContext('Colaborador', {}, '-created_date', 100, 'empresa_alocada_id');
@@ -334,7 +334,7 @@ export default function Cadastros() {
   const { count: totalColaboradores = 0 } = useCountEntities('Colaborador', getFiltroContexto('empresa_alocada_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
 
   const { data: representantes = [] } = useQuery({
-    queryKey: ['representantes', empresaAtual?.id],
+    queryKey: ['representantes', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
         return await filterInContext('Representante', {}, '-created_date', 100);
@@ -666,27 +666,27 @@ export default function Cadastros() {
 
   // QUERIES - BLOCO 5: ORGANIZACIONAL
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas', empresaAtual?.id],
+    queryKey: ['empresas', empresaAtual?.id, grupoAtual?.id],
     queryFn: () => filterInContext('Empresa', {}, '-created_date', 9999),
   });
 
   const { data: grupos = [] } = useQuery({
-    queryKey: ['grupos', empresaAtual?.id],
+    queryKey: ['grupos', empresaAtual?.id, grupoAtual?.id],
     queryFn: () => filterInContext('GrupoEmpresarial', {}, '-created_date', 9999),
   });
 
   const { data: departamentos = [] } = useQuery({
-    queryKey: ['departamentos', empresaAtual?.id],
+    queryKey: ['departamentos', empresaAtual?.id, grupoAtual?.id],
     queryFn: () => filterInContext('Departamento', {}, '-created_date', 9999),
   });
 
   const { data: cargos = [] } = useQuery({
-    queryKey: ['cargos', empresaAtual?.id],
+    queryKey: ['cargos', empresaAtual?.id, grupoAtual?.id],
     queryFn: () => filterInContext('Cargo', {}, '-created_date', 9999),
   });
 
   const { data: turnos = [] } = useQuery({
-    queryKey: ['turnos', empresaAtual?.id],
+    queryKey: ['turnos', empresaAtual?.id, grupoAtual?.id],
     queryFn: () => filterInContext('Turno', {}, '-created_date', 9999),
   });
 

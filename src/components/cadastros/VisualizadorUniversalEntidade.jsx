@@ -233,7 +233,7 @@ export default function VisualizadorUniversalEntidade({
   const [hiddenCols, setHiddenCols] = useState(new Set());
   
   const { openWindow, closeWindow } = useWindow();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -381,7 +381,7 @@ export default function VisualizadorUniversalEntidade({
   }, [getFiltroContexto, buscaBackend, nomeEntidade, columnFilters]);
 
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
-    queryKey: [...queryKey, empresaAtual?.id, buscaBackend, currentPage, itemsPerPage, sortField, sortDirection, JSON.stringify(columnFilters)],
+    queryKey: [...queryKey, empresaAtual?.id, grupoAtual?.id, buscaBackend, currentPage, itemsPerPage, sortField, sortDirection, JSON.stringify(columnFilters)],
     queryFn: async () => {
       const filtroBase = buildFilterWithSearch();
       // Ajuste especial Clientes: se só houver empresa_id, considerar dono/compartilhado
@@ -408,7 +408,7 @@ export default function VisualizadorUniversalEntidade({
   });
 
   const { data: totalItemsCount = 0 } = useQuery({
-    queryKey: [...queryKey, 'total-count', empresaAtual?.id, buscaBackend],
+    queryKey: [...queryKey, 'total-count', empresaAtual?.id, grupoAtual?.id, buscaBackend],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
       try {
