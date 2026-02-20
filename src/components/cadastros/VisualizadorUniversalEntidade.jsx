@@ -323,24 +323,32 @@ export default function VisualizadorUniversalEntidade({
     // Ajuste para entidades compartilhadas (Cliente/Fornecedor/Transportadora)
     const SHARED = new Set(['Cliente','Fornecedor','Transportadora']);
     let filtroBase = { ...fc };
-    if (SHARED.has(nomeEntidade) && (fc?.[campoEmpresa] || fc?.group_id)) {
+    if ((fc?.[campoEmpresa] || fc?.group_id)) {
       const empresaId = fc[campoEmpresa];
       const groupId = fc.group_id;
       const rest = { ...fc };
       if (campoEmpresa in rest) delete rest[campoEmpresa];
       if ('group_id' in rest) delete rest.group_id;
       const orConds = [];
-      if (empresaId) {
-        if (nomeEntidade === 'Cliente' && campoEmpresa !== 'empresa_dona_id') {
-          // Cliente pode estar em empresa_id OU empresa_dona_id
-          orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
-        } else {
-          orConds.push({ [campoEmpresa]: empresaId });
+
+      if (SHARED.has(nomeEntidade)) {
+        if (empresaId) {
+          if (nomeEntidade === 'Cliente' && campoEmpresa !== 'empresa_dona_id') {
+            // Cliente pode estar em empresa_id OU empresa_dona_id
+            orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
+          } else {
+            orConds.push({ [campoEmpresa]: empresaId });
+          }
+          // Itens compartilhados com a empresa atual
+          orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
         }
-        // Itens compartilhados com a empresa atual
-        orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
+        if (groupId) orConds.push({ group_id: groupId });
+      } else {
+        // Genérico para entidades não compartilhadas: aceitar empresa OU grupo
+        if (empresaId) orConds.push({ [campoEmpresa]: empresaId });
+        if (groupId) orConds.push({ group_id: groupId });
       }
-      if (groupId) orConds.push({ group_id: groupId });
+
       filtroBase = { ...rest, ...(orConds.length ? { $or: orConds } : {}) };
     }
     
