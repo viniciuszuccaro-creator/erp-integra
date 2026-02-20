@@ -410,7 +410,7 @@ export default function VisualizadorUniversalEntidade({
       });
       return resp.data || [];
     },
-    enabled: !!empresaAtual?.id || !!grupoAtual?.id,
+    enabled: (() => { const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; const c=m[nomeEntidade]||'empresa_id'; const fc=getFiltroContexto(c, true)||{}; return !!(fc[c]||fc.group_id); })(),
     staleTime: Infinity,
     refetchOnWindowFocus: false,
     refetchInterval: false
@@ -430,7 +430,7 @@ export default function VisualizadorUniversalEntidade({
         return 0;
       }
     },
-    enabled: !!empresaAtual?.id || !!grupoAtual?.id,
+    enabled: (() => { const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; const c=m[nomeEntidade]||'empresa_id'; const fc=getFiltroContexto(c, true)||{}; return !!(fc[c]||fc.group_id); })(),
     staleTime: Infinity,
     refetchOnWindowFocus: false
   });
