@@ -320,25 +320,27 @@ export default function VisualizadorUniversalEntidade({
     const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
     const fc = getFiltroContexto(campoEmpresa, true) || {};
 
-    // Ajuste especial para Cliente em contexto de empresa: considerar dono/compartilhado
+    // Ajuste para entidades compartilhadas (Cliente/Fornecedor/Transportadora)
+    const SHARED = new Set(['Cliente','Fornecedor','Transportadora']);
     let filtroBase = { ...fc };
-    if (nomeEntidade === 'Cliente' && (fc?.empresa_id || fc?.group_id)) {
-      const empresaId = fc.empresa_id;
+    if (SHARED.has(nomeEntidade) && (fc?.[campoEmpresa] || fc?.group_id)) {
+      const empresaId = fc[campoEmpresa];
       const groupId = fc.group_id;
       const rest = { ...fc };
-      if ('empresa_id' in rest) delete rest.empresa_id;
+      if (campoEmpresa in rest) delete rest[campoEmpresa];
       if ('group_id' in rest) delete rest.group_id;
       const orConds = [];
       if (empresaId) {
-        orConds.push(
-          { empresa_id: empresaId },
-          { empresa_dona_id: empresaId },
-          { empresas_compartilhadas_ids: { $in: [empresaId] } }
-        );
+        if (nomeEntidade === 'Cliente' && campoEmpresa !== 'empresa_dona_id') {
+          // Cliente pode estar em empresa_id OU empresa_dona_id
+          orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
+        } else {
+          orConds.push({ [campoEmpresa]: empresaId });
+        }
+        // Itens compartilhados com a empresa atual
+        orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
       }
-      if (groupId) {
-        orConds.push({ group_id: groupId });
-      }
+      if (groupId) orConds.push({ group_id: groupId });
       filtroBase = { ...rest, ...(orConds.length ? { $or: orConds } : {}) };
     }
     
