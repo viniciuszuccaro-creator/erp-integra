@@ -247,7 +247,7 @@ export default function Cadastros() {
     gcTime: 60000,
     refetchOnWindowFocus: false,
     retry: 2,
-    enabled: !bloqueadoSemEmpresa
+    enabled: !!grupoAtual?.id || !!empresaAtual?.id
   });
 
   // V22.0: Contagem total otimizada para grandes volumes
@@ -271,7 +271,7 @@ export default function Cadastros() {
     }
     return fcClientes;
   })();
-  const { count: totalClientes = 0 } = useCountEntities('Cliente', filtroClientesCount, { staleTime: 60000 });
+  const { count: totalClientes = 0 } = useCountEntities('Cliente', filtroClientesCount, { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
 
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores', empresaAtual?.id, grupoAtual?.id],
@@ -287,7 +287,7 @@ export default function Cadastros() {
     gcTime: 60000,
     refetchOnWindowFocus: false,
     retry: 2,
-    enabled: !bloqueadoSemEmpresa
+    enabled: !!grupoAtual?.id || !!empresaAtual?.id
   });
 
   // Contagem consistente via hook com compartilhamento e grupo para Fornecedor
@@ -310,7 +310,7 @@ export default function Cadastros() {
     }
     return fcFor;
   })();
-  const { count: totalFornecedores = 0 } = useCountEntities('Fornecedor', filtroFornecedoresCount, { staleTime: 60000 });
+  const { count: totalFornecedores = 0 } = useCountEntities('Fornecedor', filtroFornecedoresCount, { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
 
   const { data: transportadoras = [] } = useQuery({
     queryKey: ['transportadoras', empresaAtual?.id, grupoAtual?.id],
@@ -326,7 +326,7 @@ export default function Cadastros() {
     gcTime: 60000,
     refetchOnWindowFocus: false,
     retry: 1,
-    enabled: !bloqueadoSemEmpresa
+    enabled: !!grupoAtual?.id || !!empresaAtual?.id
   });
 
   // Contagem consistente para Transportadora incluindo compartilhadas e grupo
@@ -365,7 +365,7 @@ export default function Cadastros() {
         gcTime: 60000,
         refetchOnWindowFocus: false,
         retry: 1,
-        enabled: !bloqueadoSemEmpresa
+        enabled: !!grupoAtual?.id || !!empresaAtual?.id
       });
 
   // Contagem consistente para Colaborador usando empresa_alocada_id
@@ -385,7 +385,7 @@ export default function Cadastros() {
     gcTime: 60000,
     refetchOnWindowFocus: false,
     retry: 1,
-    enabled: !bloqueadoSemEmpresa
+    enabled: !!grupoAtual?.id || !!empresaAtual?.id
   });
 
   const { data: contatosB2B = [] } = useQuery({
@@ -402,7 +402,7 @@ export default function Cadastros() {
     gcTime: 60000,
     refetchOnWindowFocus: false,
     retry: 1,
-    enabled: !bloqueadoSemEmpresa
+    enabled: !!grupoAtual?.id || !!empresaAtual?.id
   });
 
   // QUERIES - BLOCO 2: PRODUTOS & SERVIÇOS
@@ -420,7 +420,7 @@ export default function Cadastros() {
     gcTime: 60000,
     refetchOnWindowFocus: false,
     retry: 1,
-    enabled: !bloqueadoSemEmpresa
+    enabled: !!grupoAtual?.id || !!empresaAtual?.id
   });
 
   const { count: totalProdutos = 0 } = useCountEntities('Produto', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
