@@ -156,44 +156,48 @@ function LayoutContent({ children, currentPageName }) {
                 refetchOnReconnect: false,
                 retry: 1,
                 onError: (error) => {
-                                                              const m = String(error?.message || '');
-                                                              const code = error?.code;
-                                                              const name = error?.name;
-                                                              if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(m)) { return; }
-                                                              try {
-                                                                const msg = (error && (error.message || String(error))) || 'Erro em query';
-                                          base44.functions.invoke('auditError', {
-                                            module: moduleName || 'Sistema',
-                                            message: `Query error: ${msg}`,
-                                            stack: error?.stack || null,
-                                            page: currentPageName,
-                                            empresa_id: empresaAtual?.id || null,
-                                            group_id: grupoAtual?.id || null,
-                                            metadata: { queryKey: 'unknown' }
-                                          });
-                                        } catch (_) {}
-                                      }
+                                                                                    const m = String(error?.message || '');
+                                                                                    const code = error?.code;
+                                                                                    const name = error?.name;
+                                                                                    const status = error?.response?.status || error?.status;
+                                                                                    if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(m)) { return; }
+                                                                                    if (status === 429 || /rate limit/i.test(m)) { return; }
+                                                                                    try {
+                                                                                      const msg = (error && (error.message || String(error))) || 'Erro em query';
+                                                                base44.functions.invoke('auditError', {
+                                                                  module: moduleName || 'Sistema',
+                                                                  message: `Query error: ${msg}`,
+                                                                  stack: error?.stack || null,
+                                                                  page: currentPageName,
+                                                                  empresa_id: empresaAtual?.id || null,
+                                                                  group_id: grupoAtual?.id || null,
+                                                                  metadata: { queryKey: 'unknown' }
+                                                                });
+                                                              } catch (_) {}
+                                                            }
               },
               mutations: {
                 retry: 1,
                 onError: (error) => {
-                                                              const m = String(error?.message || '');
-                                                              const code = error?.code;
-                                                              const name = error?.name;
-                                                              if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(m)) { return; }
-                                                              try {
-                                                                const msg = (error && (error.message || String(error))) || 'Erro em mutation';
-                                          base44.functions.invoke('auditError', {
-                                            module: moduleName || 'Sistema',
-                                            message: `Mutation error: ${msg}`,
-                                            stack: error?.stack || null,
-                                            page: currentPageName,
-                                            empresa_id: empresaAtual?.id || null,
-                                            group_id: grupoAtual?.id || null,
-                                            metadata: { mutation: true }
-                                          });
-                                        } catch (_) {}
-                                      }
+                                                                                    const m = String(error?.message || '');
+                                                                                    const code = error?.code;
+                                                                                    const name = error?.name;
+                                                                                    const status = error?.response?.status || error?.status;
+                                                                                    if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(m)) { return; }
+                                                                                    if (status === 429 || /rate limit/i.test(m)) { return; }
+                                                                                    try {
+                                                                                      const msg = (error && (error.message || String(error))) || 'Erro em mutation';
+                                                                base44.functions.invoke('auditError', {
+                                                                  module: moduleName || 'Sistema',
+                                                                  message: `Mutation error: ${msg}`,
+                                                                  stack: error?.stack || null,
+                                                                  page: currentPageName,
+                                                                  empresa_id: empresaAtual?.id || null,
+                                                                  group_id: grupoAtual?.id || null,
+                                                                  metadata: { mutation: true }
+                                                                });
+                                                              } catch (_) {}
+                                                            }
               }
             });
           } catch (_) {}
@@ -332,13 +336,15 @@ function LayoutContent({ children, currentPageName }) {
   // Registro global de erros de UI (não altera layout visual)
   useEffect(() => {
     const onError = (e) => {
-                          try {
-                            const msg = e?.message || e?.error?.message || 'Erro de UI';
-                            const code = e?.error?.code;
-                            const name = e?.error?.name;
-                            if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(String(msg))) { return; }
-                  const stack = e?.error?.stack || null;
-                  base44.functions.invoke('auditError', {
+                                    try {
+                                      const msg = e?.message || e?.error?.message || 'Erro de UI';
+                                      const code = e?.error?.code;
+                                      const name = e?.error?.name;
+                                      const status = e?.error?.response?.status || e?.error?.status;
+                                      if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(String(msg))) { return; }
+                                      if (status === 429 || /rate limit/i.test(String(msg))) { return; }
+                            const stack = e?.error?.stack || null;
+                            base44.functions.invoke('auditError', {
                     module: moduleName || 'Sistema',
                     message: `Erro não tratado: ${msg}`,
                     stack,
@@ -350,12 +356,14 @@ function LayoutContent({ children, currentPageName }) {
                 } catch (e) {}
               };
     const onUnhandled = (e) => {
-                          try {
-                            const msg = e?.reason?.message || String(e?.reason);
-                            const code = e?.reason?.code;
-                            const name = e?.reason?.name;
-                            if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(String(msg))) { return; }
-                  base44.functions.invoke('auditError', {
+                                    try {
+                                      const msg = e?.reason?.message || String(e?.reason);
+                                      const code = e?.reason?.code;
+                                      const name = e?.reason?.name;
+                                      const status = e?.reason?.response?.status || e?.reason?.status;
+                                      if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(String(msg))) { return; }
+                                      if (status === 429 || /rate limit/i.test(String(msg))) { return; }
+                            base44.functions.invoke('auditError', {
                     module: moduleName || 'Sistema',
                     message: `Promise rejeitada: ${msg}`,
                     stack: e?.reason?.stack || null,
@@ -690,8 +698,12 @@ function LayoutContent({ children, currentPageName }) {
         ]);
 
         base44.functions.invoke = async (functionName, params) => {
+          // Evita loops e ruído
+          if (functionName === 'auditError') {
+            return await origInvoke(functionName, params);
+          }
           const shouldGuard = SENSITIVE_FUNCTIONS.has(functionName) || (params && params.__sensitive === true);
-          if (shouldGuard) {
+          if (shouldGuard && functionName !== 'entityGuard') {
             try {
               const scope = getScope();
               const guardPayload = {
@@ -717,13 +729,20 @@ function LayoutContent({ children, currentPageName }) {
           }
 
           const result = await origInvoke(functionName, params);
-          try { await base44.entities.AuditLog.create({
-            usuario: user?.full_name || user?.email || 'Usuário',
-            usuario_id: user?.id,
-            empresa_id: empresaAtual?.id || null,
-            acao: 'Execução', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema',
-            entidade: 'Function', descricao: `Função ${functionName} chamada`, dados_novos: { params }, data_hora: new Date().toISOString(),
-          }); } catch {}
+          try {
+            const now = Date.now();
+            const last = (base44.functions.__invokeAuditLastAt || 0);
+            if (now - last > 3000) {
+              base44.functions.__invokeAuditLastAt = now;
+              await base44.entities.AuditLog.create({
+                usuario: user?.full_name || user?.email || 'Usuário',
+                usuario_id: user?.id,
+                empresa_id: empresaAtual?.id || null,
+                acao: 'Execução', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema',
+                entidade: 'Function', descricao: `Função ${functionName} chamada`, dados_novos: { params }, data_hora: new Date().toISOString(),
+              });
+            }
+          } catch {}
           return result;
         };
         base44.functions.__wrappedPhase4 = true;
