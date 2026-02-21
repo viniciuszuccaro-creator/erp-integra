@@ -195,10 +195,12 @@ Deno.serve(async (req) => {
           try {
             const idsDiverg = Array.from(new Set(issues.filter(i => i.entidade === 'ContaPagar' && i.tipo === 'taxa_marketplace_divergente' && i.id).map(i => i.id))).slice(0, 50);
             const idsDup = Array.from(new Set(issues.filter(i => i.entidade === 'ContaPagar' && i.tipo === 'duplicidade_pagar' && i.id).map(i => i.id))).slice(0, 50);
-            await Promise.all([
-              ...idsDiverg.map(id => base44.asServiceRole.entities.ContaPagar.update(id, { alerta_taxa_divergente: true })),
-              ...idsDup.map(id => base44.asServiceRole.entities.ContaPagar.update(id, { duplicidade_detectada: true }))
-            ]);
+            if (idsDiverg.length || idsDup.length) {
+              await Promise.all([
+                ...idsDiverg.map(id => base44.asServiceRole.entities.ContaPagar.update(id, { alerta_taxa_divergente: true })),
+                ...idsDup.map(id => base44.asServiceRole.entities.ContaPagar.update(id, { duplicidade_detectada: true }))
+              ]);
+            }
           } catch (_) {}
 
     // ML leve: outliers por Z-Score (valor)
@@ -321,7 +323,7 @@ Deno.serve(async (req) => {
             preco_previsto: precoPrevisto,
           });
         }
-        // Auditoria das previsões
+        // Auditoria das previsões (entrada/saída)
         try {
           await base44.asServiceRole.entities.AuditLog.create({
             usuario: user?.full_name || 'Sistema',
@@ -332,7 +334,7 @@ Deno.serve(async (req) => {
             descricao: `Previsões geradas para ${previsoes.length} itens`,
             empresa_id: filtros?.empresa_id || null,
             group_id: filtros?.group_id || null,
-            dados_novos: { params: body?.previsao_estoque, sample: previsoes.slice(0, 20) },
+            dados_novos: { params: { ...body?.previsao_estoque, estoque_params }, amostra: previsoes.slice(0, 20) },
             data_hora: new Date().toISOString(),
           });
         } catch (_) {}

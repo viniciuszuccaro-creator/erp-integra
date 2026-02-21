@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     async function encryptSensitive(obj, entity) {
       const key = await getCryptoKey();
       if (!key) return obj;
-      const SENSITIVE_KEYS = new Set(['numero_autorizacao', 'pix_chave', 'conta', 'agencia', 'cartao']);
+      const SENSITIVE_KEYS = new Set(['numero_autorizacao', 'pix_chave', 'conta', 'agencia', 'cartao', 'linha_digitavel', 'codigo_barras', 'pix_qrcode', 'pix_copia_cola']);
       const walk = async (val, parentKey = '') => {
         if (Array.isArray(val)) {
           const out = [];
@@ -96,12 +96,23 @@ Deno.serve(async (req) => {
         }
         return val;
       };
-      // Limitar a escopos conhecidos (detalhes_pagamento)
-      if (obj?.detalhes_pagamento) {
-        const clone = { ...obj, detalhes_pagamento: await walk(obj.detalhes_pagamento) };
-        return clone;
+      // Escopos conhecidos: detalhes_pagamento, dados_bancarios e campos de cobrança (ContaReceber)
+      let out = { ...obj };
+      if (out?.detalhes_pagamento) {
+        out = { ...out, detalhes_pagamento: await walk(out.detalhes_pagamento) };
       }
-      return obj;
+      if (Array.isArray(out?.dados_bancarios)) {
+        out = { ...out, dados_bancarios: await walk(out.dados_bancarios) };
+      }
+      if (entity === 'ContaReceber') {
+        const topKeys = ['linha_digitavel','codigo_barras','pix_qrcode','pix_copia_cola'];
+        for (const k of topKeys) {
+          if (typeof out[k] === 'string' || typeof out[k] === 'number') {
+            out[k] = await encryptValue(out[k], key);
+          }
+        }
+      }
+      return out;
     }
 
     const secured = await encryptSensitive(enriched, event.entity_name);
