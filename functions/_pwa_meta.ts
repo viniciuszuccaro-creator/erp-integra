@@ -1,0 +1,1 @@
+// Placeholder meta helper (kept minimal intentionally)
