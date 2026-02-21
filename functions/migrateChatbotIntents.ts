@@ -67,6 +67,32 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Garantir intents essenciais de atendimento
+    const upsertIntent = async (nome, payload) => {
+      const ex = await base44.entities.ChatbotIntent.filter({ nome_intent: nome }, undefined, 1);
+      if (ex?.length) { await base44.entities.ChatbotIntent.update(ex[0].id, payload); atualizados += 1; }
+      else { await base44.entities.ChatbotIntent.create({ ...payload, nome_intent: nome }); criados += 1; }
+    };
+
+    await upsertIntent('cotar_aco', {
+      descricao: 'Cotação de aço',
+      frases_treinamento: ['cotar aço','preço do ferro','quanto custa a bitola'],
+      palavras_chave: ['cotação','aço','preço','bitola'],
+      tipo_intent: 'cotacao',
+      acao_automatica: 'consultar_preco',
+      exige_autenticacao: false,
+      ativo: true,
+    });
+    await upsertIntent('status_pedido', {
+      descricao: 'Consultar status do pedido',
+      frases_treinamento: ['status do pedido','meu pedido','acompanhar pedido'],
+      palavras_chave: ['status','pedido','acompanhar'],
+      tipo_intent: 'consulta',
+      acao_automatica: 'ver_status_pedido',
+      exige_autenticacao: true,
+      ativo: true,
+    });
+
     await base44.entities.AuditLog.create({
       usuario: user.full_name || user.email || 'Usuário',
       usuario_id: user.id,
@@ -74,7 +100,7 @@ Deno.serve(async (req) => {
       modulo: 'Sistema',
       tipo_auditoria: 'sistema',
       entidade: 'ChatbotIntent',
-      descricao: `Migração ChatbotIntents -> ChatbotIntent concluída (criadas: ${criados}, atualizadas: ${atualizados})`,
+      descricao: `Migração/garantia intents concluída (criadas: ${criados}, atualizadas: ${atualizados})`,
       data_hora: new Date().toISOString(),
       sucesso: true,
     });

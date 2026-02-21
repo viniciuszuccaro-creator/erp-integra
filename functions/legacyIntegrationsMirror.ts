@@ -7,6 +7,17 @@ Deno.serve(async (req) => {
     const evt = payload?.event || {};
     const data = payload?.data || null;
 
+    // Webhooks Marketplaces
+    if (payload?.provider && (payload.provider === 'mercado_livre' || payload.provider === 'amazon')) {
+      const empresa_id = payload.empresa_id || payload.company_id || null;
+      const group_id = payload.group_id || null;
+      try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: payload.provider, descricao: `Webhook recebido: ${payload.event || 'evento'}`, empresa_id, group_id, dados_novos: payload, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+      if (Array.isArray(payload?.ajustes_estoque) && empresa_id) {
+        try { await base44.asServiceRole.functions.invoke('applyInventoryAdjustments', { empresa_id, ajustes: payload.ajustes_estoque }); } catch (_) {}
+      }
+      return Response.json({ ok: true, action: 'webhook_processed' });
+    }
+
     if (!evt?.entity_name) {
       return Response.json({ ok: true, skipped: true });
     }
