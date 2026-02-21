@@ -59,7 +59,7 @@ export default function Financeiro() {
         return [];
       }
     },
-    staleTime: 30000,
+    staleTime: 120000,
     retry: 2,
     enabled: canSeeFinanceiro
   });
@@ -77,7 +77,7 @@ export default function Financeiro() {
         return contasReceber.length;
       }
     },
-    staleTime: 60000,
+    staleTime: 120000,
     retry: 1,
     enabled: canSeeFinanceiro
   });
@@ -92,7 +92,7 @@ export default function Financeiro() {
         return [];
       }
     },
-    staleTime: 30000,
+    staleTime: 120000,
     retry: 2,
     enabled: canSeeFinanceiro
   });
@@ -110,7 +110,7 @@ export default function Financeiro() {
         return contasPagar.length;
       }
     },
-    staleTime: 60000,
+    staleTime: 120000,
     retry: 1,
     enabled: canSeeFinanceiro
   });
@@ -126,7 +126,7 @@ export default function Financeiro() {
         return [];
       }
     },
-    staleTime: 30000,
+    staleTime: 120000,
     retry: 1,
     enabled: canSeeFinanceiro
   });
@@ -142,7 +142,7 @@ export default function Financeiro() {
         return [];
       }
     },
-    staleTime: 30000,
+    staleTime: 120000,
     retry: 1,
     enabled: canSeeFinanceiro
   });
@@ -157,7 +157,7 @@ export default function Financeiro() {
         return [];
       }
     },
-    staleTime: 60000,
+    staleTime: 120000,
     retry: 1,
     enabled: canSeeFinanceiro
   });
@@ -173,7 +173,7 @@ export default function Financeiro() {
         return [];
       }
     },
-    staleTime: 30000,
+    staleTime: 120000,
     retry: 1,
     enabled: canSeeFinanceiro
   });
@@ -188,7 +188,7 @@ export default function Financeiro() {
         return [];
       }
     },
-    staleTime: 30000,
+    staleTime: 120000,
     retry: 1,
     enabled: canSeeFinanceiro
   });

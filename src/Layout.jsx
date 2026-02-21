@@ -97,7 +97,7 @@ const navigationItems = [
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30000,
+      staleTime: 120000,
       gcTime: 300000,
       retry: 1,
       refetchOnWindowFocus: false,
@@ -150,7 +150,7 @@ function LayoutContent({ children, currentPageName }) {
           try {
             queryClient.setDefaultOptions({
               queries: {
-                staleTime: 30000,
+                staleTime: 120000,
                 gcTime: 300000,
                 refetchOnWindowFocus: false,
                 refetchOnReconnect: false,
