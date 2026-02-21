@@ -138,6 +138,7 @@ function LayoutContent({ children, currentPageName }) {
 
         const [pesquisaOpen, setPesquisaOpen] = useState(false);
         const [modoEscuro, setModoEscuro] = useState(false);
+        const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
         const auditThrottleRef = React.useRef({ click: 0, change: 0 });
         const AUDIT_BUSINESS_ONLY = true;
         const queryClient = useQueryClient();
@@ -260,6 +261,65 @@ function LayoutContent({ children, currentPageName }) {
       document.documentElement.classList.remove('dark');
     }
   }, [modoEscuro]);
+
+  // Offline status + basic offline shell cache (last data snapshot)
+  useEffect(() => {
+    const goOnline = () => setIsOffline(false);
+    const goOffline = () => setIsOffline(true);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    const cache = queryClient.getQueryCache();
+    const indexKey = 'rq_index_keys';
+    const addToIndex = (k) => {
+      try {
+        const curr = JSON.parse(localStorage.getItem(indexKey) || '[]');
+        if (!curr.includes(k)) {
+          curr.push(k);
+          localStorage.setItem(indexKey, JSON.stringify(curr));
+        }
+      } catch (_) {}
+    };
+    const sub = cache.subscribe((event) => {
+      try {
+        if (event?.type !== 'updated') return;
+        const q = event.query;
+        const state = q.getState?.();
+        if (state?.data === undefined) return;
+        const scopeEmpresa = empresaAtual?.id || '';
+        const scopeGrupo = grupoAtual?.id || '';
+        const storageKey = `rq_${JSON.stringify(q.queryKey)}_${scopeEmpresa}_${scopeGrupo}`;
+        localStorage.setItem(storageKey, JSON.stringify(state.data));
+        addToIndex(storageKey);
+      } catch (_) {}
+    });
+    // Hydrate when offline (cold start)
+    if (isOffline) {
+      try {
+        const keys = JSON.parse(localStorage.getItem(indexKey) || '[]');
+        keys.forEach((k) => {
+          try {
+            const val = JSON.parse(localStorage.getItem(k) || 'null');
+            if (val != null) {
+              const match = k.match(/^rq_(.*)_/);
+              if (match) {
+                const keyJson = match[1];
+                const qk = JSON.parse(keyJson);
+                queryClient.setQueryData(qk, val);
+              }
+            }
+          } catch (_) {}
+        });
+      } catch (_) {}
+    }
+    return () => { if (typeof sub === 'function') sub(); };
+  }, [queryClient, isOffline, empresaAtual?.id, grupoAtual?.id]);
 
   // Registro global de erros de UI (não altera layout visual)
   useEffect(() => {
@@ -926,8 +986,13 @@ function LayoutContent({ children, currentPageName }) {
                   </button>
                 </Link>
               </div>
-            </div>
-          </header>
+              </div>
+              {isOffline && (
+              <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
+                Modo offline: exibindo dados em cache (última sincronização). Algumas ações podem não estar disponíveis.
+              </div>
+              )}
+              </header>
 
           <div className="flex-1 overflow-auto">
             <ErrorBoundary>
