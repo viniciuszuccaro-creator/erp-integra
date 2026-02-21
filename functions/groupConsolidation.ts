@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     });
 
     const durationMs = Date.now() - t0;
-    if (durationMs > 500) {
+    if (durationMs > 300) {
       try {
         await base44.asServiceRole.entities.AuditLog.create({
           usuario: 'Sistema',

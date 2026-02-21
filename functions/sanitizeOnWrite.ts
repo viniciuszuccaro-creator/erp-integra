@@ -75,7 +75,11 @@ Deno.serve(async (req) => {
     async function encryptSensitive(obj, entity) {
       const key = await getCryptoKey();
       if (!key) return obj;
-      const SENSITIVE_KEYS = new Set(['numero_autorizacao', 'pix_chave', 'conta', 'agencia', 'cartao', 'linha_digitavel', 'codigo_barras', 'pix_qrcode', 'pix_copia_cola']);
+      const SENSITIVE_EXACT = new Set(['numero_autorizacao','pix_chave','conta','agencia','cartao','linha_digitavel','codigo_barras','pix_qrcode','pix_copia_cola','cpf','cnpj','rg','inscricao_estadual','inscricao_municipal']);
+      const isPIIKey = (k) => {
+        const s = String(k || '').toLowerCase();
+        return SENSITIVE_EXACT.has(s) || s.includes('email') || s.includes('telefone') || s.includes('whatsapp');
+      };
       const walk = async (val, parentKey = '') => {
         if (Array.isArray(val)) {
           const out = [];
@@ -85,8 +89,7 @@ Deno.serve(async (req) => {
         if (val && typeof val === 'object') {
           const out = {};
           for (const [k, v] of Object.entries(val)) {
-            const pathKey = k.toLowerCase();
-            if (SENSITIVE_KEYS.has(pathKey) && (typeof v === 'string' || typeof v === 'number')) {
+            if ((typeof v === 'string' || typeof v === 'number') && isPIIKey(k)) {
               out[k] = await encryptValue(v, key);
             } else {
               out[k] = await walk(v, k);
@@ -96,13 +99,17 @@ Deno.serve(async (req) => {
         }
         return val;
       };
-      // Escopos conhecidos: detalhes_pagamento, dados_bancarios e campos de cobrança (ContaReceber)
+      // Escopos conhecidos: detalhes_pagamento, dados_bancarios, contatos/emails/telefones e campos de cobrança (ContaReceber)
       let out = { ...obj };
       if (out?.detalhes_pagamento) {
         out = { ...out, detalhes_pagamento: await walk(out.detalhes_pagamento) };
       }
       if (Array.isArray(out?.dados_bancarios)) {
         out = { ...out, dados_bancarios: await walk(out.dados_bancarios) };
+      }
+      // PII comuns por entidade
+      if (entity === 'Cliente' || entity === 'Fornecedor' || entity === 'Transportadora' || entity === 'Colaborador') {
+        out = await walk(out);
       }
       if (entity === 'ContaReceber') {
         const topKeys = ['linha_digitavel','codigo_barras','pix_qrcode','pix_copia_cola'];

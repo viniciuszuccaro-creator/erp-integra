@@ -349,7 +349,7 @@ export default function Dashboard() {
   // Dados e gráficos agora são providos por useDashboardDerivedData()
 
   const { data: previsoesIA = {}, isLoading: loadingPrevIA } = useQuery({
-    queryKey: ['iaPrevEstoque', empresaAtual?.id, grupoAtual?.id],
+    queryKey: ['iaPrevEstoque14', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return { previsoes: [] };
       const filtros = getFiltroContexto('empresa_id', true);
@@ -359,7 +359,22 @@ export default function Dashboard() {
       });
       return res?.data || { previsoes: [] };
     },
-    staleTime: 60000,
+    staleTime: 120000,
+    enabled: canSeeEstoque && (empresaAtual?.id || estaNoGrupo)
+  });
+
+  const { data: previsoesIA30 = {} } = useQuery({
+    queryKey: ['iaPrevEstoque30', empresaAtual?.id, grupoAtual?.id],
+    queryFn: async () => {
+      if (!(empresaAtual?.id || estaNoGrupo)) return { previsoes: [] };
+      const filtros = getFiltroContexto('empresa_id', true);
+      const res = await base44.functions.invoke('iaFinanceAnomalyScan', {
+        filtros,
+        previsao_estoque: { enabled: true, horizon_days: 30 }
+      });
+      return res?.data || { previsoes: [] };
+    },
+    staleTime: 120000,
     enabled: canSeeEstoque && (empresaAtual?.id || estaNoGrupo)
   });
 
@@ -665,7 +680,12 @@ export default function Dashboard() {
           )}
 
           {/* Estoque Crítico */}
-          <WidgetEstoqueCritico count={produtosBaixoEstoque} onNavigate={() => handleDrillDown(createPageUrl("Estoque"))} />
+          <WidgetEstoqueCritico 
+            preds14Count={(previsoesIA?.previsoes || []).filter(p => p.risco_ruptura && p.risco_ruptura !== 'baixo').length}
+            preds30Count={(previsoesIA30?.previsoes || []).filter(p => p.risco_ruptura && p.risco_ruptura !== 'baixo').length}
+            count={produtosBaixoEstoque}
+            onNavigate={() => handleDrillDown(createPageUrl("Estoque"))}
+          />
 
           {/* Gráficos + Top Produtos (redimensionável) */}
           <PanelGroup direction="horizontal" className="gap-2 min-h-[420px]">
