@@ -489,7 +489,7 @@ export default function Dashboard() {
     }
   ];
 
-  const quickAccess = [
+  const quickAccessBase = [
     {
       title: "Comercial e Vendas",
       description: "Gestão de Clientes e Vendas",
@@ -524,6 +524,13 @@ export default function Dashboard() {
       count: null
     },
   ];
+
+  const quickAccess = quickAccessBase.filter((m) => (
+    (m.title.includes('Comercial') && canSeeComercial) ||
+    (m.title.includes('Estoque') && canSeeEstoque) ||
+    (m.title.includes('Expedição') && canSeeExpedicao) ||
+    (m.title.includes('Financeiro') && canSeeFinanceiro)
+  ));
 
   return (
     <ProtectedSection module="Dashboard" action="ver">
