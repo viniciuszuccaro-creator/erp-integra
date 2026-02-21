@@ -201,4 +201,8 @@ npm test --if-present
 5) Revisor verifica checklist; merge via squash ou merge commit (padrão do repositório)
 
 
+## 11) Enforçar Checklist Regra‑Mãe (GitHub Action)
+Copie components/docs/templates/pr_regra_mae_check.yml para .github/workflows/pr_regra_mae_check.yml.
+Ele falha o PR se houver qualquer caixa não marcada ("- [ ]") no corpo do PR – exigindo que todos os itens da Regra‑Mãe estejam atendidos antes do merge.
+
 — Fim —
