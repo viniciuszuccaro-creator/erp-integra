@@ -155,42 +155,36 @@ function LayoutContent({ children, currentPageName }) {
                 refetchOnReconnect: false,
                 retry: 1,
                 onError: (error) => {
-                  try {
-                    const msg = (error && (error.message || String(error))) || 'Erro em query';
-                    base44.entities?.AuditLog?.create?.({
-                      usuario: user?.full_name || user?.email || 'Usuário',
-                      usuario_id: user?.id,
-                      empresa_id: empresaAtual?.id || null,
-                      acao: 'Erro',
-                      modulo: moduleName || 'Sistema',
-                      tipo_auditoria: 'sistema',
-                      entidade: 'ReactQuery',
-                      descricao: `Query error: ${msg}`,
-                      dados_novos: { page: currentPageName },
-                      data_hora: new Date().toISOString(),
-                    });
-                  } catch (_) {}
-                }
+                                        try {
+                                          const msg = (error && (error.message || String(error))) || 'Erro em query';
+                                          base44.functions.invoke('auditError', {
+                                            module: moduleName || 'Sistema',
+                                            message: `Query error: ${msg}`,
+                                            stack: error?.stack || null,
+                                            page: currentPageName,
+                                            empresa_id: empresaAtual?.id || null,
+                                            group_id: grupoAtual?.id || null,
+                                            metadata: { queryKey: 'unknown' }
+                                          });
+                                        } catch (_) {}
+                                      }
               },
               mutations: {
                 retry: 1,
                 onError: (error) => {
-                  try {
-                    const msg = (error && (error.message || String(error))) || 'Erro em mutation';
-                    base44.entities?.AuditLog?.create?.({
-                      usuario: user?.full_name || user?.email || 'Usuário',
-                      usuario_id: user?.id,
-                      empresa_id: empresaAtual?.id || null,
-                      acao: 'Erro',
-                      modulo: moduleName || 'Sistema',
-                      tipo_auditoria: 'sistema',
-                      entidade: 'ReactQuery',
-                      descricao: `Mutation error: ${msg}`,
-                      dados_novos: { page: currentPageName },
-                      data_hora: new Date().toISOString(),
-                    });
-                  } catch (_) {}
-                }
+                                        try {
+                                          const msg = (error && (error.message || String(error))) || 'Erro em mutation';
+                                          base44.functions.invoke('auditError', {
+                                            module: moduleName || 'Sistema',
+                                            message: `Mutation error: ${msg}`,
+                                            stack: error?.stack || null,
+                                            page: currentPageName,
+                                            empresa_id: empresaAtual?.id || null,
+                                            group_id: grupoAtual?.id || null,
+                                            metadata: { mutation: true }
+                                          });
+                                        } catch (_) {}
+                                      }
               }
             });
           } catch (_) {}
@@ -270,38 +264,34 @@ function LayoutContent({ children, currentPageName }) {
   // Registro global de erros de UI (não altera layout visual)
   useEffect(() => {
     const onError = (e) => {
-      try {
-        const msg = e?.message || e?.error?.message || 'Erro de UI';
-        const stack = e?.error?.stack || null;
-        base44.entities?.AuditLog?.create?.({
-                        usuario: user?.full_name || user?.email || 'Usuário',
-                        usuario_id: user?.id,
-                        acao: 'Visualização',
-                        modulo: 'Sistema',
-                        tipo_auditoria: 'ui',
-                        entidade: 'UI',
-                        descricao: `Erro não tratado: ${msg}`,
-                        dados_novos: { stack, source: e?.filename, lineno: e?.lineno, colno: e?.colno },
-                        data_hora: new Date().toISOString(),
-                      });
-      } catch (e) {}
-    };
+                try {
+                  const msg = e?.message || e?.error?.message || 'Erro de UI';
+                  const stack = e?.error?.stack || null;
+                  base44.functions.invoke('auditError', {
+                    module: moduleName || 'Sistema',
+                    message: `Erro não tratado: ${msg}`,
+                    stack,
+                    page: currentPageName,
+                    empresa_id: empresaAtual?.id || null,
+                    group_id: grupoAtual?.id || null,
+                    metadata: { source: e?.filename, lineno: e?.lineno, colno: e?.colno }
+                  });
+                } catch (e) {}
+              };
     const onUnhandled = (e) => {
-      try {
-        const msg = e?.reason?.message || String(e?.reason);
-        base44.entities?.AuditLog?.create?.({
-                        usuario: user?.full_name || user?.email || 'Usuário',
-                        usuario_id: user?.id,
-                        acao: 'Visualização',
-                        modulo: 'Sistema',
-                        tipo_auditoria: 'ui',
-                        entidade: 'UI',
-                        descricao: `Promise rejeitada: ${msg}`,
-                        dados_novos: { reason: e?.reason },
-                        data_hora: new Date().toISOString(),
-                      });
-      } catch (e) {}
-    };
+                try {
+                  const msg = e?.reason?.message || String(e?.reason);
+                  base44.functions.invoke('auditError', {
+                    module: moduleName || 'Sistema',
+                    message: `Promise rejeitada: ${msg}`,
+                    stack: e?.reason?.stack || null,
+                    page: currentPageName,
+                    empresa_id: empresaAtual?.id || null,
+                    group_id: grupoAtual?.id || null,
+                    metadata: { reason: e?.reason }
+                  });
+                } catch (e) {}
+              };
     window.addEventListener('error', onError);
     window.addEventListener('unhandledrejection', onUnhandled);
     return () => {
