@@ -205,4 +205,20 @@ npm test --if-present
 Copie components/docs/templates/pr_regra_mae_check.yml para .github/workflows/pr_regra_mae_check.yml.
 Ele falha o PR se houver qualquer caixa não marcada ("- [ ]") no corpo do PR – exigindo que todos os itens da Regra‑Mãe estejam atendidos antes do merge.
 
+## 12) Nomemclature de Branch e Review Obrigatório (Actions)
+Copie para .github/workflows/:
+- pr_branch_name.yml → valida padrão: feature|feat|fix|bugfix|hotfix|chore|refactor|docs|perf/<slug>
+- pr_review_required.yml → mantém o PR falhando até existir ao menos 1 APPROVED
+
+## 13) Hooks Git (Husky)
+- .husky/pre-commit → já incluso (lint-staged)
+- .husky/commit-msg → já incluso (commitlint)
+- .husky/pre-push → use o template pre_push.sh (build/tests + verificação multiempresa)
+- components/docs/templates/checkMultiempresa.js → heurística: se usar base44.entities.*(create|update|filter|list), o arquivo deve ter group_id/empresa_id
+
+## 14) Proteções de Branch (recomendado no provedor Git)
+- Bloquear push direto na main; exigir PRs
+- Exigir 1+ review aprovado e status checks: pr/branch-name, pr/review-required, pr/regra-mae-check, ci/lint-build
+- Exigir atualização a partir de main antes do merge
+
 — Fim —
