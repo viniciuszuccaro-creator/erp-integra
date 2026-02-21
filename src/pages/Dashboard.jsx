@@ -686,6 +686,47 @@ export default function Dashboard() {
           )}
 
           {/* Módulos de Acesso Rápido */}
+          {/* Previsões de Estoque (IA) - visível apenas para quem vê Estoque */}
+          {canSeeEstoque && (
+            <Card className="bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-indigo-600" />
+                  Previsões de Estoque (14 dias)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingPrevIA ? (
+                  <div className="h-10 rounded-md bg-slate-100 animate-pulse" />
+                ) : (
+                  (() => {
+                    const preds = (previsoesIA?.previsoes || [])
+                      .filter(p => p.risco_ruptura && p.risco_ruptura !== 'baixo')
+                      .sort((a, b) => (a.dias_cobertura ?? 999) - (b.dias_cobertura ?? 999))
+                      .slice(0, 8);
+                    if (!preds.length) return <p className="text-sm text-slate-600">Sem riscos relevantes no horizonte.</p>;
+                    return (
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {preds.map((p, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white">
+                            <div>
+                              <div className="font-medium text-slate-900 truncate max-w-[340px]">{p.descricao}</div>
+                              <div className="text-xs text-slate-500">Cobertura: {p.dias_cobertura ?? '-'} dias • Demanda/dia: {p.demanda_dia_estimada ?? '-'}</div>
+                            </div>
+                            <Badge className={p.risco_ruptura === 'alto' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
+                              {String(p.risco_ruptura || '').toUpperCase()}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Módulos de Acesso Rápido */}
           <QuickAccessModulesGrid modules={quickAccess} onClick={handleDrillDown} />
 
           {/* Resumo Financeiro */}
