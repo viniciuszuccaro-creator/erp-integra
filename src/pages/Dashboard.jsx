@@ -363,6 +363,18 @@ export default function Dashboard() {
     enabled: canSeeEstoque && (empresaAtual?.id || estaNoGrupo)
   });
 
+  const { data: anomaliasIA = {}, isLoading: loadingAnomIA } = useQuery({
+    queryKey: ['iaAnomaliasFinanceiro', empresaAtual?.id, grupoAtual?.id],
+    queryFn: async () => {
+      if (!(empresaAtual?.id || estaNoGrupo)) return { details: [] };
+      const filtros = getFiltroContexto('empresa_id', true);
+      const res = await base44.functions.invoke('iaFinanceAnomalyScan', { filtros });
+      return res?.data || { details: [] };
+    },
+    staleTime: 60000,
+    enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo)
+  });
+
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   // Pré-computos para seções avançadas (evita recalcular em cada render de subcomponente)
