@@ -108,40 +108,41 @@ const queryClient = new QueryClient({
 });
 
 function LayoutContent({ children, currentPageName }) {
+  // Módulo atual da página (definido no topo para evitar TDZ)
+  const pageToModule = {
+    CRM: 'CRM',
+    Comercial: 'Comercial',
+    Estoque: 'Estoque',
+    Compras: 'Compras',
+    Financeiro: 'Financeiro',
+    Fiscal: 'Fiscal',
+    RH: 'RH',
+    Expedicao: 'Expedição',
+    Producao: 'Produção',
+    ProducaoMobile: 'Produção',
+    Dashboard: 'Dashboard',
+    DashboardCorporativo: 'Dashboard',
+    Relatorios: 'Relatórios',
+    Agenda: 'Agenda',
+    Cadastros: 'Cadastros',
+    Contratos: 'Contratos',
+    AdministracaoSistema: 'Sistema',
+  };
+  const moduleName = pageToModule?.[currentPageName] || 'Sistema';
               // AppLayout + Sidebar + Topbar padrão já implementados; reforço de h-full/scroll interno preservado
         const location = useLocation();
         const { user } = useUser();
         const { empresaAtual, filterInContext, grupoAtual, contexto } = useContextoVisual();
         const { hasPermission } = usePermissions();
 
-        // Mapeamento de página -> módulo (declarado antes de qualquer uso)
-        const pageToModule = {
-          CRM: 'CRM',
-          Comercial: 'Comercial',
-          Estoque: 'Estoque',
-          Compras: 'Compras',
-          Financeiro: 'Financeiro',
-          Fiscal: 'Fiscal',
-          RH: 'RH',
-          Expedicao: 'Expedição',
-          Producao: 'Produção',
-          ProducaoMobile: 'Produção',
-          Dashboard: 'Dashboard',
-          DashboardCorporativo: 'Dashboard',
-          Relatorios: 'Relatórios',
-          Agenda: 'Agenda',
-          Cadastros: 'Cadastros',
-          Contratos: 'Contratos',
-          AdministracaoSistema: 'Sistema',
-        };
-        const currentModule = pageToModule?.[currentPageName] || 'Sistema';
+
         const [pesquisaOpen, setPesquisaOpen] = useState(false);
         const [modoEscuro, setModoEscuro] = useState(false);
         const auditThrottleRef = React.useRef({ click: 0, change: 0 });
         const AUDIT_BUSINESS_ONLY = true;
         const queryClient = useQueryClient();
 
-  // pageToModule/currentModule movidos para antes dos efeitos para evitar TDZ
+  // pageToModule/moduleName movidos para antes dos efeitos para evitar TDZ
 
         // Auditoria global de erros do React Query (queries e mutations)
         React.useEffect(() => {
@@ -161,7 +162,7 @@ function LayoutContent({ children, currentPageName }) {
                       usuario_id: user?.id,
                       empresa_id: empresaAtual?.id || null,
                       acao: 'Erro',
-                      modulo: currentModule || 'Sistema',
+                      modulo: moduleName || 'Sistema',
                       tipo_auditoria: 'sistema',
                       entidade: 'ReactQuery',
                       descricao: `Query error: ${msg}`,
@@ -181,7 +182,7 @@ function LayoutContent({ children, currentPageName }) {
                       usuario_id: user?.id,
                       empresa_id: empresaAtual?.id || null,
                       acao: 'Erro',
-                      modulo: currentModule || 'Sistema',
+                      modulo: moduleName || 'Sistema',
                       tipo_auditoria: 'sistema',
                       entidade: 'ReactQuery',
                       descricao: `Mutation error: ${msg}`,
@@ -193,7 +194,7 @@ function LayoutContent({ children, currentPageName }) {
               }
             });
           } catch (_) {}
-        }, [user?.id, empresaAtual?.id, grupoAtual?.id, currentModule, currentPageName]);
+        }, [user?.id, empresaAtual?.id, grupoAtual?.id, moduleName, currentPageName]);
 
         const prefetchForItem = (title) => {
                         try {
@@ -227,7 +228,7 @@ function LayoutContent({ children, currentPageName }) {
                         } catch (_) {}
                         };
 
-                        // pageToModule/currentModule já declarados acima (remoção da duplicata para evitar TDZ)
+                        // pageToModule/moduleName já declarados acima (remoção da duplicata para evitar TDZ)
 
                         useEffect(() => {
     const handleKeyDown = (e) => {
@@ -610,7 +611,7 @@ function LayoutContent({ children, currentPageName }) {
             try {
               const scope = getScope();
               const guardPayload = {
-                module: currentModule || 'Sistema',
+                module: moduleName || 'Sistema',
                 section: 'Funções',
                 action: 'executar',
                 function_name: functionName,
@@ -620,7 +621,7 @@ function LayoutContent({ children, currentPageName }) {
               const res = await origInvoke('entityGuard', guardPayload);
               if (res?.data && res.data.allowed === false) {
                 try { await base44.entities.AuditLog.create({
-                  acao: 'Bloqueio', modulo: currentModule || 'Sistema', tipo_auditoria: 'seguranca',
+                  acao: 'Bloqueio', modulo: moduleName || 'Sistema', tipo_auditoria: 'seguranca',
                   entidade: 'Function', descricao: `Acesso negado à função ${functionName}`, data_hora: new Date().toISOString(),
                 }); } catch {}
                 throw new Error('RBAC backend: ação negada');
@@ -636,7 +637,7 @@ function LayoutContent({ children, currentPageName }) {
             usuario: user?.full_name || user?.email || 'Usuário',
             usuario_id: user?.id,
             empresa_id: empresaAtual?.id || null,
-            acao: 'Execução', modulo: currentModule || 'Sistema', tipo_auditoria: 'sistema',
+            acao: 'Execução', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema',
             entidade: 'Function', descricao: `Função ${functionName} chamada`, dados_novos: { params }, data_hora: new Date().toISOString(),
           }); } catch {}
           return result;
@@ -659,7 +660,7 @@ function LayoutContent({ children, currentPageName }) {
         empresa_id: empresaAtual?.id || null,
         empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
         acao: 'Visualização',
-        modulo: currentModule || 'Sistema',
+        modulo: moduleName || 'Sistema',
         tipo_auditoria: 'ui',
         entidade: 'Navegação',
         descricao: `Rota: ${location.pathname}`,
@@ -667,7 +668,7 @@ function LayoutContent({ children, currentPageName }) {
       });
     } catch (_) {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, user?.id, empresaAtual?.id, currentModule]);
+  }, [location.pathname, user?.id, empresaAtual?.id, moduleName]);
   useEffect(() => {
             if (!user) return;
             if (AUDIT_BUSINESS_ONLY) return;
@@ -685,7 +686,7 @@ function LayoutContent({ children, currentPageName }) {
           empresa_id: empresaAtual?.id || null,
           empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
           acao: 'Visualização',
-          modulo: currentModule || 'Sistema',
+          modulo: moduleName || 'Sistema',
           tipo_auditoria: 'ui',
           entidade: 'Clique',
           descricao: `Click: ${label}`,
@@ -710,7 +711,7 @@ function LayoutContent({ children, currentPageName }) {
           empresa_id: empresaAtual?.id || null,
           empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
           acao: 'Visualização',
-          modulo: currentModule || 'Sistema',
+          modulo: moduleName || 'Sistema',
           tipo_auditoria: 'ui',
           entidade: 'Input',
           descricao: `Change: ${name}`,
@@ -725,7 +726,7 @@ function LayoutContent({ children, currentPageName }) {
       document.removeEventListener('click', handlerClick, true);
       document.removeEventListener('change', handlerChange, true);
     };
-  }, [user?.id, empresaAtual?.id, currentModule]);
+  }, [user?.id, empresaAtual?.id, moduleName]);
 
   const isMobilePage = currentPageName === "ProducaoMobile";
 
@@ -749,10 +750,10 @@ function LayoutContent({ children, currentPageName }) {
   });
 
   useEffect(() => {
-    if (!currentModule) return;
-    const key = `audit_block_${currentModule}`;
+    if (!moduleName) return;
+    const key = `audit_block_${moduleName}`;
     try {
-      const allowed = hasPermission(currentModule, null, 'ver');
+      const allowed = hasPermission(moduleName, null, 'ver');
       if (!allowed && !sessionStorage.getItem(key)) {
         sessionStorage.setItem(key, '1');
         base44.entities.AuditLog.create({
@@ -761,14 +762,14 @@ function LayoutContent({ children, currentPageName }) {
                         empresa_id: empresaAtual?.id || null,
                         empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
                         acao: 'Bloqueio',
-                        modulo: currentModule,
+                        modulo: moduleName,
                         tipo_auditoria: 'seguranca',
                         entidade: 'Página',
-                        descricao: `Acesso negado ao módulo ${currentModule} (${currentPageName})`,
+                        descricao: `Acesso negado ao módulo ${moduleName} (${currentPageName})`,
                       });
       }
     } catch (e) {}
-  }, [currentModule, currentPageName, user?.id, empresaAtual?.id]);
+  }, [moduleName, currentPageName, user?.id, empresaAtual?.id]);
 
 
 
@@ -942,7 +943,7 @@ function LayoutContent({ children, currentPageName }) {
             <ErrorBoundary>
               <Suspense fallback={<div className="p-6 text-slate-500">Carregando…</div>}>
                 <BootstrapGuard>
-                  <ProtectedSection module={currentModule || 'Sistema'} action="ver" fallback={<div className="p-10 text-center text-slate-600">Acesso negado a este módulo.</div>}>
+                  <ProtectedSection module={moduleName || 'Sistema'} action="ver" fallback={<div className="p-10 text-center text-slate-600">Acesso negado a este módulo.</div>}>
                     <GuardRails currentPageName={currentPageName}>
                       <div className="w-full h-full">
                         <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-4 space-y-4">
