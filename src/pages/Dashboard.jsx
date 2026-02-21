@@ -129,7 +129,7 @@ export default function Dashboard() {
       return await filterInContext('Pedido', {}, '-created_date', 9999);
     },
     refetchInterval,
-    staleTime: 30000,
+    staleTime: 120000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -145,7 +145,7 @@ export default function Dashboard() {
       return await filterInContext('ContaReceber', {}, '-data_vencimento', 9999);
     },
     refetchInterval,
-    staleTime: 30000,
+    staleTime: 120000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -161,7 +161,7 @@ export default function Dashboard() {
       return await filterInContext('ContaPagar', {}, '-data_vencimento', 9999);
     },
     refetchInterval,
-    staleTime: 30000,
+    staleTime: 120000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -177,7 +177,7 @@ export default function Dashboard() {
       return await filterInContext('Entrega', {}, '-created_date', 9999);
     },
     refetchInterval,
-    staleTime: 30000,
+    staleTime: 120000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -193,7 +193,7 @@ export default function Dashboard() {
       return await filterInContext('Colaborador', {}, '-created_date', 9999, 'empresa_alocada_id');
     },
     refetchInterval,
-    staleTime: 60000,
+    staleTime: 120000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -209,7 +209,7 @@ export default function Dashboard() {
       return await filterInContext('Produto', {}, '-created_date', 9999);
     },
     refetchInterval,
-    staleTime: 60000,
+    staleTime: 120000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -232,7 +232,7 @@ export default function Dashboard() {
         return produtos.length;
       }
     },
-    staleTime: 60000,
+    staleTime: 120000,
     retry: 1,
     enabled: !!(empresaAtual?.id || estaNoGrupo)
   });
@@ -244,7 +244,7 @@ export default function Dashboard() {
       return await filterInContext('Cliente', {}, '-created_date', 9999);
     },
     refetchInterval,
-    staleTime: 60000,
+    staleTime: 120000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -267,7 +267,7 @@ export default function Dashboard() {
         return clientes.length;
       }
     },
-    staleTime: 60000,
+    staleTime: 120000,
     retry: 1,
     enabled: !!(empresaAtual?.id || estaNoGrupo)
   });
@@ -286,7 +286,7 @@ export default function Dashboard() {
         return colaboradores.length;
       }
     },
-    staleTime: 60000,
+    staleTime: 120000,
     retry: 1,
     enabled: !!(empresaAtual?.id || estaNoGrupo)
   });
@@ -298,7 +298,7 @@ export default function Dashboard() {
       return await filterInContext('OrdemProducao', {}, '-data_emissao', 9999);
     },
     refetchInterval,
-    staleTime: 30000,
+    staleTime: 120000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -386,7 +386,7 @@ export default function Dashboard() {
       const res = await base44.functions.invoke('iaFinanceAnomalyScan', { filtros });
       return res?.data || { details: [] };
     },
-    staleTime: 60000,
+    staleTime: 120000,
     enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo)
   });
 
@@ -688,7 +688,7 @@ export default function Dashboard() {
           />
 
           {/* Gráficos + Top Produtos (redimensionável) */}
-          <PanelGroup direction="horizontal" className="gap-2 min-h-[420px]">
+          <PanelGroup direction="vertical" className="gap-2 min-h-[420px]">
             <Panel defaultSize={55} minSize={30} className="overflow-auto">
               <ChartsSection vendasUltimos30Dias={vendasUltimos30Dias} fluxo7Dias={fluxo7Dias} />
             </Panel>
