@@ -730,6 +730,18 @@ function LayoutContent({ children, currentPageName }) {
             }
           }
 
+          // Injetar contexto multiempresa em TODAS as chamadas de função (Regra-Mãe 5a)
+          try {
+            const ctx = getScope ? getScope() : {};
+            if (params && typeof params === 'object' && !Array.isArray(params)) {
+              params = { ...params };
+              if (ctx?.group_id && (params.group_id === undefined || params.group_id === null)) params.group_id = ctx.group_id;
+              // aceitar alias empresaId, mas padronizar empresa_id
+              const hasEmpresa = !(params.empresa_id === undefined || params.empresa_id === null) || !(params.empresaId === undefined || params.empresaId === null);
+              if (ctx?.empresa_id && !hasEmpresa) params.empresa_id = ctx.empresa_id;
+            }
+          } catch (_) {}
+
           // De-duplicação + retry com backoff para 429/500
           base44.functions.__inflight = base44.functions.__inflight || new Map();
           const key = `${functionName}:${JSON.stringify(params || {})}`;
