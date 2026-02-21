@@ -60,7 +60,8 @@ export default function Financeiro() {
       }
     },
     staleTime: 30000,
-    retry: 2
+    retry: 2,
+    enabled: canSeeFinanceiro
   });
 
   const { data: totalContasReceber = 0 } = useQuery({
@@ -92,7 +93,8 @@ export default function Financeiro() {
       }
     },
     staleTime: 30000,
-    retry: 2
+    retry: 2,
+    enabled: canSeeFinanceiro
   });
 
   const { data: totalContasPagar = 0 } = useQuery({
