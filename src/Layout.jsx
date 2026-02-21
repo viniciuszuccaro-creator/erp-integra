@@ -40,7 +40,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { base44 } from "@/api/base44Client";
-import { useQueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import usePermissions from "@/components/lib/usePermissions";
 import NotificationCenter from "@/components/NotificationCenter";
 import EmpresaSwitcher from "@/components/EmpresaSwitcher";
