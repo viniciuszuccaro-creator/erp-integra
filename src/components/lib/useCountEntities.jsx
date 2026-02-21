@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * Hook customizado para contagem eficiente de entidades
@@ -11,8 +12,9 @@ import { base44 } from '@/api/base44Client';
  * @returns {object} { count, isLoading, error, refetch }
  */
 export function useCountEntities(entityName, filter = {}, options = {}) {
+  const { empresaAtual, grupoAtual } = useContextoVisual();
   const { data: count = 0, isLoading, error, refetch } = useQuery({
-    queryKey: [entityName, 'count', JSON.stringify(filter)],
+    queryKey: [entityName, 'count', JSON.stringify(filter), empresaAtual?.id || null, grupoAtual?.id || null],
     queryFn: async () => {
       try {
         // Tenta usar a função backend otimizada

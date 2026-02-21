@@ -52,6 +52,60 @@ Deno.serve(async (req) => {
       }
     } catch {}
 
+    // Criptografia de campos sensíveis (AES-GCM com BACKUP_ENCRYPTION_KEY)
+    async function getCryptoKey() {
+      const secret = Deno.env.get('BACKUP_ENCRYPTION_KEY');
+      if (!secret) return null;
+      const enc = new TextEncoder();
+      const raw = await crypto.subtle.digest('SHA-256', enc.encode(secret));
+      return await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt']);
+    }
+    const b64 = (buf) => {
+      const bytes = new Uint8Array(buf);
+      let bin = '';
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      return btoa(bin);
+    };
+    async function encryptValue(plain, key) {
+      const enc = new TextEncoder();
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(String(plain)));
+      return { enc: 'gcm/v1', iv: b64(iv), data: b64(cipher) };
+    }
+    async function encryptSensitive(obj, entity) {
+      const key = await getCryptoKey();
+      if (!key) return obj;
+      const SENSITIVE_KEYS = new Set(['numero_autorizacao', 'pix_chave', 'conta', 'agencia', 'cartao']);
+      const walk = async (val, parentKey = '') => {
+        if (Array.isArray(val)) {
+          const out = [];
+          for (const item of val) out.push(await walk(item, parentKey));
+          return out;
+        }
+        if (val && typeof val === 'object') {
+          const out = {};
+          for (const [k, v] of Object.entries(val)) {
+            const pathKey = k.toLowerCase();
+            if (SENSITIVE_KEYS.has(pathKey) && (typeof v === 'string' || typeof v === 'number')) {
+              out[k] = await encryptValue(v, key);
+            } else {
+              out[k] = await walk(v, k);
+            }
+          }
+          return out;
+        }
+        return val;
+      };
+      // Limitar a escopos conhecidos (detalhes_pagamento)
+      if (obj?.detalhes_pagamento) {
+        const clone = { ...obj, detalhes_pagamento: await walk(obj.detalhes_pagamento) };
+        return clone;
+      }
+      return obj;
+    }
+
+    const secured = await encryptSensitive(enriched, event.entity_name);
+
     // Construir patch somente com campos alterados (ignorar built-ins)
     const BUILT_INS = new Set(['id', 'created_date', 'updated_date', 'created_by']);
 
@@ -66,7 +120,7 @@ Deno.serve(async (req) => {
       return patch;
     };
 
-    const patch = diffPatch(data, enriched);
+    const patch = diffPatch(data, secured);
 
     if (Object.keys(patch).length > 0) {
       await base44.asServiceRole.entities[event.entity_name].update(event.entity_id, patch);

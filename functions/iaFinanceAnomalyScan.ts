@@ -252,6 +252,60 @@ Deno.serve(async (req) => {
     detectMad(pendRec, 'ContaReceber');
     detectMad(pendPag, 'ContaPagar');
 
+    // Previsões de Estoque/Preço (IA leve) — multiempresa
+    let previsoes = [];
+    try {
+      if (body?.previsao_estoque?.enabled) {
+        const horizon = Number(body?.previsao_estoque?.horizon_days ?? 14);
+        const filtroProdutos = produtos.filter(p => p?.eh_bitola === true);
+        const series = (arr) => {
+          const vals = arr.filter(v => Number.isFinite(Number(v))).map(Number);
+          if (vals.length === 0) return { mean: 0, trend: 0 };
+          const mean = ss.mean(vals);
+          const trend = vals.length >= 2 ? (vals[vals.length - 1] - vals[0]) / (vals.length - 1) : 0;
+          return { mean, trend };
+        };
+        for (const p of filtroProdutos) {
+          // Sinais: vendas 30d, estoque atual, custo e preço
+          const vendas = [p?.quantidade_vendida_12meses, p?.quantidade_vendida_30dias, p?.estoque_disponivel].filter(v => v != null);
+          const { mean, trend } = series(vendas);
+          const demandaDia = Math.max(0, mean / 30);
+          const estoqueAtual = Number(p?.estoque_disponivel ?? p?.estoque_atual ?? 0);
+          const diasCobertura = demandaDia > 0 ? estoqueAtual / demandaDia : Infinity;
+          const preco = Number(p?.preco_venda ?? 0);
+          const custo = Number(p?.custo_medio ?? p?.custo_aquisicao ?? 0);
+          const margem = custo > 0 ? (preco - custo) / custo : 0;
+          const riscoRuptura = Number.isFinite(diasCobertura) ? (diasCobertura < horizon ? 'alto' : diasCobertura < horizon * 1.5 ? 'medio' : 'baixo') : 'baixo';
+          previsoes.push({
+            produto_id: p.id,
+            descricao: p.descricao,
+            horizonte_dias: horizon,
+            demanda_dia_estimada: Number(demandaDia.toFixed(2)),
+            dias_cobertura: Number.isFinite(diasCobertura) ? Number(diasCobertura.toFixed(1)) : null,
+            risco_ruptura: riscoRuptura,
+            recomendacao: riscoRuptura !== 'baixo' ? 'repor' : 'ok',
+            margem_percentual: Number((margem * 100).toFixed(1)),
+            tendencia_demanda: Number(trend.toFixed(2)),
+          });
+        }
+        // Auditoria das previsões
+        try {
+          await base44.asServiceRole.entities.AuditLog.create({
+            usuario: user?.full_name || 'Sistema',
+            acao: 'Visualização',
+            modulo: 'Estoque',
+            tipo_auditoria: 'ia',
+            entidade: 'PrevisaoEstoque',
+            descricao: `Previsões geradas para ${previsoes.length} itens`,
+            empresa_id: filtros?.empresa_id || null,
+            group_id: filtros?.group_id || null,
+            dados_novos: { params: body?.previsao_estoque, sample: previsoes.slice(0, 20) },
+            data_hora: new Date().toISOString(),
+          });
+        } catch (_) {}
+      }
+    } catch (_) {}
+
     // Auditoria + Alerta no NotificationCenter
     if (issues.length > 0) {
       // Usa empresa do primeiro título como contexto padrão
@@ -293,7 +347,7 @@ Deno.serve(async (req) => {
       } catch (_) {}
     }
 
-    return Response.json({ ok: true, issues: issues.length, details: issues });
+    return Response.json({ ok: true, issues: issues.length, details: issues, previsoes });
   } catch (error) {
     return Response.json({ error: String(error?.message || error) }, { status: 500 });
   }

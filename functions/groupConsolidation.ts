@@ -12,6 +12,7 @@ Deno.serve(async (req) => {
       if (denied) return denied;
     }
 
+    const t0 = Date.now();
     let filtros = {};
     try {
       const b = await req.json();
@@ -65,6 +66,21 @@ Deno.serve(async (req) => {
       data_hora: new Date().toISOString(),
     });
 
+    const durationMs = Date.now() - t0;
+    if (durationMs > 500) {
+      try {
+        await base44.asServiceRole.entities.AuditLog.create({
+          usuario: 'Sistema',
+          acao: 'Visualização',
+          modulo: 'Sistema',
+          tipo_auditoria: 'sistema',
+          entidade: 'Performance',
+          descricao: `groupConsolidation demorou ${durationMs}ms`,
+          dados_novos: { durationMs, filtros },
+          data_hora: new Date().toISOString(),
+        });
+      } catch (_) {}
+    }
     return Response.json({ ok: true, groups: summary.length, summary });
   } catch (error) {
     return Response.json({ error: String(error?.message || error) }, { status: 500 });

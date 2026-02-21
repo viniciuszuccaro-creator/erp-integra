@@ -13,6 +13,8 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     pageSize = 20,
   } = options || {};
 
+  const filtroContextOutside = getFiltroContexto(campo, true);
+
   // Best default sort: last user choice -> per-entity default -> updated_date desc
   const DEFAULT_SORTS = {
     Produto: { field: 'descricao', direction: 'asc' },
@@ -45,10 +47,9 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
   }
 
   return useQuery({
-    queryKey: ["entityListSorted", entityName, criterios, finalSortField, finalSortDirection, limit, page, pageSize],
+    queryKey: ["entityListSorted", entityName, criterios, finalSortField, finalSortDirection, limit, page, pageSize, filtroContextOutside?.group_id || null, filtroContextOutside?.[campo] || null],
     queryFn: async () => {
-      const filtroContexto = getFiltroContexto(campo, true);
-      const filtro = { ...criterios, ...filtroContexto };
+      const filtro = { ...criterios, ...filtroContextOutside };
       if (!filtro.group_id && !filtro[campo]) return [];
       const res = await base44.functions.invoke("entityListSorted", {
         entityName,
