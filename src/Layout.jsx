@@ -119,6 +119,8 @@ function LayoutContent({ children, currentPageName }) {
         const AUDIT_BUSINESS_ONLY = true;
         const queryClient = useQueryClient();
 
+  // pageToModule/currentModule movidos para antes dos efeitos para evitar TDZ
+
         // Auditoria global de erros do React Query (queries e mutations)
         React.useEffect(() => {
           try {
