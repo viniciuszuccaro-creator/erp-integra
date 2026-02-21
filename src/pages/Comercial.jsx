@@ -46,16 +46,8 @@ export default function Comercial() {
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
-      try {
-        const data = await filterInContext('Cliente', {}, '-created_date', 100);
-        if (!data || data.length === 0) {
-          return await base44.entities.Cliente.filter(getFiltroContexto('empresa_id', true), '-created_date', 100);
-        }
-        return data;
-      } catch (err) {
-        console.error('Erro ao buscar clientes:', err);
-        return await base44.entities.Cliente.list('-created_date', 100);
-      }
+      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      return await filterInContext('Cliente', {}, '-created_date', 100);
     },
     staleTime: 30000,
     retry: 2,
@@ -65,17 +57,8 @@ export default function Comercial() {
   const pedidosQuery = useQuery({
     queryKey: ['pedidos', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        const data = await filterInContext('Pedido', {}, '-created_date', 100);
-        if (!data || data.length === 0) {
-          return await base44.entities.Pedido.filter(getFiltroContexto('empresa_id', true), '-created_date', 100);
-        }
-        return data;
-      } catch (err) {
-        console.error('Erro ao buscar pedidos:', err);
-        return [];
-      }
+      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      return await filterInContext('Pedido', {}, '-created_date', 100);
     },
     staleTime: 30000,
     retry: 2,
@@ -86,17 +69,8 @@ export default function Comercial() {
   const { data: comissoes = [] } = useQuery({
     queryKey: ['comissoes', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        const data = await filterInContext('Comissao', {}, '-created_date', 50);
-        if (!data || data.length === 0) {
-          return await base44.entities.Comissao.filter(getFiltroContexto('empresa_id', true), '-created_date', 50);
-        }
-        return data;
-      } catch (err) {
-        console.error('Erro ao buscar comissões:', err);
-        return [];
-      }
+      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      return await filterInContext('Comissao', {}, '-created_date', 50);
     },
     staleTime: 30000,
     retry: 1,
@@ -106,17 +80,8 @@ export default function Comercial() {
   const { data: notasFiscais = [] } = useQuery({
     queryKey: ['notasFiscais', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        const data = await filterInContext('NotaFiscal', {}, '-created_date', 50, 'empresa_faturamento_id');
-        if (!data || data.length === 0) {
-          return await base44.entities.NotaFiscal.filter(getFiltroContexto('empresa_faturamento_id', true), '-created_date', 50);
-        }
-        return data;
-      } catch (err) {
-        console.error('Erro ao buscar notas fiscais:', err);
-        return [];
-      }
+      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      return await filterInContext('NotaFiscal', {}, '-created_date', 50, 'empresa_faturamento_id');
     },
     staleTime: 30000,
     retry: 1,
@@ -126,16 +91,8 @@ export default function Comercial() {
   const { data: tabelasPreco = [] } = useQuery({
     queryKey: ['tabelas-preco', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
-      try {
-        const data = await filterInContext('TabelaPreco', {}, '-updated_date', 50);
-        if (!data || data.length === 0) {
-          return await base44.entities.TabelaPreco.filter(getFiltroContexto('empresa_id', true), '-updated_date', 50);
-        }
-        return data;
-      } catch (err) {
-        console.error('Erro ao buscar tabelas de preço:', err);
-        return [];
-      }
+      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      return await filterInContext('TabelaPreco', {}, '-updated_date', 50);
     },
     staleTime: 30000,
     retry: 1,
@@ -156,17 +113,8 @@ export default function Comercial() {
   const { data: pedidosExternos = [] } = useQuery({
     queryKey: ['pedidos-externos', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        const data = await filterInContext('PedidoExterno', {}, '-created_date', 30);
-        if (!data || data.length === 0) {
-          return await base44.entities.PedidoExterno?.filter ? await base44.entities.PedidoExterno.filter(getFiltroContexto('empresa_id', true), '-created_date', 30) : [];
-        }
-        return data;
-      } catch (err) {
-        console.error('Erro ao buscar pedidos externos:', err);
-        return [];
-      }
+      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      return await filterInContext('PedidoExterno', {}, '-created_date', 30);
     },
     staleTime: 30000,
     retry: 1,
