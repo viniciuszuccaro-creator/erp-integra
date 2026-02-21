@@ -82,7 +82,7 @@ export function useCountEntities(entityName, filter = {}, options = {}) {
         }
       }
     },
-    staleTime: options.staleTime || 60000, // 1 minuto de cache padrão
+    staleTime: options.staleTime || 120000, // 2 minutos de cache padrão (listas estáveis)
     gcTime: options.gcTime || 120000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
