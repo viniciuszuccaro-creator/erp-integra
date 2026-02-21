@@ -698,10 +698,12 @@ function LayoutContent({ children, currentPageName }) {
         ]);
 
         base44.functions.invoke = async (functionName, params) => {
-          // Evita loops e ruído
+          // Evita loops e ruído de auditoria
           if (functionName === 'auditError') {
             return await origInvoke(functionName, params);
           }
+
+          // RBAC somente para funções sensíveis (evita chamadas extras)
           const shouldGuard = SENSITIVE_FUNCTIONS.has(functionName) || (params && params.__sensitive === true);
           if (shouldGuard && functionName !== 'entityGuard') {
             try {
@@ -728,7 +730,34 @@ function LayoutContent({ children, currentPageName }) {
             }
           }
 
-          const result = await origInvoke(functionName, params);
+          // De-duplicação + retry com backoff para 429/500
+          base44.functions.__inflight = base44.functions.__inflight || new Map();
+          const key = `${functionName}:${JSON.stringify(params || {})}`;
+          if (base44.functions.__inflight.has(key)) {
+            return await base44.functions.__inflight.get(key);
+          }
+          const exec = async () => {
+            let attempt = 0;
+            while (true) {
+              try {
+                return await origInvoke(functionName, params);
+              } catch (err) {
+                const status = err?.response?.status || err?.status;
+                if ((status === 429 || status === 500) && attempt < 2) {
+                  const delay = (500 + Math.floor(Math.random() * 500)) * (attempt + 1);
+                  await new Promise(r => setTimeout(r, delay));
+                  attempt++;
+                  continue;
+                }
+                throw err;
+              }
+            }
+          };
+          const p = exec().finally(() => base44.functions.__inflight.delete(key));
+          base44.functions.__inflight.set(key, p);
+          const result = await p;
+
+          // Auditoria (throttle 3s)
           try {
             const now = Date.now();
             const last = (base44.functions.__invokeAuditLastAt || 0);
@@ -745,6 +774,7 @@ function LayoutContent({ children, currentPageName }) {
           } catch {}
           return result;
         };
+
         base44.functions.__wrappedPhase4 = true;
       }
     } catch (_) {}
