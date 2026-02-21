@@ -332,8 +332,11 @@ function LayoutContent({ children, currentPageName }) {
   // Registro global de erros de UI (não altera layout visual)
   useEffect(() => {
     const onError = (e) => {
-                try {
-                  const msg = e?.message || e?.error?.message || 'Erro de UI';
+                          try {
+                            const msg = e?.message || e?.error?.message || 'Erro de UI';
+                            const code = e?.error?.code;
+                            const name = e?.error?.name;
+                            if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(String(msg))) { return; }
                   const stack = e?.error?.stack || null;
                   base44.functions.invoke('auditError', {
                     module: moduleName || 'Sistema',
@@ -347,8 +350,11 @@ function LayoutContent({ children, currentPageName }) {
                 } catch (e) {}
               };
     const onUnhandled = (e) => {
-                try {
-                  const msg = e?.reason?.message || String(e?.reason);
+                          try {
+                            const msg = e?.reason?.message || String(e?.reason);
+                            const code = e?.reason?.code;
+                            const name = e?.reason?.name;
+                            if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(String(msg))) { return; }
                   base44.functions.invoke('auditError', {
                     module: moduleName || 'Sistema',
                     message: `Promise rejeitada: ${msg}`,
