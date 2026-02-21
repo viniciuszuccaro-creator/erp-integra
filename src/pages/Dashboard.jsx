@@ -727,6 +727,8 @@ export default function Dashboard() {
             </Card>
           )}
 
+          </ProtectedSection>
+
           {/* Módulos de Acesso Rápido */}
           <QuickAccessModulesGrid modules={quickAccess} onClick={handleDrillDown} />
 
