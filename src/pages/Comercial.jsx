@@ -145,15 +145,12 @@ export default function Comercial() {
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
-      try {
-        return await filterInContext('Empresa', {}, '-created_date', 9999);
-      } catch (err) {
-        console.error('Erro ao buscar empresas:', err);
-        return [];
-      }
+      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      return await filterInContext('Empresa', {}, '-created_date', 9999);
     },
     staleTime: 60000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeComercial && (empresaAtual?.id || estaNoGrupo)
   });
 
   const { data: pedidosExternos = [] } = useQuery({
