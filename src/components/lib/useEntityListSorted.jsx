@@ -61,6 +61,6 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
       });
       return Array.isArray(res?.data) ? res.data : [];
     },
-    staleTime: 60_000,
+    staleTime: 120_000,
   });
 }
