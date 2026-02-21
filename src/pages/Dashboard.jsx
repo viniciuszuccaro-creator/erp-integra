@@ -140,7 +140,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: true,
+    enabled: canSeeComercial,
     initialData: []
   });
 
@@ -179,7 +179,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: true,
+    enabled: canSeeExpedicao,
     initialData: []
   });
 
@@ -192,7 +192,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: true,
+    enabled: canSeeRH,
     initialData: []
   });
 
@@ -205,7 +205,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: true,
+    enabled: canSeeEstoque,
     initialData: []
   });
 
@@ -245,7 +245,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: true,
+    enabled: canSeeCRM,
     initialData: []
   });
 
@@ -294,7 +294,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: true,
+    enabled: canSeeProducao,
     initialData: []
   });
 
