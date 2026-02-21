@@ -22,6 +22,20 @@ Deno.serve(async (req) => {
       return Response.json({ ok: true, skipped: true });
     }
 
+    // Alerta de Estoque Baixo via WhatsApp (Produto atualizado)
+    if (evt.entity_name === 'Produto' && evt.type === 'update' && data) {
+      const empresaId = data.empresa_id || null;
+      const groupId = data.group_id || null;
+      const disp = Number(data.estoque_disponivel || data.estoque_atual || 0);
+      const minimo = Number(data.estoque_minimo || 0);
+      if (empresaId && minimo > 0 && disp <= minimo) {
+        const internal_token = Deno.env.get('DEPLOY_AUDIT_TOKEN') || '';
+        const vars = { produto: data.descricao || data.codigo || data.id, disponivel: disp, minimo };
+        try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId, templateKey: 'estoque_baixo', vars, internal_token }); } catch (_) {}
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criação', modulo: 'Estoque', tipo_auditoria: 'integracao', entidade: 'WhatsApp', descricao: 'Alerta de estoque baixo enviado', empresa_id: empresaId, group_id: groupId, dados_novos: { produto_id: data.id, descricao: data.descricao, disponivel: disp, minimo }, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+      }
+    }
+
     const map = {
       'ConfiguracaoNFe': 'integracao_nfe',
       'ConfiguracaoBoletos': 'integracao_boletos',

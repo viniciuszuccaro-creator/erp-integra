@@ -81,6 +81,9 @@ Deno.serve(async (req) => {
         destinatario = contato?.valor || null;
       }
     }
+    if (!destinatario && (config?.alertas?.numero_admin || config?.numero_admin)) {
+      destinatario = config.alertas?.numero_admin || config.numero_admin;
+    }
     destinatario = String(destinatario || '').replace(/\D/g, '');
 
     const templates = config?.templates || {};
@@ -124,6 +127,16 @@ Deno.serve(async (req) => {
 
     return Response.json({ sucesso: true, messageId: res.key?.id, status: 'sent', modo: 'real' });
   } catch (err) {
+    try {
+      const payload = await req.json().catch(() => ({}));
+      const empresaId = payload?.empresaId || null;
+      const groupId = payload?.groupId || null;
+      await (async () => {
+        try { await (createClientFromRequest(req)).asServiceRole.entities.AuditLog.create({
+          usuario: 'Service', acao: 'Erro', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: 'WhatsApp', descricao: String(err?.message || err), empresa_id: empresaId, group_id: groupId, data_hora: new Date().toISOString(), sucesso: false
+        }); } catch {}
+      })();
+    } catch {}
     return Response.json({ error: err.message }, { status: 500 });
   }
 });
