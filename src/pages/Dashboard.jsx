@@ -348,6 +348,21 @@ export default function Dashboard() {
 
   // Dados e gráficos agora são providos por useDashboardDerivedData()
 
+  const { data: previsoesIA = {}, isLoading: loadingPrevIA } = useQuery({
+    queryKey: ['iaPrevEstoque', empresaAtual?.id, grupoAtual?.id],
+    queryFn: async () => {
+      if (!(empresaAtual?.id || estaNoGrupo)) return { previsoes: [] };
+      const filtros = getFiltroContexto('empresa_id', true);
+      const res = await base44.functions.invoke('iaFinanceAnomalyScan', {
+        filtros,
+        previsao_estoque: { enabled: true, horizon_days: 14 }
+      });
+      return res?.data || { previsoes: [] };
+    },
+    staleTime: 60000,
+    enabled: canSeeEstoque && (empresaAtual?.id || estaNoGrupo)
+  });
+
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   // Pré-computos para seções avançadas (evita recalcular em cada render de subcomponente)
