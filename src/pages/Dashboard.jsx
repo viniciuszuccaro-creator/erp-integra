@@ -74,6 +74,8 @@ import useDashboardDerivedData from "@/components/dashboard/hooks/useDashboardDe
 export default function Dashboard() {
   const navigate = useNavigate();
   const { empresaAtual, estaNoGrupo, grupoAtual, filterInContext, getFiltroContexto } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const canSeeFinanceiro = hasPermission('Financeiro', null, 'ver');
 
   const [periodo, setPeriodo] = useState(() => {
     try {
@@ -144,7 +146,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: true,
+    enabled: canSeeFinanceiro,
     initialData: []
   });
 
@@ -157,7 +159,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: true,
+    enabled: canSeeFinanceiro,
     initialData: []
   });
 
