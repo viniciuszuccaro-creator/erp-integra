@@ -93,6 +93,20 @@ const navigationItems = [
 
   ];
 
+// React Query client centralizado (padrões seguros + performance)
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30000,
+      gcTime: 300000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    },
+    mutations: { retry: 1 }
+  }
+});
+
 function LayoutContent({ children, currentPageName }) {
               // AppLayout + Sidebar + Topbar padrão já implementados; reforço de h-full/scroll interno preservado
         const location = useLocation();
@@ -104,6 +118,58 @@ function LayoutContent({ children, currentPageName }) {
         const auditThrottleRef = React.useRef({ click: 0, change: 0 });
         const AUDIT_BUSINESS_ONLY = true;
         const queryClient = useQueryClient();
+
+        // Auditoria global de erros do React Query (queries e mutations)
+        React.useEffect(() => {
+          try {
+            queryClient.setDefaultOptions({
+              queries: {
+                staleTime: 30000,
+                gcTime: 300000,
+                refetchOnWindowFocus: false,
+                refetchOnReconnect: false,
+                retry: 1,
+                onError: (error) => {
+                  try {
+                    const msg = (error && (error.message || String(error))) || 'Erro em query';
+                    base44.entities?.AuditLog?.create?.({
+                      usuario: user?.full_name || user?.email || 'Usuário',
+                      usuario_id: user?.id,
+                      empresa_id: empresaAtual?.id || null,
+                      acao: 'Erro',
+                      modulo: currentModule || 'Sistema',
+                      tipo_auditoria: 'sistema',
+                      entidade: 'ReactQuery',
+                      descricao: `Query error: ${msg}`,
+                      dados_novos: { page: currentPageName },
+                      data_hora: new Date().toISOString(),
+                    });
+                  } catch (_) {}
+                }
+              },
+              mutations: {
+                retry: 1,
+                onError: (error) => {
+                  try {
+                    const msg = (error && (error.message || String(error))) || 'Erro em mutation';
+                    base44.entities?.AuditLog?.create?.({
+                      usuario: user?.full_name || user?.email || 'Usuário',
+                      usuario_id: user?.id,
+                      empresa_id: empresaAtual?.id || null,
+                      acao: 'Erro',
+                      modulo: currentModule || 'Sistema',
+                      tipo_auditoria: 'sistema',
+                      entidade: 'ReactQuery',
+                      descricao: `Mutation error: ${msg}`,
+                      dados_novos: { page: currentPageName },
+                      data_hora: new Date().toISOString(),
+                    });
+                  } catch (_) {}
+                }
+              }
+            });
+          } catch (_) {}
+        }, [user?.id, empresaAtual?.id, grupoAtual?.id, currentModule, currentPageName]);
 
         const prefetchForItem = (title) => {
                         try {
@@ -903,7 +969,8 @@ function LayoutContent({ children, currentPageName }) {
 
 export default function Layout({ children, currentPageName }) {
   return (
-    <UserProvider>
+    <QueryClientProvider client={queryClient}>
+      <UserProvider>
       <WindowProvider>
         <ZIndexGuard>
           <GlobalNetworkErrorHandler />
@@ -911,6 +978,7 @@ export default function Layout({ children, currentPageName }) {
           <LayoutContent children={children} currentPageName={currentPageName} />
         </ZIndexGuard>
       </WindowProvider>
-    </UserProvider>
+      </UserProvider>
+    </QueryClientProvider>
   );
 }
