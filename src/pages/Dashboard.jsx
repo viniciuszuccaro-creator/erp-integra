@@ -712,7 +712,7 @@ export default function Dashboard() {
                           <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white">
                             <div>
                               <div className="font-medium text-slate-900 truncate max-w-[340px]">{p.descricao}</div>
-                              <div className="text-xs text-slate-500">Cobertura: {p.dias_cobertura ?? '-'} dias • Demanda/dia: {p.demanda_dia_estimada ?? '-'} {p.preco_previsto != null && (<span className="ml-2">• Preço previsto: R$ {p.preco_previsto}</span>)}</div>
+                              <div className="text-xs text-slate-500">Cobertura: {p.dias_cobertura ?? '-'} dias • Demanda/dia: {p.demanda_dia_estimada ?? '-'} {p.preco_previsto != null && (<span className="ml-2">• Preço previsto: R$ {p.preco_previsto}</span>)} {p.preco_previsto != null && (<span className="ml-2">• Preço previsto: R$ {p.preco_previsto}</span>)}</div>
                             </div>
                             <Badge className={p.risco_ruptura === 'alto' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
                               {String(p.risco_ruptura || '').toUpperCase()}
@@ -754,7 +754,7 @@ export default function Dashboard() {
                           <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white">
                             <div>
                               <div className="font-medium text-slate-900 truncate max-w-[340px]">{p.descricao}</div>
-                              <div className="text-xs text-slate-500">Cobertura: {p.dias_cobertura ?? '-'} dias • Demanda/dia: {p.demanda_dia_estimada ?? '-'} {p.preco_previsto != null && (<span className="ml-2">• Preço previsto: R$ {p.preco_previsto}</span>)}</div>
+                              <div className="text-xs text-slate-500">Cobertura: {p.dias_cobertura ?? '-'} dias • Demanda/dia: {p.demanda_dia_estimada ?? '-'} {p.preco_previsto != null && (<span className="ml-2">• Preço previsto: R$ {p.preco_previsto}</span>)} {p.preco_previsto != null && (<span className="ml-2">• Preço previsto: R$ {p.preco_previsto}</span>)}</div>
                             </div>
                             <Badge className={p.risco_ruptura === 'alto' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
                               {String(p.risco_ruptura || '').toUpperCase()}
