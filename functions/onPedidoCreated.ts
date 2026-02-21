@@ -44,6 +44,20 @@ Deno.serve(async (req) => {
 
       // Notificação leve via helper centralizado (multiempresa)
       await emitPedidoMovementsGenerated(base44, { pedido: dataEnriched, movimentos, validation: null });
+
+      // API-First: webhook e-commerce (create)
+      try {
+        const empresaId = dataEnriched?.empresa_id || null;
+        if (empresaId) {
+          const cfgList = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ chave: `integracoes_${empresaId}` }, undefined, 1);
+          const cfg = cfgList?.[0]?.integracao_site || null;
+          const url = cfg?.webhook_url; const secret = cfg?.shared_secret;
+          if (url) {
+            await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-shared-secret': secret || '' }, body: JSON.stringify({ type: 'pedido_created', empresa_id: empresaId, group_id: dataEnriched?.group_id || null, pedido: { id: dataEnriched?.id, numero_pedido: dataEnriched?.numero_pedido, valor_total: dataEnriched?.valor_total } }) });
+            try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user.full_name || 'Sistema', usuario_id: user.id, acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: 'site_webhook', descricao: 'Pedido criado enviado ao site', empresa_id: empresaId, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+          }
+        }
+      } catch (_) {}
     }
 
     if (event.type === 'update') {
@@ -61,6 +75,18 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId, clienteId, pedidoId: novo.id, templateKey: 'pedido_em_transito', vars, internal_token });
         } catch (_) {}
         try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user.full_name || 'Sistema', usuario_id: user.id, acao: 'Criação', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'WhatsApp', descricao: 'Aviso de pedido em trânsito enviado', empresa_id: empresaId, group_id: groupId, dados_novos: { pedido_id: novo.id, numero_pedido: novo.numero_pedido }, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+
+        // API-First: webhook e-commerce (status update)
+        try {
+          if (empresaId) {
+            const cfgList = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ chave: `integracoes_${empresaId}` }, undefined, 1);
+            const cfg = cfgList?.[0]?.integracao_site || null;
+            const url = cfg?.webhook_url; const secret = cfg?.shared_secret;
+            if (url) {
+              await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-shared-secret': secret || '' }, body: JSON.stringify({ type: 'pedido_status', empresa_id: empresaId, group_id: groupId || null, pedido: { id: novo.id, numero_pedido: novo.numero_pedido, status: statusNovo } }) });
+            }
+          }
+        } catch (_) {}
       }
     }
 

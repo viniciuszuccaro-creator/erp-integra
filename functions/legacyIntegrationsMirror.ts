@@ -7,6 +7,50 @@ Deno.serve(async (req) => {
     const evt = payload?.event || {};
     const data = payload?.data || null;
 
+    // API-First genérica (app/portal/site): actions internas com RBAC/token e escopo multiempresa
+    if (payload?.action && !payload?.provider) {
+      const action = String(payload.action || '').toLowerCase();
+      const empresa_id = payload.empresa_id || payload.company_id || null;
+      const group_id = payload.group_id || null;
+      const internal_token = payload.internal_token || null;
+      const trustedInternal = internal_token && Deno.env.get('DEPLOY_AUDIT_TOKEN') && internal_token === Deno.env.get('DEPLOY_AUDIT_TOKEN');
+
+      let user = null; try { user = await base44.auth.me(); } catch { user = null; }
+      if (!trustedInternal && !user) { return Response.json({ error: 'Unauthorized' }, { status: 401 }); }
+      if (!empresa_id && !group_id) { return Response.json({ error: 'escopo_multiempresa_obrigatorio' }, { status: 400 }); }
+
+      // RBAC quando houver usuário (actions sensíveis exigem executar)
+      if (user) {
+        try {
+          const guard = await base44.asServiceRole.functions.invoke('entityGuard', {
+            module: 'Integrações', section: 'API', action: 'executar', empresa_id, group_id
+          });
+          if (!guard?.data?.allowed) return Response.json({ error: 'Forbidden' }, { status: 403 });
+        } catch { return Response.json({ error: 'Forbidden' }, { status: 403 }); }
+      }
+
+      if (action === 'status_pedido') {
+        const pedido_id = payload.pedido_id || null;
+        const numero_pedido = payload.numero_pedido || null;
+        let q = { empresa_id }; if (numero_pedido) q.numero_pedido = numero_pedido; if (pedido_id) q.id = pedido_id;
+        const ped = await base44.asServiceRole.entities.Pedido.filter(q, undefined, 1).then(r => r?.[0] || null);
+        if (!ped) return Response.json({ ok: false, error: 'pedido_nao_encontrado' }, { status: 404 });
+        const resumo = { id: ped.id, numero_pedido: ped.numero_pedido, status: ped.status, data_prevista_entrega: ped.data_prevista_entrega, cliente: ped.cliente_nome };
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user?.full_name || 'Service', acao: 'Visualização', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'status_pedido', descricao: 'Consulta status pedido (API)', empresa_id, group_id, dados_novos: { pedido_id: resumo.id }, data_hora: new Date().toISOString() }); } catch {}
+        return Response.json({ ok: true, pedido: resumo });
+      }
+
+      if (action === 'cotar_aco') {
+        const filtro = { empresa_id };
+        const prods = await base44.asServiceRole.entities.Produto.filter(filtro, '-updated_date', 50).then(arr => (arr || []).filter(p => p.eh_bitola === true));
+        const itens = prods.map(p => ({ id: p.id, descricao: p.descricao, tipo_aco: p.tipo_aco, bitola_mm: p.bitola_diametro_mm, preco_venda: p.preco_venda, estoque_disponivel: (p.estoque_disponivel ?? (p.estoque_atual - (p.estoque_reservado || 0))) }));
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user?.full_name || 'Service', acao: 'Visualização', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'cotar_aco', descricao: 'Cotação via API', empresa_id, group_id, dados_novos: { itens: itens.slice(0, 5) }, data_hora: new Date().toISOString() }); } catch {}
+        return Response.json({ ok: true, itens });
+      }
+
+      return Response.json({ ok: false, error: 'action_nao_suportada' }, { status: 400 });
+    }
+
     // Webhooks Marketplaces
     if (payload?.provider && (payload.provider === 'mercado_livre' || payload.provider === 'amazon')) {
       const empresa_id = payload.empresa_id || payload.company_id || null;
@@ -14,6 +58,21 @@ Deno.serve(async (req) => {
       try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: payload.provider, descricao: `Webhook recebido: ${payload.event || 'evento'}`, empresa_id, group_id, dados_novos: payload, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
       if (Array.isArray(payload?.ajustes_estoque) && empresa_id) {
         try { await base44.asServiceRole.functions.invoke('applyInventoryAdjustments', { empresa_id, ajustes: payload.ajustes_estoque }); } catch (_) {}
+      }
+      if (Array.isArray(payload?.pricing_updates) && empresa_id) {
+        try {
+          for (const upd of payload.pricing_updates) {
+            const pid = upd.produto_id;
+            if (!pid) continue;
+            const patch = {};
+            if (upd.preco_venda != null) patch.preco_venda = Number(upd.preco_venda);
+            if (upd.custo_medio != null) patch.custo_medio = Number(upd.custo_medio);
+            if (Object.keys(patch).length) {
+              await base44.asServiceRole.entities.Produto.update(pid, patch);
+            }
+          }
+          await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edição', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: payload.provider, descricao: 'Atualização de preços aplicada', empresa_id, group_id, dados_novos: { count: payload.pricing_updates.length }, data_hora: new Date().toISOString(), sucesso: true });
+        } catch (_) {}
       }
       return Response.json({ ok: true, action: 'webhook_processed' });
     }
