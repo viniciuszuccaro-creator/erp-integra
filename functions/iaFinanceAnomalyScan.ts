@@ -97,19 +97,36 @@ function profileClients(contas = []) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const t0 = Date.now();
     let user = null;
     try { user = await base44.auth.me(); } catch { user = null; }
     const isScheduled = !user;
-    if (!isScheduled && user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
 
     // Filtros opcionais (multiempresa): { empresa_id?, group_id? }
     let body = {};
     try { body = await req.json(); } catch { body = {}; }
     const filtros = (body?.filtros && (body.filtros.empresa_id || body.filtros.group_id)) ? body.filtros : {};
 
-    // Coleta com escopo (quando fornecido)
+        // RBAC granular via entityGuard (permite não-admin com permissão)
+        if (!isScheduled) {
+          try {
+            const intentModule = body?.previsao_estoque?.enabled ? 'Estoque' : 'Financeiro';
+            const guard = await base44.asServiceRole.functions.invoke('entityGuard', {
+              module: intentModule,
+              section: 'IA',
+              action: 'visualizar',
+              empresa_id: filtros?.empresa_id || null,
+              group_id: filtros?.group_id || null,
+            });
+            if (!guard?.data?.allowed) {
+              return Response.json({ error: 'Forbidden' }, { status: 403 });
+            }
+          } catch (_) {
+            return Response.json({ error: 'Forbidden' }, { status: 403 });
+          }
+        }
+
+         // Coleta com escopo (quando fornecido)
     const receber = await base44.asServiceRole.entities.ContaReceber.filter(filtros, '-updated_date', 500);
     const pagar = await base44.asServiceRole.entities.ContaPagar.filter(filtros, '-updated_date', 500);
     if (!Array.isArray(receber) || !Array.isArray(pagar)) {
@@ -257,7 +274,18 @@ Deno.serve(async (req) => {
     try {
       if (body?.previsao_estoque?.enabled) {
         const horizon = Number(body?.previsao_estoque?.horizon_days ?? 14);
-        const filtroProdutos = produtos.filter(p => p?.eh_bitola === true);
+        const estoqueParams = body?.previsao_estoque?.params || body?.estoque_params || {};
+        const { tipos_aco, bitola_min_mm, bitola_max_mm, preco_min, preco_max } = estoqueParams;
+        const filtroProdutos = produtos.filter(p => {
+          if (p?.eh_bitola !== true) return false;
+          if (Array.isArray(tipos_aco) && tipos_aco.length && p?.tipo_aco && !tipos_aco.includes(p.tipo_aco)) return false;
+          if (bitola_min_mm != null && Number(p?.bitola_diametro_mm || 0) < Number(bitola_min_mm)) return false;
+          if (bitola_max_mm != null && Number(p?.bitola_diametro_mm || 0) > Number(bitola_max_mm)) return false;
+          const precoBase = Number(p?.preco_venda ?? p?.custo_medio ?? 0);
+          if (preco_min != null && precoBase < Number(preco_min)) return false;
+          if (preco_max != null && precoBase > Number(preco_max)) return false;
+          return true;
+        });
         const series = (arr) => {
           const vals = arr.filter(v => Number.isFinite(Number(v))).map(Number);
           if (vals.length === 0) return { mean: 0, trend: 0 };
@@ -275,6 +303,10 @@ Deno.serve(async (req) => {
           const preco = Number(p?.preco_venda ?? 0);
           const custo = Number(p?.custo_medio ?? p?.custo_aquisicao ?? 0);
           const margem = custo > 0 ? (preco - custo) / custo : 0;
+          // Previsão simples de preço: tendência da série de preço/custo
+          const priceVals = [p?.ultimo_preco_compra, p?.custo_medio, p?.preco_venda].filter(v => v != null);
+          const { trend: pTrend } = series(priceVals);
+          const precoPrevisto = Number((preco + pTrend * (horizon/30)).toFixed(2));
           const riscoRuptura = Number.isFinite(diasCobertura) ? (diasCobertura < horizon ? 'alto' : diasCobertura < horizon * 1.5 ? 'medio' : 'baixo') : 'baixo';
           previsoes.push({
             produto_id: p.id,
@@ -286,6 +318,7 @@ Deno.serve(async (req) => {
             recomendacao: riscoRuptura !== 'baixo' ? 'repor' : 'ok',
             margem_percentual: Number((margem * 100).toFixed(1)),
             tendencia_demanda: Number(trend.toFixed(2)),
+            preco_previsto: precoPrevisto,
           });
         }
         // Auditoria das previsões
@@ -347,6 +380,8 @@ Deno.serve(async (req) => {
       } catch (_) {}
     }
 
+    const durationMs = Date.now() - t0;
+    try { if (durationMs > 500) { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Sistema', acao: 'Visualização', modulo: body?.previsao_estoque?.enabled ? 'Estoque' : 'Financeiro', tipo_auditoria: 'sistema', entidade: 'Performance', descricao: `iaFinanceAnomalyScan demorou ${durationMs}ms`, dados_novos: { durationMs, filtros }, data_hora: new Date().toISOString() }); } } catch (_) {}
     return Response.json({ ok: true, issues: issues.length, details: issues, previsoes });
   } catch (error) {
     return Response.json({ error: String(error?.message || error) }, { status: 500 });
