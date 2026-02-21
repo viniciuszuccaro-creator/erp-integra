@@ -21,6 +21,12 @@ export default function GlobalNetworkErrorHandler() {
       }
       
       const errorMsg = event?.error?.message || event?.message || '';
+      // Ignore benign abort/cancel errors
+      const errorCode = event?.error?.code;
+      const errorName = event?.error?.name;
+      if (errorName === 'AbortError' || errorCode === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(String(errorMsg))) {
+        return;
+      }
       const isNetworkError = errorMsg.includes('Network Error') || 
                             errorMsg.includes('Failed to fetch') ||
                             errorMsg.includes('timeout');
@@ -41,9 +47,15 @@ export default function GlobalNetworkErrorHandler() {
 
     const handleUnhandledRejection = (event) => {
       const reason = event?.reason;
-      const isNetworkError = reason?.message?.includes('Network Error') ||
-                            reason?.message?.includes('Failed to fetch') ||
-                            reason?.code === 'ECONNABORTED';
+      const msg = String(reason?.message || '');
+      const code = reason?.code;
+      const name = reason?.name;
+      if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(msg)) {
+        return;
+      }
+      const isNetworkError = msg.includes('Network Error') ||
+                            msg.includes('Failed to fetch') ||
+                            code === 'ECONNABORTED';
       
       if (isNetworkError) {
         event.preventDefault(); // Previne console spam

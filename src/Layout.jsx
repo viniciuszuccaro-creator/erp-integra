@@ -156,8 +156,12 @@ function LayoutContent({ children, currentPageName }) {
                 refetchOnReconnect: false,
                 retry: 1,
                 onError: (error) => {
-                                        try {
-                                          const msg = (error && (error.message || String(error))) || 'Erro em query';
+                                                              const m = String(error?.message || '');
+                                                              const code = error?.code;
+                                                              const name = error?.name;
+                                                              if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(m)) { return; }
+                                                              try {
+                                                                const msg = (error && (error.message || String(error))) || 'Erro em query';
                                           base44.functions.invoke('auditError', {
                                             module: moduleName || 'Sistema',
                                             message: `Query error: ${msg}`,
@@ -173,8 +177,12 @@ function LayoutContent({ children, currentPageName }) {
               mutations: {
                 retry: 1,
                 onError: (error) => {
-                                        try {
-                                          const msg = (error && (error.message || String(error))) || 'Erro em mutation';
+                                                              const m = String(error?.message || '');
+                                                              const code = error?.code;
+                                                              const name = error?.name;
+                                                              if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(m)) { return; }
+                                                              try {
+                                                                const msg = (error && (error.message || String(error))) || 'Erro em mutation';
                                           base44.functions.invoke('auditError', {
                                             module: moduleName || 'Sistema',
                                             message: `Mutation error: ${msg}`,
