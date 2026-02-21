@@ -35,6 +35,7 @@ const MonitoramentoCanaisRealtime = React.lazy(() => import("@/components/comerc
 
 export default function Comercial() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
+  const canSeeComercial = hasPermission('Comercial', null, 'ver');
   const { openWindow, closeWindow } = useWindow();
   const { filterInContext, getFiltroContexto, createInContext, updateInContext, empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
   const { user } = useUser();
@@ -58,7 +59,7 @@ export default function Comercial() {
     },
     staleTime: 30000,
     retry: 2,
-    enabled: !bloqueadoSemEmpresa
+    enabled: !bloqueadoSemEmpresa && canSeeComercial
   });
 
   const pedidosQuery = useQuery({
@@ -78,7 +79,7 @@ export default function Comercial() {
     },
     staleTime: 30000,
     retry: 2,
-    enabled: !bloqueadoSemEmpresa
+    enabled: !bloqueadoSemEmpresa && canSeeComercial
   });
 
   const { data: pedidos = [] } = pedidosQuery;
@@ -99,7 +100,7 @@ export default function Comercial() {
     },
     staleTime: 30000,
     retry: 1,
-    enabled: !bloqueadoSemEmpresa
+    enabled: !bloqueadoSemEmpresa && canSeeComercial
   });
 
   const { data: notasFiscais = [] } = useQuery({
@@ -119,7 +120,7 @@ export default function Comercial() {
     },
     staleTime: 30000,
     retry: 1,
-    enabled: !bloqueadoSemEmpresa
+    enabled: !bloqueadoSemEmpresa && canSeeComercial
   });
 
   const { data: tabelasPreco = [] } = useQuery({
@@ -138,7 +139,7 @@ export default function Comercial() {
     },
     staleTime: 30000,
     retry: 1,
-    enabled: !bloqueadoSemEmpresa
+    enabled: !bloqueadoSemEmpresa && canSeeComercial
   });
 
   const { data: empresas = [] } = useQuery({
@@ -172,7 +173,7 @@ export default function Comercial() {
     },
     staleTime: 30000,
     retry: 1,
-    enabled: !bloqueadoSemEmpresa
+    enabled: !bloqueadoSemEmpresa && canSeeComercial
   });
 
   // Dados já vêm filtrados do servidor

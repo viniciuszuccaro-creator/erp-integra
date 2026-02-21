@@ -42,6 +42,7 @@ const ComprovanteDigital = React.lazy(() => import("../components/expedicao/Comp
 
 export default function Expedicao() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
+  const canSeeExpedicao = hasPermission('Expedição', null, 'ver');
   const { openWindow } = useWindow();
   const { user } = useUser();
   const { toast } = useToast();
@@ -66,7 +67,8 @@ export default function Expedicao() {
       }
     },
     staleTime: 30000,
-    retry: 2
+    retry: 2,
+    enabled: canSeeExpedicao
   });
 
   const { data: totalEntregas = 0 } = useQuery({
@@ -84,7 +86,8 @@ export default function Expedicao() {
       }
     },
     staleTime: 60000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeExpedicao
   });
 
   const { data: clientes = [] } = useQuery({
@@ -99,7 +102,8 @@ export default function Expedicao() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeExpedicao
   });
 
   const { data: pedidos = [] } = useQuery({
@@ -114,7 +118,8 @@ export default function Expedicao() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeExpedicao
   });
 
   const { data: romaneios = [] } = useQuery({
@@ -129,7 +134,8 @@ export default function Expedicao() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeExpedicao
   });
 
   const { data: rotas = [] } = useQuery({
@@ -144,7 +150,8 @@ export default function Expedicao() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeExpedicao
   });
 
   // Dados já vêm filtrados do servidor

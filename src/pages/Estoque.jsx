@@ -31,6 +31,7 @@ const IAReposicao = React.lazy(() => import("../components/estoque/IAReposicao")
 
 export default function Estoque() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
+  const canSeeEstoque = hasPermission('Estoque', null, 'ver');
   const { openWindow } = useWindow();
   const { user } = useUser();
   const { estaNoGrupo, empresaAtual, empresasDoGrupo, filtrarPorContexto, getFiltroContexto } = useContextoVisual();
@@ -78,7 +79,8 @@ export default function Estoque() {
     },
     staleTime: Infinity,
     refetchOnWindowFocus: false,
-    refetchInterval: false
+    refetchInterval: false,
+    enabled: canSeeEstoque
   });
 
   // ✅ Real-time update via subscription
@@ -103,7 +105,8 @@ export default function Estoque() {
     staleTime: 30000,
     gcTime: 60000,
     refetchOnWindowFocus: false,
-    retry: 1
+    retry: 1,
+    enabled: canSeeEstoque
   });
 
   const { data: solicitacoes = [] } = useQuery({
@@ -120,7 +123,8 @@ export default function Estoque() {
     staleTime: 30000,
     gcTime: 60000,
     refetchOnWindowFocus: false,
-    retry: 1
+    retry: 1,
+    enabled: canSeeEstoque
   });
 
   const { data: ordensCompra = [] } = useQuery({
@@ -137,7 +141,8 @@ export default function Estoque() {
     staleTime: 30000,
     gcTime: 60000,
     refetchOnWindowFocus: false,
-    retry: 1
+    retry: 1,
+    enabled: canSeeEstoque
   });
 
   // Buscar produtos simples para KPIs de valor de estoque
@@ -155,7 +160,8 @@ export default function Estoque() {
     staleTime: 60000,
     gcTime: 120000,
     refetchOnWindowFocus: false,
-    retry: 1
+    retry: 1,
+    enabled: canSeeEstoque
   });
 
   const movimentacoesFiltradas = movimentacoes;

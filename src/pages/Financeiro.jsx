@@ -35,6 +35,7 @@ const DashboardFormasPagamento = React.lazy(() => import("../components/financei
 
 export default function Financeiro() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
+  const canSeeFinanceiro = hasPermission('Financeiro', null, 'ver');
   const { openWindow } = useWindow();
   const { user } = useUser();
 
@@ -76,7 +77,8 @@ export default function Financeiro() {
       }
     },
     staleTime: 60000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeFinanceiro
   });
 
   const { data: contasPagar = [] } = useQuery({
@@ -107,7 +109,8 @@ export default function Financeiro() {
       }
     },
     staleTime: 60000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeFinanceiro
   });
 
   const { data: rateios = [] } = useQuery({
@@ -122,7 +125,8 @@ export default function Financeiro() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeFinanceiro
   });
 
   const { data: extratosBancarios = [] } = useQuery({
@@ -137,7 +141,8 @@ export default function Financeiro() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeFinanceiro
   });
 
   const { data: configsGateway = [] } = useQuery({
@@ -151,7 +156,8 @@ export default function Financeiro() {
       }
     },
     staleTime: 60000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeFinanceiro
   });
 
   const { data: ordensLiquidacao = [] } = useQuery({
@@ -166,7 +172,8 @@ export default function Financeiro() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeFinanceiro
   });
 
   const { data: pedidosPendentesAprovacao = [] } = useQuery({
@@ -180,7 +187,8 @@ export default function Financeiro() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeFinanceiro
   });
 
   // Dados já vêm filtrados do servidor

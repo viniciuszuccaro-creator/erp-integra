@@ -41,6 +41,7 @@ const ColaboradoresWindow = () => (
 
 export default function RH() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
+  const canSeeRH = hasPermission('RH', null, 'ver');
   const { filterInContext, getFiltroContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
   const { user } = useUser();
@@ -56,7 +57,8 @@ export default function RH() {
       }
     },
     staleTime: 30000,
-    retry: 2
+    retry: 2,
+    enabled: canSeeRH
   });
 
   const { data: totalColaboradores = 0 } = useQuery({
@@ -73,7 +75,8 @@ export default function RH() {
       }
     },
     staleTime: 60000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeRH
   });
 
   // Contagem confiável de colaboradores ATIVOS (não limitada a 100 registros)
@@ -93,7 +96,8 @@ export default function RH() {
       }
     },
     staleTime: 60000,
-    retry: 1
+    retry: 1,
+    enabled: canSeeRH
   });
 
   const { data: pontos = [] } = useQuery({
@@ -107,7 +111,8 @@ export default function RH() {
         }
       },
       staleTime: 30000,
-      retry: 1
+      retry: 1,
+    enabled: canSeeRH
     });
 
   const { data: ferias = [] } = useQuery({
@@ -121,7 +126,8 @@ export default function RH() {
         }
       },
       staleTime: 30000,
-      retry: 1
+      retry: 1,
+    enabled: canSeeRH
     });
 
   // Dados já vêm filtrados do servidor
