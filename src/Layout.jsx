@@ -113,6 +113,28 @@ function LayoutContent({ children, currentPageName }) {
         const { user } = useUser();
         const { empresaAtual, filterInContext, grupoAtual, contexto } = useContextoVisual();
         const { hasPermission } = usePermissions();
+
+        // Mapeamento de página -> módulo (declarado antes de qualquer uso)
+        const pageToModule = {
+          CRM: 'CRM',
+          Comercial: 'Comercial',
+          Estoque: 'Estoque',
+          Compras: 'Compras',
+          Financeiro: 'Financeiro',
+          Fiscal: 'Fiscal',
+          RH: 'RH',
+          Expedicao: 'Expedição',
+          Producao: 'Produção',
+          ProducaoMobile: 'Produção',
+          Dashboard: 'Dashboard',
+          DashboardCorporativo: 'Dashboard',
+          Relatorios: 'Relatórios',
+          Agenda: 'Agenda',
+          Cadastros: 'Cadastros',
+          Contratos: 'Contratos',
+          AdministracaoSistema: 'Sistema',
+        };
+        const currentModule = pageToModule?.[currentPageName] || 'Sistema';
         const [pesquisaOpen, setPesquisaOpen] = useState(false);
         const [modoEscuro, setModoEscuro] = useState(false);
         const auditThrottleRef = React.useRef({ click: 0, change: 0 });
@@ -205,27 +227,7 @@ function LayoutContent({ children, currentPageName }) {
                         } catch (_) {}
                         };
 
-                        // Mapeamento de página -> módulo (deve estar antes de qualquer useEffect que use currentModule)
-                        const pageToModule = {
-                          CRM: 'CRM',
-                          Comercial: 'Comercial',
-                          Estoque: 'Estoque',
-                          Compras: 'Compras',
-                          Financeiro: 'Financeiro',
-                          Fiscal: 'Fiscal',
-                          RH: 'RH',
-                          Expedicao: 'Expedição',
-                          Producao: 'Produção',
-                          ProducaoMobile: 'Produção',
-                          Dashboard: 'Dashboard',
-                          DashboardCorporativo: 'Dashboard',
-                          Relatorios: 'Relatórios',
-                          Agenda: 'Agenda',
-                          Cadastros: 'Cadastros',
-                          Contratos: 'Contratos',
-                          AdministracaoSistema: 'Sistema',
-                        };
-                        const currentModule = pageToModule[currentPageName];
+                        // pageToModule/currentModule já declarados acima (remoção da duplicata para evitar TDZ)
 
                         useEffect(() => {
     const handleKeyDown = (e) => {
