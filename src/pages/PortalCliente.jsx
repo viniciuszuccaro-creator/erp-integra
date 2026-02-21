@@ -237,6 +237,25 @@ export default function PortalCliente() {
     );
   }
 
+  // Auditoria de acessos do Portal (multiempresa + tab)
+  useEffect(() => {
+    if (!user || !cliente) return;
+    try {
+      base44.entities.AuditLog.create({
+        usuario: user.full_name || user.email || 'Usuário',
+        usuario_id: user.id,
+        empresa_id: cliente.empresa_id || null,
+        group_id: cliente.group_id || null,
+        acao: 'Visualização',
+        modulo: 'Portal',
+        tipo_auditoria: 'ui',
+        entidade: 'PortalCliente',
+        descricao: `Acesso ao Portal - aba ${activeTab}`,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (_) {}
+  }, [user?.id, cliente?.id, activeTab]);
+
   const handleLogout = async () => {
     await base44.auth.logout();
   };
