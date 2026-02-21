@@ -52,6 +52,36 @@ Deno.serve(async (req) => {
       return Response.json({ sucesso: true, modo: 'simulado', messageId: `SIM_${Date.now()}`, status: 'sent' });
     }
 
+    // Admin-only: configuração de templates (RBAC sistema.configuracao.whatsapp.editar)
+    if (action === 'setTemplate') {
+      if (!user) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const permCfg = await assertPermission(base44, ctx, 'Sistema', 'Configurações', 'editar');
+      if (permCfg) return permCfg;
+
+      if (!templateKey || !mensagem) {
+        return Response.json({ error: 'Parâmetros inválidos' }, { status: 400 });
+      }
+
+      let targetDoc = cfgDoc;
+      if (!targetDoc) {
+        const chave = empresaId ? `integracoes_${empresaId}` : (groupId ? `integracoes_group_${groupId}` : null);
+        const novo = { chave, categoria: 'Integracoes', integracao_whatsapp: { ativo: true, templates: { [templateKey]: mensagem } } };
+        targetDoc = await base44.asServiceRole.entities.ConfiguracaoSistema.create(novo);
+      } else {
+        const iw = targetDoc.integracao_whatsapp || {};
+        const templates = { ...(iw.templates || {}), [templateKey]: mensagem };
+        await base44.asServiceRole.entities.ConfiguracaoSistema.update(targetDoc.id, { integracao_whatsapp: { ...iw, templates } });
+      }
+
+      try { await base44.asServiceRole.entities.AuditLog.create({
+        usuario: currentUser?.full_name || 'Service', usuario_id: currentUser?.id || null, acao: 'Edição', modulo: 'Sistema', tipo_auditoria: 'sistema', entidade: 'WhatsApp', descricao: `Template atualizado: ${templateKey}`, empresa_id: empresaId || null, group_id: groupId || null, dados_novos: { templateKey }, data_hora: new Date().toISOString(), sucesso: true
+      }); } catch {}
+
+      return Response.json({ sucesso: true, updated: true });
+    }
+
     const apiKey = config.api_key;
     const apiUrl = config.api_url || 'https://evolution-api.com';
     const instanceName = config.instance_name;
