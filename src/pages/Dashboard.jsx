@@ -76,6 +76,13 @@ export default function Dashboard() {
   const { empresaAtual, estaNoGrupo, grupoAtual, filterInContext, getFiltroContexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const canSeeFinanceiro = hasPermission('Financeiro', null, 'ver');
+  const canSeeCRM = hasPermission('CRM', null, 'ver');
+  const canSeeComercial = hasPermission('Comercial', null, 'ver');
+  const canSeeEstoque = hasPermission('Estoque', null, 'ver');
+  const canSeeExpedicao = hasPermission('Expedição', null, 'ver');
+  const canSeeRH = hasPermission('RH', null, 'ver');
+  const canSeeCompras = hasPermission('Compras', null, 'ver');
+  const canSeeProducao = hasPermission('Produção', null, 'ver');
 
   const [periodo, setPeriodo] = useState(() => {
     try {
