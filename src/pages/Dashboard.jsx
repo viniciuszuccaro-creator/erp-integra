@@ -687,6 +687,7 @@ export default function Dashboard() {
 
           {/* Módulos de Acesso Rápido */}
           {/* Previsões de Estoque (IA) - visível apenas para quem vê Estoque */}
+          <ProtectedSection module="Estoque" action="ver" hideInstead>
           {canSeeEstoque && (
             <Card className="bg-white/80 backdrop-blur-sm">
               <CardHeader>
