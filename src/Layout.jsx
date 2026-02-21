@@ -554,10 +554,30 @@ function LayoutContent({ children, currentPageName }) {
         list: typeof api.list === 'function' ? api.list.bind(api) : null,
       };
 
+      // Frontend sanitize (reforço) - remove scripts/eventos e URLs javascript:
+      const sanitize = (val) => {
+        const cleanString = (s) => {
+          let out = String(s);
+          out = out.replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, '');
+          out = out.replace(/on[a-z]+\s*=\s*"[^"]*"/gi, '');
+          out = out.replace(/on[a-z]+\s*=\s*'[^']*'/gi, '');
+          out = out.replace(/javascript:\s*/gi, '');
+          return out;
+        };
+        if (typeof val === 'string') return cleanString(val);
+        if (Array.isArray(val)) return val.map(sanitize);
+        if (val && typeof val === 'object') {
+          const o = {};
+          for (const [k, v] of Object.entries(val)) o[k] = sanitize(v);
+          return o;
+        }
+        return val;
+      };
+
       if (orig.create) {
         api.create = async (data) => {
           await checkRBAC(name, 'criar');
-          const res = await orig.create(stamp(data));
+          const res = await orig.create(stamp(sanitize(data)));
           try { await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
             usuario_id: user?.id,
@@ -589,7 +609,7 @@ function LayoutContent({ children, currentPageName }) {
       if (orig.update) {
         api.update = async (id, data) => {
           await checkRBAC(name, 'editar');
-          const res = await orig.update(id, stamp(data));
+          const res = await orig.update(id, stamp(sanitize(data)));
           try { await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
             usuario_id: user?.id,
