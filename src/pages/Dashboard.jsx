@@ -634,6 +634,36 @@ export default function Dashboard() {
           {/* KPIs Secundários */}
           <SecondaryKPIsSection kpis={kpiCards} />
 
+          {/* Anomalias Financeiras (IA) – hiperpersonalização por role */}
+          {canSeeFinanceiro && (
+            <Card className="bg-white/80 backdrop-blur-sm mt-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-rose-600" />
+                  Anomalias Financeiras Detectadas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingAnomIA ? (
+                  <div className="h-10 rounded-md bg-slate-100 animate-pulse" />
+                ) : (
+                  (() => {
+                    const list = anomaliasIA?.details || [];
+                    if (!list.length) return <p className="text-sm text-slate-600">Nenhuma anomalia relevante.</p>;
+                    const resumo = list.reduce((acc, i) => { acc[i.severity || 'baixo'] = (acc[i.severity || 'baixo'] || 0) + 1; return acc; }, {});
+                    return (
+                      <div className="flex flex-wrap gap-2 text-sm">
+                        <Badge className="bg-red-100 text-red-700">Alta: {resumo.alto || 0}</Badge>
+                        <Badge className="bg-amber-100 text-amber-700">Média: {resumo.medio || 0}</Badge>
+                        <Badge variant="outline">Baixa: {resumo.baixo || 0}</Badge>
+                      </div>
+                    );
+                  })()
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Estoque Crítico */}
           <WidgetEstoqueCritico count={produtosBaixoEstoque} onNavigate={() => handleDrillDown(createPageUrl("Estoque"))} />
 
