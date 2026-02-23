@@ -286,6 +286,46 @@ function LayoutContent({ children, currentPageName }) {
     };
   }, []);
 
+  // PWA-lite: injeta manifest em runtime e tenta registrar service worker (se disponível)
+  useEffect(() => {
+    try {
+      // Injeta <link rel="manifest"> dinâmico
+      const manifest = {
+        name: 'ERP Zuccaro',
+        short_name: 'ERP',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        background_color: '#0f172a',
+        theme_color: '#0f172a',
+        icons: [
+          { src: 'https://base44.com/logo_v2.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
+          { src: 'https://base44.com/logo_v2.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any' }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = URL.createObjectURL(blob);
+      // Evita múltiplas inserções
+      const existing = document.head.querySelector('link[rel="manifest"]');
+      if (!existing) document.head.appendChild(link);
+
+      // Meta para barra de status em mobile
+      const themeMeta = document.querySelector('meta[name="theme-color"]') || document.createElement('meta');
+      themeMeta.setAttribute('name', 'theme-color');
+      themeMeta.setAttribute('content', '#0f172a');
+      if (!themeMeta.parentElement) document.head.appendChild(themeMeta);
+    } catch (_) {}
+
+    // Registrar service worker se houver arquivo estático em /sw.js (ignora erros)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  }, []);
+
   useEffect(() => {
     const cache = queryClient.getQueryCache();
     const indexKey = 'rq_index_keys';
