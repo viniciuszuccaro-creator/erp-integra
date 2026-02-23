@@ -69,10 +69,10 @@ export default function Documentacao() {
   ];
 
   const statusAtual = {
-    funcional: 85,
+    funcional: 93,
     mockIntegracoes: 7,
-    pronto: 23,
-    emDesenvolvimento: 10
+    pronto: 27,
+    emDesenvolvimento: 3
   };
 
   return (
@@ -132,10 +132,9 @@ export default function Documentacao() {
               <Alert className="border-green-300 bg-green-50">
                 <CheckCircle2 className="w-5 h-5 text-green-600" />
                 <AlertDescription>
-                  <p className="font-semibold text-green-900 mb-2">✅ 85% FUNCIONAL - Pronto para Uso</p>
+                  <p className="font-semibold text-green-900 mb-2">✅ 93% FUNCIONAL — Pronto para Produção (parcial)</p>
                   <p className="text-sm text-green-800">
-                    O sistema está operacional para testes e validação de processos.
-                    As integrações estão em modo Mock (simulado) mas toda a lógica de negócio está implementada.
+                    Sistema operacional, multiempresa, RBAC+2FA e auditoria ativos. Integrações externas (NF‑e, Boletos/PIX, WhatsApp Evolution) dependem apenas de chaves/contas; Google Maps já ativo.
                   </p>
                 </AlertDescription>
               </Alert>
@@ -177,15 +176,15 @@ export default function Documentacao() {
                   <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <Clock className="w-5 h-5 text-orange-600" />
-                      <p className="font-semibold text-orange-900">Mock/Preparado (15%)</p>
+                      <p className="font-semibold text-orange-900">Mock/Preparado (7%)</p>
                     </div>
                     <ul className="text-sm text-orange-800 space-y-1">
-                      <li>• 🔄 NF-e (mock funcional, aguarda API real)</li>
+                      <li>• 🔄 NF‑e (mock funcional, aguarda API real)</li>
                       <li>• 🔄 Boletos/PIX (mock funcional)</li>
-                      <li>• 🔄 WhatsApp (preparado, precisa Evolution)</li>
-                      <li>• 🔄 Google Maps (preparado, precisa API Key)</li>
+                      <li>• 🔄 WhatsApp (preparado, necessita instância Evolution)</li>
                       <li>• 🔄 Transportadoras (estrutura pronta)</li>
-                      <li>• 🔄 Conciliação bancária (IA pronta, falta OFX)</li>
+                      <li>• 🔄 Marketplaces (parcial — webhooks/base de estoque e preço prontos)</li>
+                      <li>• 🔄 Conciliação bancária (IA pronta, falta OFX/Webhooks banco)</li>
                       <li>• 🔄 Notificações automáticas (lógica pronta)</li>
                     </ul>
                   </div>
@@ -482,10 +481,10 @@ export default function Documentacao() {
                 {[
                   { nome: '📄 NF-e (eNotas, NFe.io, Focus)', status: 'Mock Funcional', cor: 'orange', proximos: 'Conectar API real' },
                   { nome: '💳 Boletos e PIX (Asaas, Juno)', status: 'Mock Funcional', cor: 'orange', proximos: 'Conectar API real + Webhooks' },
-                  { nome: '🗺️ Google Maps API', status: 'Preparado', cor: 'blue', proximos: 'Adicionar API Key' },
+                  { nome: '🗺️ Google Maps API', status: 'Ativo', cor: 'green', proximos: 'Ajustar cotas/limites' },
                   { nome: '💬 WhatsApp Business (Evolution)', status: 'Preparado', cor: 'blue', proximos: 'Configurar instância Evolution' },
                   { nome: '🚚 Transportadoras (Melhor Envio)', status: 'Preparado', cor: 'blue', proximos: 'API Key + Testes' },
-                  { nome: '🛒 Marketplaces (ML, Shopee)', status: 'Em Desenvolvimento', cor: 'yellow', proximos: 'OAuth + Webhook' },
+                  { nome: '🛒 Marketplaces (ML, Shopee)', status: 'Parcial (Webhooks + estoque/preço)', cor: 'yellow', proximos: 'OAuth + mapeadores finais' },
                   { nome: '🏦 Open Banking (Pluggy, Celcoin)', status: 'Planejado v4.0', cor: 'slate', proximos: 'Q2 2025' },
                   { nome: '🤖 CNC / Máquinas (OPC-UA)', status: 'Planejado v4.0', cor: 'slate', proximos: 'Q2 2025' },
                   { nome: '📧 SendGrid/AWS SES (Email)', status: 'Não Configurado', cor: 'red', proximos: 'Urgente - Go Live' },
