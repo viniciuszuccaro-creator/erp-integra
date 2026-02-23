@@ -21,7 +21,7 @@ import WebhookForm from "@/components/cadastros/WebhookForm";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
-import { FileText, DollarSign, MessageCircle, Truck, Globe, ShoppingCart, Link2, CheckCircle2 } from "lucide-react";
+import { FileText, DollarSign, MessageCircle, Truck, Globe, ShoppingCart, Link2, CheckCircle2, AlertCircle } from "lucide-react";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import { useWindow } from "@/components/lib/useWindow";
 import { useQuery } from "@tanstack/react-query";
@@ -60,7 +60,10 @@ export default function IntegracoesIndex({ initialTab }) {
     enabled: !!empresaAtual?.id,
   });
 
-  return (
+  const nfeOk = !!configuracao?.integracao_nfe?.api_key;
+  const boletosOk = !!configuracao?.integracao_boletos?.api_key;
+
+   return (
     <div className="w-full h-full flex flex-col">
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2 h-auto">
@@ -84,6 +87,40 @@ export default function IntegracoesIndex({ initialTab }) {
               <div className="w-full mb-4">
                 <IntegracoesPanel />
               </div>
+
+              {/* Checklist de Implantação Global */}
+              <Card className="w-full mb-4">
+                <CardContent className="p-4">
+                  <h3 className="font-semibold mb-2">Checklist de Implantação (empresa atual)</h3>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-center gap-2">
+                      {nfeOk ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-amber-600" />
+                      )}
+                      <span>NF-e: provedor e API key {nfeOk ? 'configurados' : 'pendentes'} em ConfiguracaoSistema → chave integracoes_{'{empresaId}'}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      {boletosOk ? (
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-amber-600" />
+                      )}
+                      <span>Boletos/PIX: provedor e API key {boletosOk ? 'configurados' : 'pendentes'} (Asaas/Juno)</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-blue-600" />
+                      <span>Webhooks: aponte para <code className="px-1 py-0.5 bg-slate-100 rounded">functions/legacyIntegrationsMirror</code> com header <code className="px-1 py-0.5 bg-slate-100 rounded">x-internal-token: DEPLOY_AUDIT_TOKEN</code> (definido no ambiente).</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-blue-600" />
+                      <span>RBAC/Testes: valide permissões de emissão e execute testes E2E (NF-e/Boletos/PIX) — Auditoria registra tudo.</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
               {/* Central de atalhos para configurações de integrações */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
