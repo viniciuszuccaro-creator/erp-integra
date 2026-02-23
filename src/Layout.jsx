@@ -143,6 +143,8 @@ function LayoutContent({ children, currentPageName }) {
         const AUDIT_BUSINESS_ONLY = true;
         const queryClient = useQueryClient();
 
+        const [integracoesOk, setIntegracoesOk] = useState(true);
+
   // pageToModule/moduleName movidos para antes dos efeitos para evitar TDZ
 
         // Auditoria global de erros do React Query (queries e mutations)
@@ -285,6 +287,27 @@ function LayoutContent({ children, currentPageName }) {
       window.removeEventListener('offline', goOffline);
     };
   }, []);
+
+  // Verificação de integrações fiscais por empresa (alerta leve para admins)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (!empresaAtual?.id) { if (!cancelled) setIntegracoesOk(true); return; }
+        // Apenas perfis com permissão de Sistema visualizam alerta
+        const allowed = hasPermission('Sistema', null, 'ver');
+        if (!allowed) { if (!cancelled) setIntegracoesOk(true); return; }
+        const chave = `integracoes_${empresaAtual.id}`;
+        const docs = await base44.entities.ConfiguracaoSistema.filter({ chave }, undefined, 1);
+        const cfg = docs?.[0] || null;
+        const ok = !!(cfg?.integracao_nfe?.api_key && cfg?.integracao_boletos?.api_key);
+        if (!cancelled) setIntegracoesOk(!!ok);
+      } catch {
+        if (!cancelled) setIntegracoesOk(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [empresaAtual?.id]);
 
   // PWA-lite: injeta manifest em runtime e tenta registrar service worker (se disponível)
   useEffect(() => {
@@ -734,7 +757,8 @@ function LayoutContent({ children, currentPageName }) {
           'permissionOptimizer', 'securityAlerts', 'adminInviteUser', 'propagateGroupConfigs',
           'migrateAuditoriasToAuditLog', 'migrateIntegrationsToConfiguracaoSistema', 'migrateChatbotIntents',
           'applyInventoryAdjustments', 'applyOrderStockMovements', 'emitirBoleto', 'sendEmailProvider',
-          'groupConsolidation', 'sodValidator', 'solicitacoesAprovacao'
+          'groupConsolidation', 'sodValidator', 'solicitacoesAprovacao',
+          'nfeActions', 'paymentStatusManager'
         ]);
 
         base44.functions.invoke = async (functionName, params) => {
@@ -1161,6 +1185,11 @@ function LayoutContent({ children, currentPageName }) {
               {isOffline && (
               <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
                 Modo offline: exibindo dados em cache (última sincronização). Algumas ações podem não estar disponíveis.
+              </div>
+              )}
+              {!integracoesOk && hasPermission('Sistema', null, 'ver') && (
+              <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
+                Integrações fiscais pendentes nesta empresa. <Link to={createPageUrl("AdministracaoSistema?tab=integracoes")} className="underline">Configurar agora</Link>.
               </div>
               )}
               </header>
