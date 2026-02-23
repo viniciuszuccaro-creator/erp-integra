@@ -69,6 +69,43 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Provedor NFe.io
+    if (integracao.provedor === 'NFe.io' || integracao.provedor === 'NFEIO') {
+      const base = integracao.api_url || 'https://api.nfe.io/v1';
+      const headers = { 'Content-Type': 'application/json', Authorization: `Basic ${btoa(integracao.api_key + ':')}` };
+
+      if (action === 'emitir') {
+        const r = await fetch(`${base}/nfe/issue`, { method: 'POST', headers, body: JSON.stringify({ ...nfe, companyId: integracao.empresa_id_provedor }) });
+        if (!r.ok) throw new Error(await r.text());
+        const j = await r.json();
+        await audit(base44, user, { acao: 'Criação', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfe?.id || null, descricao: `NF-e ${action} (NFe.io)`, dados_novos: { j }, empresa_id: empresaId });
+        return Response.json({ ...j, modo: 'real' });
+      }
+
+      if (action === 'status') {
+        const r = await fetch(`${base}/nfe/${nfeId}`, { headers });
+        if (!r.ok) throw new Error(await r.text());
+        const j = await r.json();
+        await audit(base44, user, { acao: 'Visualização', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Consulta status NF-e (NFe.io)', empresa_id: empresaId });
+        return Response.json(j);
+      }
+
+      if (action === 'cancelar') {
+        const r = await fetch(`${base}/nfe/${nfeId}/cancel`, { method: 'POST', headers, body: JSON.stringify({ reason: justificativa || 'Cancelado pelo sistema' }) });
+        if (!r.ok) throw new Error(await r.text());
+        const j = await r.json();
+        await audit(base44, user, { acao: 'Cancelamento', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Cancelamento NF-e (NFe.io)', dados_novos: { justificativa }, empresa_id: empresaId });
+        return Response.json({ sucesso: true, protocolo: j?.protocol || j?.protocolo || null });
+      }
+
+      if (action === 'carta') {
+        const r = await fetch(`${base}/nfe/${nfeId}/correction`, { method: 'POST', headers, body: JSON.stringify({ correction: correcao || '' }) });
+        if (!r.ok) throw new Error(await r.text());
+        const j = await r.json();
+        return Response.json({ sucesso: true, protocolo: j?.protocol || j?.protocolo || null });
+      }
+    }
+
     // Outros provedores: não implementado
     return Response.json({ error: 'Provedor não implementado' }, { status: 400 });
   } catch (err) {

@@ -51,7 +51,85 @@ Deno.serve(async (req) => {
       return Response.json({ ok: false, error: 'action_nao_suportada' }, { status: 400 });
     }
 
-    // Webhooks Marketplaces
+    // Webhooks Pagamentos e Fiscal (Asaas, Juno, eNotas, NFe.io)
+  if (payload?.provider && ['asaas','juno','enotas','nfe_io'].includes(String(payload.provider).toLowerCase())) {
+    const prov = String(payload.provider).toLowerCase();
+    const empresa_id = payload.empresa_id || payload.company_id || null;
+    const group_id = payload.group_id || null;
+    try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: prov, descricao: `Webhook recebido`, empresa_id, group_id, dados_novos: payload, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+
+    if (prov === 'asaas') {
+      const p = payload?.payment || payload?.data || payload || {};
+      const extId = p?.id || payload?.id || null;
+      if (extId) {
+        const crList = await base44.asServiceRole.entities.ContaReceber.filter({ id_cobranca_externa: extId }, undefined, 1);
+        const cr = crList?.[0] || null;
+        if (cr) {
+          const statusRaw = (p?.status || payload?.event || '').toString().toUpperCase();
+          const pago = /RECEIVED|CONFIRMED|RECEIVED_IN_CASH|PAID/.test(statusRaw);
+          const updates = {
+            status_cobranca: statusRaw.toLowerCase(),
+            data_retorno_pagamento: new Date().toISOString()
+          };
+          if (pago) {
+            updates.status = 'Recebido';
+            updates.valor_recebido = Number(cr.valor_recebido||0) + Number(p?.value || p?.netValue || cr.valor || 0);
+            const d = (p?.confirmedDate || p?.paymentDate || '').toString().slice(0,10) || new Date().toISOString().slice(0,10);
+            updates.data_recebimento = d;
+            updates.detalhes_pagamento = { ...(cr.detalhes_pagamento||{}), forma_pagamento: 'Boleto/PIX', numero_autorizacao: p?.transactionReceipt || null, status_compensacao: 'Conciliado' };
+          }
+          await base44.asServiceRole.entities.ContaReceber.update(cr.id, updates);
+          try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edição', modulo: 'Financeiro', tipo_auditoria: 'integracao', entidade: 'Asaas', descricao: `Atualização cobrança ${extId}`, empresa_id, group_id, dados_novos: updates, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+        }
+      }
+      return Response.json({ ok: true, action: 'asaas_webhook_processed' });
+    }
+
+    if (prov === 'juno') {
+      const ch = payload?.data?.charge || payload?.charge || payload || {};
+      const extId = ch?.id || payload?.id || null;
+      if (extId) {
+        const crList = await base44.asServiceRole.entities.ContaReceber.filter({ id_cobranca_externa: extId }, undefined, 1);
+        const cr = crList?.[0] || null;
+        if (cr) {
+          const statusRaw = (ch?.status || payload?.event || '').toString().toUpperCase();
+          const pago = /PAID|CONFIRMED|COMPLETED/.test(statusRaw);
+          const updates = {
+            status_cobranca: statusRaw.toLowerCase(),
+            data_retorno_pagamento: new Date().toISOString()
+          };
+          if (pago) {
+            updates.status = 'Recebido';
+            updates.valor_recebido = Number(cr.valor_recebido||0) + Number(ch?.amount || cr.valor || 0);
+            const d = (ch?.date || '').toString().slice(0,10) || new Date().toISOString().slice(0,10);
+            updates.data_recebimento = d;
+            updates.detalhes_pagamento = { ...(cr.detalhes_pagamento||{}), forma_pagamento: 'Boleto', status_compensacao: 'Conciliado' };
+          }
+          await base44.asServiceRole.entities.ContaReceber.update(cr.id, updates);
+          try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edição', modulo: 'Financeiro', tipo_auditoria: 'integracao', entidade: 'Juno', descricao: `Atualização cobrança ${extId}`, empresa_id, group_id, dados_novos: updates, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+        }
+      }
+      return Response.json({ ok: true, action: 'juno_webhook_processed' });
+    }
+
+    if (prov === 'enotas' || prov === 'nfe_io') {
+      const nfId = payload?.nfeId || payload?.id || payload?.nota_id || null;
+      const status = (payload?.status || payload?.evento || '').toString();
+      if (nfId) {
+        const map = { autorizada: 'Autorizada', autorizadauso: 'Autorizada', cancelada: 'Cancelada', denegada: 'Denegada', rejeitada: 'Rejeitada' };
+        const statusKey = status.toLowerCase().replace(/\s/g,'');
+        const nfStatus = map[statusKey] || status;
+        await base44.asServiceRole.entities.NotaFiscal.update(nfId, { status: nfStatus, mensagem_sefaz: payload?.mensagem || null, codigo_status_sefaz: String(payload?.codigo || payload?.statusCode || '') });
+        if (/autorizad/i.test(nfStatus)) {
+          try { await base44.asServiceRole.functions.invoke('onNotaFiscalAuthorized', { nota_fiscal_id: nfId, empresa_id }); } catch(_) {}
+        }
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edição', modulo: 'Fiscal', tipo_auditoria: 'integracao', entidade: prov, descricao: `Atualização NF-e ${nfId}`, empresa_id, group_id, dados_novos: { status: nfStatus }, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+      }
+      return Response.json({ ok: true, action: 'nfe_webhook_processed' });
+    }
+  }
+
+  // Webhooks Marketplaces
     if (payload?.provider && (payload.provider === 'mercado_livre' || payload.provider === 'amazon' || payload.provider === 'ecommerce_site')) {
       const empresa_id = payload.empresa_id || payload.company_id || null;
       const group_id = payload.group_id || null;
