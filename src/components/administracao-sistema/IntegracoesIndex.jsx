@@ -62,6 +62,42 @@ export default function IntegracoesIndex({ initialTab }) {
 
   const nfeOk = !!configuracao?.integracao_nfe?.api_key;
   const boletosOk = !!configuracao?.integracao_boletos?.api_key;
+  const webhookUrl = `${window?.location?.origin || ''}/functions/legacyIntegrationsMirror`;
+
+  const handleCriarBase = async () => {
+    if (!empresaAtual?.id) return;
+    const chave = `integracoes_${empresaAtual.id}`;
+    const payload = {
+      chave,
+      categoria: 'Integracoes',
+      integracao_nfe: { provedor: null, api_url: null, api_key: null, cnpj_emitente: null, ambiente: 'homologacao' },
+      integracao_boletos: { provedor: null, api_url: null, api_key: null, customer_id_default: null, customers_map: {} }
+    };
+    await base44.entities.ConfiguracaoSistema.create(payload);
+  };
+
+  const handleTestWebhookAsaasPago = async () => {
+    if (!empresaAtual?.id) return;
+    await base44.functions.invoke('legacyIntegrationsMirror', {
+      provider: 'asaas',
+      empresa_id: empresaAtual.id,
+      payment: { id: 'test_payment', status: 'RECEIVED', value: 10 }
+    });
+  };
+
+  const handleTestWebhookNFeAutorizada = async () => {
+    if (!empresaAtual?.id) return;
+    await base44.functions.invoke('legacyIntegrationsMirror', {
+      provider: 'enotas',
+      empresa_id: empresaAtual.id,
+      nfeId: 'test_nf',
+      status: 'autorizada'
+    });
+  };
+
+  const handleCopy = async (text) => {
+    try { await navigator.clipboard.writeText(text); } catch (_) {}
+  };
 
    return (
     <div className="w-full h-full flex flex-col">
