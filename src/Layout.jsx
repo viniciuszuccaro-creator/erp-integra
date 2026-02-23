@@ -82,7 +82,7 @@ const navigationItems = [
   { title: "Recursos Humanos", url: createPageUrl("RH"), icon: UserCircle, group: "administrativo" },
   { title: "Fiscal e Tributário", url: createPageUrl("Fiscal"), icon: FileText, group: "administrativo" },
   { title: "Gestão de Contratos", url: createPageUrl("Contratos"), icon: FileText, group: "administrativo" },
-  { title: "Administração do Sistema", url: createPageUrl("AdministracaoSistema?tab=config"), icon: Settings, group: "sistema" },
+  { title: "Administração do Sistema", url: createPageUrl("AdministracaoSistema?tab=integracoes"), icon: Settings, group: "sistema" },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
   
   
@@ -1189,7 +1189,7 @@ function LayoutContent({ children, currentPageName }) {
               )}
               {!integracoesOk && hasPermission('Sistema', null, 'ver') && (
               <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
-                Integrações fiscais pendentes nesta empresa. <Link to={createPageUrl("AdministracaoSistema?tab=config")} className="underline">Configurar agora</Link>.
+                Integrações fiscais pendentes nesta empresa. <Link to={createPageUrl("AdministracaoSistema?tab=integracoes")} className="underline">Configurar agora</Link>.
               </div>
               )}
               </header>

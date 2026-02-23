@@ -50,11 +50,14 @@ export default function IntegracoesIndex({ initialTab }) {
   };
 
   const { data: configuracao } = useQuery({
-    queryKey: ["configuracaoSistema"],
+    queryKey: ["configuracaoSistema", empresaAtual?.id],
     queryFn: async () => {
-      const configs = await base44.entities.ConfiguracaoSistema.list();
-      return configs[0] || null;
+      if (!empresaAtual?.id) return null;
+      const chave = `integracoes_${empresaAtual.id}`;
+      const cfgs = await base44.entities.ConfiguracaoSistema.filter({ chave }, undefined, 1);
+      return cfgs?.[0] || null;
     },
+    enabled: !!empresaAtual?.id,
   });
 
   return (
