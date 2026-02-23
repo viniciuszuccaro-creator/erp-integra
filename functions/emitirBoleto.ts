@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
                 url_fatura: j?.invoiceUrl || pdf,
                 boleto_linha_digitavel: linha,
                 pix_qrcode: pix,
+                pix_copia_cola: j?.pixQrCodeText || j?.pixCopyPaste || j?.pix_copia_cola || null,
                 id_cobranca_externa: j?.id,
                 gateway_usado_nome: 'Asaas',
                 gateway_usado_id: 'asaas',

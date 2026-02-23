@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
         const r = await fetch(`https://api.enotas.com.br/v2/empresas/${integracao.empresa_id_provedor}/nfes/${nfeId}/cartaCorrecao`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Basic ${btoa(integracao.api_key + ':')}` }, body: JSON.stringify({ correcao: correcao || '' }) });
         if (!r.ok) throw new Error(await r.text());
         const j = await r.json();
+        await audit(base44, user, { acao: 'Edição', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Carta de Correção (eNotas)', dados_novos: { correcao }, empresa_id: empresaId });
         return Response.json({ sucesso: true, protocolo: j.protocolo });
       }
     }
@@ -102,6 +103,7 @@ Deno.serve(async (req) => {
         const r = await fetch(`${base}/nfe/${nfeId}/correction`, { method: 'POST', headers, body: JSON.stringify({ correction: correcao || '' }) });
         if (!r.ok) throw new Error(await r.text());
         const j = await r.json();
+        await audit(base44, user, { acao: 'Edição', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Carta de Correção (NFe.io)', dados_novos: { correcao }, empresa_id: empresaId });
         return Response.json({ sucesso: true, protocolo: j?.protocol || j?.protocolo || null });
       }
     }
