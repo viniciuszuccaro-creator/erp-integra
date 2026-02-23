@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     }
 
     // Webhooks Marketplaces
-    if (payload?.provider && (payload.provider === 'mercado_livre' || payload.provider === 'amazon')) {
+    if (payload?.provider && (payload.provider === 'mercado_livre' || payload.provider === 'amazon' || payload.provider === 'ecommerce_site')) {
       const empresa_id = payload.empresa_id || payload.company_id || null;
       const group_id = payload.group_id || null;
       try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: payload.provider, descricao: `Webhook recebido: ${payload.event || 'evento'}`, empresa_id, group_id, dados_novos: payload, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
