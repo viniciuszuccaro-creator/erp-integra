@@ -46,11 +46,40 @@ Deno.serve(async (req) => {
     if (integracao.provedor === 'eNotas') {
       if (action === 'emitir') {
         const res = await emitirENotas(nfe, integracao, config);
+        // Atualiza NotaFiscal com dados retornados
+        try {
+          if (nfe?.id) {
+            const patch = {
+              status: res?.status || 'Autorizada',
+              numero: res?.numero || nfe?.numero || null,
+              serie: res?.serie || nfe?.serie || null,
+              chave_acesso: res?.chave || res?.chaveAcesso || res?.chave_acesso || null,
+              protocolo_autorizacao: res?.protocolo || res?.protocoloAutorizacao || null,
+              pdf_danfe: res?.danfeUrl || res?.pdf_url || null,
+              xml_nfe: res?.xmlUrl || res?.xml || null,
+              data_autorizacao: res?.dataAutorizacao || new Date().toISOString()
+            };
+            await base44.asServiceRole.entities.NotaFiscal.update(nfe.id, patch);
+          }
+        } catch (_) {}
         await audit(base44, user, { acao: 'Criação', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfe?.id || null, descricao: `NF-e ${action}`, dados_novos: { res }, empresa_id: empresaId });
         return Response.json({ ...res, modo: 'real' });
       }
       if (action === 'status') {
         const res = await statusENotas(nfeId, integracao);
+        try {
+          if (nfeId) {
+            const patch = {
+              status: res?.status || undefined,
+              mensagem_sefaz: res?.mensagem || res?.message || undefined,
+              codigo_status_sefaz: String(res?.codigo || res?.statusCode || res?.code || '') || undefined,
+              pdf_danfe: res?.pdfUrl || res?.danfeUrl || undefined,
+              xml_nfe: res?.xmlUrl || undefined,
+              chave_acesso: res?.chave || res?.chaveAcesso || undefined
+            };
+            await base44.asServiceRole.entities.NotaFiscal.update(nfeId, patch);
+          }
+        } catch (_) {}
         await audit(base44, user, { acao: 'Visualização', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Consulta status NF-e', empresa_id: empresaId });
         return Response.json(res);
       }
@@ -79,6 +108,21 @@ Deno.serve(async (req) => {
         const r = await fetch(`${base}/nfe/issue`, { method: 'POST', headers, body: JSON.stringify({ ...nfe, companyId: integracao.empresa_id_provedor }) });
         if (!r.ok) throw new Error(await r.text());
         const j = await r.json();
+        try {
+          if (nfe?.id) {
+            const patch = {
+              status: j?.status || 'Autorizada',
+              numero: j?.number || j?.numero || nfe?.numero || null,
+              serie: j?.series || j?.serie || nfe?.serie || null,
+              chave_acesso: j?.accessKey || j?.chave || null,
+              protocolo_autorizacao: j?.protocol || j?.protocolo || null,
+              pdf_danfe: j?.danfeUrl || j?.pdfUrl || null,
+              xml_nfe: j?.xmlUrl || null,
+              data_autorizacao: j?.authorizedAt || new Date().toISOString()
+            };
+            await base44.asServiceRole.entities.NotaFiscal.update(nfe.id, patch);
+          }
+        } catch (_) {}
         await audit(base44, user, { acao: 'Criação', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfe?.id || null, descricao: `NF-e ${action} (NFe.io)`, dados_novos: { j }, empresa_id: empresaId });
         return Response.json({ ...j, modo: 'real' });
       }

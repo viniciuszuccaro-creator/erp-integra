@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
           const customerId = payCfg.customers_map?.[cr.cliente_id] || payCfg.customer_id_default || null;
           if (customerId) {
             const billingType = ((forma_cobranca || cr.forma_cobranca) === 'PIX') ? 'PIX' : 'BOLETO';
-            const body = { customer: customerId, billingType, value: Number(cr.valor||0), dueDate: cr.data_vencimento, externalReference: cr.id };
+            const body = { customer: customerId, billingType, value: Number(cr.valor||0), dueDate: cr.data_vencimento, externalReference: cr.id, description: cr.descricao || 'Cobrança ERP' };
             const r = await fetch(`${apiUrl}/payments`, { method: 'POST', headers, body: JSON.stringify(body) });
             if (r.ok) {
               const j = await r.json();

@@ -54,9 +54,12 @@ Deno.serve(async (req) => {
     // Webhooks Pagamentos e Fiscal (Asaas, Juno, eNotas, NFe.io)
   if (payload?.provider && ['asaas','juno','enotas','nfe_io'].includes(String(payload.provider).toLowerCase())) {
     const prov = String(payload.provider).toLowerCase();
+    const hdrToken = req.headers.get('x-internal-token') || req.headers.get('x-webhook-token') || null;
+    const expected = Deno.env.get('DEPLOY_AUDIT_TOKEN') || null;
+    const trusted = !!(expected && hdrToken === expected);
     const empresa_id = payload.empresa_id || payload.company_id || null;
     const group_id = payload.group_id || null;
-    try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: prov, descricao: `Webhook recebido`, empresa_id, group_id, dados_novos: payload, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+    try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: prov, descricao: `Webhook recebido`, empresa_id, group_id, dados_novos: { payload, trusted }, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
 
     if (prov === 'asaas') {
       const p = payload?.payment || payload?.data || payload || {};
