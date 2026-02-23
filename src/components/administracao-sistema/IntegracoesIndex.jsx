@@ -127,7 +127,12 @@ export default function IntegracoesIndex({ initialTab }) {
               {/* Checklist de Implantação Global */}
               <Card className="w-full mb-4">
                 <CardContent className="p-4">
-                  <h3 className="font-semibold mb-2">Checklist de Implantação (empresa atual)</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold mb-2">Checklist de Implantação (empresa atual)</h3>
+                    {!configuracao && (
+                      <Button variant="outline" onClick={handleCriarBase}>Criar estrutura base</Button>
+                    )}
+                  </div>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-center gap-2">
                       {nfeOk ? (
@@ -154,6 +159,22 @@ export default function IntegracoesIndex({ initialTab }) {
                       <span>RBAC/Testes: valide permissões de emissão e execute testes E2E (NF-e/Boletos/PIX) — Auditoria registra tudo.</span>
                     </li>
                   </ul>
+                </CardContent>
+              </Card>
+
+              {/* Webhooks & Testes Rápidos */}
+              <Card className="w-full mb-4">
+                <CardContent className="p-4 space-y-3">
+                  <h3 className="font-semibold">Webhooks & Testes Rápidos</h3>
+                  <div className="flex items-center gap-2 text-xs">
+                    <code className="px-2 py-1 bg-slate-100 rounded flex-1 overflow-x-auto">{webhookUrl}</code>
+                    <Button size="sm" variant="outline" onClick={() => handleCopy(webhookUrl)}>Copiar URL</Button>
+                  </div>
+                  <div className="text-xs text-slate-600">Header: x-internal-token: <span className="font-mono">DEPLOY_AUDIT_TOKEN</span></div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" onClick={handleTestWebhookAsaasPago}>Testar webhook Asaas (pago)</Button>
+                    <Button size="sm" onClick={handleTestWebhookNFeAutorizada}>Simular NF-e autorizada</Button>
+                  </div>
                 </CardContent>
               </Card>
 
