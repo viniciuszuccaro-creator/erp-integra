@@ -38,15 +38,21 @@ Deno.serve(async (req) => {
         cfgDoc = cfgDoc?.[0] || null;
       } catch (_) { cfgDoc = null; }
       const payCfg = cfgDoc?.integracao_boletos || cfgDoc?.integracao_pagamentos || null;
+      // Suporte a múltiplos provedores por empresa (lista ou único)
+      const provRaw = (payCfg?.provedor || '').toString().toLowerCase();
+      const provList = Array.isArray(payCfg?.provedores) ? payCfg.provedores.map(p => String(p).toLowerCase()) : [];
+      const billingTypePref = ((forma_cobranca || cr.forma_cobranca) === 'PIX') ? 'PIX' : 'BOLETO';
+      let chosen = provList[0] || provRaw;
+      if (billingTypePref === 'PIX' && provList.includes('asaas')) chosen = 'asaas';
 
       if (payCfg?.ativo) {
         // Asaas
-        if ((payCfg.provedor || '').toLowerCase() === 'asaas') {
+        if (chosen === 'asaas') {
           const apiUrl = payCfg.api_url || 'https://api.asaas.com/api/v3';
           const headers = { 'Content-Type': 'application/json', 'access_token': payCfg.api_key };
           const customerId = payCfg.customers_map?.[cr.cliente_id] || payCfg.customer_id_default || null;
           if (customerId) {
-            const billingType = ((forma_cobranca || cr.forma_cobranca) === 'PIX') ? 'PIX' : 'BOLETO';
+            const billingType = billingTypePref;
             const body = { customer: customerId, billingType, value: Number(cr.valor||0), dueDate: cr.data_vencimento, externalReference: cr.id, description: cr.descricao || 'Cobrança ERP' };
             const r = await fetch(`${apiUrl}/payments`, { method: 'POST', headers, body: JSON.stringify(body) });
             if (r.ok) {
@@ -73,7 +79,7 @@ Deno.serve(async (req) => {
           }
         }
         // Juno
-        if ((payCfg.provedor || '').toLowerCase() === 'juno') {
+        if (chosen === 'juno') {
           const apiUrl = payCfg.api_url || 'https://api.juno.com.br';
           const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${payCfg.api_key}` };
           const chargeBody = {
