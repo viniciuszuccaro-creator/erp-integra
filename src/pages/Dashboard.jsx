@@ -8,53 +8,34 @@ import { Loader2, RefreshCw } from "lucide-react";
 import { useMultiempresa } from "../Layout";
 
 function useDashData(empresaId) {
-  const pedidos = useQuery({
-    queryKey: ["pedidos", empresaId],
+  const dash = useQuery({
+    queryKey: ["dashboard_data", empresaId],
     queryFn: async () => {
-      if (!empresaId) return [];
-      return base44.entities.Pedido.filter({ empresa_id: empresaId }, "-created_date", 10);
+      if (!empresaId) return { pedidos: [], nfe: [], receber: [] };
+      const res = await base44.functions.invoke('getDashboardData', { empresaId, limit: 10 });
+      return res.data || { pedidos: [], nfe: [], receber: [] };
     },
     enabled: !!empresaId,
+    staleTime: 1000 * 30,
   });
-
-  const nfe = useQuery({
-    queryKey: ["nfe", empresaId],
-    queryFn: async () => {
-      if (!empresaId) return [];
-      return base44.entities.NotaFiscal.filter({ empresa_faturamento_id: empresaId }, "-created_date", 10);
-    },
-    enabled: !!empresaId,
-  });
-
-  const receber = useQuery({
-    queryKey: ["contas_receber", empresaId],
-    queryFn: async () => {
-      if (!empresaId) return [];
-      return base44.entities.ContaReceber.filter({ empresa_id: empresaId }, "-created_date", 10);
-    },
-    enabled: !!empresaId,
-  });
-
-  return { pedidos, nfe, receber };
+  return dash;
 }
 
 export default function Dashboard() {
   const { empresaId, rbac } = useMultiempresa();
-  const { pedidos, nfe, receber } = useDashData(empresaId);
+  const dash = useDashData(empresaId);
 
-  const isLoading = pedidos.isLoading || nfe.isLoading || receber.isLoading;
+  const isLoading = dash.isLoading;
 
   if (!empresaId) {
     return <div className="text-sm text-muted-foreground">Selecione uma empresa para carregar os dados.</div>;
   }
 
   const onRefetch = () => {
-    pedidos.refetch();
-    nfe.refetch();
-    receber.refetch();
+    dash.refetch();
   };
 
-  const error = pedidos.error || nfe.error || receber.error;
+  const error = dash.error;
   if (error) {
     base44.analytics.track({ eventName: "dashboard_query_error", properties: { success: false } });
   }
@@ -79,7 +60,7 @@ export default function Dashboard() {
               <CardTitle>Pedidos recentes</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{pedidos.data?.length || 0}</div>
+              <div className="text-3xl font-bold">{dash.data?.pedidos?.length || 0}</div>
               <div className="text-xs text-muted-foreground">Últimos 10</div>
             </CardContent>
           </Card>
@@ -89,7 +70,7 @@ export default function Dashboard() {
               <CardTitle>NF-e recentes</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{nfe.data?.length || 0}</div>
+              <div className="text-3xl font-bold">{dash.data?.nfe?.length || 0}</div>
               <div className="text-xs text-muted-foreground">Últimas 10</div>
             </CardContent>
           </Card>
@@ -99,7 +80,7 @@ export default function Dashboard() {
               <CardTitle>Contas a receber (abertas)</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{(receber.data || []).filter((c) => c.status === 'Pendente' || c.status === 'Parcial').length}</div>
+              <div className="text-3xl font-bold">{(dash.data?.receber || []).filter((c) => c.status === 'Pendente' || c.status === 'Parcial').length}</div>
               <div className="text-xs text-muted-foreground">No período recente</div>
             </CardContent>
           </Card>
@@ -122,7 +103,7 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(pedidos.data || []).map((p) => (
+                {(dash.data?.pedidos || []).map((p) => (
                   <TableRow key={p.id}>
                     <TableCell>{p.numero_pedido}</TableCell>
                     <TableCell>{p.cliente_nome}</TableCell>
@@ -150,7 +131,7 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(nfe.data || []).map((n) => (
+                {(dash.data?.nfe || []).map((n) => (
                   <TableRow key={n.id}>
                     <TableCell>{n.numero}</TableCell>
                     <TableCell>{n.cliente_fornecedor}</TableCell>
@@ -179,7 +160,7 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(receber.data || []).map((c) => (
+                {(dash.data?.receber || []).map((c) => (
                   <TableRow key={c.id}>
                     <TableCell>{c.descricao}</TableCell>
                     <TableCell>{c.cliente}</TableCell>
