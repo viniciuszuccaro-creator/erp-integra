@@ -6,7 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronDown, LogOut } from "lucide-react";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+      onError: (error) => {
+        try { base44.analytics.track({ eventName: 'react_query_error', properties: { success: false } }); } catch (_) {}
+      }
+    }
+  }
+});
 
 const MultiempresaContext = createContext({ empresaId: null, setEmpresaId: () => {}, user: null, rbac: { has: () => true } });
 export const useMultiempresa = () => useContext(MultiempresaContext);
@@ -96,7 +107,6 @@ export default function Layout({ children, currentPageName }) {
         <div className="w-full h-full min-h-screen bg-muted/20">
           <HeaderBar empresas={empresas} empresaId={empresaId} setEmpresaId={setEmpresaId} user={user} />
           <div className="w-full h-[calc(100vh-56px)] overflow-auto p-4">{children}</div>
-              <WindowRenderer />
         </div>
       </MultiempresaContext.Provider>
     </QueryClientProvider>
