@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { UserProvider } from "@/components/lib/UserContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -103,12 +104,14 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MultiempresaContext.Provider value={ctxValue}>
+      <UserProvider>
+        <MultiempresaContext.Provider value={ctxValue}>
         <div className="w-full h-full min-h-screen bg-muted/20">
           <HeaderBar empresas={empresas} empresaId={empresaId} setEmpresaId={setEmpresaId} user={user} />
           <div className="w-full h-[calc(100vh-56px)] overflow-auto p-4">{children}</div>
         </div>
       </MultiempresaContext.Provider>
+      </UserProvider>
     </QueryClientProvider>
   );
 }
