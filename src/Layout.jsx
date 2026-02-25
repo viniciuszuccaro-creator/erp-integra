@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UserProvider } from "@/components/lib/UserContext";
 import { WindowProvider } from "@/components/lib/WindowManager";
 import WindowRenderer from "@/components/lib/WindowRenderer";
-import { UserProvider } from "@/components/lib/UserContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -109,11 +108,14 @@ export default function Layout({ children, currentPageName }) {
     <QueryClientProvider client={queryClient}>
       <UserProvider>
         <MultiempresaContext.Provider value={ctxValue}>
+          <WindowProvider>
         <div className="w-full h-full min-h-screen bg-muted/20">
           <HeaderBar empresas={empresas} empresaId={empresaId} setEmpresaId={setEmpresaId} user={user} />
           <div className="w-full h-[calc(100vh-56px)] overflow-auto p-4">{children}</div>
+              <WindowRenderer />
         </div>
-      </MultiempresaContext.Provider>
+      </WindowProvider>
+        </MultiempresaContext.Provider>
       </UserProvider>
     </QueryClientProvider>
   );
