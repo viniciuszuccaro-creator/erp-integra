@@ -1182,6 +1182,27 @@ function LayoutContent({ children, currentPageName }) {
                 </Link>
               </div>
               </div>
+              <div className="mt-3 overflow-x-auto">
+                <div className="flex gap-2 min-w-full pr-2">
+                  {navigationItems
+                    .filter((item) => (
+                      (item.title.includes('Comercial') && hasPermission('Comercial', null, 'ver')) ||
+                      (item.title.includes('Estoque') && hasPermission('Estoque', null, 'ver')) ||
+                      (item.title.includes('Compras') && hasPermission('Compras', null, 'ver')) ||
+                      (item.title.includes('Expedi') && hasPermission('Expedição', null, 'ver')) ||
+                      (item.title.includes('Financeiro') && hasPermission('Financeiro', null, 'ver')) ||
+                      (item.title.includes('Fiscal') && hasPermission('Fiscal', null, 'ver')) ||
+                      (item.title.includes('RH') && hasPermission('RH', null, 'ver')) ||
+                      (item.title.includes('CRM') && hasPermission('CRM', null, 'ver'))
+                    ))
+                    .map((item) => (
+                      <Link key={item.title} to={item.url} className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 bg-white/80 hover:bg-slate-100 whitespace-nowrap">
+                        <item.icon className="w-4 h-4 text-slate-600" />
+                        <span className="text-sm text-slate-700">{item.title}</span>
+                      </Link>
+                    ))}
+                </div>
+              </div>
               {isOffline && (
               <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
                 Modo offline: exibindo dados em cache (última sincronização). Algumas ações podem não estar disponíveis.
