@@ -24,11 +24,6 @@ Deno.serve(async (req) => {
     // Carrega config fiscal com service role (refatorado)
     const { config, integracao } = await getFiscalConfig(base44, empresaId);
 
-    // Suporte a múltiplos provedores por empresa (lista ou único)
-    const provRaw = (integracao?.provedor || '').toString().toLowerCase();
-    const provList = Array.isArray(integracao?.provedores) ? integracao.provedores.map(p => String(p).toLowerCase()) : [];
-    const chosenProv = provList.find(p => ['enotas','nfe.io','nfeio','nfe_io'].includes(p)) || provRaw;
-
     if (!integracao || integracao.ativa === false) {
       if (action === 'emitir') {
         // Simulado
@@ -48,7 +43,7 @@ Deno.serve(async (req) => {
     }
 
     // Implementa provedor eNotas (mínimo viável)
-    if (chosenProv === 'enotas') {
+    if (integracao.provedor === 'eNotas') {
       if (action === 'emitir') {
         const res = await emitirENotas(nfe, integracao, config);
         // Atualiza NotaFiscal com dados retornados
@@ -105,7 +100,7 @@ Deno.serve(async (req) => {
     }
 
     // Provedor NFe.io
-    if (['nfe.io','nfeio','nfe_io'].includes(chosenProv)) {
+    if (integracao.provedor === 'NFe.io' || integracao.provedor === 'NFEIO') {
       const base = integracao.api_url || 'https://api.nfe.io/v1';
       const headers = { 'Content-Type': 'application/json', Authorization: `Basic ${btoa(integracao.api_key + ':')}` };
 
