@@ -363,8 +363,56 @@ export default function Dashboard() {
     initialData: []
   });
 
+  const { data: notasFiscais = [] } = useQuery({
+    queryKey: ['notasFiscais', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: async () => {
+      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      const filtro = getFiltroContexto('empresa_id', true);
+      const res = await base44.functions.invoke('entityListSorted', {
+        entityName: 'NotaFiscal',
+        filter: filtro,
+        order: '-created_date',
+        limit: 9999
+      });
+      return res?.data?.items || [];
+    },
+    refetchInterval,
+    staleTime: 120000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+    enabled: (canSeeFinanceiro || hasPermission('Fiscal', null, 'ver') || canSeeComercial) && (empresaAtual?.id || estaNoGrupo),
+    initialData: []
+  });
+
+  const nfAutorizadas = (notasFiscais || []).filter(n => n?.status === 'Autorizada').length;
+
+  const { data: cobrancas = [] } = useQuery({
+    queryKey: ['cobrancas', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: async () => {
+      if (!(empresaAtual?.id || estaNoGrupo)) return [];
+      const filtro = getFiltroContexto('empresa_id', true);
+      const res = await base44.functions.invoke('entityListSorted', {
+        entityName: 'ContaReceber',
+        filter: filtro,
+        order: '-data_vencimento',
+        limit: 9999
+      });
+      return res?.data?.items || [];
+    },
+    refetchInterval,
+    staleTime: 120000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
+    enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo),
+    initialData: []
+  });
+
+  const cobrancasPagas = (cobrancas || []).filter(c => (c?.status === 'Recebido') || (c?.status_cobranca === 'paga')).length;
+
   const {
-    pedidosPeriodo,
+     pedidosPeriodo,
     totalVendas,
     ticketMedio,
     receitasPendentes,
@@ -593,6 +641,22 @@ export default function Dashboard() {
       color: "text-cyan-600",
       bgColor: "bg-cyan-50",
       drillDown: () => handleDrillDown(createPageUrl("Comercial"))
+    },
+    {
+      title: "NF-e Autorizadas",
+      value: nfAutorizadas,
+      icon: FileText,
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-50",
+      drillDown: () => handleDrillDown(createPageUrl("Fiscal"))
+    },
+    {
+      title: "Cobranças Pagas",
+      value: cobrancasPagas,
+      icon: DollarSign,
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+      drillDown: () => handleDrillDown(createPageUrl("Financeiro"))
     }
   ];
 
