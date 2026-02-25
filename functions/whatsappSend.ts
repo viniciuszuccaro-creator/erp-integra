@@ -7,7 +7,6 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const payload = await req.json().catch(() => ({}));
     const { action = 'sendText', numero, mensagem, empresaId, groupId, clienteId, pedidoId, templateKey, intent, vars = {}, arquivoUrl, legenda, internal_token } = payload || {};
-    let msg = mensagem;
 
     // Auth: user session OR trusted internal token
     const user = await base44.auth.me().catch(() => null);
@@ -131,16 +130,16 @@ Deno.serve(async (req) => {
 
     const tpl = resolvedTemplateKey ? templates?.[resolvedTemplateKey] : null;
     // Chatbot proactive intents (migrateChatbotIntents): se intent informado e sem template definido, tenta buscar mensagem padrão
-    if (!tpl && intent && !msg) {
+    if (!tpl && intent && !mensagem) {
       try {
         const intents = await base44.asServiceRole.entities.ChatbotIntent.filter({ nome: intent }, undefined, 1);
         if (intents?.[0]?.mensagem_padrao) {
-          msg = intents[0].mensagem_padrao;
+          mensagem = intents[0].mensagem_padrao;
         }
       } catch (_) {}
     }
     const interpolate = (tplStr, v) => tplStr?.replace(/\{\{(.*?)\}\}/g, (_, k) => (v?.[k.trim()] ?? '')) || '';
-    let texto = msg;
+    let texto = mensagem;
     if (!texto && tpl) {
       texto = interpolate(tpl, { ...vars, empresa: config?.nome_exibicao || '', pedidoId, data: new Date().toLocaleString('pt-BR') });
     }
