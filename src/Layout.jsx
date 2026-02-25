@@ -2,6 +2,9 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { base44 } from "@/api/base44Client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UserProvider } from "@/components/lib/UserContext";
+import { WindowProvider } from "@/components/lib/WindowManager";
+import WindowRenderer from "@/components/lib/WindowRenderer";
+import { UserProvider } from "@/components/lib/UserContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
