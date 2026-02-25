@@ -126,18 +126,7 @@ export default function Dashboard() {
     queryKey: ['pedidos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      const filtro = getFiltroContexto('empresa_id', true);
-      try {
-        const { data } = await base44.functions.invoke('entityListSorted', {
-          entityName: 'Pedido',
-          filter: filtro,
-          order: '-created_date',
-          limit: 9999
-        });
-        return Array.isArray(data?.items) ? data.items : (data || []);
-      } catch {
-        return await filterInContext('Pedido', {}, '-created_date', 9999);
-      }
+      return await filterInContext('Pedido', {}, '-created_date', 9999);
     },
     refetchInterval,
     staleTime: 120000,
@@ -153,18 +142,7 @@ export default function Dashboard() {
     queryKey: ['contasReceber', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      const filtro = getFiltroContexto('empresa_id', true);
-      try {
-        const { data } = await base44.functions.invoke('entityListSorted', {
-          entityName: 'ContaReceber',
-          filter: filtro,
-          order: '-data_vencimento',
-          limit: 9999
-        });
-        return Array.isArray(data?.items) ? data.items : (data || []);
-      } catch {
-        return await filterInContext('ContaReceber', {}, '-data_vencimento', 9999);
-      }
+      return await filterInContext('ContaReceber', {}, '-data_vencimento', 9999);
     },
     refetchInterval,
     staleTime: 120000,
@@ -180,18 +158,7 @@ export default function Dashboard() {
     queryKey: ['contasPagar', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      const filtro = getFiltroContexto('empresa_id', true);
-      try {
-        const { data } = await base44.functions.invoke('entityListSorted', {
-          entityName: 'ContaPagar',
-          filter: filtro,
-          order: '-data_vencimento',
-          limit: 9999
-        });
-        return Array.isArray(data?.items) ? data.items : (data || []);
-      } catch {
-        return await filterInContext('ContaPagar', {}, '-data_vencimento', 9999);
-      }
+      return await filterInContext('ContaPagar', {}, '-data_vencimento', 9999);
     },
     refetchInterval,
     staleTime: 120000,
@@ -207,18 +174,7 @@ export default function Dashboard() {
     queryKey: ['entregas', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      const filtro = getFiltroContexto('empresa_id', true);
-      try {
-        const { data } = await base44.functions.invoke('entityListSorted', {
-          entityName: 'Entrega',
-          filter: filtro,
-          order: '-created_date',
-          limit: 9999
-        });
-        return Array.isArray(data?.items) ? data.items : (data || []);
-      } catch {
-        return await filterInContext('Entrega', {}, '-created_date', 9999);
-      }
+      return await filterInContext('Entrega', {}, '-created_date', 9999);
     },
     refetchInterval,
     staleTime: 120000,
@@ -234,18 +190,7 @@ export default function Dashboard() {
     queryKey: ['colaboradores', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      const filtro = getFiltroContexto('empresa_alocada_id', true);
-      try {
-        const { data } = await base44.functions.invoke('entityListSorted', {
-          entityName: 'Colaborador',
-          filter: filtro,
-          order: '-created_date',
-          limit: 9999
-        });
-        return Array.isArray(data?.items) ? data.items : (data || []);
-      } catch {
-        return await filterInContext('Colaborador', {}, '-created_date', 9999, 'empresa_alocada_id');
-      }
+      return await filterInContext('Colaborador', {}, '-created_date', 9999, 'empresa_alocada_id');
     },
     refetchInterval,
     staleTime: 120000,
@@ -261,18 +206,7 @@ export default function Dashboard() {
     queryKey: ['produtos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      const filtro = getFiltroContexto('empresa_id', true);
-      try {
-        const { data } = await base44.functions.invoke('entityListSorted', {
-          entityName: 'Produto',
-          filter: filtro,
-          order: '-created_date',
-          limit: 9999
-        });
-        return Array.isArray(data?.items) ? data.items : (data || []);
-      } catch {
-        return await filterInContext('Produto', {}, '-created_date', 9999);
-      }
+      return await filterInContext('Produto', {}, '-created_date', 9999);
     },
     refetchInterval,
     staleTime: 120000,
@@ -307,18 +241,7 @@ export default function Dashboard() {
     queryKey: ['clientes', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      const filtro = getFiltroContexto('empresa_id', true);
-      try {
-        const { data } = await base44.functions.invoke('entityListSorted', {
-          entityName: 'Cliente',
-          filter: filtro,
-          order: '-created_date',
-          limit: 9999
-        });
-        return Array.isArray(data?.items) ? data.items : (data || []);
-      } catch {
-        return await filterInContext('Cliente', {}, '-created_date', 9999);
-      }
+      return await filterInContext('Cliente', {}, '-created_date', 9999);
     },
     refetchInterval,
     staleTime: 120000,
@@ -372,18 +295,7 @@ export default function Dashboard() {
     queryKey: ['ordensProducao', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      const filtro = getFiltroContexto('empresa_id', true);
-      try {
-        const { data } = await base44.functions.invoke('entityListSorted', {
-          entityName: 'OrdemProducao',
-          filter: filtro,
-          order: '-data_emissao',
-          limit: 9999
-        });
-        return Array.isArray(data?.items) ? data.items : (data || []);
-      } catch {
-        return await filterInContext('OrdemProducao', {}, '-data_emissao', 9999);
-      }
+      return await filterInContext('OrdemProducao', {}, '-data_emissao', 9999);
     },
     refetchInterval,
     staleTime: 120000,
