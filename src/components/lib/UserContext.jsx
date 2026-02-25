@@ -59,7 +59,8 @@ export function UserProvider({ children }) {
 export function useUser() {
   const context = useContext(UserContext);
   if (!context) {
-    throw new Error("useUser deve ser usado dentro de um UserProvider");
+    // Fallback seguro: evita crash antes do provider montar
+    return { user: null, isLoading: true, error: null, refreshUser: async () => {} };
   }
   return context;
 }
