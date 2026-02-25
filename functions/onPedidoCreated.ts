@@ -45,22 +45,6 @@ Deno.serve(async (req) => {
       // Notificação leve via helper centralizado (multiempresa)
       await emitPedidoMovementsGenerated(base44, { pedido: dataEnriched, movimentos, validation: null });
 
-      // Notificação proativa: novo pedido criado (cliente/admin via WhatsApp)
-      try {
-        const internal_token = Deno.env.get('DEPLOY_AUDIT_TOKEN') || '';
-        const empresaId = dataEnriched?.empresa_id || null;
-        const groupId = dataEnriched?.group_id || null;
-        const vars = {
-          cliente: dataEnriched?.cliente_nome || '',
-          pedido: dataEnriched?.numero_pedido || dataEnriched?.id || '',
-          valor: Number(dataEnriched?.valor_total || 0).toFixed(2)
-        };
-        await base44.asServiceRole.functions.invoke('whatsappSend', {
-          action: 'sendText', empresaId, groupId, pedidoId: dataEnriched?.id,
-          templateKey: 'pedido_novo', vars, internal_token
-        });
-      } catch (_) {}
-
       // API-First: webhook e-commerce (create)
       try {
         const empresaId = dataEnriched?.empresa_id || null;

@@ -1,26 +1,12 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { UserProvider } from "@/components/lib/UserContext";
-import { WindowProvider } from "@/components/lib/WindowManager";
-import WindowRenderer from "@/components/lib/WindowRenderer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronDown, LogOut } from "lucide-react";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      retry: 1,
-      refetchOnWindowFocus: false,
-      onError: (error) => {
-        try { base44.analytics.track({ eventName: 'react_query_error', properties: { success: false } }); } catch (_) {}
-      }
-    }
-  }
-});
+const queryClient = new QueryClient();
 
 const MultiempresaContext = createContext({ empresaId: null, setEmpresaId: () => {}, user: null, rbac: { has: () => true } });
 export const useMultiempresa = () => useContext(MultiempresaContext);
@@ -106,17 +92,12 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <UserProvider>
-        <MultiempresaContext.Provider value={ctxValue}>
-          <WindowProvider>
+      <MultiempresaContext.Provider value={ctxValue}>
         <div className="w-full h-full min-h-screen bg-muted/20">
           <HeaderBar empresas={empresas} empresaId={empresaId} setEmpresaId={setEmpresaId} user={user} />
           <div className="w-full h-[calc(100vh-56px)] overflow-auto p-4">{children}</div>
-              <WindowRenderer />
         </div>
-      </WindowProvider>
-        </MultiempresaContext.Provider>
-      </UserProvider>
+      </MultiempresaContext.Provider>
     </QueryClientProvider>
   );
 }
