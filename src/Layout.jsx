@@ -1,13 +1,23 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { UserProvider } from "@/components/lib/UserContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronDown, LogOut } from "lucide-react";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+      onError: (error) => {
+        try { base44.analytics.track({ eventName: 'react_query_error', properties: { success: false } }); } catch (_) {}
+      }
+    }
+  }
+});
 
 const MultiempresaContext = createContext({ empresaId: null, setEmpresaId: () => {}, user: null, rbac: { has: () => true } });
 export const useMultiempresa = () => useContext(MultiempresaContext);
@@ -93,14 +103,12 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <UserProvider>
-        <MultiempresaContext.Provider value={ctxValue}>
+      <MultiempresaContext.Provider value={ctxValue}>
         <div className="w-full h-full min-h-screen bg-muted/20">
           <HeaderBar empresas={empresas} empresaId={empresaId} setEmpresaId={setEmpresaId} user={user} />
           <div className="w-full h-[calc(100vh-56px)] overflow-auto p-4">{children}</div>
         </div>
       </MultiempresaContext.Provider>
-      </UserProvider>
     </QueryClientProvider>
   );
 }
