@@ -590,6 +590,8 @@ function LayoutContent({ children, currentPageName }) {
       try {
         if (grupoAtual?.id) scope.group_id = grupoAtual.id;
         if (contexto !== 'grupo' && empresaAtual?.id) scope.empresa_id = empresaAtual.id;
+        // Strict scope: mark blocked when no empresa in empresa-context
+        if (contexto !== 'grupo' && !empresaAtual?.id) scope.__blocked = true;
       } catch (_) {}
       return scope;
     };
@@ -723,17 +725,19 @@ function LayoutContent({ children, currentPageName }) {
         };
       }
 
-      // Multiempresa em list/filter por padrão para não-admins
-      if (orig.filter) {
+      // Multiempresa em list/filter por padrão + STRICT empresa_id
       api.filter = async (criteria = {}, order, limit, skip) => {
+        if (contexto !== 'grupo' && !empresaAtual?.id) { return []; }
+        const scope = getScope();
         const hasScope = !!criteria?.empresa_id || !!criteria?.group_id;
-        const merged = (!hasScope) ? { ...criteria, ...getScope() } : criteria;
+        const merged = (!hasScope) ? { ...criteria, ...scope } : criteria;
         return await orig.filter(merged, order, limit, skip);
       };
       }
 
       if (orig.list) {
         api.list = async (order, limit, skip) => {
+          if (contexto !== 'grupo' && !empresaAtual?.id) { return []; }
           if (orig.filter) {
             return await orig.filter(getScope(), order, limit, skip);
           }
@@ -748,7 +752,7 @@ function LayoutContent({ children, currentPageName }) {
       Object.keys(base44.entities).forEach((name) => wrapEntity(base44.entities[name], name));
     } catch (_) {}
 
-    // Phase 4: RBAC + Auditoria também para chamadas de funções backend
+    // Phase 4: RBAC + Auditoria + Strict empresa scope para chamadas de funções backend
     try {
       if (base44?.functions && base44.functions.invoke && base44.functions.__wrappedPhase4 !== true) {
         const origInvoke = base44.functions.invoke.bind(base44.functions);
@@ -1185,6 +1189,11 @@ function LayoutContent({ children, currentPageName }) {
               {isOffline && (
               <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
                 Modo offline: exibindo dados em cache (última sincronização). Algumas ações podem não estar disponíveis.
+              </div>
+              )}
+              {(!empresaAtual?.id && contexto !== 'grupo') && (
+              <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
+                Selecione uma empresa para carregar os dados. O acesso está bloqueado sem empresa selecionada.
               </div>
               )}
               {!integracoesOk && hasPermission('Sistema', null, 'ver') && (
