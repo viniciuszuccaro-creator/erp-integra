@@ -96,6 +96,7 @@ export default function Layout({ children, currentPageName }) {
         <div className="w-full h-full min-h-screen bg-muted/20">
           <HeaderBar empresas={empresas} empresaId={empresaId} setEmpresaId={setEmpresaId} user={user} />
           <div className="w-full h-[calc(100vh-56px)] overflow-auto p-4">{children}</div>
+              <WindowRenderer />
         </div>
       </MultiempresaContext.Provider>
     </QueryClientProvider>
