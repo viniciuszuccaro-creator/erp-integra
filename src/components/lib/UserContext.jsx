@@ -59,11 +59,7 @@ export function UserProvider({ children }) {
 export function useUser() {
   const context = useContext(UserContext);
   if (!context) {
-    if (typeof window !== 'undefined' && !window.__user_ctx_warned) {
-      try { console.warn('useUser chamado fora de UserProvider - retornando fallback'); } catch (_) {}
-      window.__user_ctx_warned = true;
-    }
-    return { user: null, isLoading: true, error: null, refreshUser: async () => {} };
+    throw new Error("useUser deve ser usado dentro de um UserProvider");
   }
   return context;
 }
