@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Settings, Users, Shield, FileText, Sparkles, Link2 } from "lucide-react";
 import ModuleLayout from "@/components/layout/ModuleLayout";
 import ModuleContent from "@/components/layout/ModuleContent";
@@ -27,6 +29,7 @@ export default function AdministracaoSistema() {
   const { isAdmin } = usePermissions();
   const params = new URLSearchParams(window.location.search);
   const initialTab = params.get('tab') || 'gerais';
+  const { empresaAtual, grupoAtual } = useContextoVisual();
 
   return (
     <ProtectedSection module="Sistema" action="visualizar">
@@ -70,6 +73,28 @@ export default function AdministracaoSistema() {
             <ProtectedSection module="Sistema" section={["Configurações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Configurações.</div>}>
               <div className="w-full h-full">
                 <ConfiguracoesGeraisIndex initialTab="global" />
+                <div className="mt-4">
+                  <div className="flex items-center justify-between bg-white/80 border rounded-lg p-4">
+                    <div>
+                      <div className="font-medium text-slate-900">Seed leve de dados (smoke test)</div>
+                      <div className="text-xs text-slate-500">Cria alguns clientes, produtos e colaboradores com multiempresa atual.</div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        const payload = {
+                          counts: { clientes: 5, produtos: 10, colaboradores: 5 },
+                          group_id: grupoAtual?.id || null,
+                          empresa_id: empresaAtual?.id || null,
+                        };
+                        const res = await base44.functions.invoke('seedData', payload);
+                        console.log('seedData:', res?.data);
+                      }}
+                    >
+                      Executar seed leve
+                    </Button>
+                  </div>
+                </div>
               </div>
             </ProtectedSection>
           </TabsContent>
