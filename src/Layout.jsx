@@ -726,13 +726,14 @@ function LayoutContent({ children, currentPageName }) {
       }
 
       // Multiempresa em list/filter por padrão + STRICT empresa_id
-      api.filter = async (criteria = {}, order, limit, skip) => {
-        if (contexto !== 'grupo' && !empresaAtual?.id) { return []; }
-        const scope = getScope();
-        const hasScope = !!criteria?.empresa_id || !!criteria?.group_id;
-        const merged = (!hasScope) ? { ...criteria, ...scope } : criteria;
-        return await orig.filter(merged, order, limit, skip);
-      };
+      if (orig.filter) {
+        api.filter = async (criteria = {}, order, limit, skip) => {
+          if (contexto !== 'grupo' && !empresaAtual?.id) { return []; }
+          const scope = getScope();
+          const hasScope = !!criteria?.empresa_id || !!criteria?.group_id;
+          const merged = (!hasScope) ? { ...criteria, ...scope } : criteria;
+          return await orig.filter(merged, order, limit, skip);
+        };
       }
 
       if (orig.list) {
