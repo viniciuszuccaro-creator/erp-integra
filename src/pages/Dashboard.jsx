@@ -400,6 +400,7 @@ export default function Dashboard() {
   const nfAutorizadas = (notasFiscais || []).filter(n => n?.status === 'Autorizada').length;
 
   const { data: cobrancas = [] } = useQuery({
+    enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo),
     queryKey: ['cobrancas', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
