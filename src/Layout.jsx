@@ -853,9 +853,24 @@ function LayoutContent({ children, currentPageName }) {
               }
             }
           };
+          const startedAt = Date.now();
           const p = exec().finally(() => base44.functions.__inflight.delete(key));
           base44.functions.__inflight.set(key, p);
           const result = await p;
+
+          // Telemetria de latência (auditoria de performance > 1500ms)
+          try {
+            const dur = Date.now() - startedAt;
+            if (dur > 1500) {
+              await base44.entities.AuditLog.create({
+                acao: 'Visualização', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema',
+                entidade: 'FunctionLatency', descricao: `Função ${functionName} lenta (${dur}ms)`,
+                empresa_id: empresaAtual?.id || null,
+                data_hora: new Date().toISOString(),
+                duracao_ms: dur,
+              });
+            }
+          } catch (_) {}
 
           // Auditoria (throttle 3s)
           try {
@@ -876,6 +891,7 @@ function LayoutContent({ children, currentPageName }) {
         };
 
         base44.functions.__wrappedPhase4 = true;
+        // Nota: performance logs visíveis em Auditoria > Logs; usar este sinal para detectar gargalos.
       }
     } catch (_) {}
     }, [user?.id, empresaAtual?.id, grupoAtual?.id, contexto]);
