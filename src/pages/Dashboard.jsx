@@ -148,6 +148,7 @@ export default function Dashboard() {
   });
 
   const { data: contasReceber = [] } = useQuery({
+    enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo),
     queryKey: ['contasReceber', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
@@ -171,6 +172,7 @@ export default function Dashboard() {
   });
 
   const { data: contasPagar = [] } = useQuery({
+    enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo),
     queryKey: ['contasPagar', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
@@ -194,6 +196,7 @@ export default function Dashboard() {
   });
 
   const { data: entregas = [] } = useQuery({
+    enabled: canSeeExpedicao && (empresaAtual?.id || estaNoGrupo),
     queryKey: ['entregas', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
@@ -217,6 +220,7 @@ export default function Dashboard() {
   });
 
   const { data: colaboradores = [] } = useQuery({
+    enabled: canSeeRH && (empresaAtual?.id || estaNoGrupo),
     queryKey: ['colaboradores', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
@@ -240,6 +244,7 @@ export default function Dashboard() {
   });
 
   const { data: produtos = [] } = useQuery({
+    enabled: canSeeEstoque && (empresaAtual?.id || estaNoGrupo),
     queryKey: ['produtos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
