@@ -374,9 +374,11 @@ Deno.serve(async (req) => {
         if (cfg?.finance?.alerts?.whatsapp?.enabled && cfg.finance.alerts.whatsapp.to) {
           const msg = `Financeiro: ${issues.length} anomalia(s). Alta:${resumoSeveridade.alto || 0} • Média:${resumoSeveridade.medio || 0} • Baixa:${resumoSeveridade.baixo || 0}.`;
           await base44.asServiceRole.functions.invoke('whatsappSend', {
-            to: cfg.finance.alerts.whatsapp.to,
-            message: msg,
-            empresa_id: alvoEmpresaId || null,
+            action: 'sendText',
+            numero: cfg.finance.alerts.whatsapp.to,
+            mensagem: msg,
+            empresaId: alvoEmpresaId || null,
+            groupId: filtros?.group_id || null,
           });
         }
       } catch (_) {}
