@@ -148,6 +148,7 @@ Deno.serve(async (req) => {
       const v = vars || {};
       const defaults = {
           pedido_em_transito: `Olá ${v.cliente || ''}! Seu pedido ${v.pedido || pedidoId || ''} está em trânsito. Previsão: ${v.data_prevista || ''}. ${v.rastreio ? 'Rastreamento: ' + v.rastreio : ''}`.trim(),
+          pedido_criado: `Olá ${v.cliente || ''}! Recebemos seu pedido ${v.pedido || pedidoId || ''} no valor de R$ ${v.valor_total ?? ''}. Em breve enviaremos atualizações.`.trim(),
           estoque_baixo: `Alerta: estoque baixo para ${v.produto || ''}. Disponível: ${v.disponivel ?? ''}, mínimo: ${v.minimo ?? ''}`.trim(),
           otp: `Seu código de verificação é: ${v.codigo || ''}. Válido por 5 minutos.`.trim(),
         };
