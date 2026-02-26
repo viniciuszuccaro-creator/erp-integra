@@ -843,8 +843,8 @@ function LayoutContent({ children, currentPageName }) {
                 return await origInvoke(functionName, params);
               } catch (err) {
                 const status = err?.response?.status || err?.status;
-                if ((status === 429 || status === 500) && attempt < 2) {
-                  const delay = (500 + Math.floor(Math.random() * 500)) * (attempt + 1);
+                if (((status === 429) || (typeof status === 'number' && status >= 500)) && attempt < 2) {
+                  const delay = (600 + Math.floor(Math.random() * 600)) * (attempt + 1);
                   await new Promise(r => setTimeout(r, delay));
                   attempt++;
                   continue;
