@@ -268,6 +268,7 @@ export default function Dashboard() {
   });
 
   const { data: totalProdutos = 0 } = useQuery({
+    enabled: !!(empresaAtual?.id || estaNoGrupo) && canSeeEstoque,
     queryKey: ['produtos-count-dash', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
@@ -287,6 +288,7 @@ export default function Dashboard() {
   });
 
   const { data: clientes = [] } = useQuery({
+    enabled: canSeeCRM && (empresaAtual?.id || estaNoGrupo),
     queryKey: ['clientes', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
@@ -310,6 +312,7 @@ export default function Dashboard() {
   });
 
   const { data: totalClientes = 0 } = useQuery({
+    enabled: !!(empresaAtual?.id || estaNoGrupo) && canSeeCRM,
     queryKey: ['clientes-count', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
@@ -348,6 +351,7 @@ export default function Dashboard() {
   });
 
   const { data: ordensProducao = [] } = useQuery({
+    enabled: canSeeProducao && (empresaAtual?.id || estaNoGrupo),
     queryKey: ['ordensProducao', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
@@ -371,6 +375,7 @@ export default function Dashboard() {
   });
 
   const { data: notasFiscais = [] } = useQuery({
+    enabled: (canSeeFinanceiro || hasPermission('Fiscal', null, 'ver') || canSeeComercial) && (empresaAtual?.id || estaNoGrupo),
     queryKey: ['notasFiscais', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
