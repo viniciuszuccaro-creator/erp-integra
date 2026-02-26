@@ -863,9 +863,12 @@ function LayoutContent({ children, currentPageName }) {
             const dur = Date.now() - startedAt;
             if (dur > 1500) {
               await base44.entities.AuditLog.create({
+                usuario: user?.full_name || user?.email || 'Usuário',
+                usuario_id: user?.id,
                 acao: 'Visualização', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema',
                 entidade: 'FunctionLatency', descricao: `Função ${functionName} lenta (${dur}ms)`,
                 empresa_id: empresaAtual?.id || null,
+                group_id: grupoAtual?.id || null,
                 data_hora: new Date().toISOString(),
                 duracao_ms: dur,
               });
