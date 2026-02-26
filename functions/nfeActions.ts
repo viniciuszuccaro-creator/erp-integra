@@ -14,15 +14,33 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { action = 'emitir', nfe, empresaId, nfeId, justificativa, correcao } = body || {};
 
-    const denied = await assertPermission(base44, { user, perfil }, 'Fiscal', 'NF-e', action);
-    if (denied) return denied;
+        const denied = await assertPermission(base44, { user, perfil }, 'Fiscal', 'NF-e', action);
+        if (denied) return denied;
 
-    const ctxErr = assertContextPresence({ empresa_id: empresaId }, true);
-    if (ctxErr) return ctxErr;
-    const ctxData = await ensureContextFields(base44, { empresa_id: empresaId }, true);
+        // Política: Emissão no GRUPO bloqueada; tentar redirecionar automaticamente para a EMPRESA
+        let empresaIdResolved = empresaId || null;
+        if (!empresaIdResolved) {
+          try { empresaIdResolved = nfe?.empresa_faturamento_id || nfe?.empresa_id || null; } catch (_) {}
+          if (!empresaIdResolved && nfe?.pedido_id) {
+            try { const ped = await base44.asServiceRole.entities.Pedido.get(nfe.pedido_id); empresaIdResolved = ped?.empresa_id || ped?.empresa_faturamento_id || null; } catch (_) {}
+          }
+          if (!empresaIdResolved && nfeId) {
+            try {
+              const nota = await base44.asServiceRole.entities.NotaFiscal.get(nfeId);
+              empresaIdResolved = nota?.empresa_faturamento_id || nota?.empresa_origem_id || nota?.empresa_id || null;
+            } catch (_) {}
+          }
+        }
+        if (!empresaIdResolved) {
+          return Response.json({ error: 'Emissão NF-e no GRUPO bloqueada. Selecione uma EMPRESA ou inicie pela empresa do pedido/nota.' }, { status: 400 });
+        }
 
-    // Carrega config fiscal com service role (refatorado)
-    const { config, integracao } = await getFiscalConfig(base44, empresaId);
+        const ctxErr = assertContextPresence({ empresa_id: empresaIdResolvedResolved }, true);
+        if (ctxErr) return ctxErr;
+        const ctxData = await ensureContextFields(base44, { empresa_id: empresaIdResolvedResolved }, true);
+
+        // Carrega config fiscal com service role (refatorado)
+        const { config, integracao } = await getFiscalConfig(base44, empresaIdResolved);
 
     if (!integracao || integracao.ativa === false) {
       if (action === 'emitir') {
@@ -62,7 +80,7 @@ Deno.serve(async (req) => {
             await base44.asServiceRole.entities.NotaFiscal.update(nfe.id, patch);
           }
         } catch (_) {}
-        await audit(base44, user, { acao: 'Criação', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfe?.id || null, descricao: `NF-e ${action}`, dados_novos: { res }, empresa_id: empresaId });
+        await audit(base44, user, { acao: 'Criação', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfe?.id || null, descricao: `NF-e ${action}`, dados_novos: { res }, empresa_id: empresaIdResolved });
         return Response.json({ ...res, modo: 'real' });
       }
       if (action === 'status') {
@@ -80,21 +98,21 @@ Deno.serve(async (req) => {
             await base44.asServiceRole.entities.NotaFiscal.update(nfeId, patch);
           }
         } catch (_) {}
-        await audit(base44, user, { acao: 'Visualização', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Consulta status NF-e', empresa_id: empresaId });
+        await audit(base44, user, { acao: 'Visualização', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Consulta status NF-e', empresa_id: empresaIdResolved });
         return Response.json(res);
       }
       if (action === 'cancelar') {
         const r = await fetch(`https://api.enotas.com.br/v2/empresas/${integracao.empresa_id_provedor}/nfes/${nfeId}/cancelamento`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Basic ${btoa(integracao.api_key + ':')}` }, body: JSON.stringify({ motivo: justificativa || 'Cancelado pelo sistema' }) });
         if (!r.ok) throw new Error(await r.text());
         const j = await r.json();
-        await audit(base44, user, { acao: 'Cancelamento', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Cancelamento NF-e', dados_novos: { justificativa }, empresa_id: empresaId });
+        await audit(base44, user, { acao: 'Cancelamento', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Cancelamento NF-e', dados_novos: { justificativa }, empresa_id: empresaIdResolved });
         return Response.json({ sucesso: true, protocolo: j.protocolo });
       }
       if (action === 'carta') {
         const r = await fetch(`https://api.enotas.com.br/v2/empresas/${integracao.empresa_id_provedor}/nfes/${nfeId}/cartaCorrecao`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Basic ${btoa(integracao.api_key + ':')}` }, body: JSON.stringify({ correcao: correcao || '' }) });
         if (!r.ok) throw new Error(await r.text());
         const j = await r.json();
-        await audit(base44, user, { acao: 'Edição', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Carta de Correção (eNotas)', dados_novos: { correcao }, empresa_id: empresaId });
+        await audit(base44, user, { acao: 'Edição', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Carta de Correção (eNotas)', dados_novos: { correcao }, empresa_id: empresaIdResolved });
         return Response.json({ sucesso: true, protocolo: j.protocolo });
       }
     }
@@ -123,7 +141,7 @@ Deno.serve(async (req) => {
             await base44.asServiceRole.entities.NotaFiscal.update(nfe.id, patch);
           }
         } catch (_) {}
-        await audit(base44, user, { acao: 'Criação', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfe?.id || null, descricao: `NF-e ${action} (NFe.io)`, dados_novos: { j }, empresa_id: empresaId });
+        await audit(base44, user, { acao: 'Criação', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfe?.id || null, descricao: `NF-e ${action} (NFe.io)`, dados_novos: { j }, empresa_id: empresaIdResolved });
         return Response.json({ ...j, modo: 'real' });
       }
 
@@ -131,7 +149,7 @@ Deno.serve(async (req) => {
         const r = await fetch(`${base}/nfe/${nfeId}`, { headers });
         if (!r.ok) throw new Error(await r.text());
         const j = await r.json();
-        await audit(base44, user, { acao: 'Visualização', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Consulta status NF-e (NFe.io)', empresa_id: empresaId });
+        await audit(base44, user, { acao: 'Visualização', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Consulta status NF-e (NFe.io)', empresa_id: empresaIdResolved });
         return Response.json(j);
       }
 
@@ -139,7 +157,7 @@ Deno.serve(async (req) => {
         const r = await fetch(`${base}/nfe/${nfeId}/cancel`, { method: 'POST', headers, body: JSON.stringify({ reason: justificativa || 'Cancelado pelo sistema' }) });
         if (!r.ok) throw new Error(await r.text());
         const j = await r.json();
-        await audit(base44, user, { acao: 'Cancelamento', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Cancelamento NF-e (NFe.io)', dados_novos: { justificativa }, empresa_id: empresaId });
+        await audit(base44, user, { acao: 'Cancelamento', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Cancelamento NF-e (NFe.io)', dados_novos: { justificativa }, empresa_id: empresaIdResolved });
         return Response.json({ sucesso: true, protocolo: j?.protocol || j?.protocolo || null });
       }
 
@@ -147,7 +165,7 @@ Deno.serve(async (req) => {
         const r = await fetch(`${base}/nfe/${nfeId}/correction`, { method: 'POST', headers, body: JSON.stringify({ correction: correcao || '' }) });
         if (!r.ok) throw new Error(await r.text());
         const j = await r.json();
-        await audit(base44, user, { acao: 'Edição', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Carta de Correção (NFe.io)', dados_novos: { correcao }, empresa_id: empresaId });
+        await audit(base44, user, { acao: 'Edição', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Carta de Correção (NFe.io)', dados_novos: { correcao }, empresa_id: empresaIdResolved });
         return Response.json({ sucesso: true, protocolo: j?.protocol || j?.protocolo || null });
       }
     }
