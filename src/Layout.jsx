@@ -565,12 +565,31 @@ function LayoutContent({ children, currentPageName }) {
               } catch (_) { /* silencioso: se não puder atualizar, seguimos */ }
             }
           }
+
+          // Invalidação de queries relacionadas ao evento (sync frontend↔backend)
+          try {
+            const map = {
+              Pedido: [['pedidos']],
+              ContaReceber: [['contasReceber'], ['cobrancas']],
+              ContaPagar: [['contasPagar']],
+              Entrega: [['entregas']],
+              Colaborador: [['colaboradores']],
+              Produto: [['produtos'], ['produtos-count-dash']],
+              Cliente: [['clientes'], ['clientes-count']],
+              OrdemProducao: [['ordensProducao']],
+              NotaFiscal: [['notasFiscais']],
+            };
+            (map[name] || []).forEach((qk) => {
+              try { queryClient.invalidateQueries({ queryKey: qk }); } catch (_) {}
+            });
+          } catch (_) {}
+
         } catch (e) { /* auditoria nunca deve quebrar a UI */ }
       });
     }).filter(Boolean);
 
     return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
-  }, [user?.id, empresaAtual?.id]);
+  }, [user?.id, empresaAtual?.id, queryClient]);
 
   // Global Phase 4 patch: multiempresa stamping + audit on entity writes
   useEffect(() => {
