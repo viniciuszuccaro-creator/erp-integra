@@ -124,6 +124,7 @@ export default function Dashboard() {
   const refetchInterval = (activeTab === 'resumo' && autoRefresh) ? 60000 : false; // 60 segundos
 
   const { data: pedidos = [] } = useQuery({
+    enabled: canSeeComercial && (empresaAtual?.id || estaNoGrupo),
     queryKey: ['pedidos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
