@@ -142,12 +142,16 @@ Deno.serve(async (req) => {
     if (action === 'lembretes_cobranca' && (trustedInternal || !user)) {
       const empresaIdIn = body.empresa_id || null;
       const groupIdIn = body.group_id || null;
-      const empresas = [];
+      let empresas = [];
       if (groupIdIn) {
-        const emps = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupIdIn }, undefined, 200);
-        (emps || []).forEach(e => empresas.push(e.id));
+        const emps = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupIdIn }, undefined, 500);
+        empresas = (emps || []).map(e => e.id);
       } else if (empresaIdIn) {
-        empresas.push(empresaIdIn);
+        empresas = [empresaIdIn];
+      } else {
+        // Sem escopo explícito: varre todas as empresas (multiempresa absoluta)
+        const empsAll = await base44.asServiceRole.entities.Empresa.filter({}, undefined, 500);
+        empresas = (empsAll || []).map(e => e.id);
       }
       let enviados = 0;
       const onlyDate = (d) => new Date(new Date(d).toISOString().slice(0,10));
