@@ -108,6 +108,70 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { entity, id, ids, action, justificativa, pagamento: pagamentoIn, conciliacao } = body || {};
+    const internalToken = body?.internal_token || req.headers.get('x-internal-token') || null;
+    const trustedInternal = !!(internalToken && Deno.env.get('DEPLOY_AUDIT_TOKEN') && internalToken === Deno.env.get('DEPLOY_AUDIT_TOKEN'));
+
+    // Automação por evento (Entity Automation): lembretes de cobrança ao criar/atualizar CR perto do vencimento
+    if (body?.event?.entity_name === 'ContaReceber' && (body.event.type === 'create' || body.event.type === 'update') && body?.data) {
+      const cr = body.data;
+      const empresaId = cr.empresa_id || null;
+      const groupId = cr.group_id || null;
+      const status = String(cr.status || '').toLowerCase();
+      if (!empresaId || !cr.data_vencimento || !['pendente','atrasado','parcial'].includes(status)) {
+        return Response.json({ ok: true, skipped: true });
+      }
+      const onlyDate = (d) => new Date(new Date(d).toISOString().slice(0,10));
+      const diffDays = Math.floor((onlyDate(cr.data_vencimento).getTime() - onlyDate(new Date()).getTime()) / (1000*60*60*24));
+      if (![3,0,-3].includes(diffDays)) {
+        return Response.json({ ok: true, skipped: true, diffDays });
+      }
+      const valorFmt = Number(cr.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+      let mensagem = '';
+      if (diffDays === 3) mensagem = `Lembrete: sua cobrança ${cr.numero_documento || cr.id} vence em 3 dias (R$ ${valorFmt}).`;
+      if (diffDays === 0) mensagem = `Hoje vence sua cobrança ${cr.numero_documento || cr.id} (R$ ${valorFmt}).`;
+      if (diffDays === -3) mensagem = `Aviso: sua cobrança ${cr.numero_documento || cr.id} venceu há 3 dias (R$ ${valorFmt}).`;
+      try {
+        await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId, clienteId: cr.cliente_id || null, mensagem, internal_token: Deno.env.get('DEPLOY_AUDIT_TOKEN') || '' });
+        await audit(base44, { id: 'Service' }, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: cr.id, descricao: 'Lembrete de cobrança enviado (automação)', empresa_id: empresaId, group_id: groupId, dados_novos: { diffDays } });
+      } catch (_) {}
+      return Response.json({ ok: true, reminder: true, diffDays });
+    }
+
+    // Execução agendada/service: varredura de CR e envio de lembretes (requer internal_token)
+    if (action === 'lembretes_cobranca' && trustedInternal) {
+      const empresaIdIn = body.empresa_id || null;
+      const groupIdIn = body.group_id || null;
+      const empresas = [];
+      if (groupIdIn) {
+        const emps = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupIdIn }, undefined, 200);
+        (emps || []).forEach(e => empresas.push(e.id));
+      } else if (empresaIdIn) {
+        empresas.push(empresaIdIn);
+      }
+      let enviados = 0;
+      const onlyDate = (d) => new Date(new Date(d).toISOString().slice(0,10));
+      for (const eid of empresas) {
+        const lista = await base44.asServiceRole.entities.ContaReceber.filter({ empresa_id: eid }, '-data_vencimento', 1000);
+        for (const r of (lista || [])) {
+          const st = String(r.status || '').toLowerCase();
+          if (!r.data_vencimento || !['pendente','atrasado','parcial'].includes(st)) continue;
+          const diff = Math.floor((onlyDate(r.data_vencimento).getTime() - onlyDate(new Date()).getTime()) / (1000*60*60*24));
+          if (![3,0,-3].includes(diff)) continue;
+          const valorFmt = Number(r.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+          let msg = '';
+          if (diff === 3) msg = `Lembrete: sua cobrança ${r.numero_documento || r.id} vence em 3 dias (R$ ${valorFmt}).`;
+          if (diff === 0) msg = `Hoje vence sua cobrança ${r.numero_documento || r.id} (R$ ${valorFmt}).`;
+          if (diff === -3) msg = `Aviso: sua cobrança ${r.numero_documento || r.id} venceu há 3 dias (R$ ${valorFmt}).`;
+          try {
+            await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: eid, groupId: groupIdIn || r.group_id || null, clienteId: r.cliente_id || null, mensagem: msg, internal_token: Deno.env.get('DEPLOY_AUDIT_TOKEN') || '' });
+            await audit(base44, { id: 'Service' }, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: r.id, descricao: 'Lembrete de cobrança enviado (varredura)', empresa_id: eid, group_id: groupIdIn || r.group_id || null, dados_novos: { diffDays: diff } });
+            enviados++;
+          } catch (_) {}
+        }
+      }
+      return Response.json({ ok: true, enviados });
+    }
+
     if (action === 'conciliar_extrato') {
       // validaremos adiante
     } else if (!['ContaPagar','ContaReceber'].includes(entity) || (!id && (!ids || !Array.isArray(ids) || ids.length === 0))) {
