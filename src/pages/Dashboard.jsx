@@ -818,7 +818,7 @@ export default function Dashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-indigo-600" />
-                  Previsões de Estoque (14 dias)
+                  Previsões de Estoque (30 dias)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -826,7 +826,7 @@ export default function Dashboard() {
                   <div className="h-10 rounded-md bg-slate-100 animate-pulse" />
                 ) : (
                   (() => {
-                    const preds = (previsoesIA?.previsoes || [])
+                    const preds = (previsoesIA30?.previsoes || [])
                       .filter(p => p.risco_ruptura && p.risco_ruptura !== 'baixo')
                       .sort((a, b) => (a.dias_cobertura ?? 999) - (b.dias_cobertura ?? 999))
                       .slice(0, 8);
