@@ -107,6 +107,7 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
+    if (!user && !body?.action) body.action = 'lembretes_cobranca';
     const { entity, id, ids, action, justificativa, pagamento: pagamentoIn, conciliacao } = body || {};
     const internalToken = body?.internal_token || req.headers.get('x-internal-token') || null;
     const trustedInternal = !!(internalToken && Deno.env.get('DEPLOY_AUDIT_TOKEN') && internalToken === Deno.env.get('DEPLOY_AUDIT_TOKEN'));
