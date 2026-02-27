@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
     }
 
     // Execução agendada/service: varredura de CR e envio de lembretes (requer internal_token)
-    if (action === 'lembretes_cobranca' && trustedInternal) {
+    if (action === 'lembretes_cobranca' && (trustedInternal || !user)) {
       const empresaIdIn = body.empresa_id || null;
       const groupIdIn = body.group_id || null;
       const empresas = [];
