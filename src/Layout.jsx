@@ -322,8 +322,8 @@ function LayoutContent({ children, currentPageName }) {
         background_color: '#0f172a',
         theme_color: '#0f172a',
         icons: [
-          { src: 'https://base44.com/logo_v2.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
-          { src: 'https://base44.com/logo_v2.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any' }
+          { src: 'https://base44.com/logo_v2.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+          { src: 'https://base44.com/logo_v2.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
         ]
       };
       const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
@@ -339,6 +339,17 @@ function LayoutContent({ children, currentPageName }) {
       themeMeta.setAttribute('name', 'theme-color');
       themeMeta.setAttribute('content', '#0f172a');
       if (!themeMeta.parentElement) document.head.appendChild(themeMeta);
+
+      // Apple PWA meta/icons
+      const appleMeta = document.querySelector('meta[name="apple-mobile-web-app-capable"]') || document.createElement('meta');
+      appleMeta.setAttribute('name', 'apple-mobile-web-app-capable');
+      appleMeta.setAttribute('content', 'yes');
+      if (!appleMeta.parentElement) document.head.appendChild(appleMeta);
+
+      const appleIcon = document.querySelector('link[rel="apple-touch-icon"]') || document.createElement('link');
+      appleIcon.setAttribute('rel', 'apple-touch-icon');
+      appleIcon.setAttribute('href', 'https://base44.com/logo_v2.svg');
+      if (!appleIcon.parentElement) document.head.appendChild(appleIcon);
     } catch (_) {}
 
     // Registrar service worker se houver arquivo estático em /sw.js (ignora erros)
@@ -1004,6 +1015,75 @@ function LayoutContent({ children, currentPageName }) {
         const isMobilePage = currentPageName === "ProducaoMobile";
 
 
+
+  // Idle prefetch common datasets (multiempresa-aware)
+  useEffect(() => {
+    const can = (contexto === 'grupo') || !!empresaAtual?.id;
+    if (!can) return;
+    const run = () => {
+      try {
+        if (hasPermission('Comercial', null, 'ver')) {
+          queryClient.prefetchQuery({ queryKey: ['pedidos', empresaAtual?.id, grupoAtual?.id, contexto], queryFn: () => filterInContext('Pedido', {}, '-updated_date', 20) });
+        }
+        if (hasPermission('Financeiro', null, 'ver')) {
+          queryClient.prefetchQuery({ queryKey: ['contasReceber', empresaAtual?.id, grupoAtual?.id, contexto], queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 20) });
+        }
+        if (hasPermission('Estoque', null, 'ver')) {
+          queryClient.prefetchQuery({ queryKey: ['produtos', empresaAtual?.id, grupoAtual?.id, contexto], queryFn: () => filterInContext('Produto', {}, '-updated_date', 20) });
+        }
+      } catch (_) {}
+    };
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(run, { timeout: 2000 });
+    } else {
+      setTimeout(run, 1500);
+    }
+  }, [empresaAtual?.id, grupoAtual?.id, contexto]);
+
+  // Performance metrics observer (audit slow LCP/long tasks)
+  useEffect(() => {
+    try {
+      const audits = [];
+      if (typeof PerformanceObserver !== 'undefined') {
+        // LCP
+        const lcpObs = new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          const entry = entries && entries.length ? entries[entries.length - 1] : null;
+          if (entry && entry.startTime > 2500) {
+            audits.push({ type: 'LCP', value: entry.startTime });
+          }
+        });
+        try { lcpObs.observe({ type: 'largest-contentful-paint', buffered: true }); } catch {}
+        // Long tasks
+        const ltObs = new PerformanceObserver((list) => {
+          const longs = list.getEntries().filter((e) => e.duration > 200);
+          if (longs.length) {
+            const max = Math.max.apply(null, longs.map((e) => e.duration));
+            audits.push({ type: 'longtask', count: longs.length, max });
+          }
+        });
+        try { ltObs.observe({ type: 'longtask', buffered: true }); } catch {}
+        // Flush once after 5s
+        setTimeout(() => {
+          if (audits.length) {
+            try { base44.entities.AuditLog.create({
+              usuario: user?.full_name || 'Usuário',
+              usuario_id: user?.id,
+              empresa_id: empresaAtual?.id || null,
+              group_id: grupoAtual?.id || null,
+              acao: 'Visualização',
+              modulo: moduleName || 'Sistema',
+              tipo_auditoria: 'sistema',
+              entidade: 'Performance',
+              descricao: 'Métricas de desempenho',
+              dados_novos: { audits },
+              data_hora: new Date().toISOString(),
+            }); } catch {}
+          }
+        }, 5000);
+      }
+    } catch (_) {}
+  }, [user?.id, empresaAtual?.id, grupoAtual?.id, moduleName]);
 
   const titleToModule = {
     "CRM - Relacionamento": "CRM",
