@@ -135,8 +135,7 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false,
-    enabled: canSeeComercial && (empresaAtual?.id || estaNoGrupo),
+    retry: false, canSeeComercial && (empresaAtual?.id || estaNoGrupo),
     initialData: []
   });
 
@@ -152,8 +151,7 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false,
-    enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo),
+    retry: false, canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo),
     initialData: []
   });
 
@@ -169,8 +167,7 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false,
-    enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo),
+    retry: false, canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo),
     initialData: []
   });
 
@@ -186,8 +183,7 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false,
-    enabled: canSeeExpedicao && (empresaAtual?.id || estaNoGrupo),
+    retry: false, canSeeExpedicao && (empresaAtual?.id || estaNoGrupo),
     initialData: []
   });
 
@@ -203,8 +199,7 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false,
-    enabled: canSeeRH && (empresaAtual?.id || estaNoGrupo),
+    retry: false, canSeeRH && (empresaAtual?.id || estaNoGrupo),
     initialData: []
   });
 
@@ -220,8 +215,7 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false,
-    enabled: canSeeEstoque && (empresaAtual?.id || estaNoGrupo),
+    retry: false, canSeeEstoque && (empresaAtual?.id || estaNoGrupo),
     initialData: []
   });
 
@@ -241,8 +235,7 @@ export default function Dashboard() {
       }
     },
     staleTime: 120000,
-    retry: 1,
-    enabled: !!(empresaAtual?.id || estaNoGrupo)
+    retry: 1, !!(empresaAtual?.id || estaNoGrupo)
   });
 
   const { data: clientes = [] } = useQuery({
@@ -257,8 +250,7 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false,
-    enabled: canSeeCRM && (empresaAtual?.id || estaNoGrupo),
+    retry: false, canSeeCRM && (empresaAtual?.id || estaNoGrupo),
     initialData: []
   });
 
@@ -278,8 +270,7 @@ export default function Dashboard() {
       }
     },
     staleTime: 120000,
-    retry: 1,
-    enabled: !!(empresaAtual?.id || estaNoGrupo)
+    retry: 1, !!(empresaAtual?.id || estaNoGrupo)
   });
 
   const { data: totalColaboradoresDash = 0 } = useQuery({
@@ -297,8 +288,7 @@ export default function Dashboard() {
       }
     },
     staleTime: 120000,
-    retry: 1,
-    enabled: !!(empresaAtual?.id || estaNoGrupo)
+    retry: 1, !!(empresaAtual?.id || estaNoGrupo)
   });
 
   const { data: ordensProducao = [] } = useQuery({
@@ -313,8 +303,7 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false,
-    enabled: canSeeProducao && (empresaAtual?.id || estaNoGrupo),
+    retry: false, canSeeProducao && (empresaAtual?.id || estaNoGrupo),
     initialData: []
   });
 
@@ -329,8 +318,7 @@ export default function Dashboard() {
     staleTime: 120000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false,
-    enabled: (canSeeFinanceiro || hasPermission('Fiscal', null, 'ver') || canSeeComercial) && (empresaAtual?.id || estaNoGrupo),
+    retry: false, (canSeeFinanceiro || hasPermission('Fiscal', null, 'ver') || canSeeComercial) && (empresaAtual?.id || estaNoGrupo),
     initialData: []
   });
 
@@ -347,8 +335,7 @@ export default function Dashboard() {
     staleTime: 120000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false,
-    enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo),
+    retry: false, canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo),
     initialData: []
   });
 

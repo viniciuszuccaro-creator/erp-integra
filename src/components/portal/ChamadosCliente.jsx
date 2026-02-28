@@ -72,7 +72,7 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
         group_id: cli?.group_id || undefined,
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['chamados', clienteId] });
       setDialogOpen(false);
       resetForm();
