@@ -356,8 +356,9 @@ export default function Comercial() {
               title="Comercial e Vendas"
               subtitle="Vendas, clientes e canais"
               actions={<div className="flex items-center gap-2">
-                <Button onClick={handleCreateNewPedido} className="bg-indigo-600 hover:bg-indigo-700">Novo Pedido</Button>
+                <Button data-permission="Comercial.Pedidos.criar" data-sensitive onClick={handleCreateNewPedido} className="bg-indigo-600 hover:bg-indigo-700">Novo Pedido</Button>
                 <Button
+                  data-permission="Comercial.Pedidos.visualizar"
                   variant="outline"
                   onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1300, height: 800 })}
                 >Validar Pedido Externo</Button>
