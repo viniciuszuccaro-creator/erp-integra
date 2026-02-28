@@ -66,6 +66,18 @@ export default function Comercial() {
   });
 
   const { data: pedidos = [] } = pedidosQuery;
+
+  // Realtime: atualiza pedidos em tempo real via subscribe (multiempresa + RBAC já aplicados no wrapper do Layout)
+  useEffect(() => {
+    if (!(empresaAtual?.id || estaNoGrupo)) return;
+    if (!base44.entities?.Pedido?.subscribe) return;
+    const un = base44.entities.Pedido.subscribe((evt) => {
+      // Invalida apenas a lista de pedidos do contexto atual
+      try { queryClient.invalidateQueries({ queryKey: ['pedidos', empresaAtual?.id, estaNoGrupo, grupoAtual?.id] }); } catch (_) {}
+    });
+    return () => { try { un && un(); } catch (_) {} };
+  }, [empresaAtual?.id, grupoAtual?.id, estaNoGrupo]);
+
   const { data: comissoes = [] } = useQuery({
     queryKey: ['comissoes', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
