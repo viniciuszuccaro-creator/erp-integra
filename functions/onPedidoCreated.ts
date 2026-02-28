@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
         });
       } catch (_) {}
 
-      // WhatsApp proativo: alerta de estoque baixo para itens do pedido (envio para admin)
+      // WhatsApp proativo: alerta de estoque baixo para itens do pedido (envio para admin - multiempresa)
       try {
         const itemLists = [
           ...(Array.isArray(dataEnriched?.itens_revenda) ? dataEnriched.itens_revenda : []),
