@@ -322,6 +322,7 @@ export default function PortalCliente() {
             acao: 'Edição', modulo: 'Portal', tipo_auditoria: 'entidade', entidade: 'Cliente', registro_id: cliente.id,
             descricao: 'Gamificação: bônus diário (+5)', dados_novos: { pontos_fidelidade: novo }, data_hora: new Date().toISOString()
           }); } catch {}
+          try { queryClient.invalidateQueries({ queryKey: ['cliente-portal'] }); } catch {}
         }).catch(() => {});
       }
     } catch (_) {}

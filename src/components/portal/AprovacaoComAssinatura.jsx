@@ -147,6 +147,9 @@ export default function AprovacaoComAssinatura({ clienteId }) {
         }); } catch {}
       } catch (_) {}
 
+      try { await queryClient.invalidateQueries({ queryKey: ['cliente-portal'] }); } catch {}
+      try { await queryClient.invalidateQueries({ queryKey: ['orcamentos-aprovados-flag'] }); } catch {}
+
       toast.success(`✅ Orçamento aprovado! Pedido ${pedido.numero_pedido} criado.`);
     },
     onError: (error) => {

@@ -107,6 +107,8 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
           descricao: 'Gamificação: feedback registrado (+10)', dados_novos: { pontos_fidelidade: novo }, data_hora: new Date().toISOString()
         }); } catch {}
       } catch (_) {}
+      try { await queryClient.invalidateQueries({ queryKey: ['portal-has-feedback'] }); } catch {}
+      try { await queryClient.invalidateQueries({ queryKey: ['cliente-portal'] }); } catch {}
     },
   });
 
