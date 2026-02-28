@@ -35,25 +35,43 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const { data: clienteData } = useQuery({
+    queryKey: ['cliente-portal-by-id', clienteId],
+    enabled: !!clienteId,
+    queryFn: async () => {
+      const rows = await base44.entities.Cliente.filter({ id: clienteId });
+      return rows?.[0] || null;
+    }
+  });
+
   const { data: chamados = [] } = useQuery({
-    queryKey: ['chamados', clienteId],
+    queryKey: ['chamados', clienteId, clienteData?.empresa_id, clienteData?.group_id],
+    enabled: !!clienteId,
     queryFn: async () => {
       if (!clienteId) return [];
-      const todosChamados = await base44.entities.Chamado.list('-created_date');
-      return todosChamados.filter(c => c.cliente_id === clienteId);
-    },
-    enabled: !!clienteId
+      const filtros = {
+        cliente_id: clienteId,
+        ...(clienteData?.empresa_id ? { empresa_id: clienteData.empresa_id } : {}),
+        ...(clienteData?.group_id ? { group_id: clienteData.group_id } : {}),
+      };
+      return await base44.entities.Chamado.filter(filtros, '-created_date');
+    }
   });
 
   const criarChamadoMutation = useMutation({
-    mutationFn: (data) => base44.entities.Chamado.create({
-      ...data,
-      cliente_id: clienteId,
-      cliente_nome: clienteNome,
-      status: "Aberto",
-      data_abertura: new Date().toISOString().split('T')[0],
-      mensagens: []
-    }),
+    mutationFn: async (data) => {
+      const cli = clienteData || (await base44.entities.Cliente.filter({ id: clienteId }).then(r=>r?.[0]));
+      return base44.entities.Chamado.create({
+        ...data,
+        cliente_id: clienteId,
+        cliente_nome: clienteNome,
+        status: 'Aberto',
+        data_abertura: new Date().toISOString().split('T')[0],
+        mensagens: [],
+        empresa_id: cli?.empresa_id || undefined,
+        group_id: cli?.group_id || undefined,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chamados', clienteId] });
       setDialogOpen(false);
@@ -62,6 +80,10 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
         title: "✅ Chamado Aberto!",
         description: "Seu chamado foi registrado e será atendido em breve"
       });
+      try { await base44.entities.AuditLog.create({
+        acao: 'Criação', modulo: 'Portal', tipo_auditoria: 'entidade', entidade: 'Chamado',
+        descricao: 'Chamado aberto via Portal', data_hora: new Date().toISOString(),
+      }); } catch (_) {}
     },
   });
 
@@ -69,12 +91,22 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
     mutationFn: ({ chamadoId, avaliacao }) => {
       return base44.entities.Chamado.update(chamadoId, { avaliacao });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['chamados', clienteId] });
-      toast({
-        title: "✅ Obrigado!",
-        description: "Sua avaliação foi registrada"
-      });
+      toast({ title: '✅ Obrigado!', description: 'Sua avaliação foi registrada' });
+      try {
+        const cli = clienteData || (await base44.entities.Cliente.filter({ id: clienteId }).then(r=>r?.[0]));
+        const novo = Number(cli?.pontos_fidelidade || 0) + 10;
+        await base44.entities.Cliente.update(clienteId, {
+          pontos_fidelidade: novo,
+          empresa_id: cli?.empresa_id || undefined,
+          group_id: cli?.group_id || undefined,
+        });
+        try { await base44.entities.AuditLog.create({
+          acao: 'Edição', modulo: 'Portal', tipo_auditoria: 'entidade', entidade: 'Cliente', registro_id: clienteId,
+          descricao: 'Gamificação: feedback registrado (+10)', dados_novos: { pontos_fidelidade: novo }, data_hora: new Date().toISOString()
+        }); } catch {}
+      } catch (_) {}
     },
   });
 
