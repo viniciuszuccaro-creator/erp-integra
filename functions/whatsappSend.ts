@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     }
     const config = cfgDoc?.integracao_whatsapp || cfgDoc?.whatsapp || null;
 
-    if (!config || config.ativo === false || config.simulacao_ativa === true) {
+    if (!config || config.ativo === false || config.simulacao_ativa !== false) {
       if (action === 'status') {
         return Response.json({ conectado: false, modo: 'simulado', mensagem: 'WhatsApp não configurado' });
       }
