@@ -235,7 +235,7 @@ export default function Dashboard() {
       }
     },
     staleTime: 120000,
-    retry: 1, !!(empresaAtual?.id || estaNoGrupo)
+    retry: 1,
   });
 
   const { data: clientes = [] } = useQuery({
@@ -250,7 +250,7 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false, canSeeCRM && (empresaAtual?.id || estaNoGrupo),
+    retry: false,
     initialData: []
   });
 
@@ -270,7 +270,7 @@ export default function Dashboard() {
       }
     },
     staleTime: 120000,
-    retry: 1, !!(empresaAtual?.id || estaNoGrupo)
+    retry: 1,
   });
 
   const { data: totalColaboradoresDash = 0 } = useQuery({
@@ -288,7 +288,7 @@ export default function Dashboard() {
       }
     },
     staleTime: 120000,
-    retry: 1, !!(empresaAtual?.id || estaNoGrupo)
+    retry: 1,
   });
 
   const { data: ordensProducao = [] } = useQuery({
@@ -303,7 +303,7 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false, canSeeProducao && (empresaAtual?.id || estaNoGrupo),
+    retry: false,
     initialData: []
   });
 
