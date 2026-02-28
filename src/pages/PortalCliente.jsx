@@ -126,16 +126,20 @@ export default function PortalCliente() {
 
     await base44.entities.Pedido.update(pedidoId, {
       ultimo_acesso_portal_at: new Date().toISOString(),
-      visualizacoes_portal: (pedido.visualizacoes_portal || 0) + 1
+      visualizacoes_portal: (pedido.visualizacoes_portal || 0) + 1,
+      empresa_id: pedido.empresa_id || cliente.empresa_id || undefined,
+      group_id: pedido.group_id || cliente.group_id || undefined,
     });
-    
+
     queryClient.invalidateQueries(['pedidosCliente', cliente.id]);
 
     const currentCliente = await base44.entities.Cliente.filter({ id: cliente.id }).then(r => r[0]);
     await base44.entities.Cliente.update(cliente.id, {
       'uso_portal.ultimo_acesso': new Date().toISOString(),
       'uso_portal.total_acessos': (currentCliente?.uso_portal?.total_acessos || 0) + 1,
-      'uso_canais.total_portal': (currentCliente?.uso_canais?.total_portal || 0) + 1
+      'uso_canais.total_portal': (currentCliente?.uso_canais?.total_portal || 0) + 1,
+      empresa_id: currentCliente?.empresa_id || cliente.empresa_id || undefined,
+      group_id: currentCliente?.group_id || cliente.group_id || undefined,
     });
 
     queryClient.invalidateQueries(['cliente-portal', user.id]);

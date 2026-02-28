@@ -38,9 +38,11 @@ import GerenciadorSessoes from "@/components/sistema/GerenciadorSessoes";
   // RBAC cliente-only: se não for admin, renderiza Portal do Cliente reutilizando a página existente
   if (!isAdmin()) {
     return (
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-slate-600">Carregando Portal…</div>}>
-        <PortalCliente />
-      </Suspense>
+      <div className="w-full h-full">
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-slate-600 w-full h-full">Carregando Portal…</div>}>
+          <PortalCliente />
+        </Suspense>
+      </div>
     );
   }
 
