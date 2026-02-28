@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Settings, Users, Shield, FileText, Sparkles, Link2 } from "lucide-react
 import ModuleLayout from "@/components/layout/ModuleLayout";
 import ModuleContent from "@/components/layout/ModuleContent";
 import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configuracoes-gerais/ConfiguracoesGeraisIndex";
 import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acessos/GestaoAcessosIndex";
 import AuditoriaLogsIndex from "@/components/administracao-sistema/auditoria-logs/AuditoriaLogsIndex";
@@ -25,11 +26,23 @@ import GerenciadorSessoes from "@/components/sistema/GerenciadorSessoes";
 
  import ProtectedSection from "@/components/security/ProtectedSection";
 
-export default function AdministracaoSistema() {
+ const PortalCliente = lazy(() => import("./PortalCliente"));
+
+ export default function AdministracaoSistema() {
   const { isAdmin } = usePermissions();
+  const { user } = useUser();
   const params = new URLSearchParams(window.location.search);
   const initialTab = params.get('tab') || 'gerais';
   const { empresaAtual, grupoAtual } = useContextoVisual();
+
+  // RBAC cliente-only: se não for admin, renderiza Portal do Cliente reutilizando a página existente
+  if (!isAdmin()) {
+    return (
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-slate-600">Carregando Portal…</div>}>
+        <PortalCliente />
+      </Suspense>
+    );
+  }
 
   return (
     <ProtectedSection module="Sistema" action="visualizar">
