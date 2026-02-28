@@ -204,6 +204,19 @@ export default function PortalCliente() {
     enabled: !!cliente?.id
   });
 
+  const { data: hasFeedback = false } = useQuery({
+    queryKey: ['portal-has-feedback', cliente?.id],
+    enabled: !!cliente?.id,
+    queryFn: async () => {
+      const lista = await base44.entities.Chamado.filter({
+        cliente_id: cliente.id,
+        empresa_id: cliente.empresa_id || undefined,
+        group_id: cliente.group_id || undefined
+      }, '-created_date', 20);
+      return (lista || []).some(c => !!c.avaliacao);
+    }
+  });
+
   const { data: notasFiscais = [] } = useQuery({
     queryKey: ['notasFiscais', cliente?.id],
     queryFn: () => base44.entities.NotaFiscal.filter({
@@ -435,7 +448,7 @@ export default function PortalCliente() {
               <Suspense fallback={<div className="w-6 h-6 rounded-full bg-slate-200 animate-pulse" />}> 
                 <NotificacoesPortal />
               </Suspense>
-              <GamificacaoWidget cliente={cliente} hasAprovado={hasAprovado} />
+              <GamificacaoWidget cliente={cliente} hasAprovado={hasAprovado} hasFeedback={hasFeedback} />
               <Button
                 onClick={() => setChatOpen(!chatOpen)}
                 className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"

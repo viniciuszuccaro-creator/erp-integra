@@ -10,7 +10,7 @@ function getLevel(points) {
   return { name: 'Bronze', color: 'bg-orange-500' };
 }
 
-export default function GamificacaoWidget({ cliente, hasAprovado }) {
+export default function GamificacaoWidget({ cliente, hasAprovado, hasFeedback }) {
   const pontos = Number(cliente?.pontos_fidelidade || 0);
   const acessos = Number(cliente?.uso_portal?.total_acessos || 0);
   const level = getLevel(pontos);
@@ -19,6 +19,7 @@ export default function GamificacaoWidget({ cliente, hasAprovado }) {
   if (acessos > 0) badges.push({ key: 'primeiro_acesso', label: 'Primeiro Acesso', icon: Star, color: 'bg-indigo-100 text-indigo-700' });
   if (acessos >= 10) badges.push({ key: 'engajado_10', label: 'Engajado 10+', icon: Star, color: 'bg-green-100 text-green-700' });
   if (hasAprovado) badges.push({ key: 'aprovador', label: 'Aprovador', icon: Award, color: 'bg-amber-100 text-amber-700' });
+  if (hasFeedback) badges.push({ key: 'avaliador', label: 'Feedback', icon: Star, color: 'bg-blue-100 text-blue-700' });
 
   return (
     <Card className="px-3 py-2 flex items-center gap-3 bg-white/80 border shadow-sm">
