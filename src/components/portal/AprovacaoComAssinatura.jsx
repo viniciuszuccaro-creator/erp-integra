@@ -125,12 +125,28 @@ export default function AprovacaoComAssinatura({ clienteId }) {
 
       return { orcamento, pedido, assinaturaUrl: file_url };
     },
-    onSuccess: ({ pedido, assinaturaUrl }) => {
+    onSuccess: async ({ pedido, assinaturaUrl }) => {
       queryClient.invalidateQueries(['orcamentos-aprovacao']);
       queryClient.invalidateQueries(['pedidos-dashboard']);
       setAssinaturaModal(false);
       setOrcamentoSelecionado(null);
       setNomeAssinante('');
+
+      // Gamificação: bônus por aprovação (+50 pontos)
+      try {
+        const cli = await base44.entities.Cliente.filter({ id: clienteId }).then(r => r?.[0]);
+        const novo = Number(cli?.pontos_fidelidade || 0) + 50;
+        await base44.entities.Cliente.update(clienteId, {
+          pontos_fidelidade: novo,
+          empresa_id: cli?.empresa_id || undefined,
+          group_id: cli?.group_id || undefined,
+        });
+        try { await base44.entities.AuditLog.create({
+          acao: 'Edição', modulo: 'Portal', tipo_auditoria: 'entidade', entidade: 'Cliente', registro_id: clienteId,
+          descricao: 'Gamificação: aprovação de orçamento (+50)', dados_novos: { pontos_fidelidade: novo }, data_hora: new Date().toISOString()
+        }); } catch {}
+      } catch (_) {}
+
       toast.success(`✅ Orçamento aprovado! Pedido ${pedido.numero_pedido} criado.`);
     },
     onError: (error) => {

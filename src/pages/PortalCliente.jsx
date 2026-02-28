@@ -27,6 +27,7 @@ const ConfiguracoesPortal = React.lazy(() => import("@/components/portal/Configu
 const HistoricoComprasCliente = React.lazy(() => import("@/components/portal/HistoricoComprasCliente"));
 const ExportarDadosPortal = React.lazy(() => import("@/components/portal/ExportarDadosPortal"));
 const FAQAjuda = React.lazy(() => import("@/components/portal/FAQAjuda"));
+import GamificacaoWidget from "@/components/portal/GamificacaoWidget";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
@@ -162,6 +163,27 @@ export default function PortalCliente() {
     enabled: !!cliente?.id
   });
 
+  const { data: hasAprovado = false } = useQuery({
+    queryKey: ['orcamentos-aprovados-flag', cliente?.id],
+    enabled: !!cliente?.id,
+    queryFn: async () => {
+      const ap1 = await base44.entities.OrcamentoCliente.filter({
+        cliente_id: cliente.id,
+        status: 'Aprovado',
+        empresa_id: cliente.empresa_id || undefined,
+        group_id: cliente.group_id || undefined
+      }, '-created_date', 1);
+      if (ap1?.length) return true;
+      const ap2 = await base44.entities.OrcamentoCliente.filter({
+        cliente_id: cliente.id,
+        status: 'Convertido',
+        empresa_id: cliente.empresa_id || undefined,
+        group_id: cliente.group_id || undefined
+      }, '-created_date', 1);
+      return (ap2?.length || 0) > 0;
+    }
+  });
+
   const { data: entregasEmAndamento = [] } = useQuery({
     queryKey: ['entregasEmAndamento', cliente?.id],
     queryFn: () => base44.entities.Entrega.filter({
@@ -251,7 +273,7 @@ export default function PortalCliente() {
     );
   }
 
-  // Auditoria de acessos do Portal (multiempresa + tab)
+  // Auditoria de acessos do Portal (multiempresa + tab) + bônus diário (5 pts)
   useEffect(() => {
     if (!user || !cliente) return;
     try {
@@ -267,6 +289,28 @@ export default function PortalCliente() {
         descricao: `Acesso ao Portal - aba ${activeTab}`,
         data_hora: new Date().toISOString(),
       });
+    } catch (_) {}
+
+    // Bônus diário de acesso (5 pontos), controlado por localStorage
+    try {
+      const dayKey = new Date().toISOString().slice(0,10);
+      const k = `portal_daily_${cliente.id}_${dayKey}`;
+      if (!localStorage.getItem(k)) {
+        const novo = Number(cliente.pontos_fidelidade || 0) + 5;
+        base44.entities.Cliente.update(cliente.id, {
+          pontos_fidelidade: novo,
+          empresa_id: cliente.empresa_id || undefined,
+          group_id: cliente.group_id || undefined,
+        }).then(() => {
+          localStorage.setItem(k, '1');
+          try { base44.entities.AuditLog.create({
+            usuario: user.full_name || user.email || 'Usuário', usuario_id: user.id,
+            empresa_id: cliente.empresa_id || null, group_id: cliente.group_id || null,
+            acao: 'Edição', modulo: 'Portal', tipo_auditoria: 'entidade', entidade: 'Cliente', registro_id: cliente.id,
+            descricao: 'Gamificação: bônus diário (+5)', dados_novos: { pontos_fidelidade: novo }, data_hora: new Date().toISOString()
+          }); } catch {}
+        }).catch(() => {});
+      }
     } catch (_) {}
   }, [user?.id, cliente?.id, activeTab]);
 
@@ -391,6 +435,7 @@ export default function PortalCliente() {
               <Suspense fallback={<div className="w-6 h-6 rounded-full bg-slate-200 animate-pulse" />}> 
                 <NotificacoesPortal />
               </Suspense>
+              <GamificacaoWidget cliente={cliente} hasAprovado={hasAprovado} />
               <Button
                 onClick={() => setChatOpen(!chatOpen)}
                 className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
