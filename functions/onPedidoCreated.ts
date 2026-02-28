@@ -131,10 +131,32 @@ Deno.serve(async (req) => {
             }
           }
         } catch (_) {}
-      }
-    }
+        }
 
-    return Response.json({ ok: true });
+        // 2) Em Expedição / Pronto para Expedir → mensagem explícita
+        if (statusNovo && statusNovo !== statusAnt && /(expedi[cç][aã]o|pronto\s*para\s*expedir)/i.test(statusNovo)) {
+        const internal_token = Deno.env.get('DEPLOY_AUDIT_TOKEN') || '';
+        const clienteId = novo.cliente_id || null;
+        const empresaId = novo.empresa_id || null;
+        const groupId = novo.group_id || null;
+        const mensagem = `Olá ${novo.cliente_nome || ''}! Seu pedido ${novo.numero_pedido || novo.id || ''} está em expedição.`.trim();
+        try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId, clienteId, pedidoId: novo.id, mensagem, internal_token }); } catch (_) {}
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user.full_name || 'Sistema', usuario_id: user.id, acao: 'Criação', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'WhatsApp', descricao: 'Aviso de pedido em expedição enviado', empresa_id: empresaId, group_id: groupId, dados_novos: { pedido_id: novo.id, numero_pedido: novo.numero_pedido }, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+        }
+
+        // 3) Entregue/Concluído → mensagem explícita
+        if (statusNovo && statusNovo !== statusAnt && /(entregue|finalizad[oa]|conclu[ií]d[oa])/i.test(statusNovo)) {
+        const internal_token = Deno.env.get('DEPLOY_AUDIT_TOKEN') || '';
+        const clienteId = novo.cliente_id || null;
+        const empresaId = novo.empresa_id || null;
+        const groupId = novo.group_id || null;
+        const mensagem = `Olá ${novo.cliente_nome || ''}! Seu pedido ${novo.numero_pedido || novo.id || ''} foi entregue. Obrigado pela preferência!`.trim();
+        try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId, groupId, clienteId, pedidoId: novo.id, mensagem, internal_token }); } catch (_) {}
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: user.full_name || 'Sistema', usuario_id: user.id, acao: 'Criação', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: 'WhatsApp', descricao: 'Aviso de pedido entregue enviado', empresa_id: empresaId, group_id: groupId, dados_novos: { pedido_id: novo.id, numero_pedido: novo.numero_pedido }, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+        }
+        }
+
+        return Response.json({ ok: true });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
   }
