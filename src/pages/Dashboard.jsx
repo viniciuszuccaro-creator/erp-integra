@@ -396,7 +396,7 @@ export default function Dashboard() {
   // Dados e gráficos agora são providos por useDashboardDerivedData()
 
   const { data: previsoesIA = {}, isLoading: loadingPrevIA } = useQuery({
-    queryKey: ['iaPrevEstoque14', empresaAtual?.id, grupoAtual?.id],
+    queryKey: ['iaPrevEstoque14', empresaAtual?.id, grupoAtual?.id, periodo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return { previsoes: [] };
       const filtros = getFiltroContexto('empresa_id', true);
