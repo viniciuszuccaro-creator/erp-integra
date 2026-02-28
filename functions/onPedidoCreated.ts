@@ -89,6 +89,29 @@ Deno.serve(async (req) => {
         }
       } catch (_) {}
 
+      // Otimização de rota logística (multiempresa) ao criar pedido
+      try {
+        await base44.asServiceRole.functions.invoke('optimizeDeliveryRoute', {
+          pedidoId: dataEnriched?.id,
+          empresa_id: dataEnriched?.empresa_id || null,
+          group_id: dataEnriched?.group_id || null,
+          endereco: dataEnriched?.endereco_entrega_principal || null,
+          janela: {
+            inicio: dataEnriched?.endereco_entrega_principal?.horario_inicio || null,
+            fim: dataEnriched?.endereco_entrega_principal?.horario_fim || null
+          },
+          optimize: true
+        });
+        try {
+          await base44.asServiceRole.entities.AuditLog.create({
+            acao: 'Execução', modulo: 'Expedição', tipo_auditoria: 'integracao', entidade: 'Roteirização',
+            descricao: 'Rota otimizada ao criar pedido',
+            empresa_id: dataEnriched?.empresa_id || null, group_id: dataEnriched?.group_id || null,
+            dados_novos: { pedido_id: dataEnriched?.id }, data_hora: new Date().toISOString(), sucesso: true
+          });
+        } catch (_) {}
+      } catch (_) {}
+
       // API-First: webhook e-commerce (create)
       try {
         const empresaId = dataEnriched?.empresa_id || null;
