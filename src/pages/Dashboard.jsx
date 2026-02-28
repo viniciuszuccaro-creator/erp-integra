@@ -411,7 +411,7 @@ export default function Dashboard() {
   });
 
   const { data: previsoesIA30 = {} } = useQuery({
-    queryKey: ['iaPrevEstoque30', empresaAtual?.id, grupoAtual?.id],
+    queryKey: ['iaPrevEstoque30', empresaAtual?.id, grupoAtual?.id, periodo],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return { previsoes: [] };
       const filtros = getFiltroContexto('empresa_id', true);
