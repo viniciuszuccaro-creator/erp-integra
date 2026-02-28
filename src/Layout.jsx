@@ -352,13 +352,30 @@ function LayoutContent({ children, currentPageName }) {
       if (!appleIcon.parentElement) document.head.appendChild(appleIcon);
     } catch (_) {}
 
-    // Registrar service worker se houver arquivo estático em /sw.js (ignora erros)
+    // Registrar service worker com estratégia de atualização
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
-      });
+    window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      if (reg && reg.waiting) { try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch {} }
+      reg.onupdatefound = () => {
+        const nw = reg.installing;
+        if (!nw) return;
+        nw.onstatechange = () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            // Auditar atualização disponível
+            try { base44.entities.AuditLog.create({
+              acao: 'Visualização', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema', entidade: 'PWA',
+              descricao: 'Nova versão PWA disponível', data_hora: new Date().toISOString(),
+              usuario: user?.full_name || 'Usuário', usuario_id: user?.id || null,
+              empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
+            }); } catch {}
+          }
+        };
+      };
+    }).catch(() => {});
+    });
     }
-  }, []);
+    }, []);
 
   useEffect(() => {
     const cache = queryClient.getQueryCache();
