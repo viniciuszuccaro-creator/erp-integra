@@ -2,6 +2,7 @@
  * Biblioteca de Exportação para Excel (CSV)
  * Gera arquivos CSV que podem ser abertos no Excel
  */
+import { base44 } from "@/api/base44Client";
 
 /**
  * Converte array de objetos para CSV
