@@ -310,6 +310,8 @@ function LayoutContent({ children, currentPageName }) {
         const allowed = hasPermission('Sistema', null, 'ver');
         if (!allowed) { if (!cancelled) setIntegracoesOk(true); return; }
         const chave = `integracoes_${empresaAtual.id}`;
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) { if (!cancelled) setIntegracoesOk(true); return; }
         const docs = await base44.entities.ConfiguracaoSistema.filter({ chave }, undefined, 1);
         const cfg = docs?.[0] || null;
         const ok = !!(cfg?.integracao_nfe?.api_key && cfg?.integracao_boletos?.api_key);
