@@ -166,15 +166,21 @@ function LayoutContent({ children, currentPageName }) {
                                                                                     if (status === 429 || /rate limit/i.test(m)) { return; }
                                                                                     try {
                                                                                       const msg = (error && (error.message || String(error))) || 'Erro em query';
-                                                                base44.functions.invoke('auditError', {
-                                                                  module: moduleName || 'Sistema',
-                                                                  message: `Query error: ${msg}`,
-                                                                  stack: error?.stack || null,
-                                                                  page: currentPageName,
-                                                                  empresa_id: empresaAtual?.id || null,
-                                                                  group_id: grupoAtual?.id || null,
-                                                                  metadata: { queryKey: 'unknown' }
-                                                                });
+                                                                (async () => {
+                                                                  try {
+                                                                    if (await base44.auth.isAuthenticated()) {
+                                                                      await base44.functions.invoke('auditError', {
+                                                                        module: moduleName || 'Sistema',
+                                                                        message: `Query error: ${msg}`,
+                                                                        stack: error?.stack || null,
+                                                                        page: currentPageName,
+                                                                        empresa_id: empresaAtual?.id || null,
+                                                                        group_id: grupoAtual?.id || null,
+                                                                        metadata: { queryKey: 'unknown' }
+                                                                      });
+                                                                    }
+                                                                  } catch (_) {}
+                                                                })();
                                                               } catch (_) {}
                                                             }
               },
@@ -189,15 +195,21 @@ function LayoutContent({ children, currentPageName }) {
                                                                                     if (status === 429 || /rate limit/i.test(m)) { return; }
                                                                                     try {
                                                                                       const msg = (error && (error.message || String(error))) || 'Erro em mutation';
-                                                                base44.functions.invoke('auditError', {
-                                                                  module: moduleName || 'Sistema',
-                                                                  message: `Mutation error: ${msg}`,
-                                                                  stack: error?.stack || null,
-                                                                  page: currentPageName,
-                                                                  empresa_id: empresaAtual?.id || null,
-                                                                  group_id: grupoAtual?.id || null,
-                                                                  metadata: { mutation: true }
-                                                                });
+                                                                (async () => {
+                                                                  try {
+                                                                    if (await base44.auth.isAuthenticated()) {
+                                                                      await base44.functions.invoke('auditError', {
+                                                                        module: moduleName || 'Sistema',
+                                                                        message: `Mutation error: ${msg}`,
+                                                                        stack: error?.stack || null,
+                                                                        page: currentPageName,
+                                                                        empresa_id: empresaAtual?.id || null,
+                                                                        group_id: grupoAtual?.id || null,
+                                                                        metadata: { mutation: true }
+                                                                      });
+                                                                    }
+                                                                  } catch (_) {}
+                                                                })();
                                                               } catch (_) {}
                                                             }
               }
@@ -478,15 +490,21 @@ function LayoutContent({ children, currentPageName }) {
                                       if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(String(msg))) { return; }
                                       if (status === 429 || /rate limit/i.test(String(msg))) { return; }
                             const stack = e?.error?.stack || null;
-                            base44.functions.invoke('auditError', {
-                    module: moduleName || 'Sistema',
-                    message: `Erro não tratado: ${msg}`,
-                    stack,
-                    page: currentPageName,
-                    empresa_id: empresaAtual?.id || null,
-                    group_id: grupoAtual?.id || null,
-                    metadata: { source: e?.filename, lineno: e?.lineno, colno: e?.colno }
-                  });
+                            (async () => {
+                              try {
+                                if (await base44.auth.isAuthenticated()) {
+                                  await base44.functions.invoke('auditError', {
+                                    module: moduleName || 'Sistema',
+                                    message: `Erro não tratado: ${msg}`,
+                                    stack,
+                                    page: currentPageName,
+                                    empresa_id: empresaAtual?.id || null,
+                                    group_id: grupoAtual?.id || null,
+                                    metadata: { source: e?.filename, lineno: e?.lineno, colno: e?.colno }
+                                  });
+                                }
+                              } catch (_) {}
+                            })();
                 } catch (e) {}
               };
     const onUnhandled = (e) => {
@@ -497,15 +515,21 @@ function LayoutContent({ children, currentPageName }) {
                                       const status = e?.reason?.response?.status || e?.reason?.status;
                                       if (name === 'AbortError' || code === 'ERR_CANCELED' || /aborted|abort|canceled|cancelled/i.test(String(msg))) { return; }
                                       if (status === 429 || /rate limit/i.test(String(msg))) { return; }
-                            base44.functions.invoke('auditError', {
-                    module: moduleName || 'Sistema',
-                    message: `Promise rejeitada: ${msg}`,
-                    stack: e?.reason?.stack || null,
-                    page: currentPageName,
-                    empresa_id: empresaAtual?.id || null,
-                    group_id: grupoAtual?.id || null,
-                    metadata: { reason: e?.reason }
-                  });
+                            (async () => {
+                              try {
+                                if (await base44.auth.isAuthenticated()) {
+                                  await base44.functions.invoke('auditError', {
+                                    module: moduleName || 'Sistema',
+                                    message: `Promise rejeitada: ${msg}`,
+                                    stack: e?.reason?.stack || null,
+                                    page: currentPageName,
+                                    empresa_id: empresaAtual?.id || null,
+                                    group_id: grupoAtual?.id || null,
+                                    metadata: { reason: e?.reason }
+                                  });
+                                }
+                              } catch (_) {}
+                            })();
                 } catch (e) {}
               };
     window.addEventListener('error', onError);
@@ -990,18 +1014,24 @@ function LayoutContent({ children, currentPageName }) {
   useEffect(() => {
     if (!user) return;
     try {
-      base44.entities?.AuditLog?.create?.({
-        usuario: user?.full_name || user?.email || 'Usuário',
-        usuario_id: user?.id,
-        empresa_id: empresaAtual?.id || null,
-        empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
-        acao: 'Visualização',
-        modulo: moduleName || 'Sistema',
-        tipo_auditoria: 'ui',
-        entidade: 'Navegação',
-        descricao: `Rota: ${location.pathname}`,
-        data_hora: new Date().toISOString(),
-      });
+      (async () => {
+        try {
+          if (await base44.auth.isAuthenticated()) {
+            await base44.entities.AuditLog.create({
+              usuario: user?.full_name || user?.email || 'Usuário',
+              usuario_id: user?.id,
+              empresa_id: empresaAtual?.id || null,
+              empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+              acao: 'Visualização',
+              modulo: moduleName || 'Sistema',
+              tipo_auditoria: 'ui',
+              entidade: 'Navegação',
+              descricao: `Rota: ${location.pathname}`,
+              data_hora: new Date().toISOString(),
+            });
+          }
+        } catch (_) {}
+      })();
     } catch (_) {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, user?.id, empresaAtual?.id, moduleName]);
@@ -1141,7 +1171,7 @@ function LayoutContent({ children, currentPageName }) {
         // Flush once after 5s
         setTimeout(() => {
           if (audits.length) {
-            try { base44.entities.AuditLog.create({
+            try { (async () => { try { if (await base44.auth.isAuthenticated()) { await base44.entities.AuditLog.create({
               usuario: user?.full_name || 'Usuário',
               usuario_id: user?.id,
               empresa_id: empresaAtual?.id || null,
@@ -1153,7 +1183,7 @@ function LayoutContent({ children, currentPageName }) {
               descricao: 'Métricas de desempenho',
               dados_novos: { audits },
               data_hora: new Date().toISOString(),
-            }); } catch {}
+            }); } } catch {} })(); } catch {}
           }
         }, 5000);
       }
