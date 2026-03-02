@@ -381,6 +381,12 @@ export default function Dashboard() {
     periodo,
   });
 
+  // Pedidos - listas rápidas (recentes/pendentes/aprovação)
+  const pedidosRecentes = (pedidos || []).slice(0, 8);
+  const pedidosPendentes = (pedidos || []).filter(p => ['Rascunho','Em Produção','Pronto para Faturar','Em Expedição'].includes(p?.status)).slice(0, 8);
+  const pedidosAguardandoAprovacao = (pedidos || []).filter(p => (p?.status_aprovacao === 'pendente') || (p?.status === 'Aguardando Aprovação')).slice(0, 8);
+
+
   // Dados e gráficos agora são providos por useDashboardDerivedData()
 
   const { data: previsoesIA = {}, isLoading: loadingPrevIA } = useQuery({
