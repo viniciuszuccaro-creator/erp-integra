@@ -354,26 +354,57 @@ function LayoutContent({ children, currentPageName }) {
 
     // Registrar service worker com estratégia de atualização
     if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(reg => {
-      if (reg && reg.waiting) { try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch {} }
-      reg.onupdatefound = () => {
-        const nw = reg.installing;
-        if (!nw) return;
-        nw.onstatechange = () => {
-          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-            // Auditar atualização disponível
-            try { base44.entities.AuditLog.create({
-              acao: 'Visualização', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema', entidade: 'PWA',
-              descricao: 'Nova versão PWA disponível', data_hora: new Date().toISOString(),
-              usuario: user?.full_name || 'Usuário', usuario_id: user?.id || null,
-              empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
-            }); } catch {}
+      window.addEventListener('load', () => {
+        // Só registra se o arquivo existir para evitar 404 no console
+        fetch('/sw.js', { method: 'HEAD' }).then((res) => {
+          if (!res.ok) {
+            try {
+              base44.entities.AuditLog.create({
+                acao: 'Visualização', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema', entidade: 'PWA',
+                descricao: 'Service Worker ausente - registro pulado', data_hora: new Date().toISOString(),
+                usuario: user?.full_name || 'Usuário', usuario_id: user?.id || null,
+                empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
+              });
+            } catch {}
+            return;
           }
-        };
-      };
-    }).catch(() => {});
-    });
+          navigator.serviceWorker.register('/sw.js').then((reg) => {
+            // Força ativação da nova versão quando disponível
+            if (reg && reg.waiting) { try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch {} }
+            reg.onupdatefound = () => {
+              const nw = reg.installing;
+              if (!nw) return;
+              nw.onstatechange = () => {
+                if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                  try {
+                    base44.entities.AuditLog.create({
+                      acao: 'Visualização', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema', entidade: 'PWA',
+                      descricao: 'Nova versão PWA disponível', data_hora: new Date().toISOString(),
+                      usuario: user?.full_name || 'Usuário', usuario_id: user?.id || null,
+                      empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
+                    });
+                  } catch {}
+                }
+              };
+            };
+            // Checagens periódicas por atualização (1h)
+            try {
+              setInterval(() => { try { reg.update(); } catch {} }, 60 * 60 * 1000);
+            } catch {}
+            // Auditoria quando o SW assumir controle (atualização aplicada)
+            try {
+              navigator.serviceWorker.addEventListener('controllerchange', () => {
+                try { base44.entities.AuditLog.create({
+                  acao: 'Visualização', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema', entidade: 'PWA',
+                  descricao: 'Service Worker atualizado e ativo', data_hora: new Date().toISOString(),
+                  usuario: user?.full_name || 'Usuário', usuario_id: user?.id || null,
+                  empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
+                }); } catch {}
+              });
+            } catch {}
+          }).catch(() => {});
+        }).catch(() => {});
+      });
     }
     }, []);
 
@@ -592,6 +623,17 @@ function LayoutContent({ children, currentPageName }) {
                 await base44.entities?.[name]?.update?.(evt.id, patch);
               } catch (_) { /* silencioso: se não puder atualizar, seguimos */ }
             }
+
+            // Replicação descendente: se o registro foi criado no contexto de Grupo (tem group_id e não tem empresa_id)
+            try {
+              if (evt?.data?.group_id && !evt?.data?.empresa_id) {
+                await base44.functions.invoke('propagateGroupConfigs', {
+                  entity_name: name,
+                  source_id: evt.id,
+                  group_id: evt.data.group_id
+                });
+              }
+            } catch (_) {}
           }
 
           // Invalidação de queries relacionadas ao evento (sync frontend↔backend)
@@ -1060,6 +1102,8 @@ function LayoutContent({ children, currentPageName }) {
   // Performance metrics observer (audit slow LCP/long tasks)
   useEffect(() => {
     try {
+      // Auditoria de deploy/app load (não bloqueante)
+      setTimeout(() => { try { base44.functions.invoke('deployAudit', { event: 'app_loaded', module: moduleName || 'Sistema', page: currentPageName }); } catch {} }, 0);
       const audits = [];
       if (typeof PerformanceObserver !== 'undefined') {
         // LCP
