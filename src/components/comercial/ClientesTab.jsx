@@ -13,6 +13,7 @@ import ERPDataTable from "@/components/ui/erp/DataTable";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import usePersistedSort from "@/components/lib/usePersistedSort";
 import useBackendPagination from "@/components/lib/useBackendPagination";
+import { ProtectedAction } from "@/components/ProtectedAction";
 
 export default function ClientesTab({ clientes }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -56,9 +57,11 @@ export default function ClientesTab({ clientes }) {
     { key: 'empresa_id', label: 'Empresa', render: (r) => obterNomeEmpresa(r.empresa_id) },
     { key: 'actions', label: 'Ações', render: (r) => (
       <div className="flex gap-1">
-        <Button variant="ghost" size="sm" onClick={() => openWindow(CadastroClienteCompleto, { cliente: r, windowMode: true }, { title: `Editar: ${r.nome || r.razao_social}`, width: 1200, height: 750 })}>
-          <Edit2 className="w-3 h-3 mr-1" /> Editar
-        </Button>
+        <ProtectedAction module="CRM" section="Cliente" action="editar" mode="disable">
+          <Button variant="ghost" size="sm" data-permission="CRM.Cliente.editar" onClick={() => openWindow(CadastroClienteCompleto, { cliente: r, windowMode: true }, { title: `Editar: ${r.nome || r.razao_social}`, width: 1200, height: 750 })}>
+            <Edit2 className="w-3 h-3 mr-1" /> Editar
+          </Button>
+        </ProtectedAction>
       </div>
     )},
   ]), [empresasDoGrupo]);
@@ -85,6 +88,7 @@ export default function ClientesTab({ clientes }) {
         columns={columns}
         data={filteredClientes}
         entityName="Cliente"
+        permission="CRM.Cliente.visualizar"
         sortField={sortField}
         sortDirection={sortDirection}
         onSortChange={(sf, sd) => { setSortField(sf); setSortDirection(sd); }}
