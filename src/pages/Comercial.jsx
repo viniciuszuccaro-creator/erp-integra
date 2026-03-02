@@ -78,6 +78,23 @@ export default function Comercial() {
     return () => { try { un && un(); } catch (_) {} };
   }, [empresaAtual?.id, grupoAtual?.id, estaNoGrupo]);
 
+  // Realtime adicional: Comissões e NF-e
+  useEffect(() => {
+    if (!(empresaAtual?.id || estaNoGrupo)) return;
+    const unsubs = [];
+    if (base44.entities?.Comissao?.subscribe) {
+      unsubs.push(base44.entities.Comissao.subscribe(() => {
+        try { queryClient.invalidateQueries({ queryKey: ['comissoes'] }); } catch (_) {}
+      }));
+    }
+    if (base44.entities?.NotaFiscal?.subscribe) {
+      unsubs.push(base44.entities.NotaFiscal.subscribe(() => {
+        try { queryClient.invalidateQueries({ queryKey: ['notasFiscais'] }); } catch (_) {}
+      }));
+    }
+    return () => { unsubs.forEach(u => { try { u && u(); } catch (_) {} }); };
+  }, [empresaAtual?.id, grupoAtual?.id, estaNoGrupo]);
+
   const { data: comissoes = [] } = useQuery({
     queryKey: ['comissoes', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {

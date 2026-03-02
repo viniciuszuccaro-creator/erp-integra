@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useContextoVisual } from '@/components/lib/useContextoVisual'; // Updated import path
@@ -121,6 +121,7 @@ export default function Dashboard() {
   }, [periodo]);
 
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const queryClient = useQueryClient();
   const refetchInterval = (activeTab === 'resumo' && autoRefresh) ? 60000 : false; // 60 segundos
 
   const { data: pedidos = [] } = useQuery({
@@ -425,6 +426,24 @@ export default function Dashboard() {
   });
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+  // Assinaturas realtime locais (reforço) para invalidar KPIs do Dashboard
+  useEffect(() => {
+    if (!(empresaAtual?.id || estaNoGrupo)) return;
+    const subs = [];
+    const add = (api, key) => { if (!api?.subscribe) return; const un = api.subscribe(() => {
+      try { queryClient.invalidateQueries({ queryKey: [key] }); } catch (_) {}
+    }); subs.push(un); };
+    add(base44.entities?.Pedido, 'pedidos');
+    add(base44.entities?.ContaReceber, 'contasReceber');
+    add(base44.entities?.ContaPagar, 'contasPagar');
+    add(base44.entities?.Entrega, 'entregas');
+    add(base44.entities?.Produto, 'produtos');
+    add(base44.entities?.Cliente, 'clientes');
+    add(base44.entities?.OrdemProducao, 'ordensProducao');
+    add(base44.entities?.NotaFiscal, 'notasFiscais');
+    return () => { subs.forEach(u => { try { u && u(); } catch (_) {} }); };
+  }, [empresaAtual?.id, grupoAtual?.id, estaNoGrupo]);
 
   // Pré-computos para seções avançadas (evita recalcular em cada render de subcomponente)
   // Pré-cálculos fornecidos pelo hook useDashboardDerivedData
