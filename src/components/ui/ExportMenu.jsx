@@ -15,7 +15,10 @@ import { base44 } from "@/api/base44Client";
  * Menu de exportação reutilizável
  * Exporta dados em Excel ou PDF
  */
-export default function ExportMenu({ data, fileName = "relatorio", title = "Relatório" }) {
+export default function ExportMenu({ data, fileName = "relatorio", title = "Relatório", module = "Sistema", section = "Exportacao", action = "exportar" }) {
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const allowed = hasPermission(module, section, 'exportar');
   const exportToExcel = () => {
     if (!data || data.length === 0) {
       alert("Não há dados para exportar");
