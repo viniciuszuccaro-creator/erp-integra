@@ -343,16 +343,22 @@ export default function Comercial() {
 
    const handleModuleClick = (module) => {
     React.startTransition(() => {
-      // Auditoria de abertura de seção
-      base44.entities.AuditLog.create({
-        usuario: user?.full_name || user?.email || 'Usuário',
-        acao: 'Visualização',
-        modulo: 'Comercial',
-        tipo_auditoria: 'acesso',
-        entidade: 'Seção',
-        descricao: `Abrir seção: ${module.title}`,
-        data_hora: new Date().toISOString(),
-      });
+      // Auditoria de abertura de seção (somente se autenticado)
+      (async () => {
+        try {
+          if (await base44.auth.isAuthenticated()) {
+            await base44.entities.AuditLog.create({
+              usuario: user?.full_name || user?.email || 'Usuário',
+              acao: 'Visualização',
+              modulo: 'Comercial',
+              tipo_auditoria: 'acesso',
+              entidade: 'Seção',
+              descricao: `Abrir seção: ${module.title}`,
+              data_hora: new Date().toISOString(),
+            });
+          }
+        } catch (_) {}
+      })();
       openWindow(
         module.component,
         { ...(module.props || {}), windowMode: true },
@@ -373,12 +379,16 @@ export default function Comercial() {
               title="Comercial e Vendas"
               subtitle="Vendas, clientes e canais"
               actions={<div className="flex items-center gap-2">
-                <Button data-permission="Comercial.Pedidos.criar" data-sensitive onClick={handleCreateNewPedido} className="bg-indigo-600 hover:bg-indigo-700">Novo Pedido</Button>
-                <Button
-                  data-permission="Comercial.Pedidos.visualizar"
-                  variant="outline"
-                  onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1300, height: 800 })}
-                >Validar Pedido Externo</Button>
+                <ProtectedSection module="Comercial" section="Pedidos" action="criar">
+                  <Button data-permission="Comercial.Pedidos.criar" data-sensitive onClick={handleCreateNewPedido} className="bg-indigo-600 hover:bg-indigo-700">Novo Pedido</Button>
+                </ProtectedSection>
+                <ProtectedSection module="Comercial" section="Pedidos" action="visualizar">
+                  <Button
+                    data-permission="Comercial.Pedidos.visualizar"
+                    variant="outline"
+                    onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1300, height: 800 })}
+                  >Validar Pedido Externo</Button>
+                </ProtectedSection>
               </div>}
             >
               <ModuleKPIs>
