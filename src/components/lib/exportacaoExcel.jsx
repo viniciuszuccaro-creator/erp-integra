@@ -189,7 +189,9 @@ export function exportarContasPagarExcel(contas, contexto = {}) {
 /**
  * Exporta Estoque para Excel
  */
-export function exportarEstoqueExcel(produtos) {
+export function exportarEstoqueExcel(produtos, contexto = {}) {
+  if (!contexto?.allowed) { base44.entities.AuditLog.create({ acao: 'Bloqueio', modulo: contexto.module || 'Sistema', tipo_auditoria: 'seguranca', entidade: 'Exportacao', descricao: 'Sem permissão - Estoque', empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: false }); throw new Error('Sem permissão para exportar'); }
+  base44.entities.AuditLog.create({ acao: 'Exportação', modulo: contexto.module || 'Sistema', tipo_auditoria: 'ui', entidade: 'Exportacao', descricao: 'Estoque → Excel', empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: true });
   const colunas = [
     { key: 'codigo', label: 'Código' },
     { key: 'descricao', label: 'Descrição' },
