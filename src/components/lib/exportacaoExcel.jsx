@@ -215,7 +215,9 @@ export function exportarEstoqueExcel(produtos, contexto = {}) {
 /**
  * Exporta Movimentações de Estoque para Excel
  */
-export function exportarMovimentacoesExcel(movimentacoes) {
+export function exportarMovimentacoesExcel(movimentacoes, contexto = {}) {
+  if (!contexto?.allowed) { base44.entities.AuditLog.create({ acao: 'Bloqueio', modulo: contexto.module || 'Sistema', tipo_auditoria: 'seguranca', entidade: 'Exportacao', descricao: 'Sem permissão - Movimentações', empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: false }); throw new Error('Sem permissão para exportar'); }
+  base44.entities.AuditLog.create({ acao: 'Exportação', modulo: contexto.module || 'Sistema', tipo_auditoria: 'ui', entidade: 'Exportacao', descricao: 'Movimentações → Excel', empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: true });
   const colunas = [
     { key: 'data_movimentacao', label: 'Data/Hora', tipo: 'date' },
     { key: 'tipo_movimento', label: 'Tipo' },
