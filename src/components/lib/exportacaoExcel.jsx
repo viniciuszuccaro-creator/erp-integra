@@ -140,7 +140,9 @@ export function exportarClientesExcel(clientes, contexto = {}) {
 /**
  * Exporta Contas a Receber para Excel
  */
-export function exportarContasReceberExcel(contas) {
+export function exportarContasReceberExcel(contas, contexto = {}) {
+  if (!contexto?.allowed) { base44.entities.AuditLog.create({ acao: 'Bloqueio', modulo: contexto.module || 'Sistema', tipo_auditoria: 'seguranca', entidade: 'Exportacao', descricao: 'Sem permissão - CR', empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: false }); throw new Error('Sem permissão para exportar'); }
+  base44.entities.AuditLog.create({ acao: 'Exportação', modulo: contexto.module || 'Sistema', tipo_auditoria: 'ui', entidade: 'Exportacao', descricao: 'ContasReceber → Excel', empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: true });
   const colunas = [
     { key: 'descricao', label: 'Descrição' },
     { key: 'cliente', label: 'Cliente' },
