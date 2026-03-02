@@ -351,7 +351,9 @@ export function exportarNotasFiscaisExcel(notas, contexto = {}) {
 /**
  * Exporta Fornecedores para Excel
  */
-export function exportarFornecedoresExcel(fornecedores) {
+export function exportarFornecedoresExcel(fornecedores, contexto = {}) {
+  if (!contexto?.allowed) { base44.entities.AuditLog.create({ acao: 'Bloqueio', modulo: contexto.module || 'Sistema', tipo_auditoria: 'seguranca', entidade: 'Exportacao', descricao: 'Sem permissão - Fornecedores', empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: false }); throw new Error('Sem permissão para exportar'); }
+  base44.entities.AuditLog.create({ acao: 'Exportação', modulo: contexto.module || 'Sistema', tipo_auditoria: 'ui', entidade: 'Exportacao', descricao: 'Fornecedores → Excel', empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: true });
   const colunas = [
     { key: 'nome', label: 'Nome' },
     { key: 'cnpj', label: 'CNPJ' },
