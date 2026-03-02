@@ -359,12 +359,18 @@ function LayoutContent({ children, currentPageName }) {
         fetch('/sw.js', { method: 'HEAD' }).then((res) => {
           if (!res.ok) {
             try {
-              base44.entities.AuditLog.create({
-                acao: 'Visualização', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema', entidade: 'PWA',
-                descricao: 'Service Worker ausente - registro pulado', data_hora: new Date().toISOString(),
-                usuario: user?.full_name || 'Usuário', usuario_id: user?.id || null,
-                empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
-              });
+              (async () => {
+                try {
+                  if (await base44.auth.isAuthenticated()) {
+                    await base44.entities.AuditLog.create({
+                      acao: 'Visualização', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema', entidade: 'PWA',
+                      descricao: 'Service Worker ausente - registro pulado', data_hora: new Date().toISOString(),
+                      usuario: user?.full_name || 'Usuário', usuario_id: user?.id || null,
+                      empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
+                    });
+                  }
+                } catch {}
+              })();
             } catch {}
             return;
           }
@@ -377,12 +383,18 @@ function LayoutContent({ children, currentPageName }) {
               nw.onstatechange = () => {
                 if (nw.state === 'installed' && navigator.serviceWorker.controller) {
                   try {
-                    base44.entities.AuditLog.create({
-                      acao: 'Visualização', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema', entidade: 'PWA',
-                      descricao: 'Nova versão PWA disponível', data_hora: new Date().toISOString(),
-                      usuario: user?.full_name || 'Usuário', usuario_id: user?.id || null,
-                      empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
-                    });
+                    (async () => {
+                      try {
+                        if (await base44.auth.isAuthenticated()) {
+                          await base44.entities.AuditLog.create({
+                            acao: 'Visualização', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema', entidade: 'PWA',
+                            descricao: 'Nova versão PWA disponível', data_hora: new Date().toISOString(),
+                            usuario: user?.full_name || 'Usuário', usuario_id: user?.id || null,
+                            empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
+                          });
+                        }
+                      } catch {}
+                    })();
                   } catch {}
                 }
               };
@@ -394,12 +406,12 @@ function LayoutContent({ children, currentPageName }) {
             // Auditoria quando o SW assumir controle (atualização aplicada)
             try {
               navigator.serviceWorker.addEventListener('controllerchange', () => {
-                try { base44.entities.AuditLog.create({
+                try { (async () => { try { if (await base44.auth.isAuthenticated()) { await base44.entities.AuditLog.create({
                   acao: 'Visualização', modulo: moduleName || 'Sistema', tipo_auditoria: 'sistema', entidade: 'PWA',
                   descricao: 'Service Worker atualizado e ativo', data_hora: new Date().toISOString(),
                   usuario: user?.full_name || 'Usuário', usuario_id: user?.id || null,
                   empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
-                }); } catch {}
+                }); } } catch {} })(); } catch {}
               });
             } catch {}
           }).catch(() => {});
@@ -627,11 +639,13 @@ function LayoutContent({ children, currentPageName }) {
             // Replicação descendente: se o registro foi criado no contexto de Grupo (tem group_id e não tem empresa_id)
             try {
               if (evt?.data?.group_id && !evt?.data?.empresa_id) {
-                await base44.functions.invoke('propagateGroupConfigs', {
-                  entity_name: name,
-                  source_id: evt.id,
-                  group_id: evt.data.group_id
-                });
+                if (await base44.auth.isAuthenticated()) {
+                  await base44.functions.invoke('propagateGroupConfigs', {
+                    entity_name: name,
+                    source_id: evt.id,
+                    group_id: evt.data.group_id
+                  });
+                }
               }
             } catch (_) {}
           }
@@ -1103,7 +1117,7 @@ function LayoutContent({ children, currentPageName }) {
   useEffect(() => {
     try {
       // Auditoria de deploy/app load (não bloqueante)
-      setTimeout(() => { try { base44.functions.invoke('deployAudit', { event: 'app_loaded', module: moduleName || 'Sistema', page: currentPageName }); } catch {} }, 0);
+      setTimeout(() => { (async () => { try { if (await base44.auth.isAuthenticated()) { await base44.functions.invoke('deployAudit', { event: 'app_loaded', module: moduleName || 'Sistema', page: currentPageName }); } } catch {} })(); }, 0);
       const audits = [];
       if (typeof PerformanceObserver !== 'undefined') {
         // LCP
