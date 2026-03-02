@@ -20,6 +20,22 @@ export default function ExportMenu({ data, fileName = "relatorio", title = "Rela
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const allowed = hasPermission(module, section, 'exportar');
   const exportToExcel = () => {
+    if (!allowed) {
+      base44.entities.AuditLog.create({
+        usuario: 'UI', acao: 'Bloqueio', modulo: module, tipo_auditoria: 'seguranca',
+        entidade: 'Exportacao', descricao: `Tentativa sem permissão (${section})`,
+        empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
+        data_hora: new Date().toISOString(), sucesso: false
+      });
+      alert('Você não tem permissão para exportar.');
+      return;
+    }
+    base44.entities.AuditLog.create({
+      usuario: 'UI', acao: 'Exportação', modulo: module, tipo_auditoria: 'ui',
+      entidade: 'Exportacao', descricao: `Exportar Excel (${section})`,
+      empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null,
+      data_hora: new Date().toISOString(), sucesso: true
+    });
     if (!data || data.length === 0) {
       alert("Não há dados para exportar");
       return;
