@@ -376,7 +376,9 @@ export function exportarFornecedoresExcel(fornecedores, contexto = {}) {
 /**
  * Exporta Colaboradores para Excel
  */
-export function exportarColaboradoresExcel(colaboradores) {
+export function exportarColaboradoresExcel(colaboradores, contexto = {}) {
+  if (!contexto?.allowed) { base44.entities.AuditLog.create({ acao: 'Bloqueio', modulo: contexto.module || 'Sistema', tipo_auditoria: 'seguranca', entidade: 'Exportacao', descricao: 'Sem permissão - Colaboradores', empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: false }); throw new Error('Sem permissão para exportar'); }
+  base44.entities.AuditLog.create({ acao: 'Exportação', modulo: contexto.module || 'Sistema', tipo_auditoria: 'ui', entidade: 'Exportacao', descricao: 'Colaboradores → Excel', empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: true });
   const colunas = [
     { key: 'nome_completo', label: 'Nome' },
     { key: 'cpf', label: 'CPF' },
