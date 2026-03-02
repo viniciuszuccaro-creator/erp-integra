@@ -400,7 +400,9 @@ export function exportarColaboradoresExcel(colaboradores, contexto = {}) {
 /**
  * Exporta Genérico para Excel
  */
-export function exportarGenericoExcel(dados, colunas, nomeArquivo) {
+export function exportarGenericoExcel(dados, colunas, nomeArquivo, contexto = {}) {
+  if (!contexto?.allowed) { base44.entities.AuditLog.create({ acao: 'Bloqueio', modulo: contexto.module || 'Sistema', tipo_auditoria: 'seguranca', entidade: 'Exportacao', descricao: `Sem permissão - ${nomeArquivo || 'Genérico'}`, empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: false }); throw new Error('Sem permissão para exportar'); }
+  base44.entities.AuditLog.create({ acao: 'Exportação', modulo: contexto.module || 'Sistema', tipo_auditoria: 'ui', entidade: 'Exportacao', descricao: `${nomeArquivo || 'Genérico'} → Excel`, empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: true });
   const csv = converterParaCSV(dados, colunas);
   const arquivo = nomeArquivo || `exportacao_${new Date().toISOString().split('T')[0]}.csv`;
   baixarCSV(arquivo, csv);
