@@ -239,7 +239,9 @@ export function exportarMovimentacoesExcel(movimentacoes, contexto = {}) {
 /**
  * Exporta DRE para Excel
  */
-export function exportarDREExcel(dre) {
+export function exportarDREExcel(dre, contexto = {}) {
+  if (!contexto?.allowed) { base44.entities.AuditLog.create({ acao: 'Bloqueio', modulo: contexto.module || 'Sistema', tipo_auditoria: 'seguranca', entidade: 'Exportacao', descricao: 'Sem permissão - DRE', empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: false }); throw new Error('Sem permissão para exportar'); }
+  base44.entities.AuditLog.create({ acao: 'Exportação', modulo: contexto.module || 'Sistema', tipo_auditoria: 'ui', entidade: 'Exportacao', descricao: 'DRE → Excel', empresa_id: contexto.empresa_id || null, group_id: contexto.group_id || null, data_hora: new Date().toISOString(), sucesso: true });
   const dados = [
     { conta: 'RECEITA BRUTA', valor: dre.receita_bruta },
     { conta: '(-) Deduções e Impostos', valor: -dre.deducoes_impostos },
