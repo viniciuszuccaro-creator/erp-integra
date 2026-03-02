@@ -724,6 +724,81 @@ export default function Dashboard() {
           {/* KPIs Secundários */}
           <SecondaryKPIsSection kpis={kpiCards} />
 
+          {canSeeComercial && (
+            <Card className="bg-white/80 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle>Pedidos (Recentes, Pendentes, Aprovação)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Recentes */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-slate-900">Recentes</h3>
+                      <Badge variant="outline">{pedidosRecentes.length}</Badge>
+                    </div>
+                    <div className="space-y-2 max-h-64 overflow-auto">
+                      {pedidosRecentes.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between p-2 rounded border border-slate-200 bg-white">
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-slate-900 truncate">#{p.numero_pedido} • {p.cliente_nome}</div>
+                            <div className="text-xs text-slate-500">{p.data_pedido ? new Date(p.data_pedido).toLocaleDateString('pt-BR') : '-'} • {p.status}</div>
+                          </div>
+                          <div className="text-sm font-semibold text-blue-600">R$ {(p.valor_total||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                        </div>
+                      ))}
+                      {pedidosRecentes.length === 0 && (<p className="text-sm text-slate-500">Sem pedidos.</p>)}
+                    </div>
+                  </div>
+
+                  {/* Pendentes */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-slate-900">Pendentes</h3>
+                      <Badge className="bg-amber-100 text-amber-700">{pedidosPendentes.length}</Badge>
+                    </div>
+                    <div className="space-y-2 max-h-64 overflow-auto">
+                      {pedidosPendentes.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between p-2 rounded border border-slate-200 bg-white">
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-slate-900 truncate">#{p.numero_pedido} • {p.cliente_nome}</div>
+                            <div className="text-xs text-slate-500">{p.data_pedido ? new Date(p.data_pedido).toLocaleDateString('pt-BR') : '-'} • {p.status}</div>
+                          </div>
+                          <div className="text-sm font-semibold text-slate-700">R$ {(p.valor_total||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                        </div>
+                      ))}
+                      {pedidosPendentes.length === 0 && (<p className="text-sm text-slate-500">Sem pendências.</p>)}
+                    </div>
+                  </div>
+
+                  {/* Aguardando Aprovação */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-slate-900">Aguardando Aprovação</h3>
+                      <Badge className="bg-red-100 text-red-700">{pedidosAguardandoAprovacao.length}</Badge>
+                    </div>
+                    <div className="space-y-2 max-h-64 overflow-auto">
+                      {pedidosAguardandoAprovacao.map((p) => (
+                        <div key={p.id} className="flex items-center justify-between p-2 rounded border border-slate-200 bg-white">
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-slate-900 truncate">#{p.numero_pedido} • {p.cliente_nome}</div>
+                            <div className="text-xs text-slate-500">solicit.: {p.vendedor || '-'} • desc {p.desconto_solicitado_percentual ?? 0}%</div>
+                          </div>
+                          <Badge className="bg-rose-100 text-rose-700 text-[10px]">{p.status_aprovacao || 'pendente'}</Badge>
+                        </div>
+                      ))}
+                      {pedidosAguardandoAprovacao.length === 0 && (<p className="text-sm text-slate-500">Sem aprovações pendentes.</p>)}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end mt-3">
+                  <Button variant="outline" onClick={() => handleDrillDown(createPageUrl('Comercial'))}>Ver todos</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+
           {/* Anomalias Financeiras (IA) – hiperpersonalização por role */}
           {canSeeFinanceiro && (
             <Card className="bg-white/80 backdrop-blur-sm mt-4">
