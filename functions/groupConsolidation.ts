@@ -1,6 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
 
+// In-memory cache (per instance) for quick subsequent calls
+const CACHE = globalThis.__gcCache || (globalThis.__gcCache = new Map());
+const CACHE_TTL_MS = 60_000;
+
 // Consolidação Multiempresas: agrega KPIs por group_id (Pedidos, Receber, Pagar) e registra snapshot no AuditLog
 Deno.serve(async (req) => {
   try {
@@ -18,6 +22,18 @@ Deno.serve(async (req) => {
       const b = await req.json();
       if (b?.filtros && (b.filtros.group_id || b.filtros.empresa_id)) filtros = b.filtros;
     } catch (_) {}
+
+    // Strict multiempresa scope for non-admins
+    if (user?.role !== 'admin' && !filtros.group_id && !filtros.empresa_id) {
+      return Response.json({ error: 'empresa_id ou group_id obrigatório' }, { status: 403 });
+    }
+
+    // Cache hit?
+    const __key = JSON.stringify({ filtros });
+    const __entry = CACHE.get(__key);
+    if (__entry && (Date.now() - __entry.t) < CACHE_TTL_MS) {
+      return Response.json(__entry.resp);
+    }
 
     const [pedidos, receber, pagar] = await Promise.all([
       base44.asServiceRole.entities.Pedido.filter(filtros, '-updated_date', 500),
@@ -83,7 +99,9 @@ Deno.serve(async (req) => {
         });
       } catch (_) {}
     }
-    return Response.json({ ok: true, groups: summary.length, summary });
+    const __resp = { ok: true, groups: summary.length, summary };
+    try { CACHE.set(__key, { t: Date.now(), resp: __resp }); } catch (_) {}
+    return Response.json(__resp);
   } catch (error) {
     return Response.json({ error: String(error?.message || error) }, { status: 500 });
   }

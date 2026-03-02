@@ -38,6 +38,7 @@ import ERPDataTable from "@/components/ui/erp/DataTable";
 import usePersistedSort from "@/components/lib/usePersistedSort";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import useBackendPagination from "@/components/lib/useBackendPagination";
+import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 
 export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCreateNFe }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -166,10 +167,11 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const payload = sanitizeOnWrite(formData);
     if (selectedNF) { // Changed from editingNota
-      updateMutation.mutate({ id: selectedNF.id, data: formData }); // Changed from editingNota
+      updateMutation.mutate({ id: selectedNF.id, data: payload }); // Changed from editingNota
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(payload);
     }
   };
 
