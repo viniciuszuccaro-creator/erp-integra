@@ -21,7 +21,9 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const entities = Array.isArray(body?.entities) && body.entities.length ? body.entities : DEFAULT_ENTITIES;
     const dryRun = body?.dryRun !== false; // default true
-    const apply = body?.apply === true && dryRun === false; // only when explicitly requested and not dryRun
+    // For execução sob automação: honrar preferência de dry-run via flag forçada
+    const forceDryRun = body?.forceDryRun === true;
+    const apply = !forceDryRun && (body?.apply === true && dryRun === false); // only when explicitly requested and not dryRun
     const limitPerEntity = Number(body?.limitPerEntity) > 0 ? Number(body.limitPerEntity) : 1000;
 
     const sr = base44.asServiceRole;
