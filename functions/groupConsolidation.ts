@@ -1,9 +1,7 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
-// In-memory cache (per instance) for quick subsequent calls
-const CACHE: Map<string, { t: number; resp: any }> = (globalThis as any).__gcCache || (((globalThis as any).__gcCache = new Map()), (globalThis as any).__gcCache);
-const CACHE_TTL_MS = 60_000;
+
+
 
 // In-memory cache (per instance) for quick subsequent calls
 const CACHE = globalThis.__gcCache || (globalThis.__gcCache = new Map());
@@ -13,11 +11,19 @@ const CACHE_TTL_MS = 60_000;
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { user, perfil } = await getUserAndPerfil(base44);
+    const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     if (user?.role !== 'admin') {
-      const denied = await assertPermission(base44, { user, perfil }, 'Sistema', 'ConsolidacaoGrupo', 'visualizar');
-      if (denied) return denied;
+      try {
+        const guard = await base44.asServiceRole.functions.invoke('entityGuard', {
+          module: 'Sistema',
+          section: 'ConsolidacaoGrupo',
+          action: 'visualizar',
+        });
+        if (guard?.data?.allowed === false) {
+          return Response.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      } catch (_) { /* guard indisponível: segue leitura */ }
     }
 
     const t0 = Date.now();
