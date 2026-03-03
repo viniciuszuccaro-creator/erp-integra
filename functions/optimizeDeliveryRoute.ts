@@ -25,7 +25,8 @@ Deno.serve(async (req) => {
     let empresa_id = body?.empresa_id || null;
     let group_id = body?.group_id || null;
     const isAutomation = !!body?.event && body?.event?.entity_name === 'Entrega';
-    if (isAutomation) {
+    const isPedidoEvent = !!body?.event && body?.event?.entity_name === 'Pedido';
+    if (isAutomation || isPedidoEvent) {
       const d = body?.data || null;
       empresa_id = d?.empresa_id || empresa_id;
       group_id = d?.group_id || group_id;
@@ -56,10 +57,16 @@ Deno.serve(async (req) => {
         entregas.push(...(part || []));
       }
     } else {
-      // Critério padrão: entregas pendentes para a empresa/região (ajuste conforme seu fluxo)
-      const crit = { empresa_id, status: { $in: ['Pronto para Expedir', 'Saiu para Entrega', 'Em Trânsito'] } };
-      if (regiaoId) crit['regiao_entrega_id'] = regiaoId;
-      entregas = await base44.asServiceRole.entities.Entrega.filter(crit, undefined, 100);
+      // Se veio de evento de Pedido, roteiriza somente as entregas vinculadas a ele
+      const pedidoId = isPedidoEvent ? (body?.event?.entity_id || body?.data?.id) : null;
+      if (pedidoId) {
+        entregas = await base44.asServiceRole.entities.Entrega.filter({ empresa_id, pedido_id: pedidoId }, undefined, 100);
+      } else {
+        // Critério padrão: entregas pendentes para a empresa/região
+        const crit = { empresa_id, status: { $in: ['Pronto para Expedir', 'Saiu para Entrega', 'Em Trânsito'] } };
+        if (regiaoId) crit['regiao_entrega_id'] = regiaoId;
+        entregas = await base44.asServiceRole.entities.Entrega.filter(crit, undefined, 100);
+      }
 
       // Pré-ordenar por prioridade e janelas de entrega
       const prioRank = { Urgente: 1, Alta: 2, Normal: 3, Baixa: 4 };
