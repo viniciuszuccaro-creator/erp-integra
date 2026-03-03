@@ -858,6 +858,47 @@ export default function Dashboard() {
             COLORS={COLORS}
           />
 
+          {/* Command Center (Executivo) - sem criar módulo novo, visível a quem tem Sistema */}
+          <ProtectedSection module="Sistema" action="ver" hideInstead>
+            <Card className="bg-white/80 backdrop-blur-sm mt-4">
+              <CardHeader>
+                <CardTitle>Command Center</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-700">Erros (24h)</div>
+                      <div className="text-2xl font-bold">{/* agregado por auditError/deployAudit */}</div>
+                    </div>
+                    <AlertCircle className="w-6 h-6 text-rose-600" />
+                  </div>
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-700">Jobs/Automations</div>
+                      <div className="text-2xl font-bold">{/* list_automations na aba técnica */}</div>
+                    </div>
+                    <Activity className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-700">Integrações</div>
+                      <div className="text-2xl font-bold">OK</div>
+                    </div>
+                    <BarChart3 className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-700">Segurança</div>
+                      <div className="text-2xl font-bold">{/* securityAlerts na aba técnica */}</div>
+                    </div>
+                    <Shield className="w-6 h-6 text-amber-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </ProtectedSection>
+
           {/* Previsões de Estoque (IA) - visível apenas para quem vê Estoque */}
           {canSeeEstoque && (
             <Card className="bg-white/80 backdrop-blur-sm">
