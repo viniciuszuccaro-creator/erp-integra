@@ -32,18 +32,10 @@ import AdminTabs from "@/components/administracao-sistema/AdminTabs";
 
   return (
     <ProtectedSection module="Sistema" action="visualizar">
-    <ModuleLayout title="Administração do Sistema">
-      <header className="p-4 md:p-6 border-b bg-white/80 backdrop-blur-sm">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Administração do Sistema</h1>
-          <div className="text-sm text-slate-500">Hub central • responsivo • w-full / h-full</div>
-        </div>
-      </header>
-
-      <ModuleContent>
-        <div className="p-4 md:p-6">
-        <Tabs defaultValue={initialTab} className="w-full h-full">
-          <TabsList className="flex flex-wrap gap-2">
+      <ModuleLayout title="Administração do Sistema">
+        <AdminHeader />
+        <ModuleContent>
+          <div className="p-4 md:p-6">
             <TabsTrigger value="gerais" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <div className="flex items-center gap-2"><Settings className="w-4 h-4"/> Gerais</div>
             </TabsTrigger>
@@ -192,10 +184,10 @@ import AdminTabs from "@/components/administracao-sistema/AdminTabs";
 
 
 
-        </Tabs>
-        </div>
-      </ModuleContent>
-    </ModuleLayout>
+            <AdminTabs initialTab={initialTab} isAdmin={isAdmin} empresaAtual={empresaAtual} grupoAtual={grupoAtual} />
+          </div>
+        </ModuleContent>
+      </ModuleLayout>
     </ProtectedSection>
   );
 }
