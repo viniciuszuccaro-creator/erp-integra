@@ -377,8 +377,8 @@ function LayoutContent({ children, currentPageName }) {
     // Registrar service worker com estratégia de atualização
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        // Só registra se o arquivo existir para evitar 404 no console
-        fetch('/sw.js', { method: 'HEAD' }).then((res) => {
+        // Registra SW servido por função (compatível com Vite 6, sem plugin)
+        fetch('/functions/pwaSw', { method: 'HEAD' }).then((res) => {
           if (!res.ok) {
             try {
               (async () => {
@@ -396,7 +396,7 @@ function LayoutContent({ children, currentPageName }) {
             } catch {}
             return;
           }
-          navigator.serviceWorker.register('/sw.js').then((reg) => {
+          navigator.serviceWorker.register('/functions/pwaSw').then((reg) => {
             // Força ativação da nova versão quando disponível
             if (reg && reg.waiting) { try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch {} }
             reg.onupdatefound = () => {
