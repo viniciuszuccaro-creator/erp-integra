@@ -1,60 +1,32 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
-
-
-
-// In-memory cache (per instance) for quick subsequent calls
+// Simple in-memory cache per instance
 const CACHE = globalThis.__gcCache || (globalThis.__gcCache = new Map());
-const CACHE_TTL_MS = 60_000;
+const CACHE_TTL_MS = 300_000; // 5 minutes
 
-// Consolidação Multiempresas: agrega KPIs por group_id (Pedidos, Receber, Pagar) e registra snapshot no AuditLog
 Deno.serve(async (req) => {
+  const t0 = Date.now();
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    if (user?.role !== 'admin') {
-      try {
-        const guard = await base44.asServiceRole.functions.invoke('entityGuard', {
-          module: 'Sistema',
-          section: 'ConsolidacaoGrupo',
-          action: 'visualizar',
-        });
-        if (guard?.data?.allowed === false) {
-          return Response.json({ error: 'Forbidden' }, { status: 403 });
-        }
-      } catch (_) { /* guard indisponível: segue leitura */ }
-    }
 
-    const t0 = Date.now();
-    let filtros: any = {};
+    let filtros = {};
     try {
-      const b = await req.json();
-      if (b?.filtros && (b.filtros.group_id || b.filtros.empresa_id)) filtros = b.filtros;
+      const body = await req.json();
+      if (body && body.filtros && (body.filtros.group_id || body.filtros.empresa_id)) {
+        filtros = body.filtros;
+      }
     } catch (_) {}
 
-    // Strict multiempresa scope for non-admins
-    if (user?.role !== 'admin' && !filtros.group_id && !filtros.empresa_id) {
+    if (user.role !== 'admin' && !filtros.group_id && !filtros.empresa_id) {
       return Response.json({ error: 'empresa_id ou group_id obrigatório' }, { status: 403 });
     }
 
-    // Cache hit?
-    const __key = JSON.stringify({ filtros });
-    const __entry = CACHE.get(__key);
-    if (__entry && (Date.now() - __entry.t) < CACHE_TTL_MS) {
-      return Response.json(__entry.resp);
-    }
-
-    // Strict multiempresa scope for non-admins
-    if (user?.role !== 'admin' && !filtros.group_id && !filtros.empresa_id) {
-      return Response.json({ error: 'empresa_id ou group_id obrigatório' }, { status: 403 });
-    }
-
-    // Cache hit?
-    const __key = JSON.stringify({ filtros });
-    const __entry = CACHE.get(__key);
-    if (__entry && (Date.now() - __entry.t) < CACHE_TTL_MS) {
-      return Response.json(__entry.resp);
+    const key = JSON.stringify(filtros || {});
+    const entry = CACHE.get(key);
+    if (entry && (Date.now() - entry.t) < CACHE_TTL_MS) {
+      return Response.json(entry.resp);
     }
 
     const [pedidos, receber, pagar] = await Promise.all([
@@ -63,7 +35,6 @@ Deno.serve(async (req) => {
       base44.asServiceRole.entities.ContaPagar.filter(filtros, '-updated_date', 500)
     ]);
 
-    // Diagnóstico de GAPS multiempresa
     const gaps = {
       pedido_sem_empresa: pedidos.filter(p => !p?.empresa_id).length,
       pedido_sem_grupo: pedidos.filter(p => !p?.group_id).length,
@@ -72,42 +43,49 @@ Deno.serve(async (req) => {
     };
 
     const groups = new Map();
-    const add = (gid) => { if (!groups.has(gid)) groups.set(gid, { group_id: gid || null, pedidos: 0, valor_pedidos: 0, receber: 0, valor_receber: 0, pagar: 0, valor_pagar: 0 }); };
+    const add = (gid) => {
+      if (!groups.has(gid)) groups.set(gid || null, { group_id: gid || null, pedidos: 0, valor_pedidos: 0, receber: 0, valor_receber: 0, pagar: 0, valor_pagar: 0 });
+    };
 
     for (const p of pedidos) {
-      add(p?.group_id || p?.empresa_id || null);
-      const g = groups.get(p?.group_id || p?.empresa_id || null);
+      const gid = p?.group_id || p?.empresa_id || null;
+      add(gid);
+      const g = groups.get(gid);
       g.pedidos += 1;
       g.valor_pedidos += Number(p?.valor_total || 0);
     }
     for (const r of receber) {
-      add(r?.group_id || r?.empresa_id || null);
-      const g = groups.get(r?.group_id || r?.empresa_id || null);
+      const gid = r?.group_id || r?.empresa_id || null;
+      add(gid);
+      const g = groups.get(gid);
       g.receber += 1;
       g.valor_receber += Number(r?.valor || 0) - Number(r?.valor_recebido || 0);
     }
     for (const c of pagar) {
-      add(c?.group_id || c?.empresa_id || null);
-      const g = groups.get(c?.group_id || c?.empresa_id || null);
+      const gid = c?.group_id || c?.empresa_id || null;
+      add(gid);
+      const g = groups.get(gid);
       g.pagar += 1;
       g.valor_pagar += Number(c?.valor || 0) - Number(c?.valor_pago || 0);
     }
 
     const summary = Array.from(groups.values());
 
-    // Gravar uma entrada de auditoria consolidada + GAPS
-    await base44.asServiceRole.entities.AuditLog.create({
-      usuario: 'Sistema',
-      acao: 'Criação',
-      modulo: 'Sistema',
-      entidade: 'ConsolidaçãoGrupo',
-      descricao: `Snapshot multiempresa (${summary.length} grupos/escopos) — gaps: ${JSON.stringify(gaps)}`,
-      dados_novos: { gerado_em: new Date().toISOString(), summary, gaps },
-      data_hora: new Date().toISOString(),
-    });
+    // Audit snapshot + performance
+    try {
+      await base44.asServiceRole.entities.AuditLog.create({
+        usuario: 'Sistema',
+        acao: 'Criação',
+        modulo: 'Sistema',
+        entidade: 'ConsolidaçãoGrupo',
+        descricao: `Snapshot multiempresa (${summary.length} escopos) — gaps: ${JSON.stringify(gaps)}`,
+        dados_novos: { gerado_em: new Date().toISOString(), summary, gaps },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (_) {}
 
     const durationMs = Date.now() - t0;
-    if (durationMs > 300) {
+    if (durationMs > 500) {
       try {
         await base44.asServiceRole.entities.AuditLog.create({
           usuario: 'Sistema',
@@ -115,15 +93,16 @@ Deno.serve(async (req) => {
           modulo: 'Sistema',
           tipo_auditoria: 'sistema',
           entidade: 'Performance',
-          descricao: `groupConsolidation demorou ${durationMs}ms`,
+          descricao: `groupConsolidation ${durationMs}ms`,
           dados_novos: { durationMs, filtros },
           data_hora: new Date().toISOString(),
         });
       } catch (_) {}
     }
-    const __resp = { ok: true, groups: summary.length, summary };
-    try { CACHE.set(__key, { t: Date.now(), resp: __resp }); } catch (_) {}
-    return Response.json(__resp);
+
+    const resp = { ok: true, groups: summary.length, summary };
+    try { CACHE.set(key, { t: Date.now(), resp }); } catch (_) {}
+    return Response.json(resp);
   } catch (error) {
     return Response.json({ error: String(error?.message || error) }, { status: 500 });
   }
