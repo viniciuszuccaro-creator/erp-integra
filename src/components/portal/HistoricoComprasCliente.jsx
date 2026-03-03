@@ -21,8 +21,8 @@ export default function HistoricoComprasCliente({ clienteId }) {
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['historico-pedidos', clienteId],
-    queryFn: () => base44.entities.Pedido.filter({ cliente_id: clienteId }, '-data_pedido', 100),
+    queryKey: ['historico-pedidos', clienteId, cliente?.empresa_id, cliente?.group_id],
+    queryFn: () => base44.entities.Pedido.filter({ cliente_id: clienteId, empresa_id: cliente?.empresa_id || undefined, group_id: cliente?.group_id || undefined }, '-data_pedido', 100),
     enabled: !!clienteId,
   });
 

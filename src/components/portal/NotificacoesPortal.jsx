@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useUser } from '@/components/lib/UserContext';
 import { Bell, Package, FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,12 +21,18 @@ import { format } from 'date-fns';
  * ✅ Timestamp formatado
  */
 export default function NotificacoesPortal() {
+  const { user } = useUser();
   const { data: notificacoes = [] } = useQuery({
-    queryKey: ['notificacoes-portal'],
+    queryKey: ['notificacoes-portal', user?.id],
     queryFn: async () => {
-      const user = await base44.auth.me();
+      const me = await base44.auth.me();
+      let empresaId = null, groupId = null;
+      try {
+        const c = await base44.entities.Cliente.filter({ portal_usuario_id: me.id }, undefined, 1);
+        if (Array.isArray(c) && c[0]) { empresaId = c[0].empresa_id || null; groupId = c[0].group_id || null; }
+      } catch {}
       return await base44.entities.Notificacao.filter(
-        { usuario_id: user.id, lida: false },
+        { usuario_id: me.id, lida: false, empresa_id: empresaId || undefined, group_id: groupId || undefined },
         '-created_date',
         10
       );
@@ -49,7 +56,15 @@ export default function NotificacoesPortal() {
   };
 
   const marcarComoLida = async (notifId) => {
-    await base44.entities.Notificacao.update(notifId, { lida: true });
+    try {
+      const me = await base44.auth.me();
+      let empresaId = null, groupId = null;
+      try {
+        const c = await base44.entities.Cliente.filter({ portal_usuario_id: me.id }, undefined, 1);
+        if (Array.isArray(c) && c[0]) { empresaId = c[0].empresa_id || null; groupId = c[0].group_id || null; }
+      } catch {}
+      await base44.entities.Notificacao.update(notifId, { lida: true, empresa_id: empresaId || undefined, group_id: groupId || undefined });
+    } catch (_) {}
   };
 
   return (

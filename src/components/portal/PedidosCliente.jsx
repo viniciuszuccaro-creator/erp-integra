@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useUser } from '@/components/lib/UserContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,12 +18,13 @@ import { Progress } from '@/components/ui/progress';
  * ✅ w-full h-full
  */
 export default function PedidosCliente() {
+  const { user } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPedido, setSelectedPedido] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   const { data: pedidos = [], isLoading } = useQuery({
-    queryKey: ['meus-pedidos'],
+    queryKey: ['meus-pedidos', user?.id],
     queryFn: async () => {
       const user = await base44.auth.me();
       const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
@@ -32,13 +34,15 @@ export default function PedidosCliente() {
       
       return await base44.entities.Pedido.filter({ 
         cliente_id: cliente.id,
-        pode_ver_no_portal: true 
+        pode_ver_no_portal: true,
+        empresa_id: cliente.empresa_id || undefined,
+        group_id: cliente.group_id || undefined
       }, '-data_pedido', 50);
     },
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['minhas-entregas'],
+    queryKey: ['minhas-entregas', user?.id],
     queryFn: async () => {
       const user = await base44.auth.me();
       const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
@@ -46,7 +50,7 @@ export default function PedidosCliente() {
       
       if (!cliente) return [];
       
-      return await base44.entities.Entrega.filter({ cliente_id: cliente.id }, '-data_previsao', 50);
+      return await base44.entities.Entrega.filter({ cliente_id: cliente.id, empresa_id: cliente.empresa_id || undefined, group_id: cliente.group_id || undefined }, '-data_previsao', 50);
     },
   });
 
