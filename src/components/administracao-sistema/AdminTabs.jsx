@@ -123,6 +123,19 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
         <ProtectedSection module="Sistema" section={["Controle de Acesso"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</div>}>
           <div className="w-full h-full space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+             {/* Painel técnico do Command Center (detalhe) */}
+             <Card className="col-span-1 xl:col-span-3">
+               <CardContent className="p-4">
+                 <h2 className="font-semibold mb-2">Command Center Técnico</h2>
+                 <div className="text-sm text-slate-600 mb-3">Consolida erros (auditError), jobs/automations, integrações e alertas de segurança.</div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+                   <div className="p-3 rounded-lg border bg-white">Erros 24h {/* agregar via AuditoriaLogsIndex filtros */}</div>
+                   <div className="p-3 rounded-lg border bg-white">Automations {/* listadas em Integrações/Jobs */}</div>
+                   <div className="p-3 rounded-lg border bg-white">Integrações {/* status em IntegracoesIndex */}</div>
+                   <div className="p-3 rounded-lg border bg-white">Segurança {/* MonitorAcessoRealtimeSection / SoDChecker */}</div>
+                 </div>
+               </CardContent>
+             </Card>
               <Card className="col-span-1 xl:col-span-2">
                 <CardContent className="p-4">
                   <h2 className="font-semibold mb-3">Gestão de Usuários</h2>
