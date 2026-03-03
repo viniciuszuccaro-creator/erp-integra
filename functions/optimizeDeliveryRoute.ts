@@ -21,8 +21,15 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const empresa_id = body?.empresa_id || null;
-    const group_id = body?.group_id || null;
+    // Suporte a automations: quando chamado por evento de Entrega
+    let empresa_id = body?.empresa_id || null;
+    let group_id = body?.group_id || null;
+    const isAutomation = !!body?.event && body?.event?.entity_name === 'Entrega';
+    if (isAutomation) {
+      const d = body?.data || null;
+      empresa_id = d?.empresa_id || empresa_id;
+      group_id = d?.group_id || group_id;
+    }
 
     // Contexto obrigatório
     const ctxErr = assertContextPresence({ empresa_id, group_id }, true);
@@ -32,7 +39,12 @@ Deno.serve(async (req) => {
     const denied = await assertPermission(base44, { user, perfil }, 'Expedição', 'Roteirizacao', 'executar');
     if (denied) return denied;
 
-    // Carregar entregas alvo
+    // Carregar entregas alvo com filtros e restrições
+    const constraints = body?.constraints || {};
+    const capKg = Number(constraints?.vehicle_capacity_kg) > 0 ? Number(constraints.vehicle_capacity_kg) : null;
+    const regiaoId = body?.regiao_entrega_id || null;
+    const usarJanela = constraints?.respect_time_windows === true;
+
     let entregas = [];
     const ids = Array.isArray(body?.entrega_ids) ? body.entrega_ids.filter(Boolean) : [];
     if (ids.length > 0) {
@@ -44,12 +56,25 @@ Deno.serve(async (req) => {
         entregas.push(...(part || []));
       }
     } else {
-      // Critério padrão: entregas pendentes para a empresa (ajuste conforme seu fluxo)
-      entregas = await base44.asServiceRole.entities.Entrega.filter(
-        { empresa_id, status: { $in: ['Pronto para Expedir', 'Saiu para Entrega', 'Em Trânsito'] } },
-        undefined,
-        50
-      );
+      // Critério padrão: entregas pendentes para a empresa/região (ajuste conforme seu fluxo)
+      const crit = { empresa_id, status: { $in: ['Pronto para Expedir', 'Saiu para Entrega', 'Em Trânsito'] } };
+      if (regiaoId) crit['regiao_entrega_id'] = regiaoId;
+      entregas = await base44.asServiceRole.entities.Entrega.filter(crit, undefined, 100);
+
+      // Pré-ordenar por prioridade e janelas de entrega
+      const prioRank = { Urgente: 1, Alta: 2, Normal: 3, Baixa: 4 };
+      entregas.sort((a,b) => {
+        const pa = prioRank[a?.prioridade] || 99; const pb = prioRank[b?.prioridade] || 99;
+        const wa = a?.janela_entrega_inicio || ''; const wb = b?.janela_entrega_inicio || '';
+        if (pa !== pb) return pa - pb;
+        return String(wa).localeCompare(String(wb));
+      });
+
+      // Capacidade do veículo
+      if (capKg) {
+        let acc = 0;
+        entregas = entregas.filter(e => { const w = Number(e?.peso_total_kg || 0); if (acc + w <= capKg) { acc += w; return true; } return false; });
+      }
     }
 
     if (!entregas || entregas.length === 0) {
@@ -132,9 +157,28 @@ Deno.serve(async (req) => {
     // Reordena paradas conforme waypoint_order (aplica sobre via; destino final já é o último)
     const reordered = order.map((idx) => usableStops[idx]).concat([usableStops[usableStops.length - 1]]);
 
-    // Monta resposta ordenada com IDs originais
-    const idByAddr = new Map(usableStops.map(s => [s.addr, s.id]));
-    const ordered = reordered.map((s) => ({ entrega_id: s.id, label: s.label, address: s.addr }));
+    // Estimar ETAs e status de SLA
+    const now = Date.now();
+    const etas = [];
+    let accS = 0;
+    for (const l of legs) { etas.push(new Date(now + (accS + (l?.duration?.value||0)) * 1000).toISOString()); accS += (l?.duration?.value || 0); }
+    // legs length = ordered.length; última perna leva ao destino final
+    const ordered = reordered.map((s, idx) => ({ entrega_id: s.id, label: s.label, address: s.addr, eta_iso: etas[idx] || null }));
+
+    // Best-effort: atualizar 'data_previsao' e histórico de planejamento
+    try {
+      for (let i = 0; i < ordered.length; i++) {
+        const o = ordered[i];
+        const data_previsao = o.eta_iso ? o.eta_iso.slice(0,10) : null;
+        await base44.asServiceRole.entities.Entrega.update(o.entrega_id, {
+          ...(data_previsao ? { data_previsao } : {}),
+          historico_status: [
+            ...(entregas[i]?.historico_status || []),
+            { status: 'Roteirização Planejada', data_hora: new Date().toISOString(), usuario: user.full_name || 'Sistema' }
+          ]
+        });
+      }
+    } catch (_) {}
 
     // Auditoria
     try {

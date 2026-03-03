@@ -158,6 +158,14 @@ export default function AppEntregasMotorista() {
       ]
     });
 
+    try { await base44.entities.AuditLog.create({
+      usuario: user?.full_name || user?.email || 'Motorista',
+      usuario_id: user?.id,
+      empresa_id: entrega.empresa_id || null,
+      group_id: entrega.group_id || null,
+      acao: 'Edição', modulo: 'Expedição', tipo_auditoria: 'ui', entidade: 'Entrega', registro_id: entrega.id,
+      descricao: 'Entrega iniciada no app do motorista', data_hora: new Date().toISOString()
+    }); } catch (_) {}
     refetch();
     toast.success('🚚 Entrega iniciada!');
   };
@@ -228,6 +236,14 @@ export default function AppEntregasMotorista() {
     setAssinaturaBase64(null);
     setNomeRecebedor('');
     setDocumentoRecebedor('');
+    try { await base44.entities.AuditLog.create({
+      usuario: user?.full_name || user?.email || 'Motorista',
+      usuario_id: user?.id,
+      empresa_id: entregaAtual?.empresa_id || null,
+      group_id: entregaAtual?.group_id || null,
+      acao: 'Edição', modulo: 'Expedição', tipo_auditoria: 'ui', entidade: 'Entrega', registro_id: entregaAtual?.id,
+      descricao: 'Entrega confirmada (foto + assinatura) no app do motorista', data_hora: new Date().toISOString()
+    }); } catch (_) {}
     refetch();
     toast.success('✅ Entrega confirmada com sucesso!');
   };

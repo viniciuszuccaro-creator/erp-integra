@@ -372,6 +372,15 @@ function LayoutContent({ children, currentPageName }) {
       appleIcon.setAttribute('rel', 'apple-touch-icon');
       appleIcon.setAttribute('href', 'https://base44.com/logo_v2.svg');
       if (!appleIcon.parentElement) document.head.appendChild(appleIcon);
+
+      // CSP meta (melhora segurança client-side)
+      try {
+        const csp = document.querySelector('meta[http-equiv="Content-Security-Policy"]') || document.createElement('meta');
+        csp.setAttribute('http-equiv', 'Content-Security-Policy');
+        csp.setAttribute('content', "default-src 'self' https: data: blob:; connect-src 'self' https: wss:; img-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https:; frame-ancestors 'self'; object-src 'none'");
+        if (!csp.parentElement) document.head.appendChild(csp);
+      } catch (_) {}
+      
     } catch (_) {}
 
     // Registrar service worker com estratégia de atualização

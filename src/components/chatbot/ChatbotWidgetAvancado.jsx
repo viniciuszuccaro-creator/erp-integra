@@ -133,6 +133,7 @@ export default function ChatbotWidgetAvancado({
         tipo_atendimento: 'Bot',
         prioridade: 'Normal',
         data_inicio: new Date().toISOString(),
+        sla_iniciado_em: new Date().toISOString(),
         data_ultima_mensagem: new Date().toISOString(),
         total_mensagens: 0,
         mensagens_bot: 0,
@@ -339,12 +340,8 @@ export default function ChatbotWidgetAvancado({
     try {
       const atendentes = configCanal?.equipe_atendimento_ids || [];
       
-      if (atendentes.length === 0) {
-        return;
-      }
-
-      // Round-robin simples
-      const atendenteId = atendentes[0];
+      // Round-robin simples (pode não haver atendentes configurados)
+      const atendenteId = atendentes[0] || null;
 
       await base44.entities.ConversaOmnicanal.update(conversaId, {
         tipo_atendimento: 'Humano',
@@ -354,7 +351,8 @@ export default function ChatbotWidgetAvancado({
         prioridade: resultado.sentimento === 'Frustrado' || resultado.sentimento === 'Urgente' ? 'Urgente' : 'Alta'
       });
 
-      // Criar notificação
+      // Criar notificação (se houver atendente)
+      if (atendenteId) {
       await base44.entities.Notificacao.create({
         titulo: '🚨 Nova Conversa - Transbordo Chatbot',
         mensagem: `Cliente precisa de atendimento humano.\nSentimento: ${resultado.sentimento}\nIntent: ${resultado.intent}\nCanal: ${canal}`,
@@ -417,8 +415,9 @@ export default function ChatbotWidgetAvancado({
         feedback_cliente: avaliacaoSelecionada === nota ? 'Positivo' : null,
         resolvido: nota >= 4,
         status: 'Resolvida',
-        data_finalizacao: new Date().toISOString()
-      });
+        data_finalizacao: new Date().toISOString(),
+        sla_finalizado_em: new Date().toISOString()
+        });
       
       setAvaliacaoSelecionada(nota);
       

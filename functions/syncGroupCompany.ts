@@ -22,6 +22,15 @@ async function listEmpresasByGroup(base44, groupId) {
 
 function nowIso() { return new Date().toISOString(); }
 
+// Retry helper (idempotent best-effort)
+async function doWithRetry(fn, tries = 3, delayMs = 300) {
+  let lastErr;
+  for (let i = 0; i < tries; i++) {
+    try { return await fn(); } catch (e) { lastErr = e; if (i < tries - 1) { await new Promise(r => setTimeout(r, delayMs * (i + 1))); } }
+  }
+  throw lastErr;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
