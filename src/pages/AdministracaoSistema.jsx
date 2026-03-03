@@ -1,28 +1,12 @@
 import React, { Suspense, lazy } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import { Settings, Users, Shield, FileText, Sparkles, Link2 } from "lucide-react";
 import ModuleLayout from "@/components/layout/ModuleLayout";
 import ModuleContent from "@/components/layout/ModuleContent";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
-import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configuracoes-gerais/ConfiguracoesGeraisIndex";
-import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acessos/GestaoAcessosIndex";
-import AuditoriaLogsIndex from "@/components/administracao-sistema/auditoria-logs/AuditoriaLogsIndex";
-import SegurancaGovernancaIndex from "@/components/administracao-sistema/seguranca-governanca/SegurancaGovernancaIndex";
-import IntegracoesIndex from "@/components/administracao-sistema/IntegracoesIndex";
-import IAOtimizacaoIndex from "@/components/administracao-sistema/IAOtimizacaoIndex";
-import ExternalAppsHub from "@/components/administracao-sistema/ExternalAppsHub";
-import GestaoUsuariosAvancada from "@/components/sistema/GestaoUsuariosAvancada";
-import CentralPerfisAcesso from "@/components/sistema/CentralPerfisAcesso";
-import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChecker";
-import MonitorAcessoRealtimeSection from "@/components/administracao-sistema/seguranca-governanca/MonitorAcessoRealtimeSection";
-import GerenciadorSessoes from "@/components/sistema/GerenciadorSessoes";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import ProtectedSection from "@/components/security/ProtectedSection";
+import AdminHeader from "@/components/administracao-sistema/AdminHeader";
+import AdminTabs from "@/components/administracao-sistema/AdminTabs";
 
  import ProtectedSection from "@/components/security/ProtectedSection";
 

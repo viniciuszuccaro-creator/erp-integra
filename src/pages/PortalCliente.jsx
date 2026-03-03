@@ -28,6 +28,11 @@ const HistoricoComprasCliente = React.lazy(() => import("@/components/portal/His
 const ExportarDadosPortal = React.lazy(() => import("@/components/portal/ExportarDadosPortal"));
 const FAQAjuda = React.lazy(() => import("@/components/portal/FAQAjuda"));
 import GamificacaoWidget from "@/components/portal/GamificacaoWidget";
+import PortalHeader from "@/components/portal/PortalHeader";
+import PortalTabsNav from "@/components/portal/PortalTabsNav";
+import OrdersLegacySection from "@/components/portal/OrdersLegacySection";
+import EntregasOldSection from "@/components/portal/EntregasOldSection";
+import ChatFloating from "@/components/portal/ChatFloating";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
@@ -332,24 +337,10 @@ export default function PortalCliente() {
     await base44.auth.logout();
   };
 
-  const getStatusColor = (status) => {
-    const cores = {
-      'Rascunho': 'bg-slate-100 text-slate-700',
-      'Aprovado': 'bg-blue-100 text-blue-700',
-      'Em Produção': 'bg-purple-100 text-purple-700',
-      'Faturado': 'bg-cyan-100 text-cyan-700',
-      'Em Trânsito': 'bg-orange-100 text-orange-700',
-      'Entregue': 'bg-green-100 text-green-700',
-      'Cancelado': 'bg-red-100 text-red-700',
-      'Pendente': 'bg-yellow-100 text-yellow-700',
-      'Aberto': 'bg-blue-100 text-blue-700',
-      'Em Atendimento': 'bg-orange-100 text-orange-700',
-      'Concluído': 'bg-green-100 text-green-700',
-    };
-    return cores[status] || 'bg-slate-100 text-slate-700';
-  };
+  // status colors moved to subcomponents
 
-  const renderPedidoProducao = (pedido) => {
+  // produção renderer moved to OrdersLegacySection
+  const renderPedidoProducao = undefined; // kept for backward compatibility (unused)
     const temRevenda = (pedido.itens_revenda?.length || 0) > 0;
     const temArmado = (pedido.itens_armado_padrao?.length || 0) > 0;
     const temCorte = (pedido.itens_corte_dobra?.length || 0) > 0;
@@ -438,39 +429,15 @@ export default function PortalCliente() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
       {/* Header do Portal */}
-      <div className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Portal do Cliente</h1>
-              <p className="text-sm text-slate-600">{cliente?.nome_fantasia || cliente?.razao_social || user?.full_name}</p>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
-              <Suspense fallback={<div className="w-6 h-6 rounded-full bg-slate-200 animate-pulse" />}> 
-                <NotificacoesPortal />
-              </Suspense>
-              <GamificacaoWidget cliente={cliente} hasAprovado={hasAprovado} hasFeedback={hasFeedback} />
-              <Button
-                onClick={() => setChatOpen(!chatOpen)}
-                className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                size="sm"
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Assistente IA</span>
-                <span className="sm:hidden">IA</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleLogout}
-                size="sm"
-              >
-                <LogOut className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Sair</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PortalHeader
+        user={user}
+        cliente={cliente}
+        hasAprovado={hasAprovado}
+        hasFeedback={hasFeedback}
+        chatOpen={chatOpen}
+        setChatOpen={setChatOpen}
+        handleLogout={handleLogout}
+      />
 
       {/* Conteúdo Principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 w-full">
@@ -486,71 +453,7 @@ export default function PortalCliente() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 w-full">
           <div className="overflow-x-auto">
-            <TabsList className="inline-flex w-auto min-w-full bg-white shadow-sm p-1">
-              <TabsTrigger value="dashboard" className="flex items-center gap-2 whitespace-nowrap">
-                <LayoutDashboard className="w-4 h-4" />
-                <span className="hidden sm:inline">Dashboard</span>
-              </TabsTrigger>
-              <TabsTrigger value="meus-pedidos" className="flex items-center gap-2 whitespace-nowrap">
-                <Package className="w-4 h-4" />
-                <span className="hidden sm:inline">Meus Pedidos</span>
-              </TabsTrigger>
-              <TabsTrigger value="rastreamento" className="flex items-center gap-2 whitespace-nowrap">
-                <Truck className="w-4 h-4" />
-                <span className="hidden sm:inline">Rastreamento</span>
-              </TabsTrigger>
-              <TabsTrigger value="documentos-novos" className="flex items-center gap-2 whitespace-nowrap">
-                <FileText className="w-4 h-4" />
-                <span className="hidden sm:inline">Docs & Boletos</span>
-              </TabsTrigger>
-              <TabsTrigger value="solicitar-orcamento" className="flex items-center gap-2 whitespace-nowrap">
-                <Send className="w-4 h-4" />
-                <span className="hidden sm:inline">Solicitar Orçamento</span>
-              </TabsTrigger>
-              <TabsTrigger value="minhas-oportunidades" className="flex items-center gap-2 whitespace-nowrap">
-                <Target className="w-4 h-4" />
-                <span className="hidden sm:inline">Oportunidades</span>
-              </TabsTrigger>
-              <TabsTrigger value="orcamentos" className="flex items-center gap-2 whitespace-nowrap">
-                <CheckCircle2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Aprovar Orçamentos</span>
-                {orcamentos.length > 0 && (
-                  <Badge className="ml-1 sm:ml-2 bg-orange-600 text-white text-xs animate-pulse">{orcamentos.length}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="projetos" className="flex items-center gap-2 whitespace-nowrap">
-                <Upload className="w-4 h-4" />
-                <span className="hidden sm:inline">Enviar Projeto</span>
-              </TabsTrigger>
-              <TabsTrigger value="chat" className="flex items-center gap-2 whitespace-nowrap">
-                <MessageCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">Chat Vendedor</span>
-                <div className="ml-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              </TabsTrigger>
-              <TabsTrigger value="chamados" className="flex items-center gap-2 whitespace-nowrap">
-                <MessageSquare className="w-4 h-4" />
-                <span className="hidden sm:inline">Suporte</span>
-                {chamadosAbertos.length > 0 && (
-                  <Badge className="ml-1 sm:ml-2 bg-blue-600 text-white text-xs">{chamadosAbertos.length}</Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center gap-2 whitespace-nowrap">
-                <TrendingUp className="w-4 h-4" />
-                <span className="hidden sm:inline">Analytics</span>
-              </TabsTrigger>
-              <TabsTrigger value="historico" className="flex items-center gap-2 whitespace-nowrap">
-                <Calendar className="w-4 h-4" />
-                <span className="hidden sm:inline">Histórico</span>
-              </TabsTrigger>
-              <TabsTrigger value="configuracoes" className="flex items-center gap-2 whitespace-nowrap">
-                <Settings className="w-4 h-4" />
-                <span className="hidden sm:inline">Configurações</span>
-              </TabsTrigger>
-              <TabsTrigger value="ajuda" className="flex items-center gap-2 whitespace-nowrap">
-                <HelpCircle className="w-4 h-4" />
-                <span className="hidden sm:inline">Ajuda</span>
-              </TabsTrigger>
-            </TabsList>
+            <PortalTabsNav orcamentosCount={orcamentos.length} chamadosCount={chamadosAbertos.length} />
           </div>
 
           {/* Dashboard Interativo */}
@@ -595,123 +498,9 @@ export default function PortalCliente() {
             </Suspense>
           </TabsContent>
 
-          {/* Tab antiga de entregas - REMOVIDA (agora usa rastreamento) */}
+          {/* Tab antiga de entregas - preservada */}
           <TabsContent value="entregas-old">
-            <Card>
-              <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                <CardTitle className="flex items-center gap-2">
-                  <Truck className="w-5 h-5" />
-                  Rastreamento de Entregas em Tempo Real
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {entregasEmAndamento
-                    .filter(e => e.status !== 'Entregue' && e.status !== 'Cancelado')
-                    .map(entrega => (
-                      <Card key={entrega.id} className="border-2 border-blue-300 hover:shadow-xl transition-all">
-                        <CardContent className="p-6">
-                          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
-                            <div className="flex items-start gap-4">
-                              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                                <Truck className="w-7 h-7 text-white" />
-                              </div>
-                              <div>
-                                <p className="font-bold text-lg">Pedido {entrega.numero_pedido}</p>
-                                <p className="text-sm text-slate-600 flex items-center gap-2 mt-1">
-                                  <MapPin className="w-4 h-4" />
-                                  {entrega.endereco_entrega_completo?.cidade} - {entrega.endereco_entrega_completo?.estado}
-                                </p>
-                                {entrega.motorista && (
-                                  <p className="text-sm text-slate-600 mt-1">
-                                    Motorista: {entrega.motorista} | Placa: {entrega.placa}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            <Badge className={`${getStatusColor(entrega.status)} text-sm px-3 py-1`}>
-                              {entrega.status}
-                            </Badge>
-                          </div>
-
-                          {entrega.data_previsao && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                              <div className="flex items-center gap-3">
-                                <Calendar className="w-5 h-5 text-blue-600" />
-                                <div>
-                                  <p className="text-sm font-medium text-blue-900">Previsão de Entrega</p>
-                                  <p className="text-lg font-bold text-blue-700">
-                                    {format(new Date(entrega.data_previsao), 'dd/MM/yyyy')}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {entrega.qr_code && (
-                            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-4">
-                              <p className="text-sm font-medium text-purple-900 mb-2">QR Code de Rastreamento</p>
-                              <p className="font-mono text-sm bg-white px-3 py-2 rounded border inline-block">
-                                {entrega.qr_code}
-                              </p>
-                            </div>
-                          )}
-
-                          {entrega.codigo_rastreamento && (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                              <p className="text-sm font-medium text-green-900 mb-2">Código Transportadora</p>
-                              <p className="font-mono font-bold text-green-700">{entrega.codigo_rastreamento}</p>
-                            </div>
-                          )}
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {entrega.link_rastreamento && (
-                              <Button
-                                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                                onClick={() => window.open(entrega.link_rastreamento, '_blank')}
-                              >
-                                <Navigation className="w-4 h-4 mr-2" />
-                                Rastrear em Tempo Real
-                              </Button>
-                            )}
-                            {entrega.link_publico_rastreamento && (
-                              <Button
-                                variant="outline"
-                                className="w-full"
-                                onClick={() => window.open(entrega.link_publico_rastreamento, '_blank')}
-                              >
-                                <MapPin className="w-4 h-4 mr-2" />
-                                Compartilhar Rastreio
-                              </Button>
-                            )}
-                          </div>
-
-                          {entrega.endereco_entrega_completo && (
-                            <div className="mt-4 pt-4 border-t">
-                              <p className="text-xs text-slate-500 mb-2">Endereço de Entrega</p>
-                              <p className="text-sm font-medium">
-                                {entrega.endereco_entrega_completo.logradouro}, {entrega.endereco_entrega_completo.numero}
-                              </p>
-                              <p className="text-sm text-slate-600">
-                                {entrega.endereco_entrega_completo.bairro} - {entrega.endereco_entrega_completo.cidade}/{entrega.endereco_entrega_completo.estado}
-                              </p>
-                              <p className="text-sm text-slate-600">CEP: {entrega.endereco_entrega_completo.cep}</p>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-
-                  {entregasEmAndamento.filter(e => e.status !== 'Entregue' && e.status !== 'Cancelado').length === 0 && (
-                    <div className="text-center py-16 text-slate-500">
-                      <Truck className="w-20 h-20 mx-auto mb-4 opacity-20" />
-                      <p className="text-lg font-medium">Nenhuma entrega em andamento</p>
-                      <p className="text-sm mt-2">Suas entregas concluídas estão disponíveis na aba "Docs & Boletos"</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <EntregasOldSection entregas={entregasEmAndamento} />
           </TabsContent>
 
           {/* Aprovação com Assinatura */}
@@ -721,66 +510,9 @@ export default function PortalCliente() {
             </Suspense>
           </TabsContent>
 
-          {/* Histórico de Pedidos - REMOVIDO (substituído por meus-pedidos) */}
+          {/* Histórico de Pedidos - preservado */}
           <TabsContent value="pedidos">
-            <Card className="border-0 shadow-md">
-              <CardHeader className="bg-slate-50 border-b">
-                <CardTitle>Histórico de Pedidos</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-6">
-                  {pedidos.map(pedido => {
-                    const hasProductionDetails = (pedido.itens_revenda?.length || 0) > 0 || (pedido.itens_armado_padrao?.length || 0) > 0 || (pedido.itens_corte_dobra?.length || 0) > 0;
-                    
-                    return (
-                      <Card key={pedido.id} className="border-2 border-blue-200">
-                        <CardHeader className="bg-blue-50 border-b">
-                          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                            <div>
-                              <p className="font-bold text-lg">Pedido #{pedido.numero_pedido}</p>
-                              <p className="text-sm text-slate-600">
-                                {format(new Date(pedido.data_pedido), 'dd/MM/yyyy')}
-                              </p>
-                            </div>
-                            <div className="text-left sm:text-right">
-                              <Badge className={getStatusColor(pedido.status)}>
-                                {pedido.status}
-                              </Badge>
-                              <p className="text-lg font-bold text-green-600 mt-2">
-                                R$ {pedido.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                              </p>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                          {hasProductionDetails ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="mb-4"
-                              onClick={() => atualizarVisualizacaoPedido(pedido.id)}
-                            >
-                              Ver Detalhes da Produção →
-                            </Button>
-                          ) : (
-                            <p className="text-sm text-slate-500 mb-4">Detalhes de produção não disponíveis.</p>
-                          )}
-
-                          {hasProductionDetails && renderPedidoProducao(pedido)}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-
-                  {pedidos.length === 0 && (
-                    <div className="text-center py-12 text-slate-500">
-                      <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                      <p>Nenhum pedido encontrado</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <OrdersLegacySection pedidos={pedidos} onVerDetalhesPedido={atualizarVisualizacaoPedido} />
           </TabsContent>
 
           <TabsContent value="projetos">
@@ -861,26 +593,14 @@ export default function PortalCliente() {
 
       {/* Chatbot IA Flutuante */}
       <AnimatePresence>
-        {chatOpen && (
-          <Suspense fallback={<div className="fixed bottom-4 right-4 w-12 h-12 bg-white/80 rounded-full shadow animate-pulse" />}> 
-            <ChatbotPortal
-              onClose={() => setChatOpen(false)}
-              isMinimized={chatMinimized}
-              onToggleMinimize={() => setChatMinimized(!chatMinimized)}
-            />
-          </Suspense>
-        )}
+        <ChatFloating
+          chatOpen={chatOpen}
+          chatMinimized={chatMinimized}
+          onClose={() => setChatOpen(false)}
+          onToggleMinimize={() => setChatMinimized(!chatMinimized)}
+          onRestore={() => setChatMinimized(false)}
+        />
       </AnimatePresence>
-
-      {/* Botão Flutuante do Chat (quando minimizado) */}
-      {chatMinimized && (
-        <Button
-          onClick={() => setChatMinimized(false)}
-          className="fixed bottom-4 right-4 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-2xl z-40"
-        >
-          <MessageCircle className="w-6 h-6" />
-        </Button>
-      )}
     </div>
   );
 }
