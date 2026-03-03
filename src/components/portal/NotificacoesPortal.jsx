@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useUser } from '@/components/lib/UserContext';
 import { Bell, Package, FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -22,6 +22,7 @@ import { format } from 'date-fns';
  */
 export default function NotificacoesPortal() {
   const { user } = useUser();
+  const queryClient = useQueryClient();
   const { data: notificacoes = [] } = useQuery({
     queryKey: ['notificacoes-portal', user?.id],
     queryFn: async () => {
@@ -38,6 +39,7 @@ export default function NotificacoesPortal() {
       );
     },
     refetchInterval: 60000, // Atualiza a cada minuto
+    enabled: !!user?.id,
   });
 
   const getIconByTipo = (tipo) => {
@@ -64,6 +66,7 @@ export default function NotificacoesPortal() {
         if (Array.isArray(c) && c[0]) { empresaId = c[0].empresa_id || null; groupId = c[0].group_id || null; }
       } catch {}
       await base44.entities.Notificacao.update(notifId, { lida: true, empresa_id: empresaId || undefined, group_id: groupId || undefined });
+      try { queryClient.invalidateQueries({ queryKey: ['notificacoes-portal', user?.id] }); } catch {}
     } catch (_) {}
   };
 
