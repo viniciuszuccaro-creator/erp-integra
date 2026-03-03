@@ -221,4 +221,9 @@ Copie para .github/workflows/:
 - Exigir 1+ review aprovado e status checks: pr/branch-name, pr/review-required, pr/regra-mae-check, ci/lint-build
 - Exigir atualização a partir de main antes do merge
 
+## 15) Branches temporárias e Tags Multiempresa
+- Crie branches temporárias a partir de main para testes rápidos: `tmp/<descricao-curta>`; sempre abra Draft PR.
+- Padrão de tags com escopo multiempresa (não quebra main): `vX.Y.Z`, e tags auxiliares: `vX.Y.Z-group-<groupId>` e `vX.Y.Z-empresa-<empresaId>` para builds específicos.
+- Nunca faça release sem passar pelos checks Regra‑Mãe e CI.
+
 — Fim —

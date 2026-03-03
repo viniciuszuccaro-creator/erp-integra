@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { FileUp, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { sanitizeOnWrite } from '@/components/lib/sanitizeOnWrite';
 
 /**
  * V21.5 - Solicitar Orçamento COMPLETO
@@ -36,6 +37,12 @@ export default function SolicitarOrcamento() {
   const criarOportunidadeMutation = useMutation({
     mutationFn: async (data) => {
       const user = await base44.auth.me();
+      // Resolver contexto multiempresa a partir do cliente vinculado ao usuário do portal
+      let empresaId = null, groupId = null;
+      try {
+        const c = await base44.entities.Cliente.filter({ portal_usuario_id: user.id }, undefined, 1);
+        if (Array.isArray(c) && c[0]) { empresaId = c[0].empresa_id || null; groupId = c[0].group_id || null; }
+      } catch {}
       return await base44.entities.Oportunidade.create({
         titulo: data.titulo,
         descricao: data.descricao,
@@ -52,6 +59,8 @@ export default function SolicitarOrcamento() {
         observacoes: data.observacoes,
         score: 50,
         temperatura: 'Morno',
+        empresa_id: empresaId || undefined,
+        group_id: groupId || undefined,
       });
     },
     onSuccess: () => {
@@ -103,7 +112,8 @@ export default function SolicitarOrcamento() {
   });
 
   const handleSubmit = async () => {
-    criarOportunidadeMutation.mutate(formData);
+    const payload = sanitizeOnWrite(formData);
+    criarOportunidadeMutation.mutate(payload);
   };
 
   if (success) {

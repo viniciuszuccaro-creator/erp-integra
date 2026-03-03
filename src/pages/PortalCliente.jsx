@@ -106,7 +106,7 @@ export default function PortalCliente() {
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidosCliente', cliente?.id],
+    queryKey: ['pedidosCliente', cliente?.id, cliente?.empresa_id, cliente?.group_id],
     queryFn: async () => {
       const pedidosData = await base44.entities.Pedido.filter({ 
          cliente_id: cliente.id,
@@ -132,7 +132,7 @@ export default function PortalCliente() {
       group_id: pedido.group_id || cliente.group_id || undefined,
     });
 
-    queryClient.invalidateQueries(['pedidosCliente', cliente.id]);
+    queryClient.invalidateQueries(['pedidosCliente', cliente.id, cliente?.empresa_id, cliente?.group_id]);
 
     const currentCliente = await base44.entities.Cliente.filter({ id: cliente.id }).then(r => r[0]);
     await base44.entities.Cliente.update(cliente.id, {
@@ -147,13 +147,13 @@ export default function PortalCliente() {
   };
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceberCliente', cliente?.id],
+    queryKey: ['contasReceberCliente', cliente?.id, cliente?.empresa_id, cliente?.group_id],
     queryFn: () => base44.entities.ContaReceber.filter({ cliente_id: cliente.id, empresa_id: cliente.empresa_id || undefined, group_id: cliente.group_id || undefined }, '-data_vencimento'),
     enabled: !!cliente?.id
   });
 
   const { data: orcamentos = [] } = useQuery({
-    queryKey: ['orcamentos-site', cliente?.id],
+    queryKey: ['orcamentos-site', cliente?.id, cliente?.empresa_id, cliente?.group_id],
     queryFn: () => base44.entities.OrcamentoCliente.filter({
       cliente_id: cliente?.id,
       status: 'Pendente',
@@ -164,7 +164,7 @@ export default function PortalCliente() {
   });
 
   const { data: hasAprovado = false } = useQuery({
-    queryKey: ['orcamentos-aprovados-flag', cliente?.id],
+    queryKey: ['orcamentos-aprovados-flag', cliente?.id, cliente?.empresa_id, cliente?.group_id],
     enabled: !!cliente?.id,
     queryFn: async () => {
       const ap1 = await base44.entities.OrcamentoCliente.filter({
@@ -185,7 +185,7 @@ export default function PortalCliente() {
   });
 
   const { data: entregasEmAndamento = [] } = useQuery({
-    queryKey: ['entregasEmAndamento', cliente?.id],
+    queryKey: ['entregasEmAndamento', cliente?.id, cliente?.empresa_id, cliente?.group_id],
     queryFn: () => base44.entities.Entrega.filter({
       cliente_id: cliente.id,
       empresa_id: cliente.empresa_id || undefined,
@@ -195,7 +195,7 @@ export default function PortalCliente() {
   });
 
   const { data: chamadosAbertos = [] } = useQuery({
-    queryKey: ['chamadosAbertos', cliente?.id],
+    queryKey: ['chamadosAbertos', cliente?.id, cliente?.empresa_id, cliente?.group_id],
     queryFn: () => base44.entities.Chamado.filter({
       cliente_id: cliente.id,
       empresa_id: cliente.empresa_id || undefined,
@@ -205,7 +205,7 @@ export default function PortalCliente() {
   });
 
   const { data: hasFeedback = false } = useQuery({
-    queryKey: ['portal-has-feedback', cliente?.id],
+    queryKey: ['portal-has-feedback', cliente?.id, cliente?.empresa_id, cliente?.group_id],
     enabled: !!cliente?.id,
     queryFn: async () => {
       const lista = await base44.entities.Chamado.filter({
@@ -218,7 +218,7 @@ export default function PortalCliente() {
   });
 
   const { data: notasFiscais = [] } = useQuery({
-    queryKey: ['notasFiscais', cliente?.id],
+    queryKey: ['notasFiscais', cliente?.id, cliente?.empresa_id, cliente?.group_id],
     queryFn: () => base44.entities.NotaFiscal.filter({
       cliente_fornecedor_id: cliente.id,
       empresa_atendimento_id: cliente.empresa_id || undefined,

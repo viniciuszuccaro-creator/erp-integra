@@ -2,6 +2,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
 
 // In-memory cache (per instance) for quick subsequent calls
+const CACHE: Map<string, { t: number; resp: any }> = (globalThis as any).__gcCache || (((globalThis as any).__gcCache = new Map()), (globalThis as any).__gcCache);
+const CACHE_TTL_MS = 60_000;
+
+// In-memory cache (per instance) for quick subsequent calls
 const CACHE = globalThis.__gcCache || (globalThis.__gcCache = new Map());
 const CACHE_TTL_MS = 60_000;
 
@@ -17,11 +21,23 @@ Deno.serve(async (req) => {
     }
 
     const t0 = Date.now();
-    let filtros = {};
+    let filtros: any = {};
     try {
       const b = await req.json();
       if (b?.filtros && (b.filtros.group_id || b.filtros.empresa_id)) filtros = b.filtros;
     } catch (_) {}
+
+    // Strict multiempresa scope for non-admins
+    if (user?.role !== 'admin' && !filtros.group_id && !filtros.empresa_id) {
+      return Response.json({ error: 'empresa_id ou group_id obrigatório' }, { status: 403 });
+    }
+
+    // Cache hit?
+    const __key = JSON.stringify({ filtros });
+    const __entry = CACHE.get(__key);
+    if (__entry && (Date.now() - __entry.t) < CACHE_TTL_MS) {
+      return Response.json(__entry.resp);
+    }
 
     // Strict multiempresa scope for non-admins
     if (user?.role !== 'admin' && !filtros.group_id && !filtros.empresa_id) {
