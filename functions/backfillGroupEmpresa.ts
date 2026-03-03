@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
       } catch {}
     }
 
-    return Response.json({ ok: true, dryRun, apply, summary });
+    return Response.json({ ok: true, dryRun: forceDryRun ? true : dryRun, apply, summary });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
