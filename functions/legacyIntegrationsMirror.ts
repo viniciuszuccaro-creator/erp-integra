@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 Deno.serve(async (req) => {
   try {
@@ -132,30 +132,119 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Webhooks Marketplaces
-    if (payload?.provider && (payload.provider === 'mercado_livre' || payload.provider === 'amazon' || payload.provider === 'ecommerce_site')) {
-      const empresa_id = payload.empresa_id || payload.company_id || null;
-      const group_id = payload.group_id || null;
-      try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: payload.provider, descricao: `Webhook recebido: ${payload.event || 'evento'}`, empresa_id, group_id, dados_novos: payload, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
-      if (Array.isArray(payload?.ajustes_estoque) && empresa_id) {
-        try { await base44.asServiceRole.functions.invoke('applyInventoryAdjustments', { empresa_id, ajustes: payload.ajustes_estoque }); } catch (_) {}
-      }
-      if (Array.isArray(payload?.pricing_updates) && empresa_id) {
-        try {
-          for (const upd of payload.pricing_updates) {
-            const pid = upd.produto_id;
-            if (!pid) continue;
-            const patch = {};
-            if (upd.preco_venda != null) patch.preco_venda = Number(upd.preco_venda);
-            if (upd.custo_medio != null) patch.custo_medio = Number(upd.custo_medio);
-            if (Object.keys(patch).length) {
-              await base44.asServiceRole.entities.Produto.update(pid, patch);
+  // Webhooks Marketplaces (Mercado Livre, Amazon, Shopee, Magalu, etc.)
+    if (payload?.provider) {
+      const rawProv = String(payload.provider).toLowerCase();
+      const prov = ({
+        'meli': 'mercado_livre', 'mercadolivre': 'mercado_livre', 'ml': 'mercado_livre',
+        'magazineluiza': 'magalu', 'magazine_luiza': 'magalu',
+      }[rawProv]) || rawProv;
+
+      if (['mercado_livre','amazon','shopee','magalu','ecommerce_site'].includes(prov)) {
+        const empresa_id = payload.empresa_id || payload.company_id || null;
+        const group_id = payload.group_id || null;
+
+        // Token/assinatura obrigatória (Zero Trust)
+        const hdrToken = req.headers.get('x-internal-token') || req.headers.get('x-webhook-token') || null;
+        const expected = Deno.env.get('DEPLOY_AUDIT_TOKEN') || null;
+        const trusted = !!(expected && hdrToken === expected);
+        if (!trusted) {
+          try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Bloqueio', modulo: 'Integrações', tipo_auditoria: 'seguranca', entidade: prov, descricao: 'Token inválido no webhook', dados_novos: { headers: { hasToken: !!hdrToken } }, data_hora: new Date().toISOString(), sucesso: false }); } catch {}
+          return Response.json({ error: 'unauthorized_webhook' }, { status: 401 });
+        }
+
+        if (!empresa_id) { return Response.json({ error: 'empresa_id_obrigatorio' }, { status: 400 }); }
+
+        const clean = (v) => {
+          if (typeof v === 'string') return v.replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi,'').replace(/on[a-z]+\s*=\s*(["']).*?\1/gi,'').replace(/javascript:\s*/gi,'').slice(0, 4000);
+          return v;
+        };
+        const safeNum = (n, d=0) => { const x = Number(n); return isFinite(x) ? x : d; };
+
+        try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Criação', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: prov, descricao: `Webhook recebido: ${payload.event || 'evento'}`, empresa_id, group_id, dados_novos: { provider: prov }, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+
+        // 1) Pedido (order) - upsert por origem_externa_id
+        const order = payload.order || payload.pedido || null;
+        let pedidoResult = null;
+        if (order) {
+          const extId = String(order.id || order.order_id || order.code || order.external_id || '').trim();
+          if (extId) {
+            const numero = String(order.number || order.code || extId).slice(0,50);
+            const statusRaw = String(order.status || '').toLowerCase();
+            const statusMap = { paid: 'Aprovado', approved: 'Aprovado', canceled: 'Cancelado', shipped: 'Em Expedição', delivered: 'Entregue', pending: 'Aguardando Aprovação' };
+            const status = statusMap[statusRaw] || 'Rascunho';
+            const total = safeNum(order.total_amount || order.total || order.amount || 0);
+            const cliente = clean(order.buyer_name || order.customer_name || 'Cliente Marketplace');
+            const data_pedido = (order.date || order.created_at || new Date().toISOString()).toString().slice(0,10);
+
+            const found = await base44.asServiceRole.entities.Pedido.filter({ empresa_id, origem_pedido: 'Marketplace', origem_externa_id: extId }, undefined, 1).then(r=>r?.[0]||null);
+            if (found) {
+              await base44.asServiceRole.entities.Pedido.update(found.id, { status, valor_total: total });
+              pedidoResult = { action: 'update', id: found.id };
+            } else {
+              const novo = await base44.asServiceRole.entities.Pedido.create({
+                numero_pedido: numero,
+                cliente_nome: cliente,
+                data_pedido,
+                valor_total: total,
+                empresa_id, group_id,
+                origem_pedido: 'Marketplace',
+                origem_externa_id: extId,
+                tipo: 'Pedido'
+              });
+              pedidoResult = { action: 'create', id: novo.id };
+            }
+            try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: pedidoResult.action === 'create' ? 'Criação' : 'Edição', modulo: 'Comercial', tipo_auditoria: 'integracao', entidade: prov, descricao: `Sync pedido ${extId}`, empresa_id, group_id, dados_novos: { pedidoResult }, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+          }
+        }
+
+        // 2) Estoque (inventory)
+        const inv = payload.ajustes_estoque || payload.inventory_updates || (Array.isArray(payload.items) ? payload.items.map(it=>({ produto_id: it.produto_id, codigo: it.sku || it.codigo, quantidade: it.quantity ?? it.qty })) : null);
+        let invCount = 0;
+        if (Array.isArray(inv)) {
+          for (const it of inv) {
+            const pid = it.produto_id || null;
+            const codigo = it.codigo || it.sku || null;
+            const qtd = safeNum(it.quantidade ?? it.quantity, null);
+            if (pid || codigo) {
+              try {
+                let target = null;
+                if (pid) target = await base44.asServiceRole.entities.Produto.filter({ id: pid, empresa_id }, undefined, 1).then(r=>r?.[0]||null);
+                if (!target && codigo) target = await base44.asServiceRole.entities.Produto.filter({ codigo, empresa_id }, undefined, 1).then(r=>r?.[0]||null);
+                if (target && qtd != null) {
+                  await base44.asServiceRole.entities.Produto.update(target.id, { estoque_atual: qtd });
+                  invCount++;
+                }
+              } catch(_){}
             }
           }
-          await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edição', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: payload.provider, descricao: 'Atualização de preços aplicada', empresa_id, group_id, dados_novos: { count: payload.pricing_updates.length }, data_hora: new Date().toISOString(), sucesso: true });
-        } catch (_) {}
+          try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edição', modulo: 'Estoque', tipo_auditoria: 'integracao', entidade: prov, descricao: `Atualização de estoque (${invCount})`, empresa_id, group_id, dados_novos: { invCount }, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+        }
+
+        // 3) Preços (pricing)
+        const pricing = payload.pricing_updates || (Array.isArray(payload.items) ? payload.items.map(it=>({ produto_id: it.produto_id, codigo: it.sku || it.codigo, preco_venda: it.price })) : null);
+        let priceCount = 0;
+        if (Array.isArray(pricing)) {
+          for (const upd of pricing) {
+            const pid = upd.produto_id || null;
+            const codigo = upd.codigo || upd.sku || null;
+            const patch = {};
+            if (upd.preco_venda != null) patch.preco_venda = safeNum(upd.preco_venda, null);
+            if (upd.custo_medio != null) patch.custo_medio = safeNum(upd.custo_medio, null);
+            if (Object.keys(patch).length) {
+              try {
+                let target = null;
+                if (pid) target = await base44.asServiceRole.entities.Produto.filter({ id: pid, empresa_id }, undefined, 1).then(r=>r?.[0]||null);
+                if (!target && codigo) target = await base44.asServiceRole.entities.Produto.filter({ codigo, empresa_id }, undefined, 1).then(r=>r?.[0]||null);
+                if (target) { await base44.asServiceRole.entities.Produto.update(target.id, patch); priceCount++; }
+              } catch(_){}
+            }
+          }
+          try { await base44.asServiceRole.entities.AuditLog.create({ usuario: 'Webhook', acao: 'Edição', modulo: 'Integrações', tipo_auditoria: 'integracao', entidade: prov, descricao: `Atualização de preços (${priceCount})`, empresa_id, group_id, dados_novos: { priceCount }, data_hora: new Date().toISOString(), sucesso: true }); } catch {}
+        }
+
+        return Response.json({ ok: true, action: 'marketplace_webhook_processed', provider: prov, results: { pedido: pedidoResult, invCount, priceCount } });
       }
-      return Response.json({ ok: true, action: 'webhook_processed' });
     }
 
     if (!evt?.entity_name) {
