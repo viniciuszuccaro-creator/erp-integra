@@ -48,7 +48,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
         <ProtectedSection module="Sistema" section={["Configurações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Configurações.</div>}>
           <div className="w-full h-full">
             <ConfiguracoesGeraisIndex initialTab="global" />
-            <div className="mt-4">
+            <div className="mt-4 space-y-3">
               <div className="flex items-center justify-between bg-white/80 border rounded-lg p-4">
                 <div>
                   <div className="font-medium text-slate-900">Seed leve de dados (smoke test)</div>
@@ -68,6 +68,35 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
                 >
                   Executar seed leve
                 </Button>
+              </div>
+
+              <div className="flex items-center justify-between bg-white/80 border rounded-lg p-4">
+                <div>
+                  <div className="font-medium text-slate-900">Backfill Multiempresa (seguro)</div>
+                  <div className="text-xs text-slate-500">Dry‑run valida e lista correções de group_id/empresa_id; aplicar executa somente casos inequívocos.</div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      const res = await base44.functions.invoke('backfillGroupEmpresa', { dryRun: true, apply: false, limitPerEntity: 1000 });
+                      console.log('backfill dry-run:', res?.data);
+                    }}
+                  >
+                    Dry‑run
+                  </Button>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={async () => {
+                      const ok = confirm('Aplicar correções de multiempresa (apenas quando inequívocas)?');
+                      if (!ok) return;
+                      const res = await base44.functions.invoke('backfillGroupEmpresa', { dryRun: false, apply: true, limitPerEntity: 1000 });
+                      console.log('backfill apply:', res?.data);
+                    }}
+                  >
+                    Aplicar
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
