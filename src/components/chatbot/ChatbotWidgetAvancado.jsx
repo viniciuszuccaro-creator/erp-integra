@@ -369,6 +369,7 @@ export default function ChatbotWidgetAvancado({
           sentimento: resultado.sentimento
         }
       });
+      }
     } catch (error) {
       console.error('Erro ao transferir para atendente:', error);
     }
