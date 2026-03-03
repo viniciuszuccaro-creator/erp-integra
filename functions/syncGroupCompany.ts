@@ -83,12 +83,12 @@ Deno.serve(async (req) => {
       delete payload.empresa_id;
       let targetId = upMap?.target_id;
       if (targetId) {
-        await base44.asServiceRole.entities[entityName].update(targetId, payload);
-        await base44.asServiceRole.entities.SyncMap.update(upMap.id, { last_sync_at: nowIso() });
-      } else {
-        const created = await base44.asServiceRole.entities[entityName].create({ ...payload, ...groupFilter });
-        await base44.asServiceRole.entities.SyncMap.create({ entity_name: entityName, group_id: groupId || null, empresa_id: empresaId, source_id: entityId, target_id: created.id, direction: 'up', last_sync_at: nowIso() });
-      }
+         await doWithRetry(() => base44.asServiceRole.entities[entityName].update(targetId, payload));
+         await doWithRetry(() => base44.asServiceRole.entities.SyncMap.update(upMap.id, { last_sync_at: nowIso() }));
+       } else {
+         const created = await doWithRetry(() => base44.asServiceRole.entities[entityName].create({ ...payload, ...groupFilter }));
+         await doWithRetry(() => base44.asServiceRole.entities.SyncMap.create({ entity_name: entityName, group_id: groupId || null, empresa_id: empresaId, source_id: entityId, target_id: created.id, direction: 'up', last_sync_at: nowIso() }));
+       }
       return Response.json({ ok: true, direction: 'up' });
     }
 
@@ -106,14 +106,14 @@ Deno.serve(async (req) => {
         const targetId = isMirror ? map.target_id : null;
         const dataDown = { ...payload, empresa_id: empId };
         if (targetId) {
-          await base44.asServiceRole.entities[entityName].update(targetId, dataDown);
-          await base44.asServiceRole.entities.SyncMap.update(map.id, { last_sync_at: nowIso() });
-          results.push({ empresa_id: empId, action: 'updated' });
-        } else {
-          const created = await base44.asServiceRole.entities[entityName].create({ ...dataDown, group_id: groupId });
-          await base44.asServiceRole.entities.SyncMap.create({ entity_name: entityName, group_id: groupId, empresa_id: empId, source_id: entityId, target_id: created.id, direction: 'down', last_sync_at: nowIso() });
-          results.push({ empresa_id: empId, action: 'created' });
-        }
+           await doWithRetry(() => base44.asServiceRole.entities[entityName].update(targetId, dataDown));
+           await doWithRetry(() => base44.asServiceRole.entities.SyncMap.update(map.id, { last_sync_at: nowIso() }));
+           results.push({ empresa_id: empId, action: 'updated' });
+         } else {
+           const created = await doWithRetry(() => base44.asServiceRole.entities[entityName].create({ ...dataDown, group_id: groupId }));
+           await doWithRetry(() => base44.asServiceRole.entities.SyncMap.create({ entity_name: entityName, group_id: groupId, empresa_id: empId, source_id: entityId, target_id: created.id, direction: 'down', last_sync_at: nowIso() }));
+           results.push({ empresa_id: empId, action: 'created' });
+         }
       }
       return Response.json({ ok: true, direction: 'down', results });
     }
