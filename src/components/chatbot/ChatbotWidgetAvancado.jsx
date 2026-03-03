@@ -148,8 +148,8 @@ export default function ChatbotWidgetAvancado({
       const mensagemBoasVindas = configCanal?.mensagem_boas_vindas || 
         `Olá ${nomeCliente}! 👋 Sou o assistente virtual do ERP Zuccaro. Como posso ajudar você hoje?`;
 
-      await base44.entities.MensagemOmnicanal.create({
-        conversa_id: novaConversa.id,
+       await base44.entities.MensagemOmnicanal.create({
+         conversa_id: novaConversa.id,
         sessao_id: sessaoId,
         canal,
         tipo_remetente: 'Bot',
