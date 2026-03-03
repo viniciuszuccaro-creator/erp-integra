@@ -19,6 +19,8 @@ export default function ProtectedSection({
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const loggedRef = useRef(false);
   const [openDenied, setOpenDenied] = useState(false);
+  const [requestingAccess, setRequestingAccess] = useState(false);
+  const [requestedAccess, setRequestedAccess] = useState(false);
 
   // Sempre manter a mesma ordem de hooks entre renders
   const allowed = !isLoading && hasPermission(modulo, section, action);
@@ -92,8 +94,34 @@ export default function ProtectedSection({
               {section && <p><strong>Seção:</strong> {section}</p>}
               <p><strong>Ação:</strong> {action}</p>
             </div>
+            {requestedAccess && (
+              <div className="text-xs text-emerald-600 mt-2">
+                Pedido de acesso enviado para aprovação.
+              </div>
+            )}
             <DialogFooter>
-              <Button onClick={() => setOpenDenied(false)}>Entendi</Button>
+              <Button
+                variant="default"
+                disabled={requestingAccess || requestedAccess}
+                onClick={async () => {
+                  try {
+                    setRequestingAccess(true);
+                    await base44.functions.invoke('solicitacoesAprovacao', {
+                      module: modulo || 'Sistema',
+                      section,
+                      action,
+                      empresa_id: empresaAtual?.id || null,
+                      group_id: grupoAtual?.id || null,
+                    });
+                    setRequestedAccess(true);
+                  } finally {
+                    setRequestingAccess(false);
+                  }
+                }}
+              >
+                {requestedAccess ? 'Solicitado' : (requestingAccess ? 'Solicitando…' : 'Solicitar acesso')}
+              </Button>
+              <Button variant="outline" onClick={() => setOpenDenied(false)}>Fechar</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
