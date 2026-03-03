@@ -61,6 +61,7 @@ import GlobalNetworkErrorHandler from "@/components/lib/GlobalNetworkErrorHandle
 import GuardRails from "@/components/lib/GuardRails";
 import GlobalContextStamp from "@/components/lib/GlobalContextStamp";
 import ProtectedSection from "@/components/security/ProtectedSection";
+import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 
 
 const navigationItems = [
@@ -777,30 +778,14 @@ function LayoutContent({ children, currentPageName }) {
         list: typeof api.list === 'function' ? api.list.bind(api) : null,
       };
 
-      // Frontend sanitize (reforço) - remove scripts/eventos e URLs javascript:
-      const sanitize = (val) => {
-        const cleanString = (s) => {
-          let out = String(s);
-          out = out.replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi, '');
-          out = out.replace(/on[a-z]+\s*=\s*"[^"]*"/gi, '');
-          out = out.replace(/on[a-z]+\s*=\s*'[^']*'/gi, '');
-          out = out.replace(/javascript:\s*/gi, '');
-          return out;
-        };
-        if (typeof val === 'string') return cleanString(val);
-        if (Array.isArray(val)) return val.map(sanitize);
-        if (val && typeof val === 'object') {
-          const o = {};
-          for (const [k, v] of Object.entries(val)) o[k] = sanitize(v);
-          return o;
-        }
-        return val;
-      };
+      // Sanitização centralizada (utilitário):
+      // usar sanitizeOnWrite em todas as escritas
+
 
       if (orig.create) {
         api.create = async (data) => {
           await checkRBAC(name, 'criar');
-          const res = await orig.create(stamp(sanitize(data)));
+          const res = await orig.create(stamp(sanitizeOnWrite(data)));
           try { await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
             usuario_id: user?.id,
@@ -815,7 +800,7 @@ function LayoutContent({ children, currentPageName }) {
 
       if (orig.bulkCreate) {
         api.bulkCreate = async (arr) => {
-          const stamped = Array.isArray(arr) ? arr.map(stamp) : arr;
+          const stamped = Array.isArray(arr) ? arr.map((x) => stamp(sanitizeOnWrite(x))) : arr;
           const res = await orig.bulkCreate(stamped);
           try { await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
@@ -832,7 +817,7 @@ function LayoutContent({ children, currentPageName }) {
       if (orig.update) {
         api.update = async (id, data) => {
           await checkRBAC(name, 'editar');
-          const res = await orig.update(id, stamp(sanitize(data)));
+          const res = await orig.update(id, stamp(sanitizeOnWrite(data)));
           try { await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
             usuario_id: user?.id,
