@@ -289,7 +289,7 @@ export default function Expedicao() {
     windowTitle: '🗺️ Painel Logístico',
     width: 1400,
     height: 800,
-    props: { empresaId: empresaAtual?.id }
+    props: { empresaId: empresaAtual?.id, entregas: entregasFiltradas }
   }
   ];
 

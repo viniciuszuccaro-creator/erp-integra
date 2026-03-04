@@ -22,7 +22,14 @@ import {
  * Dashboard analítico de logística (LEGADO - preservado)
  * NOVO: DashboardLogisticaInteligente.jsx com IA avançada
  */
-function DashboardLogistico({ entregas, windowMode = false }) {
+const RoteirizacaoMapaLazy = React.lazy(() => import("./RoteirizacaoMapa"));
+import QueuesLogistica from "./QueuesLogistica";
+
+function DashboardLogistico({ entregas: entregasProp, empresaId, windowMode = false }) {
+  // Dados (usa props ou busca por empresaId se necessário)
+  const [entregas, setEntregas] = React.useState(() => Array.isArray(entregasProp) ? entregasProp : []);
+  React.useEffect(() => { if (Array.isArray(entregasProp)) setEntregas(entregasProp); }, [entregasProp]);
+
   // KPIs
   const totalEntregas = entregas.length;
   const entregasEntregues = entregas.filter(e => e.status === "Entregue").length;
@@ -84,6 +91,33 @@ function DashboardLogistico({ entregas, windowMode = false }) {
   return (
     <div className={containerClass}>
       <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
+
+      {/* Mapa + Filas */}
+      <div className="grid lg:grid-cols-3 gap-6 items-stretch">
+        <div className="lg:col-span-2 min-h-[360px] h-full">
+          <Card className="border-0 shadow-md h-full">
+            <CardHeader className="bg-slate-50 border-b">
+              <CardTitle className="text-base">Mapa de Entregas (tempo real)</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 h-[360px]">
+              <React.Suspense fallback={<div className="h-[360px] w-full animate-pulse bg-slate-100" />}> 
+                <RoteirizacaoMapaLazy entregas={entregas} empresaId={empresaId} compact />
+              </React.Suspense>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="min-h-[360px] h-full">
+          <Card className="border-0 shadow-md h-full">
+            <CardHeader className="bg-slate-50 border-b">
+              <CardTitle className="text-base">Filas de Operação</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <QueuesLogistica entregas={entregas} />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="border-0 shadow-md">
