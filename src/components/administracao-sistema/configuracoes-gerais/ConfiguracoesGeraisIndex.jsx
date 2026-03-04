@@ -2,6 +2,8 @@ import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import ConfigGlobal from "@/components/sistema/ConfigGlobal";
+import HerancaOverridesPanel from "@/components/administracao-sistema/configuracoes-gerais/HerancaOverridesPanel";
+import VersionamentoConfigPanel from "@/components/administracao-sistema/configuracoes-gerais/VersionamentoConfigPanel";
 
 
 
@@ -44,6 +46,8 @@ export default function ConfiguracoesGeraisIndex({ initialTab }) {
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2">
           <TabsTrigger value="global">Gerais</TabsTrigger>
+          <TabsTrigger value="heranca">Herança/Overrides</TabsTrigger>
+          <TabsTrigger value="versionamento">Versionamento</TabsTrigger>
         </TabsList>
 
         <TabsContent value="global" className="mt-4">
@@ -53,6 +57,26 @@ export default function ConfiguracoesGeraisIndex({ initialTab }) {
               <HerancaConfigNotice />
               <ProtectedSection module="Sistema" section={["Configurações","Gerais"]} action="visualizar" fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para Gerais.</div>}>
                 <ConfigGlobal />
+              </ProtectedSection>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="heranca" className="mt-4">
+          <Card className="w-full">
+            <CardContent className="p-4">
+              <ProtectedSection module="Sistema" section={["Configurações","Herança"]} action="editar" fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para Herança/Overrides.</div>}>
+                <HerancaOverridesPanel />
+              </ProtectedSection>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="versionamento" className="mt-4">
+          <Card className="w-full">
+            <CardContent className="p-4">
+              <ProtectedSection module="Sistema" section={["Configurações","Versionamento"]} action="visualizar" fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para Versionamento.</div>}>
+                <VersionamentoConfigPanel />
               </ProtectedSection>
             </CardContent>
           </Card>

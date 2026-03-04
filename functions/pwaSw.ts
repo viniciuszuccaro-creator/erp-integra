@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
   try {
     // Allow HEAD for liveness checks
     if (req.method === 'HEAD') {
-      return new Response(null, { status: 200 });
+      return new Response(null, { status: 200, headers: { 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload' } });
     }
 
     const url = new URL(req.url);
@@ -74,9 +74,10 @@ Deno.serve(async (req) => {
       headers: {
         'Content-Type': 'application/javascript; charset=utf-8',
         'Cache-Control': 'no-store',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
       },
     });
   } catch (error) {
-    return new Response(`/* SW error: ${error?.message || error} */`, { status: 500, headers: { 'Content-Type': 'application/javascript' } });
+    return new Response(`/* SW error: ${error?.message || error} */`, { status: 500, headers: { 'Content-Type': 'application/javascript', 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload' } });
   }
 });
