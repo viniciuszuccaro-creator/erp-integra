@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, assertPermission, assertContextPresence } from './_lib/guard.js';
+import { z } from 'npm:zod@3.24.2';
 
 // Otimização de rotas de entrega (multiempresa) usando Google Directions API
 // Payload esperado:
@@ -20,7 +21,26 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json().catch(() => ({}));
+    const raw = await req.json().catch(() => ({}));
+    const BodySchema = z.object({
+      empresa_id: z.string().min(1, 'empresa_id obrigatório'),
+      group_id: z.string().optional().nullable(),
+      entrega_ids: z.array(z.string()).optional(),
+      origem: z.union([z.string(), z.object({ lat: z.number(), lng: z.number() })]).optional(),
+      modo: z.enum(['driving','bicycling','walking','transit']).optional(),
+      regiao_entrega_id: z.string().optional(),
+      constraints: z.object({
+        vehicle_capacity_kg: z.number().optional(),
+        respect_time_windows: z.boolean().optional()
+      }).optional(),
+      event: z.any().optional(),
+      data: z.any().optional()
+    }).passthrough();
+    const parsed = BodySchema.safeParse(raw);
+    if (!parsed.success) {
+      return Response.json({ error: 'Payload inválido', issues: parsed.error.issues }, { status: 400 });
+    }
+    const body = parsed.data;
     // Suporte a automations: quando chamado por evento de Entrega
     let empresa_id = body?.empresa_id || null;
     let group_id = body?.group_id || null;

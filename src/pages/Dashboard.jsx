@@ -52,6 +52,7 @@ const PainelOperacoes3D = React.lazy(() => import("../components/dashboard/Paine
 const GamificacaoOperacoes = React.lazy(() => import("../components/dashboard/GamificacaoOperacoes"));
 const DashboardTempoReal = React.lazy(() => import('../components/dashboard/DashboardTempoReal'));
 const DashboardOperacionalBI = React.lazy(() => import("@/components/dashboard/DashboardOperacionalBI"));
+const MapaTempoReal = React.lazy(() => import("@/components/expedicao/MapaTempoReal"));
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import DashboardTabsNav from "@/components/dashboard/DashboardTabsNav";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
@@ -698,7 +699,7 @@ export default function Dashboard() {
 
         <TabsContent value="tempo-real" className="overflow-auto">
           <PanelGroup direction="vertical" className="gap-2 min-h-[760px]">
-            <Panel defaultSize={70} minSize={40} className="overflow-auto h-full">
+            <Panel defaultSize={55} minSize={35} className="overflow-auto h-full">
               {activeTab === 'tempo-real' && (
                 <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
                   <DashboardTempoReal empresaId={empresaAtual?.id} />
@@ -706,8 +707,16 @@ export default function Dashboard() {
               )}
             </Panel>
             <PanelResizeHandle className="h-1 bg-slate-200 rounded" />
-            <Panel defaultSize={30} minSize={20} className="overflow-auto h-full">
+            <Panel defaultSize={25} minSize={15} className="overflow-auto h-full">
               <KPIsOperacionaisSection kpis={kpisOperacionais} />
+            </Panel>
+            <PanelResizeHandle className="h-1 bg-slate-200 rounded" />
+            <Panel defaultSize={20} minSize={15} className="overflow-auto h-full">
+              <ProtectedSection module="Expedição" action="ver" hideInstead>
+                <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+                  <MapaTempoReal />
+                </Suspense>
+              </ProtectedSection>
             </Panel>
           </PanelGroup>
         </TabsContent>
@@ -884,7 +893,7 @@ export default function Dashboard() {
                 <CardTitle>Command Center</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                   <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Erros (24h)</div>
@@ -912,6 +921,14 @@ export default function Dashboard() {
                       <div className="text-2xl font-bold">{ccMetrics?.secAlerts ?? 0}</div>
                     </div>
                     <Shield className="w-6 h-6 text-amber-600" />
+                  </div>
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-700">Chatbot (24h)</div>
+                      <div className="text-xs text-slate-500">SLA 1ª resp.</div>
+                      <div className="text-2xl font-bold">{botMetrics?.chats ?? 0} / {botMetrics?.sla_total ?? 0} • {botMetrics?.sla_total ? Math.round(100*(botMetrics.sla_ok/(botMetrics.sla_total||1))) : 0}%</div>
+                    </div>
+                    <MessageCircle className="w-6 h-6 text-blue-600" />
                   </div>
                 </div>
               </CardContent>

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { z } from 'npm:zod@3.24.2';
 
 function pickAllowed(entityName, data) {
   // Remove read-only fields and IDs
@@ -36,7 +37,22 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
 
     // Automations call with payload: { event, data, old_data, payload_too_large }
-    const body = await req.json();
+    const raw = await req.json().catch(() => ({}));
+    const EventSchema = z.object({
+      event: z.object({
+        entity_name: z.string(),
+        type: z.enum(['create','update','delete']),
+        entity_id: z.string()
+      }),
+      data: z.record(z.any()).optional(),
+      old_data: z.record(z.any()).optional(),
+      payload_too_large: z.boolean().optional()
+    }).passthrough();
+    const parsed = EventSchema.safeParse(raw);
+    if (!parsed.success) {
+      return Response.json({ error: 'Evento inválido', issues: parsed.error.issues }, { status: 400 });
+    }
+    const body = parsed.data;
     const event = body?.event || {};
     const entityName = event?.entity_name;
     const eventType = event?.type; // create | update | delete
