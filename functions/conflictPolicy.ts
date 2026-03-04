@@ -11,6 +11,18 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
+    // RBAC granular: apenas perfis autorizados podem aplicar política de conflitos
+    try {
+      const guard = await base44.functions.invoke('entityGuard', {
+        module: 'Sistema',
+        section: 'ConflictPolicy',
+        action: 'executar'
+      });
+      if (guard?.data && guard.data.allowed === false) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } catch (_) {}
+
     const raw = await req.json().catch(() => ({}));
     const Schema = z.object({
       entity_name: z.string(),

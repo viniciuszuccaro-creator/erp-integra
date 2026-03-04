@@ -142,6 +142,27 @@ Deno.serve(async (req) => {
 
       // Se solicitado, agrupa por região e ordena dentro de cada grupo
       if (constraints?.group_by_region) {
+        // Tentativa de auto-alocação por região quando não houver regiao_entrega definida
+        try {
+          if (!regiaoId) {
+            const filtroReg = group_id ? { group_id } : { empresa_id };
+            const regioes = await base44.asServiceRole.entities.RegiaoAtendimento.filter(filtroReg, undefined, 200).catch(() => []);
+            const byName = new Map((regioes || []).map(r => [String(r?.nome || r?.descricao || '').toLowerCase(), r]));
+            for (const e of entregas) {
+              if (!e?.regiao_entrega_id) {
+                const c = cityOf(e).toLowerCase();
+                const r = byName.get(c) || null;
+                if (r) {
+                  e.regiao_entrega_id = r.id; // atualiza em memória
+                  e.regiao_entrega_nome = r.nome || r.descricao || null;
+                  // melhor esforço: persistir
+                  try { await base44.asServiceRole.entities.Entrega.update(e.id, { regiao_entrega_id: r.id, regiao_entrega_nome: e.regiao_entrega_nome }); } catch (_) {}
+                }
+              }
+            }
+          }
+        } catch (_) {}
+
         const groups = new Map();
         for (const e of entregas) {
           const key = e?.regiao_entrega_id || e?.regiao_entrega_nome || 'Sem Região';
