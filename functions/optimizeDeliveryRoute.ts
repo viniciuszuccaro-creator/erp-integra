@@ -89,12 +89,39 @@ Deno.serve(async (req) => {
         entregas = await base44.asServiceRole.entities.Entrega.filter(crit, undefined, 100);
       }
 
-      // Ordenação simples apenas por janela de entrega (preferência do usuário)
-      entregas.sort((a,b) => {
-        const wa = a?.janela_entrega_inicio || '';
-        const wb = b?.janela_entrega_inicio || '';
-        return String(wa).localeCompare(String(wb));
-      });
+      // Ordenação avançada (janelas + prioridade) e agrupamento opcional por região
+      const prioWeight = { 'Urgente': 0, 'Alta': 1, 'Normal': 2, 'Baixa': 3 };
+      const parseHHMM = (s) => {
+        if (!s || typeof s !== 'string') return Number.POSITIVE_INFINITY;
+        const [h, m] = s.split(':').map(n => parseInt(n, 10));
+        if (isNaN(h) || isNaN(m)) return Number.POSITIVE_INFINITY;
+        return (h * 60) + m;
+      };
+      const sortByWindowAndPriority = (a, b) => {
+        const ta = parseHHMM(a?.janela_entrega_inicio);
+        const tb = parseHHMM(b?.janela_entrega_inicio);
+        const pa = prioWeight[a?.prioridade] ?? 2;
+        const pb = prioWeight[b?.prioridade] ?? 2;
+        if (usarJanela && ta !== tb) return ta - tb;
+        if (pa !== pb) return pa - pb;
+        const na = (a?.cliente_nome || '').localeCompare(b?.cliente_nome || '');
+        if (na !== 0) return na;
+        return String(a?.id || '').localeCompare(String(b?.id || ''));
+      };
+
+      // Se solicitado, agrupa por região e ordena dentro de cada grupo
+      if (constraints?.group_by_region) {
+        const groups = new Map();
+        for (const e of entregas) {
+          const key = e?.regiao_entrega_id || e?.regiao_entrega_nome || 'Sem Região';
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(e);
+        }
+        const orderedGroups = Array.from(groups.entries()).sort(([ka], [kb]) => String(ka).localeCompare(String(kb)));
+        entregas = orderedGroups.flatMap(([, arr]) => arr.sort(sortByWindowAndPriority));
+      } else {
+        entregas.sort(sortByWindowAndPriority);
+      }
 
       // Capacidade do veículo
       if (capKg) {
@@ -167,13 +194,16 @@ Deno.serve(async (req) => {
     const maxPoints = 25; // Directions API typical limit (may vary by plan)
     const usableStops = rawStops.slice(0, Math.min(rawStops.length, maxPoints - 1));
 
-    // Monta request Directions com optimize:true
+    // Monta request Directions (usa optimize:true somente quando não estiver agrupando por região)
     const destination = usableStops[usableStops.length - 1].addr;
     const via = usableStops.slice(0, usableStops.length - 1).map(s => encodeURIComponent(s.addr));
-    const waypointsParam = via.length ? `optimize:true|${via.join('|')}` : 'optimize:true';
+    const optimizeWaypoints = !constraints?.group_by_region;
+    const waypointsParam = via.length
+      ? (optimizeWaypoints ? `optimize:true|${via.join('|')}` : `${via.join('|')}`)
+      : (optimizeWaypoints ? 'optimize:true' : '');
 
-    const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(originStr)}&destination=${encodeURIComponent(destination)}&waypoints=${waypointsParam}&mode=${encodeURIComponent(modo)}&language=pt-BR&key=${apiKey}`;
-    const resp = await fetch(url);
+    const baseUrl = `https://maps.googleapis.com/maps/api/directions/json?origin=${encodeURIComponent(originStr)}&destination=${encodeURIComponent(destination)}${waypointsParam ? `&waypoints=${waypointsParam}` : ''}&mode=${encodeURIComponent(modo)}&language=pt-BR&key=${apiKey}`;
+    const resp = await fetch(baseUrl);
     if (!resp.ok) {
       const txt = await resp.text();
       return Response.json({ error: 'Maps request failed', details: txt }, { status: 502 });
@@ -192,8 +222,13 @@ Deno.serve(async (req) => {
       total_duration_s += l?.duration?.value || 0;
     }
 
-    // Reordena paradas conforme waypoint_order (aplica sobre via; destino final já é o último)
-    const reordered = order.map((idx) => usableStops[idx]).concat([usableStops[usableStops.length - 1]]);
+    // Reordena paradas conforme waypoint_order quando otimizado; caso contrário, mantém sequência planejada
+    let reordered;
+    if (optimizeWaypoints && order.length) {
+      reordered = order.map((idx) => usableStops[idx]).concat([usableStops[usableStops.length - 1]]);
+    } else {
+      reordered = usableStops;
+    }
 
     // Agrupa rótulos por região (best-effort)
     const byId = Object.fromEntries(entregas.map(e => [e.id, e]));
