@@ -38,6 +38,8 @@ export default function AppEntregasMotorista() {
   const [localizacao, setLocalizacao] = useState(null);
   const [rastreando, setRastreando] = useState(false);
   const [fotoComprovante, setFotoComprovante] = useState(null);
+  const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+  const [smsNumero, setSmsNumero] = useState('');
   const [assinaturaBase64, setAssinaturaBase64] = useState(null);
   const [nomeRecebedor, setNomeRecebedor] = useState('');
   const [documentoRecebedor, setDocumentoRecebedor] = useState('');
@@ -84,6 +86,14 @@ export default function AppEntregasMotorista() {
   });
 
   // Iniciar rastreamento GPS
+  useEffect(() => {
+    const goOnline = () => setIsOffline(false);
+    const goOffline = () => setIsOffline(true);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
+  }, []);
+
   useEffect(() => {
     if (minhasEntregas.length > 0 && !rastreando) {
       iniciarRastreamento();
@@ -298,6 +308,28 @@ export default function AppEntregasMotorista() {
             <MapPin className="w-4 h-4 text-green-600" />
             <AlertDescription className="text-sm text-green-700">
               📍 GPS ativo • Precisão: {localizacao.precisao?.toFixed(0)}m
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {isOffline && (
+          <Alert className="mb-4 border-amber-300 bg-amber-50">
+            <AlertDescription className="text-sm text-amber-800">
+              Sem conexão: você pode enviar sua localização por SMS para o centro de operações.
+              <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
+                <Input placeholder="Número do gateway SMS (ex.: 28900)" value={smsNumero} onChange={(e)=>setSmsNumero(e.target.value)} />
+                <Button variant="outline" onClick={()=>{
+                  const lat = localizacao?.latitude?.toFixed(6) || 'LAT';
+                  const lng = localizacao?.longitude?.toFixed(6) || 'LNG';
+                  const entrega = minhasEntregas?.[0]?.id || 'ENTREGA';
+                  const placa = minhasEntregas?.[0]?.placa || 'PLACA';
+                  const body = `GPS ${lat},${lng} ENTREGA:${entrega} PLACA:${placa}`;
+                  const href = `sms:${encodeURIComponent(smsNumero)}?body=${encodeURIComponent(body)}`;
+                  window.location.href = href;
+                }}>
+                  Abrir SMS com localização
+                </Button>
+              </div>
             </AlertDescription>
           </Alert>
         )}

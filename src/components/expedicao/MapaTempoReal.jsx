@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { MapPin, Navigation, Clock, Truck, Zap } from 'lucide-react';
+import LiveMap from './painel-logistico/LiveMap';
 import { useRealtimeGPS } from '../lib/useRealtimeData';
 import { motion } from 'framer-motion';
 
@@ -87,6 +88,9 @@ export default function MapaTempoReal({ romaneioId, entregaId, windowMode = fals
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid md:grid-cols-2 gap-6">
+            <div className="md:col-span-2">
+              <LiveMap posicao={posicao} entregaId={entregaId} height={320} />
+            </div>
             {/* Dados do Veículo */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-slate-700">
