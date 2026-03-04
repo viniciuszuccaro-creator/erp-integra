@@ -88,12 +88,10 @@ Deno.serve(async (req) => {
         entregas = await base44.asServiceRole.entities.Entrega.filter(crit, undefined, 100);
       }
 
-      // Pré-ordenar por prioridade e janelas de entrega
-      const prioRank = { Urgente: 1, Alta: 2, Normal: 3, Baixa: 4 };
+      // Ordenação simples apenas por janela de entrega (preferência do usuário)
       entregas.sort((a,b) => {
-        const pa = prioRank[a?.prioridade] || 99; const pb = prioRank[b?.prioridade] || 99;
-        const wa = a?.janela_entrega_inicio || ''; const wb = b?.janela_entrega_inicio || '';
-        if (pa !== pb) return pa - pb;
+        const wa = a?.janela_entrega_inicio || '';
+        const wb = b?.janela_entrega_inicio || '';
         return String(wa).localeCompare(String(wb));
       });
 
