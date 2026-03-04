@@ -115,25 +115,28 @@ Deno.serve(async (req) => {
       await Promise.all(toList.map((to) => sendEmail(base44, to, subject, body)));
     }
 
-    // Slack (opcional) via App Connector 'slackbot'
+    // Slack (opcional) - tenta Webhook primeiro; se ausente, tenta App Connector 'slackbot'
     try {
       const cfgAllSlack = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({});
       const scfg = cfgAllSlack?.[0]?.observabilidade?.alerts?.slack;
-      if (scfg?.enabled && scfg?.channel) {
-        const { accessToken } = await base44.asServiceRole.connectors.getConnection('slackbot');
-        const text = [
-          `:rotating_light: Segurança: ${suspicious.length} alerta(s) nos últimos ${WINDOW_MIN} minutos`,
-          ...suspicious.slice(0, 5).map((s, i) => `${i + 1}. *${s.tipo}* [${s.severidade}] - ${s.detalhes}`),
-          recent.length ? `Eventos analisados: ${recent.length}` : ''
-        ].filter(Boolean).join('\n');
-        await fetch('https://slack.com/api/chat.postMessage', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ channel: scfg.channel, text })
-        });
+      const text = [
+        `:rotating_light: Segurança: ${suspicious.length} alerta(s) nos últimos ${WINDOW_MIN} minutos`,
+        ...suspicious.slice(0, 5).map((s, i) => `${i + 1}. *${s.tipo}* [${s.severidade}] - ${s.detalhes}`),
+        recent.length ? `Eventos analisados: ${recent.length}` : ''
+      ].filter(Boolean).join('\n');
+
+      const webhook = Deno.env.get('SLACK_WEBHOOK_URL');
+      if (scfg?.enabled && webhook) {
+        await fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+      } else if (scfg?.enabled && scfg?.channel) {
+        try {
+          const { accessToken } = await base44.asServiceRole.connectors.getConnection('slackbot');
+          await fetch('https://slack.com/api/chat.postMessage', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ channel: scfg.channel, text })
+          });
+        } catch (_) { /* sem Slack conectado, segue sem erro */ }
       }
     } catch (_) {}
 
