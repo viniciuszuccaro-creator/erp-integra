@@ -10,6 +10,9 @@ import MapView from "./painel-logistico/MapView";
 import QueuePanels from "./painel-logistico/QueuePanels";
 import BottlenecksPanel from "./painel-logistico/BottlenecksPanel";
 import AlertsPanel from "./painel-logistico/AlertsPanel";
+import DriverChat from "./painel-logistico/DriverChat";
+import OcorrenciasPanel from "./painel-logistico/OcorrenciasPanel";
+import PerformanceReportDialog from "./painel-logistico/PerformanceReportDialog";
 import { Activity } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
@@ -19,6 +22,7 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
   const [selected, setSelected] = React.useState(null);
   const [filters, setFilters] = React.useState({ q: '', statuses: [] });
   const [simResult, setSimResult] = React.useState(null);
+  const [showReport, setShowReport] = React.useState(false);
 
   React.useEffect(() => {
     const handler = (e) => setSimResult(e.detail || null);
@@ -57,6 +61,11 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
     staleTime: 15000,
   });
 
+  const handleEntregaUpdated = (e) => {
+    try { setSelected(e); } catch (_) {}
+    try { queryClient.invalidateQueries({ queryKey: ['painel-logistico-entregas', empresaId] }); } catch (_) {}
+  };
+
   const filtradas = React.useMemo(() => {
     const q = (filters.q || '').toLowerCase();
     return (entregas || []).filter((e) => {
@@ -72,7 +81,10 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2"><Activity className="w-4 h-4 text-teal-600"/> Painel Logístico</CardTitle>
-            <Badge variant="outline" className="text-xs">{filtradas.length} entregas</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">{filtradas.length} entregas</Badge>
+              <Button size="sm" variant="outline" onClick={() => setShowReport(true)}>Relatório</Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -93,13 +105,22 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={35} minSize={30}>
-          <div className="grid gap-3 h-full grid-rows-[1fr_1fr_1fr]">
+          <div className="grid gap-3 h-full grid-rows-[1fr_1fr_1fr_1fr]">
             <AlertsPanel entregas={filtradas} rules={rules} onSelectEntrega={setSelected} />
             <BottlenecksPanel entregas={filtradas} rules={rules} onSelectEntrega={setSelected} />
             <QueuePanels entregas={filtradas} onSelectEntrega={setSelected} />
+            {selected ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <DriverChat entrega={selected} onUpdated={handleEntregaUpdated} />
+                <OcorrenciasPanel entrega={selected} onUpdated={handleEntregaUpdated} />
+              </div>
+            ) : (
+              <Card className="h-full"><CardContent className="text-sm text-slate-500 p-3">Selecione uma entrega no mapa para conversar com o motorista e registrar ocorrências.</CardContent></Card>
+            )}
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
+      <PerformanceReportDialog open={showReport} onOpenChange={setShowReport} entregas={filtradas} />
     </div>
   );
 }
