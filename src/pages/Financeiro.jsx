@@ -32,6 +32,7 @@ const RateioMultiempresa = React.lazy(() => import("../components/financeiro/Rat
 const AlertasFinanceirosEmpresa = React.lazy(() => import("../components/financeiro/AlertasFinanceirosEmpresa"));
 const RelatorioFinanceiro = React.lazy(() => import("../components/financeiro/RelatorioFinanceiro"));
 const DashboardFormasPagamento = React.lazy(() => import("../components/financeiro/DashboardFormasPagamento"));
+const LogisticaFinanceiroPanel = React.lazy(() => import("../components/expedicao/financeiro/LogisticaFinanceiroPanel"));
 
 export default function Financeiro() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
