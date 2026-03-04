@@ -31,6 +31,24 @@ export default function AlertsPanel({ entregas = [], rules, onSelectEntrega }) {
       }
     });
 
+    // Espera prolongada em CD/rota
+    (entregas || []).forEach((e) => {
+      if (e.status === 'Pronto para Expedir' || e.status === 'Em Separação') {
+        let tsPronto = null;
+        if (Array.isArray(e.historico_status)) {
+          const match = [...e.historico_status].reverse().find(h => h.status === 'Pronto para Expedir' && h.data_hora);
+          if (match) tsPronto = new Date(match.data_hora);
+        }
+        if (!tsPronto && e.data_separacao) tsPronto = new Date(e.data_separacao);
+        if (tsPronto) {
+          const diffH = Math.round((now - tsPronto) / 36e5);
+          if (diffH >= (rules?.maxEsperaCentroHoras ?? 4)) {
+            res.push({ id: `espera-${e.id}`, sev: diffH>8?'high':'medium', title: `Espera prolongada no CD`, desc: `${diffH}h aguardando expedição • ${e.cliente_nome}`, entrega: e });
+          }
+        }
+      }
+    });
+
     // Gargalo por rota (muitos prontos)
     const porRota = (entregas || []).reduce((a, e) => {
       if (e.status === 'Pronto para Expedir') {

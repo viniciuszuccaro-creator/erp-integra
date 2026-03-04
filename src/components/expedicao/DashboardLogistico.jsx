@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import ControlsBar from "./painel-logistico/ControlsBar";
 import MapView from "./painel-logistico/MapView";
 import QueuePanels from "./painel-logistico/QueuePanels";
+import BottlenecksPanel from "./painel-logistico/BottlenecksPanel";
 import AlertsPanel from "./painel-logistico/AlertsPanel";
 import { Activity } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -17,6 +18,13 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
   const { filterInContext } = useContextoVisual();
   const [selected, setSelected] = React.useState(null);
   const [filters, setFilters] = React.useState({ q: '', statuses: [] });
+  const [simResult, setSimResult] = React.useState(null);
+
+  React.useEffect(() => {
+    const handler = (e) => setSimResult(e.detail || null);
+    window.addEventListener('logistica:simulation', handler);
+    return () => window.removeEventListener('logistica:simulation', handler);
+  }, []);
 
   // Regras configuráveis salvas em ConfiguracaoSistema
   const rulesKey = React.useMemo(() => empresaId ? `logistica_alertas_rules_${empresaId}` : `logistica_alertas_rules_global`, [empresaId]);
@@ -69,6 +77,13 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
         </CardHeader>
         <CardContent>
           <ControlsBar filters={filters} setFilters={setFilters} rules={rules} onSaveRules={(r) => saveRulesMutation.mutate(r)} loadingRules={saveRulesMutation.isPending || loadingRules} />
+          {simResult && (
+            <div className="mt-3 grid md:grid-cols-3 gap-2 text-sm">
+              <div className="border rounded p-2">Distância Total: <span className="font-medium">{(simResult?.total_distance_km ?? simResult?.distance_km ?? 0).toLocaleString('pt-BR')} km</span></div>
+              <div className="border rounded p-2">Duração Total: <span className="font-medium">{(simResult?.total_duration_min ?? simResult?.duration_min ?? 0)} min</span></div>
+              <div className="border rounded p-2">Não Alocados: <span className="font-medium">{(simResult?.unassigned?.length || 0)}</span></div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -78,8 +93,9 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={35} minSize={30}>
-          <div className="grid gap-3 h-full grid-rows-[1fr_1fr]">
+          <div className="grid gap-3 h-full grid-rows-[1fr_1fr_1fr]">
             <AlertsPanel entregas={filtradas} rules={rules} onSelectEntrega={setSelected} />
+            <BottlenecksPanel entregas={filtradas} rules={rules} onSelectEntrega={setSelected} />
             <QueuePanels entregas={filtradas} onSelectEntrega={setSelected} />
           </div>
         </ResizablePanel>
