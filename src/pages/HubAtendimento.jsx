@@ -198,6 +198,19 @@ export default function HubAtendimento() {
     refetchInterval: 10000
   });
 
+  // KPIs SLA 24h (Chatbot)
+  const { data: botSla = { chats: 0, sla_ok: 0, sla_total: 0 } } = useQuery({
+    queryKey: ['bot-sla-24h', empresaAtual?.id],
+    queryFn: async () => {
+      const since = Date.now() - 24 * 60 * 60 * 1000;
+      const items = await base44.entities.ChatbotInteracao.filter({}, '-created_date', 500);
+      const within = (items || []).filter(i => new Date(i?.created_date || Date.now()).getTime() >= since && (!empresaAtual?.id || i?.empresa_id === empresaAtual.id));
+      const acc = within.reduce((a,i)=>{ const ms=Number(i?.tempo_primeira_resposta_ms||0); if(!isNaN(ms)){a.total++; if(ms<=60000) a.ok++;} return a; }, {ok:0,total:0});
+      return { chats: within.length, sla_ok: acc.ok, sla_total: acc.total };
+    },
+    staleTime: 60000,
+  });
+
   // Enviar mensagem do atendente
   const enviarMensagemMutation = useMutation({
     mutationFn: async ({ mensagem, arquivo }) => {
@@ -541,6 +554,19 @@ export default function HubAtendimento() {
             </Card>
           </div>
         )}
+
+        <Card className="mt-4">
+          <CardContent className="p-3 lg:p-4">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="text-sm text-slate-600">Conversas 24h:</div>
+              <Badge variant="outline" className="text-xs">{botSla.chats}</Badge>
+              <div className="text-sm text-slate-600 ml-4">SLA 1ª resp ≤ 60s:</div>
+              <Badge className={(botSla.sla_total ? Math.round(100*(botSla.sla_ok/(botSla.sla_total||1))) : 0) >= 80 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}>
+                {botSla.sla_total ? Math.round(100*(botSla.sla_ok/(botSla.sla_total||1))) : 0}%
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Filtros Avançados */}
         <Card>

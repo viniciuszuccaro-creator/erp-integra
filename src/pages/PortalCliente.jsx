@@ -391,6 +391,65 @@ export default function PortalCliente() {
             <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
               <DocumentosCliente />
             </Suspense>
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Minhas Cobranças (PIX/Boleto)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(!contasReceber || contasReceber.length === 0) ? (
+                  <p className="text-sm text-slate-600">Nenhuma cobrança pendente.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {contasReceber.map((cr) => (
+                      <div key={cr.id} className="p-3 rounded-lg border bg-white flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="font-medium text-slate-900 truncate">{cr.descricao || 'Cobrança'}</div>
+                          <div className="text-xs text-slate-500">Venc.: {cr.data_vencimento ? new Date(cr.data_vencimento).toLocaleDateString('pt-BR') : '-'} • Valor: R$ {(cr.valor || 0).toLocaleString('pt-BR',{minimumFractionDigits:2})} • Status: {cr.status_cobranca || cr.status}</div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {cr.url_boleto_pdf ? (
+                            <Button asChild variant="outline" size="sm">
+                              <a href={cr.url_boleto_pdf} target="_blank" rel="noopener noreferrer">Ver Boleto</a>
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                const res = await base44.functions.invoke('emitirBoleto', { conta_receber_id: cr.id, empresa_id: cliente.empresa_id, group_id: cliente.group_id, metodo: 'boleto' });
+                                if (res?.data?.url_boleto_pdf) { window.open(res.data.url_boleto_pdf, '_blank'); }
+                              }}
+                            >Gerar Boleto</Button>
+                          )}
+                          {cr.pix_qrcode || cr.pix_copia_cola ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const cc = cr.pix_copia_cola || '';
+                                if (cc) navigator.clipboard.writeText(cc);
+                                const img = cr.pix_qrcode;
+                                if (img) window.open(img, '_blank');
+                              }}
+                            >Ver PIX</Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                // Tenta geração via mesmo endpoint quando suportado
+                                await base44.functions.invoke('emitirBoleto', { conta_receber_id: cr.id, empresa_id: cliente.empresa_id, group_id: cliente.group_id, metodo: 'pix' });
+                                try { await queryClient.invalidateQueries({ queryKey: ['contasReceberCliente', cliente?.id, cliente?.empresa_id, cliente?.group_id] }); } catch {}
+                              }}
+                            >Gerar PIX</Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Nova Aba: Solicitar Orçamento */}

@@ -77,6 +77,13 @@ Deno.serve(async (req) => {
       suspicious.push({ tipo: 'RBAC backend negações', severidade: 'Média', detalhes: `${rbacBlocks.length} negações em ${WINDOW_MIN} min` });
     }
 
+    // 5) Funções lentas (FunctionLatency) registradas pelo cliente (>1500ms)
+    const funcLatency = recent.filter((l) => l.entidade === 'FunctionLatency' && (Number(l?.duracao_ms) || 0) > 1500);
+    if (funcLatency.length >= 5) {
+      const max = Math.max(...funcLatency.map((l) => Number(l?.duracao_ms) || 0));
+      suspicious.push({ tipo: 'Funções lentas', severidade: max > 3000 ? 'Alta' : 'Média', detalhes: `${funcLatency.length} chamadas >1500ms (pico ${Math.round(max)}ms)` });
+    }
+
     // Se nada suspeito, retorna rápido
     if (suspicious.length === 0) {
       return Response.json({ ok: true, message: 'Sem alertas', analyzed: recent.length });
@@ -101,12 +108,13 @@ Deno.serve(async (req) => {
     const admins = await base44.asServiceRole.entities.User.filter({ role: 'admin' }, undefined, 100);
     const toList = admins.map((u) => u.email).filter(Boolean);
 
-    if (toList.length > 0) {
-      const subject = 'Alerta de Segurança • ERP Zuccaro';
+    const highAlerts = suspicious.filter((s) => s.severidade === 'Alta');
+    if (toList.length > 0 && highAlerts.length > 0) {
+      const subject = 'Alerta de Segurança • ERP Zuccaro (Crítico)';
       const body = [
         `Janela analisada: últimos ${WINDOW_MIN} minutos`,
         '',
-        ...suspicious.map((s, i) => `${i + 1}. ${s.tipo} [${s.severidade}] - ${s.detalhes}`),
+        ...highAlerts.map((s, i) => `${i + 1}. ${s.tipo} [${s.severidade}] - ${s.detalhes}`),
         '',
         `Total de eventos analisados: ${recent.length}`
       ].join('\n');
@@ -119,24 +127,27 @@ Deno.serve(async (req) => {
     try {
       const cfgAllSlack = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({});
       const scfg = cfgAllSlack?.[0]?.observabilidade?.alerts?.slack;
-      const text = [
-        `:rotating_light: Segurança: ${suspicious.length} alerta(s) nos últimos ${WINDOW_MIN} minutos`,
-        ...suspicious.slice(0, 5).map((s, i) => `${i + 1}. *${s.tipo}* [${s.severidade}] - ${s.detalhes}`),
-        recent.length ? `Eventos analisados: ${recent.length}` : ''
-      ].filter(Boolean).join('\n');
+      const slackAlerts = suspicious.filter((s) => s.severidade === 'Média' || s.severidade === 'Alta');
+      if (slackAlerts.length > 0) {
+        const text = [
+          `:rotating_light: Segurança: ${slackAlerts.length} alerta(s) nos últimos ${WINDOW_MIN} minutos`,
+          ...slackAlerts.slice(0, 5).map((s, i) => `${i + 1}. *${s.tipo}* [${s.severidade}] - ${s.detalhes}`),
+          recent.length ? `Eventos analisados: ${recent.length}` : ''
+        ].filter(Boolean).join('\n');
 
-      const webhook = Deno.env.get('SLACK_WEBHOOK_URL');
-      if (scfg?.enabled && webhook) {
-        await fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
-      } else if (scfg?.enabled && scfg?.channel) {
-        try {
-          const { accessToken } = await base44.asServiceRole.connectors.getConnection('slackbot');
-          await fetch('https://slack.com/api/chat.postMessage', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ channel: scfg.channel, text })
-          });
-        } catch (_) { /* sem Slack conectado, segue sem erro */ }
+        const webhook = Deno.env.get('SLACK_WEBHOOK_URL');
+        if (scfg?.enabled && webhook) {
+          await fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, username: 'ERP Zuccaro Bot', icon_emoji: ':rotating_light:' }) });
+        } else if (scfg?.enabled && scfg?.channel) {
+          try {
+            const { accessToken } = await base44.asServiceRole.connectors.getConnection('slackbot');
+            await fetch('https://slack.com/api/chat.postMessage', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ channel: scfg.channel, text, username: 'ERP Zuccaro Bot', icon_emoji: ':rotating_light:' })
+            });
+          } catch (_) { /* sem Slack conectado, segue sem erro */ }
+        }
       }
     } catch (_) {}
 
