@@ -13,6 +13,7 @@ import AlertsPanel from "./painel-logistico/AlertsPanel";
 import DriverChat from "./painel-logistico/DriverChat";
 import OcorrenciasPanel from "./painel-logistico/OcorrenciasPanel";
 import PerformanceReportDialog from "./painel-logistico/PerformanceReportDialog";
+import RouteOptimizerPanel from "./painel-logistico/RouteOptimizerPanel";
 import { Activity } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
@@ -96,6 +97,8 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
               <div className="border rounded p-2">Não Alocados: <span className="font-medium">{(simResult?.unassigned?.length || 0)}</span></div>
             </div>
           )}
+
+          <RouteOptimizerPanel entregas={filtradas} onSelectEntrega={setSelected} />
         </CardContent>
       </Card>
 
