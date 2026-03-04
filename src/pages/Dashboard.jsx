@@ -25,7 +25,8 @@ import {
   Trophy,
   Activity,
   Shield,
-  FileText
+  FileText,
+  MessageCircle
   } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -450,6 +451,23 @@ export default function Dashboard() {
       const funcs = within.filter(l => l?.entidade === 'Function' && l?.acao === 'Execução').length;
       const secAlerts = within.filter(l => (l?.tipo_auditoria || '').toLowerCase() === 'seguranca').length;
       return { errors, funcs, secAlerts };
+    },
+    staleTime: 60000,
+  });
+
+  // KPIs Chatbot / SLA últimas 24h
+  const { data: botMetrics = { chats: 0, sla_ok: 0, sla_total: 0 } } = useQuery({
+    queryKey: ['bot-metrics-24h', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: async () => {
+      const since = Date.now() - 24 * 60 * 60 * 1000;
+      const items = await base44.entities.ChatbotInteracao.filter({}, '-created_date', 500);
+      const within = (items || []).filter(i => new Date(i?.created_date || Date.now()).getTime() >= since);
+      const sla = within.reduce((acc, i) => {
+        const ms = Number(i?.tempo_primeira_resposta_ms || 0);
+        if (!isNaN(ms)) { acc.total++; if (ms <= 60000) acc.ok++; }
+        return acc;
+      }, { ok: 0, total: 0 });
+      return { chats: within.length, sla_ok: sla.ok, sla_total: sla.total };
     },
     staleTime: 60000,
   });
