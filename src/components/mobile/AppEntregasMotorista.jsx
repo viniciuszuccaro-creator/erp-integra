@@ -549,6 +549,28 @@ export default function AppEntregasMotorista() {
         </CardContent>
       </Card>
 
+      {isOffline && (
+        <Alert className="mb-4 border-amber-300 bg-amber-50">
+          <AlertDescription className="text-sm text-amber-800">
+            Sem conexão: envie sua posição via SMS.
+            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-2">
+              <Input placeholder="Número do gateway SMS" value={smsNumero} onChange={(e)=>setSmsNumero(e.target.value)} />
+              <Button variant="outline" onClick={()=>{
+                const lat = localizacao?.latitude?.toFixed(6) || 'LAT';
+                const lng = localizacao?.longitude?.toFixed(6) || 'LNG';
+                const entrega = entregaAtual?.id || 'ENTREGA';
+                const placa = entregaAtual?.placa || 'PLACA';
+                const body = `GPS ${lat},${lng} ENTREGA:${entrega} PLACA:${placa}`;
+                const href = `sms:${encodeURIComponent(smsNumero)}?body=${encodeURIComponent(body)}`;
+                window.location.href = href;
+              }}>
+                Abrir SMS com localização
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="space-y-3">
         <Button
           onClick={confirmarEntrega}
