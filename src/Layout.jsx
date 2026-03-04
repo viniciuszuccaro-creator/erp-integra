@@ -803,6 +803,12 @@ function LayoutContent({ children, currentPageName }) {
             empresa_id: empresaAtual?.id || null,
             data_hora: new Date().toISOString(),
           }); } catch (_) {}
+          // PII encryption pass (server-side) for sensitive entities
+          try {
+            if (name === 'Cliente' || name === 'Colaborador') {
+              await base44.functions.invoke('piiEncryptor', { entity_name: name, id: res?.id, action: 'encrypt' });
+            }
+          } catch (_) {}
           return res;
         };
       }
@@ -835,6 +841,12 @@ function LayoutContent({ children, currentPageName }) {
             empresa_id: empresaAtual?.id || null,
             data_hora: new Date().toISOString(),
           }); } catch (_) {}
+          // PII encryption pass (server-side) for sensitive entities
+          try {
+            if (name === 'Cliente' || name === 'Colaborador') {
+              await base44.functions.invoke('piiEncryptor', { entity_name: name, id, action: 'encrypt' });
+            }
+          } catch (_) {}
           return res;
         };
       }
