@@ -31,7 +31,8 @@ Deno.serve(async (req) => {
       regiao_entrega_id: z.string().optional(),
       constraints: z.object({
         vehicle_capacity_kg: z.number().optional(),
-        respect_time_windows: z.boolean().optional()
+        respect_time_windows: z.boolean().optional(),
+        group_by_region: z.boolean().optional()
       }).optional(),
       event: z.any().optional(),
       data: z.any().optional()
