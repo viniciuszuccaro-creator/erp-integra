@@ -80,8 +80,9 @@ export default function ControlsBar({ filters, setFilters, rules, onSaveRules, l
         ))}
       </div>
       <div className="ml-auto flex items-center gap-2">
-        <Badge variant="outline" className="text-xs">Regras: atraso≥{local.minAtrasoHoras ?? 1}h • filaRota>{local.maxFilaRota ?? 8} • trânsito≥{local.maxTransitoHoras ?? 6}h</Badge>
+        <Badge variant="outline" className="text-xs">Regras: atraso≥{local.minAtrasoHoras ?? 1}h • filaRota>{local.maxFilaRota ?? 8} • trânsito≥{local.maxTransitoHoras ?? 6}h • esperaCD≥{local.maxEsperaCentroHoras ?? 4}h</Badge>
         <Button variant="outline" onClick={() => setOpen(true)}>Configurar Regras</Button>
+        <Button onClick={() => setOpen('sim')}>Simular Cenário</Button>
       </div>
 
       <Dialog open={open===true} onOpenChange={(v)=>setOpen(v?true:false)}>
