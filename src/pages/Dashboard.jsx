@@ -54,7 +54,7 @@ const GamificacaoOperacoes = React.lazy(() => import("../components/dashboard/Ga
 const DashboardTempoReal = React.lazy(() => import('../components/dashboard/DashboardTempoReal'));
 const DashboardOperacionalBI = React.lazy(() => import("@/components/dashboard/DashboardOperacionalBI"));
 const MapaTempoReal = React.lazy(() => import("@/components/expedicao/MapaTempoReal"));
-const MonitorSistemaRealtime = React.lazy(() => import("@/components/sistema/MonitorSistemaRealtime"));
+const DashboardPerformance = React.lazy(() => import("@/components/sistema/DashboardPerformance"));
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import DashboardTabsNav from "@/components/dashboard/DashboardTabsNav";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
@@ -956,7 +956,7 @@ export default function Dashboard() {
 
           <ProtectedSection module="Sistema" action="ver" hideInstead>
             <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}> 
-              <MonitorSistemaRealtime />
+              <DashboardPerformance />
             </Suspense>
           </ProtectedSection>
 
