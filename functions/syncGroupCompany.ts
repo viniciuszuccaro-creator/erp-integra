@@ -108,10 +108,29 @@ Deno.serve(async (req) => {
       delete payload.empresa_id;
       let targetId = upMap?.target_id;
       if (targetId) {
-         await doWithRetry(() => base44.asServiceRole.entities[entityName].update(targetId, payload));
+         const current = await base44.asServiceRole.entities[entityName].get(targetId).catch(() => ({}));
+         const mergeRes = await base44.asServiceRole.functions.invoke('conflictPolicy', {
+           entity_name: entityName,
+           group_id: groupId || null,
+           empresa_id: empresaId,
+           source: 'up',
+           current,
+           incoming: payload
+         });
+         const merged = (mergeRes?.data && (mergeRes.data.merged || mergeRes.data)) || payload;
+         await doWithRetry(() => base44.asServiceRole.entities[entityName].update(targetId, merged));
          await doWithRetry(() => base44.asServiceRole.entities.SyncMap.update(upMap.id, { last_sync_at: nowIso() }));
        } else {
-         const created = await doWithRetry(() => base44.asServiceRole.entities[entityName].create({ ...payload, ...groupFilter }));
+         const mergeRes = await base44.asServiceRole.functions.invoke('conflictPolicy', {
+           entity_name: entityName,
+           group_id: groupId || null,
+           empresa_id: empresaId,
+           source: 'up',
+           current: {},
+           incoming: { ...payload, ...groupFilter }
+         });
+         const merged = (mergeRes?.data && (mergeRes.data.merged || mergeRes.data)) || { ...payload, ...groupFilter };
+         const created = await doWithRetry(() => base44.asServiceRole.entities[entityName].create(merged));
          await doWithRetry(() => base44.asServiceRole.entities.SyncMap.create({ entity_name: entityName, group_id: groupId || null, empresa_id: empresaId, source_id: entityId, target_id: created.id, direction: 'up', last_sync_at: nowIso() }));
        }
       return Response.json({ ok: true, direction: 'up' });
@@ -131,11 +150,30 @@ Deno.serve(async (req) => {
         const targetId = isMirror ? map.target_id : null;
         const dataDown = { ...payload, empresa_id: empId };
         if (targetId) {
-           await doWithRetry(() => base44.asServiceRole.entities[entityName].update(targetId, dataDown));
+           const current = await base44.asServiceRole.entities[entityName].get(targetId).catch(() => ({}));
+           const mergeRes = await base44.asServiceRole.functions.invoke('conflictPolicy', {
+             entity_name: entityName,
+             group_id: groupId,
+             empresa_id: empId,
+             source: 'down',
+             current,
+             incoming: dataDown
+           });
+           const merged = (mergeRes?.data && (mergeRes.data.merged || mergeRes.data)) || dataDown;
+           await doWithRetry(() => base44.asServiceRole.entities[entityName].update(targetId, merged));
            await doWithRetry(() => base44.asServiceRole.entities.SyncMap.update(map.id, { last_sync_at: nowIso() }));
            results.push({ empresa_id: empId, action: 'updated' });
          } else {
-           const created = await doWithRetry(() => base44.asServiceRole.entities[entityName].create({ ...dataDown, group_id: groupId }));
+           const mergeRes = await base44.asServiceRole.functions.invoke('conflictPolicy', {
+             entity_name: entityName,
+             group_id: groupId,
+             empresa_id: empId,
+             source: 'down',
+             current: {},
+             incoming: { ...dataDown, group_id: groupId }
+           });
+           const merged = (mergeRes?.data && (mergeRes.data.merged || mergeRes.data)) || { ...dataDown, group_id: groupId };
+           const created = await doWithRetry(() => base44.asServiceRole.entities[entityName].create(merged));
            await doWithRetry(() => base44.asServiceRole.entities.SyncMap.create({ entity_name: entityName, group_id: groupId, empresa_id: empId, source_id: entityId, target_id: created.id, direction: 'down', last_sync_at: nowIso() }));
            results.push({ empresa_id: empId, action: 'created' });
          }

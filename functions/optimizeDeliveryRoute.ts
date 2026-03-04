@@ -104,6 +104,18 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Autoalocação por região (melhoria incremental)
+    if (regiaoId) {
+      try {
+        const reg = await base44.asServiceRole.entities.RegiaoAtendimento.filter({ id: regiaoId }, undefined, 1).then(r => r?.[0]).catch(() => null);
+        for (const e of entregas) {
+          if (!e?.regiao_entrega_id) {
+            await base44.asServiceRole.entities.Entrega.update(e.id, { regiao_entrega_id: regiaoId, regiao_entrega_nome: reg?.nome || reg?.descricao || null });
+          }
+        }
+      } catch (_) {}
+    }
+
     if (!entregas || entregas.length === 0) {
       return Response.json({ ok: true, ordered: [], total_distance_m: 0, total_duration_s: 0, api_mode: 'none' });
     }
@@ -184,13 +196,20 @@ Deno.serve(async (req) => {
     // Reordena paradas conforme waypoint_order (aplica sobre via; destino final já é o último)
     const reordered = order.map((idx) => usableStops[idx]).concat([usableStops[usableStops.length - 1]]);
 
+    // Agrupa rótulos por região (best-effort)
+    const byId = Object.fromEntries(entregas.map(e => [e.id, e]));
+    const regionOf = (id) => {
+      const e = byId[id];
+      return e?.regiao_entrega_nome || e?.regiao_entrega_id || 'Sem Região';
+    };
+
     // Estimar ETAs e status de SLA
     const now = Date.now();
     const etas = [];
     let accS = 0;
     for (const l of legs) { etas.push(new Date(now + (accS + (l?.duration?.value||0)) * 1000).toISOString()); accS += (l?.duration?.value || 0); }
     // legs length = ordered.length; última perna leva ao destino final
-    const ordered = reordered.map((s, idx) => ({ entrega_id: s.id, label: s.label, address: s.addr, eta_iso: etas[idx] || null }));
+    const ordered = reordered.map((s, idx) => ({ entrega_id: s.id, label: s.label, address: s.addr, eta_iso: etas[idx] || null, regiao: regionOf(s.id) }));
 
     // Best-effort: atualizar 'data_previsao' e histórico de planejamento
     try {
