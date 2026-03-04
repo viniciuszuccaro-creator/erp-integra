@@ -279,7 +279,6 @@ export default function Expedicao() {
       height: 700,
       props: { empresaId: empresaAtual?.id }
     },
-  ,
   {
     title: 'Painel Logístico',
     description: 'Mapa + filas em tempo real',
