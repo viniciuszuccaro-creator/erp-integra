@@ -1,5 +1,5 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission, assertContextPresence } from './_lib/guard.js';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+
 import { z } from 'npm:zod@3.24.2';
 
 // Otimização de rotas de entrega (multiempresa) usando Google Directions API
@@ -16,7 +16,7 @@ import { z } from 'npm:zod@3.24.2';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { user, perfil } = await getUserAndPerfil(base44);
+    const user = await base44.auth.me();
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -54,12 +54,23 @@ Deno.serve(async (req) => {
     }
 
     // Contexto obrigatório
-    const ctxErr = assertContextPresence({ empresa_id, group_id }, true);
-    if (ctxErr) return ctxErr;
+    if (!empresa_id) {
+      return Response.json({ error: 'Contexto ausente: empresa_id obrigatório' }, { status: 400 });
+    }
 
     // RBAC: módulo Expedição → Roteirização (executar)
-    const denied = await assertPermission(base44, { user, perfil }, 'Expedição', 'Roteirizacao', 'executar');
-    if (denied) return denied;
+    try {
+      const guard = await base44.functions.invoke('entityGuard', {
+        module: 'Expedição',
+        section: 'Roteirizacao',
+        action: 'executar',
+        empresa_id,
+        group_id
+      });
+      if (guard?.data && guard.data.allowed === false) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } catch (_) {}
 
     // Carregar entregas alvo com filtros e restrições
     const constraints = body?.constraints || {};
