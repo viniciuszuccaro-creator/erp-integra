@@ -115,6 +115,28 @@ Deno.serve(async (req) => {
       await Promise.all(toList.map((to) => sendEmail(base44, to, subject, body)));
     }
 
+    // Slack (opcional) via App Connector 'slackbot'
+    try {
+      const cfgAllSlack = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({});
+      const scfg = cfgAllSlack?.[0]?.observabilidade?.alerts?.slack;
+      if (scfg?.enabled && scfg?.channel) {
+        const { accessToken } = await base44.asServiceRole.connectors.getConnection('slackbot');
+        const text = [
+          `:rotating_light: Segurança: ${suspicious.length} alerta(s) nos últimos ${WINDOW_MIN} minutos`,
+          ...suspicious.slice(0, 5).map((s, i) => `${i + 1}. *${s.tipo}* [${s.severidade}] - ${s.detalhes}`),
+          recent.length ? `Eventos analisados: ${recent.length}` : ''
+        ].filter(Boolean).join('\n');
+        await fetch('https://slack.com/api/chat.postMessage', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ channel: scfg.channel, text })
+        });
+      }
+    } catch (_) {}
+
     // WhatsApp opcional para gestores via Configuração do Sistema
     try {
       const cfgAll = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({});
