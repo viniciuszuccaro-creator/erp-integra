@@ -39,6 +39,8 @@ const ConfiguracaoExpedicao = React.lazy(() => import("../components/expedicao/C
 const MapaRoteirizacaoIA = React.lazy(() => import("../components/logistica/MapaRoteirizacaoIA"));
 const RoteirizacaoMapa = React.lazy(() => import("../components/expedicao/RoteirizacaoMapa"));
 const ComprovanteDigital = React.lazy(() => import("../components/expedicao/ComprovanteDigital"));
+const LogisticaFinanceiroPanel = React.lazy(() => import("../components/expedicao/financeiro/LogisticaFinanceiroPanel"));
+const ConfigFinanceiroLogistica = React.lazy(() => import("../components/expedicao/financeiro/ConfigFinanceiroLogistica"));
 
 export default function Expedicao() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
@@ -255,6 +257,17 @@ export default function Expedicao() {
       windowTitle: '📊 Dashboard Entregas',
       width: 1300,
       height: 750,
+      props: { empresaId: empresaAtual?.id }
+    },
+    {
+      title: 'Financeiro Logístico',
+      description: 'CR/CP e conciliação',
+      icon: BarChart3,
+      color: 'teal',
+      component: LogisticaFinanceiroPanel,
+      windowTitle: '💸 Financeiro Logístico',
+      width: 1300,
+      height: 800,
       props: { empresaId: empresaAtual?.id }
     },
     {
