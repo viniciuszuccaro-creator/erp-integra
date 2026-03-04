@@ -31,8 +31,15 @@ Deno.serve(async (req) => {
       regiao_entrega_id: z.string().optional(),
       constraints: z.object({
         vehicle_capacity_kg: z.number().optional(),
+        vehicle_capacity_m3: z.number().optional(),
         respect_time_windows: z.boolean().optional(),
-        group_by_region: z.boolean().optional()
+        respect_time_windows_strict: z.boolean().optional(),
+        group_by_region: z.boolean().optional(),
+        prefer_same_city: z.boolean().optional(),
+        max_stops: z.number().int().optional(),
+        max_route_duration_minutes: z.number().int().optional(),
+        allow_multi_batches: z.boolean().optional(),
+        route_start_time: z.string().optional()
       }).optional(),
       event: z.any().optional(),
       data: z.any().optional()
@@ -75,8 +82,14 @@ Deno.serve(async (req) => {
     // Carregar entregas alvo com filtros e restrições
     const constraints = body?.constraints || {};
     const capKg = Number(constraints?.vehicle_capacity_kg) > 0 ? Number(constraints.vehicle_capacity_kg) : null;
+    const capM3 = Number(constraints?.vehicle_capacity_m3) > 0 ? Number(constraints.vehicle_capacity_m3) : null;
     const regiaoId = body?.regiao_entrega_id || null;
     const usarJanela = constraints?.respect_time_windows === true;
+    const usarJanelaEstrita = constraints?.respect_time_windows_strict === true;
+    const preferSameCity = constraints?.prefer_same_city === true;
+    const maxStops = (typeof constraints?.max_stops === 'number' && constraints.max_stops > 0) ? constraints.max_stops : null;
+    const maxRouteMin = (typeof constraints?.max_route_duration_minutes === 'number' && constraints.max_route_duration_minutes > 0) ? constraints.max_route_duration_minutes : null;
+    const allowMultiBatches = constraints?.allow_multi_batches === true;
 
     let entregas = [];
     const ids = Array.isArray(body?.entrega_ids) ? body.entrega_ids.filter(Boolean) : [];
@@ -108,6 +121,7 @@ Deno.serve(async (req) => {
         if (isNaN(h) || isNaN(m)) return Number.POSITIVE_INFINITY;
         return (h * 60) + m;
       };
+      const cityOf = (e) => String(e?.endereco_entrega_completo?.cidade || '');
       const sortByWindowAndPriority = (a, b) => {
         const ta = parseHHMM(a?.janela_entrega_inicio);
         const tb = parseHHMM(b?.janela_entrega_inicio);
@@ -115,6 +129,12 @@ Deno.serve(async (req) => {
         const pb = prioWeight[b?.prioridade] ?? 2;
         if (usarJanela && ta !== tb) return ta - tb;
         if (pa !== pb) return pa - pb;
+        if (preferSameCity) {
+          const ca = cityOf(a);
+          const cb = cityOf(b);
+          const cc = ca.localeCompare(cb);
+          if (cc !== 0) return cc;
+        }
         const na = (a?.cliente_nome || '').localeCompare(b?.cliente_nome || '');
         if (na !== 0) return na;
         return String(a?.id || '').localeCompare(String(b?.id || ''));
@@ -134,10 +154,22 @@ Deno.serve(async (req) => {
         entregas.sort(sortByWindowAndPriority);
       }
 
-      // Capacidade do veículo
-      if (capKg) {
-        let acc = 0;
-        entregas = entregas.filter(e => { const w = Number(e?.peso_total_kg || 0); if (acc + w <= capKg) { acc += w; return true; } return false; });
+      // Capacidade do veículo (kg e m3)
+      if (capKg || capM3) {
+        let accKg = 0;
+        let accM3 = 0;
+        entregas = entregas.filter(e => {
+          const w = Number(e?.peso_total_kg || 0);
+          const v = Number(e?.volume_total_m3 || 0);
+          const fitsKg = !capKg || (accKg + w <= capKg);
+          const fitsM3 = !capM3 || (accM3 + v <= capM3);
+          if (fitsKg && fitsM3) {
+            accKg += w;
+            accM3 += v;
+            return true;
+          }
+          return false;
+        });
       }
     }
 
@@ -254,7 +286,47 @@ Deno.serve(async (req) => {
     let accS = 0;
     for (const l of legs) { etas.push(new Date(now + (accS + (l?.duration?.value||0)) * 1000).toISOString()); accS += (l?.duration?.value || 0); }
     // legs length = ordered.length; última perna leva ao destino final
-    const ordered = reordered.map((s, idx) => ({ entrega_id: s.id, label: s.label, address: s.addr, eta_iso: etas[idx] || null, regiao: regionOf(s.id) }));
+    let ordered = reordered.map((s, idx) => ({ entrega_id: s.id, label: s.label, address: s.addr, eta_iso: etas[idx] || null, regiao: regionOf(s.id) }));
+
+    // Pós-processamento de restrições: janelas estritas, limite de paradas e duração
+    const unassigned = [];
+    if (usarJanelaEstrita) {
+      const filtered = [];
+      for (let i = 0; i < ordered.length; i++) {
+        const o = ordered[i];
+        const e = byId[o.entrega_id];
+        const ji = parseHHMM(e?.janela_entrega_inicio);
+        const jf = parseHHMM(e?.janela_entrega_fim);
+        const d = o.eta_iso ? new Date(o.eta_iso) : null;
+        const etaMin = d ? (d.getHours() * 60 + d.getMinutes()) : Number.POSITIVE_INFINITY;
+        const okInicio = (ji === Number.POSITIVE_INFINITY) || (etaMin >= ji);
+        const okFim = (jf === Number.POSITIVE_INFINITY) || (etaMin <= jf);
+        if (okInicio && okFim) filtered.push(o); else unassigned.push(o.entrega_id);
+      }
+      ordered = filtered;
+    }
+
+    if (maxStops && ordered.length > maxStops) {
+      const excess = ordered.splice(maxStops);
+      unassigned.push(...excess.map(x => x.entrega_id));
+    }
+
+    if (maxRouteMin && legs?.length) {
+      let acc = 0;
+      let keepCount = 0;
+      for (let i = 0; i < legs.length && i < ordered.length; i++) {
+        acc += (legs[i]?.duration?.value || 0) / 60; // minutos
+        if (acc <= maxRouteMin) keepCount = i + 1; else break;
+      }
+      if (keepCount < ordered.length) {
+        const removed = ordered.splice(keepCount);
+        unassigned.push(...removed.map(x => x.entrega_id));
+        // recomputa totais parciais
+        let td = 0, ts = 0;
+        for (let i = 0; i < keepCount && i < legs.length; i++) { td += legs[i]?.distance?.value || 0; ts += legs[i]?.duration?.value || 0; }
+        total_distance_m = td; total_duration_s = ts;
+      }
+    }
 
     // Best-effort: atualizar 'data_previsao' e histórico de planejamento
     try {
@@ -283,13 +355,13 @@ Deno.serve(async (req) => {
         tipo_auditoria: 'integracao',
         entidade: 'Roteirizacao',
         descricao: `Rota otimizada para ${ordered.length} paradas`,
-        dados_novos: { origem: originStr, modo, stops: usableStops.length, total_distance_m, total_duration_s },
+        dados_novos: { origem: originStr, modo, stops: usableStops.length, total_distance_m, total_duration_s, unassigned_count: (unassigned?.length||0), constraints: constraints || {} },
         data_hora: new Date().toISOString(),
         sucesso: true
       });
     } catch {}
 
-    return Response.json({ ok: true, total_distance_m, total_duration_s, ordered, api_mode: modo });
+    return Response.json({ ok: true, total_distance_m, total_duration_s, ordered, api_mode: modo, unassigned });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
