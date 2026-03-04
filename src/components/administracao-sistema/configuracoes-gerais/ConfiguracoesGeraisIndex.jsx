@@ -4,9 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import ConfigGlobal from "@/components/sistema/ConfigGlobal";
 import HerancaOverridesPanel from "@/components/administracao-sistema/configuracoes-gerais/HerancaOverridesPanel";
 import VersionamentoConfigPanel from "@/components/administracao-sistema/configuracoes-gerais/VersionamentoConfigPanel";
-
-
-
+import ConflitosRevisaoPanel from "@/components/administracao-sistema/configuracoes-gerais/ConflitosRevisaoPanel";
 
 import ProtectedSection from "@/components/security/ProtectedSection";
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
@@ -48,6 +46,7 @@ export default function ConfiguracoesGeraisIndex({ initialTab }) {
           <TabsTrigger value="global">Gerais</TabsTrigger>
           <TabsTrigger value="heranca">Herança/Overrides</TabsTrigger>
           <TabsTrigger value="versionamento">Versionamento</TabsTrigger>
+          <TabsTrigger value="conflitos">Conflitos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="global" className="mt-4">
@@ -82,8 +81,17 @@ export default function ConfiguracoesGeraisIndex({ initialTab }) {
           </Card>
         </TabsContent>
 
+        <TabsContent value="conflitos" className="mt-4">
+          <Card className="w-full">
+            <CardContent className="p-4">
+              <ProtectedSection module="Sistema" section={["Configurações","ConflictPolicy"]} action="executar" fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para Conflitos.</div>}>
+                <ConflitosRevisaoPanel />
+              </ProtectedSection>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      </Tabs>
-    </div>
+        </Tabs>
+        </div>
   );
 }

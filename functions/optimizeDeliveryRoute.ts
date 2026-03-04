@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     }
 
     const raw = await req.json().catch(() => ({}));
-    const BodySchema = z.object({
+    const BodySchema = z.object({ // zod reforçado
       empresa_id: z.string().min(1, 'empresa_id obrigatório'),
       group_id: z.string().optional().nullable(),
       entrega_ids: z.array(z.string()).optional(),
