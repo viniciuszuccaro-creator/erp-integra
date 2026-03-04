@@ -92,6 +92,8 @@ const navigationItems = [
   { title: "Hub de Atendimento", url: createPageUrl("HubAtendimento"), icon: MessageCircle, group: "principal" },
   // Portal do Cliente movido para Apps Externos
 
+  { title: "Orçamento (Site)", url: createPageUrl("OrcamentoSite"), icon: ShoppingCart, group: "publico" },
+
   ];
 
 // React Query client centralizado (padrões seguros + performance)
