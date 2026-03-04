@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Clock, Package, MapPin, AlertTriangle, CheckCircle } from "lucide-react";
