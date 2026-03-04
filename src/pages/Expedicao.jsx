@@ -41,6 +41,7 @@ const RoteirizacaoMapa = React.lazy(() => import("../components/expedicao/Roteir
 const ComprovanteDigital = React.lazy(() => import("../components/expedicao/ComprovanteDigital"));
 const LogisticaFinanceiroPanel = React.lazy(() => import("../components/expedicao/financeiro/LogisticaFinanceiroPanel"));
 const ConfigFinanceiroLogistica = React.lazy(() => import("../components/expedicao/financeiro/ConfigFinanceiroLogistica"));
+const RelatorioFinanceiroLogistica = React.lazy(() => import("../components/expedicao/financeiro/RelatorioFinanceiroLogistica"));
 
 export default function Expedicao() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
@@ -269,6 +270,16 @@ export default function Expedicao() {
       width: 1300,
       height: 800,
       props: { empresaId: empresaAtual?.id }
+    },
+    {
+      title: 'Relatório Financeiro',
+      description: 'KPIs, grupos e detalhamento',
+      icon: BarChart3,
+      color: 'cyan',
+      component: RelatorioFinanceiroLogistica,
+      windowTitle: '📊 Relatório Financeiro Logístico',
+      width: 1300,
+      height: 900
     },
     {
       title: 'Relatórios',
