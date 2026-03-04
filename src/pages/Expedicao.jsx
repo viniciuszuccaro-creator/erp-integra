@@ -279,6 +279,18 @@ export default function Expedicao() {
       height: 700,
       props: { empresaId: empresaAtual?.id }
     },
+  ,
+  {
+    title: 'Painel Logístico',
+    description: 'Mapa + filas em tempo real',
+    icon: Activity,
+    color: 'teal',
+    component: DashboardLogistico,
+    windowTitle: '🗺️ Painel Logístico',
+    width: 1400,
+    height: 800,
+    props: { empresaId: empresaAtual?.id }
+  }
   ];
 
   const allowedModules = modules.filter(m => hasPermission('Expedição', (m.sectionKey || m.title), 'ver'));
