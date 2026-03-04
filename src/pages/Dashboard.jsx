@@ -461,7 +461,7 @@ export default function Dashboard() {
     queryKey: ['bot-metrics-24h', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       const since = Date.now() - 24 * 60 * 60 * 1000;
-      const items = await base44.entities.ChatbotInteracao.filter({}, '-created_date', 500);
+      const items = await filterInContext('ChatbotInteracao', {}, '-created_date', 500);
       const within = (items || []).filter(i => new Date(i?.created_date || Date.now()).getTime() >= since);
       const sla = within.reduce((acc, i) => {
         const ms = Number(i?.tempo_primeira_resposta_ms || 0);

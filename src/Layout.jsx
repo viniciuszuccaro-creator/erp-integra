@@ -377,10 +377,17 @@ function LayoutContent({ children, currentPageName }) {
       try {
         const csp = document.querySelector('meta[http-equiv="Content-Security-Policy"]') || document.createElement('meta');
         csp.setAttribute('http-equiv', 'Content-Security-Policy');
-        csp.setAttribute('content', "default-src 'self' https: data: blob:; connect-src 'self' https: wss:; img-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https:; frame-ancestors 'self'; object-src 'none'");
+        csp.setAttribute('content', "upgrade-insecure-requests; default-src 'self' https: data: blob:; connect-src 'self' https: wss:; img-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https:; frame-ancestors 'self'; object-src 'none'");
         if (!csp.parentElement) document.head.appendChild(csp);
       } catch (_) {}
       
+      // Enforce HTTPS at client as fallback (HSTS at edge)
+      try {
+        if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
+          window.location.replace('https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash);
+        }
+      } catch (_) {}
+    
     } catch (_) {}
 
     // Registrar service worker com estratégia de atualização

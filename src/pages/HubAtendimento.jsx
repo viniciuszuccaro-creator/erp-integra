@@ -106,7 +106,7 @@ export default function HubAtendimento() {
   
   const queryClient = useQueryClient();
   const { hasPermission, user, isAdmin } = usePermissions();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, filterInContext } = useContextoVisual();
 
   // Auto-scroll para última mensagem
   useEffect(() => {
@@ -203,8 +203,8 @@ export default function HubAtendimento() {
     queryKey: ['bot-sla-24h', empresaAtual?.id],
     queryFn: async () => {
       const since = Date.now() - 24 * 60 * 60 * 1000;
-      const items = await base44.entities.ChatbotInteracao.filter({}, '-created_date', 500);
-      const within = (items || []).filter(i => new Date(i?.created_date || Date.now()).getTime() >= since && (!empresaAtual?.id || i?.empresa_id === empresaAtual.id));
+      const items = await filterInContext('ChatbotInteracao', {}, '-created_date', 500);
+      const within = (items || []).filter(i => new Date(i?.created_date || Date.now()).getTime() >= since);
       const acc = within.reduce((a,i)=>{ const ms=Number(i?.tempo_primeira_resposta_ms||0); if(!isNaN(ms)){a.total++; if(ms<=60000) a.ok++;} return a; }, {ok:0,total:0});
       return { chats: within.length, sla_ok: acc.ok, sla_total: acc.total };
     },
