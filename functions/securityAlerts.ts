@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import { sendEmail } from './_lib/notificationUtils.js';
 
 // Agregado de alertas de segurança com envio de e-mail para administradores
