@@ -329,6 +329,17 @@ export default function Financeiro() {
       height: 850,
     },
     {
+      title: 'Custos Logísticos',
+      description: 'Conciliação e relatórios (LOG)',
+      icon: Wallet,
+      color: 'teal',
+      component: LogisticaFinanceiroPanel,
+      windowTitle: '\ud83d\udee3\ufe0f Custos Logísticos (LOG)',
+      width: 1500,
+      height: 850,
+      props: { empresaId: empresaAtual?.id }
+    },
+    {
       title: 'Relatórios Financeiros',
       description: 'DRE, fluxo e análises',
       icon: Wallet,
