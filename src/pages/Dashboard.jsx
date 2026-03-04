@@ -434,6 +434,25 @@ export default function Dashboard() {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
+  // Command Center metrics (24h window) from AuditLog
+  const { data: ccMetrics = { errors: 0, funcs: 0, secAlerts: 0 } } = useQuery({
+    queryKey: ['command-center', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: async () => {
+      const since = Date.now() - 24 * 60 * 60 * 1000;
+      const logs = await base44.entities.AuditLog.filter({}, '-data_hora', 500);
+      const within = (logs || []).filter(l => {
+        const t = new Date(l?.data_hora || l?.created_date || Date.now()).getTime();
+        return t >= since;
+      });
+      const str = (l) => `${l?.descricao || ''} ${l?.mensagem_erro || ''} ${l?.acao || ''}`;
+      const errors = within.filter(l => /erro|error|failed|rejeit/i.test(str(l))).length;
+      const funcs = within.filter(l => l?.entidade === 'Function' && l?.acao === 'Execução').length;
+      const secAlerts = within.filter(l => (l?.tipo_auditoria || '').toLowerCase() === 'seguranca').length;
+      return { errors, funcs, secAlerts };
+    },
+    staleTime: 60000,
+  });
+
   // Assinaturas realtime locais (reforço) para invalidar KPIs do Dashboard
   useEffect(() => {
     if (!(empresaAtual?.id || estaNoGrupo)) return;
@@ -869,14 +888,14 @@ export default function Dashboard() {
                   <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Erros (24h)</div>
-                      <div className="text-2xl font-bold">{/* agregado por auditError/deployAudit */}</div>
+                      <div className="text-2xl font-bold">{ccMetrics?.errors ?? 0}</div>
                     </div>
                     <AlertCircle className="w-6 h-6 text-rose-600" />
                   </div>
                   <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Jobs/Automations</div>
-                      <div className="text-2xl font-bold">{/* list_automations na aba técnica */}</div>
+                      <div className="text-2xl font-bold">{ccMetrics?.funcs ?? 0}</div>
                     </div>
                     <Activity className="w-6 h-6 text-blue-600" />
                   </div>
@@ -890,7 +909,7 @@ export default function Dashboard() {
                   <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Segurança</div>
-                      <div className="text-2xl font-bold">{/* securityAlerts na aba técnica */}</div>
+                      <div className="text-2xl font-bold">{ccMetrics?.secAlerts ?? 0}</div>
                     </div>
                     <Shield className="w-6 h-6 text-amber-600" />
                   </div>
