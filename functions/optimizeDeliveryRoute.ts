@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
       }
     } catch (_) {}
 
-    // Carregar entregas alvo com filtros e restrições
+    // Carregar entregas alvo com filtros e restrições (inclui janelas, prioridade, capacidade)
     const constraints = body?.constraints || {};
     const capKg = Number(constraints?.vehicle_capacity_kg) > 0 ? Number(constraints.vehicle_capacity_kg) : null;
     const capM3 = Number(constraints?.vehicle_capacity_m3) > 0 ? Number(constraints.vehicle_capacity_m3) : null;
