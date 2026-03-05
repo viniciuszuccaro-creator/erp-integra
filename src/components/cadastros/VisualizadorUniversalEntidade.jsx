@@ -594,12 +594,17 @@ export default function VisualizadorUniversalEntidade({
     });
   }, [onSelectionChange, columnFilters]);
   
-  const excluirSelecionados = async () => {
-    if (selectedIds.size === 0) return;
-    await Promise.all(Array.from(selectedIds).map(id => deleteInContext(nomeEntidade, id)));
-    try { await base44.entities.AuditLog.create({ acao: 'Exclusão', modulo: moduloPermissao, entidade: nomeEntidade, descricao: `Exclusão em massa: ${selectedIds.size} registro(s)`, data_hora: new Date().toISOString() }); } catch {}
+  const excluirSelecionadosIds = async (ids) => {
+    if (!ids || ids.length === 0) return;
+    await Promise.all(Array.from(ids).map(id => deleteInContext(nomeEntidade, id)));
+    try { await base44.entities.AuditLog.create({ acao: 'Exclusão', modulo: moduloPermissao, entidade: nomeEntidade, descricao: `Exclusão em massa: ${ids.length} registro(s)`, data_hora: new Date().toISOString() }); } catch {}
     setSelectedIds(new Set());
     await invalidateAllRelated();
+  };
+
+  const excluirSelecionados = async () => {
+    if (selectedIds.size === 0) return;
+    await excluirSelecionadosIds(Array.from(selectedIds));
   };
 
   const camposExibicao = camposPrincipais.length > 0 
@@ -607,6 +612,25 @@ export default function VisualizadorUniversalEntidade({
     : Object.keys(dadosBuscadosEOrdenados[0] || {}).filter(k => 
         !['id', 'created_date', 'updated_date', 'created_by'].includes(k)
       ).slice(0, 6);
+
+  const exportarSelecionados = (ids) => {
+    const set = new Set(ids || []);
+    const somenteSelecionados = dadosBuscadosEOrdenados.filter(i => set.has(i.id));
+    const cols = camposExibicao;
+    const csv = [
+      cols.join(','),
+      ...somenteSelecionados.map(item => cols.map(campo => JSON.stringify(item[campo] || '')).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${nomeEntidade}_selecionados_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    try { base44.entities.AuditLog.create({ acao: 'Exportação', modulo: moduloPermissao, entidade: nomeEntidade, descricao: `Exportados ${somenteSelecionados.length} selecionado(s)`, data_hora: new Date().toISOString() }); } catch {}
+  };
 
   const exportarDados = () => {
     const csv = [
@@ -920,6 +944,34 @@ export default function VisualizadorUniversalEntidade({
                     totalItems={totalItemsCount}
                     onPageChange={(p) => { setCurrentPage(p); setSelectedIds(new Set()); }}
                     onPageSizeChange={(n) => { setItemsPerPage(n); setCurrentPage(1); setSelectedIds(new Set()); }}
+                    // Híbrido: ações inline + menu contexto + barra superior massa
+                    rowActionsRender={(row) => (
+                      <div className="inline-flex items-center gap-1">
+                        {componenteVisualizacao && (
+                          <Button size="sm" variant="ghost" onClick={() => abrirVisualizacao(dadosBuscadosEOrdenados.find(i => i.id === row.id))}>
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {componenteEdicao && (
+                          <ProtectedAction module={moduloPermissao} action="editar" mode="disable">
+                            <Button size="sm" variant="ghost" onClick={() => abrirEdicao(dadosBuscadosEOrdenados.find(i => i.id === row.id))}>
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                          </ProtectedAction>
+                        )}
+                      </div>
+                    )}
+                    rowContextMenuItems={(row) => {
+                      const item = dadosBuscadosEOrdenados.find(i => i.id === row.id);
+                      const items = [];
+                      if (componenteVisualizacao) items.push({ key: 'ver', label: 'Ver', action: () => abrirVisualizacao(item) });
+                      if (componenteEdicao) items.push({ key: 'editar', label: 'Editar', action: () => abrirEdicao(item) });
+                      items.push({ key: 'excluir', label: 'Excluir', action: () => excluirSelecionadosIds([row.id]) });
+                      return items;
+                    }}
+                    showBulkBar
+                    onBulkDeleteSelected={(ids) => excluirSelecionadosIds(ids)}
+                    onBulkExportSelected={(ids) => exportarSelecionados(ids)}
                   />
 
               )}
