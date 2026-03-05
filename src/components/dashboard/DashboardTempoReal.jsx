@@ -253,136 +253,152 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
       <ResizablePanelGroup direction="horizontal" className="w-full h-[520px] md:h-[640px]">
         <ResizablePanel defaultSize={55} minSize={35}>
           <Card className="border-0 shadow-md overflow-hidden">
-        <CardHeader className="bg-slate-50 border-b">
-          <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-blue-600" />
-            Pedidos Recentes
-            <Badge className="ml-auto bg-blue-600">Tempo Real</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0 max-h-[520px] md:max-h-[640px] overflow-auto">
-          <div className="divide-y">
-            <AnimatePresence>
-              {pedidosRecentes?.map((pedido) => (
-                <motion.div
-                  key={pedido.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="p-4 hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <span className="font-semibold text-slate-900">
-                          {pedido.numero_pedido}
-                        </span>
-                        <Badge className={
-                          pedido.status === 'Aprovado' ? 'bg-green-100 text-green-700' :
-                          pedido.status === 'Em Produção' ? 'bg-blue-100 text-blue-700' :
-                          pedido.status === 'Aguardando Aprovação' ? 'bg-orange-100 text-orange-700' :
-                          'bg-slate-100 text-slate-700'
-                        }>
-                          {pedido.status}
-                        </Badge>
-                        {pedido.prioridade === 'Urgente' && (
-                          <Badge className="bg-red-600">
-                            <AlertTriangle className="w-3 h-3 mr-1" />
-                            Urgente
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-slate-600 mt-1">
-                        {pedido.cliente_nome}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-lg text-green-600">
-                        R$ {pedido.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {new Date(pedido.created_date).toLocaleTimeString('pt-BR')}
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {(!pedidosRecentes || pedidosRecentes.length === 0) && (
-              <div className="text-center py-8 text-slate-500">
-                <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>Nenhum pedido recente</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Entregas Ativas */}
-      {entregasAtivas && entregasAtivas.length > 0 && (
-        <Card className="border-0 shadow-md overflow-hidden">
-          <CardHeader className="bg-orange-50 border-b">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Truck className="w-5 h-5 text-orange-600" />
-              Entregas em Andamento
-              <Badge className="ml-auto bg-orange-600">
-                {entregasAtivas.length} ativas
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 max-h-[520px] md:max-h-[640px] overflow-auto">
-            <div className="divide-y">
-              <AnimatePresence>
-                {entregasAtivas.slice(0, 5).map((entrega) => (
-                  <motion.div
-                    key={entrega.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="p-4 hover:bg-slate-50"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-900">
-                            {entrega.numero_pedido}
-                          </span>
-                          <Badge className={
-                            entrega.status === 'Saiu para Entrega' ? 'bg-blue-600' :
-                            entrega.status === 'Em Trânsito' ? 'bg-orange-600' :
-                            entrega.status === 'Pronto para Expedir' ? 'bg-green-100 text-green-700' :
-                            'bg-slate-100 text-slate-700'
-                          }>
-                            {entrega.status}
-                          </Badge>
+            <CardHeader className="bg-slate-50 border-b">
+              <CardTitle className="text-base flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                Pedidos Recentes
+                <Badge className="ml-auto bg-blue-600">Tempo Real</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 max-h-[520px] md:max-h-[640px] overflow-auto">
+              <div className="divide-y">
+                <AnimatePresence>
+                  {pedidosRecentes?.map((pedido) => (
+                    <motion.div
+                      key={pedido.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="p-4 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <span className="font-semibold text-slate-900">
+                              {pedido.numero_pedido}
+                            </span>
+                            <Badge className={
+                              pedido.status === 'Aprovado' ? 'bg-green-100 text-green-700' :
+                              pedido.status === 'Em Produção' ? 'bg-blue-100 text-blue-700' :
+                              pedido.status === 'Aguardando Aprovação' ? 'bg-orange-100 text-orange-700' :
+                              'bg-slate-100 text-slate-700'
+                            }>
+                              {pedido.status}
+                            </Badge>
+                            {pedido.prioridade === 'Urgente' && (
+                              <Badge className="bg-red-600">
+                                <AlertTriangle className="w-3 h-3 mr-1" />
+                                Urgente
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-slate-600 mt-1">
+                            {pedido.cliente_nome}
+                          </p>
                         </div>
-                        <p className="text-sm text-slate-600 mt-1">
-                          {entrega.cliente_nome} • {entrega.endereco_entrega_completo?.cidade || '-'}
-                        </p>
-                        {entrega.motorista && (
-                          <p className="text-xs text-slate-500 mt-1">
-                            🚚 {entrega.motorista} • {entrega.placa}
+                        <div className="text-right">
+                          <p className="font-semibold text-lg text-green-600">
+                            R$ {pedido.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        {entrega.data_previsao && (
-                          <p className="text-sm text-slate-600">
-                            <Clock className="w-3 h-3 inline mr-1" />
-                            {new Date(entrega.data_previsao).toLocaleDateString('pt-BR')}
+                          <p className="text-xs text-slate-500">
+                            {new Date(pedido.created_date).toLocaleTimeString('pt-BR')}
                           </p>
-                        )}
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
 
+                {(!pedidosRecentes || pedidosRecentes.length === 0) && (
+                  <div className="text-center py-8 text-slate-500">
+                    <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p>Nenhum pedido recente</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </ResizablePanel>
+
+        <ResizableHandle />
+
+        <ResizablePanel defaultSize={45} minSize={25}>
+          {entregasAtivas && entregasAtivas.length > 0 ? (
+            <Card className="border-0 shadow-md overflow-hidden">
+              <CardHeader className="bg-orange-50 border-b">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-orange-600" />
+                  Entregas em Andamento
+                  <Badge className="ml-auto bg-orange-600">
+                    {entregasAtivas.length} ativas
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 max-h-[520px] md:max-h-[640px] overflow-auto">
+                <div className="divide-y">
+                  <AnimatePresence>
+                    {entregasAtivas.slice(0, 5).map((entrega) => (
+                      <motion.div
+                        key={entrega.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="p-4 hover:bg-slate-50"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-900">
+                                {entrega.numero_pedido}
+                              </span>
+                              <Badge className={
+                                entrega.status === 'Saiu para Entrega' ? 'bg-blue-600' :
+                                entrega.status === 'Em Trânsito' ? 'bg-orange-600' :
+                                entrega.status === 'Pronto para Expedir' ? 'bg-green-100 text-green-700' :
+                                'bg-slate-100 text-slate-700'
+                              }>
+                                {entrega.status}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-slate-600 mt-1">
+                              {entrega.cliente_nome} • {entrega.endereco_entrega_completo?.cidade || '-'}
+                            </p>
+                            {entrega.motorista && (
+                              <p className="text-xs text-slate-500 mt-1">
+                                🚚 {entrega.motorista} • {entrega.placa}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            {entrega.data_previsao && (
+                              <p className="text-sm text-slate-600">
+                                <Clock className="w-3 h-3 inline mr-1" />
+                                {new Date(entrega.data_previsao).toLocaleDateString('pt-BR')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-0 shadow-md overflow-hidden">
+              <CardHeader className="bg-orange-50 border-b">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-orange-600" />
+                  Entregas em Andamento
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 text-slate-500">Sem entregas ativas</CardContent>
+            </Card>
+          )}
+        </ResizablePanel>
+      </ResizablePanelGroup>
+
+      {/* Alertas em Tempo Real */}
       {/* Alertas em Tempo Real */}
       <div className="grid md:grid-cols-3 gap-4">
         {/* Alerta: Pedidos Aguardando */}
