@@ -48,7 +48,9 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
             Voltar ao Cadastro
           </Button>
         </div>
-        <ImportacaoProdutoNFe onProdutosCriados={handleProdutosCriadosImportacao} />
+        <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
+          <ImportacaoProdutoNFe onProdutosCriados={handleProdutosCriadosImportacao} />
+        </Suspense>
       </div>
     );
   }
@@ -62,7 +64,9 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
             Voltar ao Cadastro
           </Button>
         </div>
-        <ImportacaoProdutoLote onProdutosCriados={handleProdutosCriadosImportacao} />
+        <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
+          <ImportacaoProdutoLote onProdutosCriados={handleProdutosCriadosImportacao} />
+        </Suspense>
       </div>
     );
   }
