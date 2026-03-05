@@ -99,18 +99,10 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
       };
     }
     
-    // V22.0: Auto-incremento de código
-    const ultimoCodigo = todosProdutos
-      .map(p => p.codigo)
-      .filter(c => c && /^\d+$/.test(c))
-      .map(c => parseInt(c))
-      .sort((a, b) => b - a)[0] || 0;
-    
-    const proximoCodigo = (ultimoCodigo + 1).toString().padStart(4, '0');
-    
+    // V22.0: Auto-incremento de código será definido após carregar produtos
     return {
       descricao: '',
-      codigo: proximoCodigo,
+      codigo: '',
       codigo_barras: '',
       tipo_item: 'Revenda',
       grupo: 'Outros',

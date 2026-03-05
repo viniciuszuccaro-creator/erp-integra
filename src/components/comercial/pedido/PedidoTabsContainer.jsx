@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PedidoTabsNav from './PedidoTabsNav';
 import ProtectedSection from '@/components/security/ProtectedSection';
@@ -39,7 +39,48 @@ export default function PedidoTabsContainer({
     { id: 'auditoria', label: 'Auditoria', icon: null },
   ];
 
-  const isLocked = (['Em Trânsito','Faturado'].includes(formData?.status)) && !formData?.__liberado_gerencia;
+  const [conformidade, setConformidade] = useState({ ok: false, motivos: [] });
+
+  useEffect(() => {
+    let cancel = false;
+    const run = async () => {
+      let ok = true;
+      const motivos = [];
+      try {
+        if (formData?.cliente_id) {
+          const cli = await base44.entities.Cliente.filter({ id: formData.cliente_id });
+          const c = Array.isArray(cli) ? cli[0] : null;
+          const limite = c?.condicao_comercial?.limite_credito || 0;
+          if (limite > 0 && (Number(formData?.valor_total) || 0) > limite) {
+            ok = false; motivos.push('Estouro de limite de crédito');
+          }
+          const atrasados = await base44.entities.ContaReceber.filter({ cliente_id: formData.cliente_id, status: 'Atrasado' });
+          if (Array.isArray(atrasados) && atrasados.length > 0) {
+            ok = false; motivos.push('Cliente com títulos em atraso');
+          }
+        }
+        try {
+          if (pedido?.id) {
+            const res = await base44.functions.invoke('iaFinanceAnomalyScan', { pedido_id: pedido.id });
+            if (res?.data?.anomaly === true) { ok = false; motivos.push('Anomalia financeira (IA)'); }
+          }
+        } catch {}
+      } catch {}
+      if (!cancel) setConformidade({ ok, motivos });
+    };
+    run();
+    return () => { cancel = true; };
+  }, [formData?.cliente_id, formData?.valor_total, formData?.forma_pagamento, pedido?.id]);
+
+  const podeLiberarVendedor = conformidade.ok && formData?.forma_pagamento === 'À Vista';
+
+  const liberarEdicaoVendedor = async () => {
+    setFormData(prev => ({ ...prev, __liberado_vendedor: true }));
+    try { await base44.entities.AuditLog.create({ acao: 'Aprovação', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido?.id, descricao: 'Vendedor liberou edição (conformidade + à vista)', data_hora: new Date().toISOString() }); } catch {}
+    toast.success('Edição liberada (vendedor)');
+  };
+
+  const isLocked = (['Em Trânsito','Faturado'].includes(formData?.status)) && !(formData?.__liberado_gerencia || formData?.__liberado_vendedor);
 
   const solicitarLiberacao = async () => {
     try {
@@ -70,6 +111,11 @@ export default function PedidoTabsContainer({
             <ProtectedSection module="Comercial" action="aprovar" hideInstead>
               <button className="px-3 py-1 rounded bg-green-600 text-white" onClick={liberarEdicaoLocal}>Liberar Edição (Gerente)</button>
             </ProtectedSection>
+            {podeLiberarVendedor && (
+              <ProtectedSection module="Comercial" action="editar" hideInstead>
+                <button className="px-3 py-1 rounded bg-blue-600 text-white" onClick={liberarEdicaoVendedor}>Liberar Edição (Vendedor)</button>
+              </ProtectedSection>
+            )}
           </div>
         </div>
       )}
