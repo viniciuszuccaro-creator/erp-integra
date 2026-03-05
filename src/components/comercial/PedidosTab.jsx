@@ -178,7 +178,16 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
           </Button>
         )}
 
-        <Button variant="ghost" size="sm" onClick={() => onEditPedido(pedido)} title="Editar Pedido" className="h-8 px-2" data-permission="Comercial.Pedido.editar">
+        <Button
+          variant="ghost"
+          size="sm"
+          data-permission="Comercial.Pedido.editar"
+          data-sensitive
+          disabled={pedido.status_aprovacao === 'pendente' && !(canApprove && canApprove('Comercial','Pedido'))}
+          onClick={() => onEditPedido(pedido)}
+          title={pedido.status_aprovacao === 'pendente' ? 'Edição bloqueada até aprovação' : 'Editar Pedido'}
+          className="h-8 px-2"
+        >
           <Edit2 className="w-3 h-3 mr-1" />
           <span className="text-xs">Editar</span>
         </Button>
