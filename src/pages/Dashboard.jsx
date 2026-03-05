@@ -741,7 +741,7 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="bi-operacional" className="w-full h-full overflow-hidden">
-          <PanelGroup direction="vertical" className="gap-2 flex-1 h-full min-h-[760px]">
+          <PanelGroup direction="vertical" className="gap-2 flex-1 w-full h-full min-h-[760px]">
             <Panel defaultSize={70} minSize={40} className="overflow-auto h-full">
               {activeTab === 'bi-operacional' && (
                 <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
