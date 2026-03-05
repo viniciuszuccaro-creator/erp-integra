@@ -53,7 +53,7 @@ const PainelOperacoes3D = React.lazy(() => import("../components/dashboard/Paine
 const GamificacaoOperacoes = React.lazy(() => import("../components/dashboard/GamificacaoOperacoes"));
 const DashboardTempoReal = React.lazy(() => import('../components/dashboard/DashboardTempoReal'));
 const DashboardOperacionalBI = React.lazy(() => import("@/components/dashboard/DashboardOperacionalBI"));
-const MapaTempoReal = React.lazy(() => import("@/components/expedicao/MapaTempoReal"));
+import MapaTempoReal from "@/components/expedicao/MapaTempoReal";
 const DashboardPerformance = React.lazy(() => import("@/components/sistema/DashboardPerformance"));
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import DashboardTabsNav from "@/components/dashboard/DashboardTabsNav";
