@@ -175,8 +175,8 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
 
   // V22.0: Query de produtos para auto-incremento
   const { data: todosProdutos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos-codes-sample'],
+    queryFn: () => base44.entities.Produto.filter({}, '-created_date', 100),
     staleTime: 300000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
