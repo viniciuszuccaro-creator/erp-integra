@@ -28,11 +28,15 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, onSubmit, windowMod
   const { data: contasContabeis = [] } = useQuery({
     queryKey: ['plano-contas'],
     queryFn: () => base44.entities.PlanoDeContas.list(),
+    staleTime: 300000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: centrosResultado = [] } = useQuery({
     queryKey: ['centros-resultado'],
     queryFn: () => base44.entities.CentroResultado.list(),
+    staleTime: 300000,
+    refetchOnWindowFocus: false,
   });
 
   const handleSubmit = (e) => {
@@ -128,7 +132,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, onSubmit, windowMod
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
+        <div className="flex items-center justify-between p-3 border rounded-sm bg-slate-50">
           <Label>Exige Aprovação</Label>
           <Switch
             checked={formData.exige_aprovacao}
@@ -148,7 +152,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, onSubmit, windowMod
         )}
       </div>
 
-      <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
+      <div className="flex items-center justify-between p-3 border rounded-sm bg-slate-50">
         <Label>Pode ser Recorrente</Label>
         <Switch
           checked={formData.pode_ser_recorrente}
@@ -156,7 +160,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, onSubmit, windowMod
         />
       </div>
 
-      <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
+      <div className="flex items-center justify-between p-3 border rounded-sm bg-slate-50">
         <Label className="font-semibold">Tipo Ativo</Label>
         <Switch
           checked={formData.ativo}
