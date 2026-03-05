@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMe
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { ChevronDown, ArrowUp, ArrowDown, ArrowUpDown, MoreVertical } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { uiAuditWrap } from "@/components/lib/uiAudit";
 
 export default function ERPDataTable({
@@ -162,8 +163,8 @@ export default function ERPDataTable({
   }
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-white/50 backdrop-blur-md rounded-none">
-      <div className="flex items-center justify-between pb-2 gap-2 rounded-none border bg-white/60 backdrop-blur px-2 py-1">
+    <div className="w-full h-full flex flex-col overflow-hidden bg-white/50 backdrop-blur-md rounded-sm">
+      <div className="flex items-center justify-between pb-2 gap-2 rounded-sm border bg-white/60 backdrop-blur px-2 py-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="gap-1">
@@ -214,7 +215,7 @@ export default function ERPDataTable({
         </div>
       )}
 
-      <div className="flex-1 overflow-auto border rounded-none w-full h-full bg-white/60 backdrop-blur">
+      <div className="flex-1 overflow-auto border rounded-sm w-full h-full bg-white/60 backdrop-blur">
         <Table className="w-full">
           <TableHeader className="sticky top-0 bg-white/70 backdrop-blur z-10">
             <TableRow>
@@ -282,11 +283,16 @@ export default function ERPDataTable({
                       <div className="inline-flex items-center gap-1">
                         {rowActionsRender(row)}
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
+                          <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                          <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm">
+                                                              <MoreVertical className="w-4 h-4" />
+                                                            </Button>
+                                                          </DropdownMenuTrigger>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>Mais ações</TooltipContent>
+                                                      </Tooltip>
                           <DropdownMenuContent align="end">
                             {/* Itens adicionais podem ser controlados pelo caller via rowContextMenuItems */}
                             {Array.isArray(rowContextMenuItems?.(row)) && rowContextMenuItems(row).map((it) => (

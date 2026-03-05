@@ -111,7 +111,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
       )}
 
       {/* Grid de KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch sticky top-0 z-20 bg-white/70 backdrop-blur border-b border-slate-200/60 py-2">
         {/* COMERCIAL */}
         <motion.div className="h-full"
           initial={false}

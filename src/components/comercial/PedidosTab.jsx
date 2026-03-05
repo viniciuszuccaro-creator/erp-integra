@@ -345,7 +345,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
 
       <ResizablePanelGroup direction="vertical" className="w-full h-full">
         <ResizablePanel defaultSize={25} minSize={15}>
-          <Card className="border-0 shadow-md rounded-none">
+          <Card className="border-0 shadow-md rounded-sm">
             <CardContent className="p-6">
               <div className="flex flex-col sm:flex-row gap-4">
                 <SearchInput
@@ -376,7 +376,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel defaultSize={75} minSize={40}>
-          <Card className="border-0 shadow-md rounded-none h-full">
+          <Card className="border-0 shadow-md rounded-sm h-full">
             <CardHeader className="bg-slate-50 border-b">
               <CardTitle>Lista de Pedidos ({filteredPedidos.length})</CardTitle>
         </CardHeader>
