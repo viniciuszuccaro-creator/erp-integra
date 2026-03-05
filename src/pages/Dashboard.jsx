@@ -913,35 +913,35 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Erros (24h)</div>
                       <div className="text-2xl font-bold">{ccMetrics?.errors ?? 0}</div>
                     </div>
                     <AlertCircle className="w-6 h-6 text-rose-600" />
                   </div>
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Jobs/Automations</div>
                       <div className="text-2xl font-bold">{ccMetrics?.funcs ?? 0}</div>
                     </div>
                     <Activity className="w-6 h-6 text-blue-600" />
                   </div>
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Integrações</div>
                       <div className="text-2xl font-bold">OK</div>
                     </div>
                     <BarChart3 className="w-6 h-6 text-emerald-600" />
                   </div>
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Segurança</div>
                       <div className="text-2xl font-bold">{ccMetrics?.secAlerts ?? 0}</div>
                     </div>
                     <Shield className="w-6 h-6 text-amber-600" />
                   </div>
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+                  <div className="p-4 rounded-xl border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Chatbot (24h)</div>
                       <div className="text-xs text-slate-500">SLA 1ª resp.</div>

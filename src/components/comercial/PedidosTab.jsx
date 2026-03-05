@@ -26,6 +26,7 @@ import {
   Download
 } from "lucide-react";
 import ERPDataTable from "@/components/ui/erp/DataTable";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ImprimirPedido } from "@/components/lib/impressao";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -149,7 +150,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
       )
     ) },
     { key: 'actions', label: 'Ações Rápidas', render: (pedido) => (
-      <div className="flex flex-wrap gap-1">
+      <div className="flex items-center gap-1">
         {pedido.status === 'Rascunho' && (
           <Button 
             variant="ghost" size="sm"
@@ -288,7 +289,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
       {/* ESTATÍSTICAS DE APROVAÇÃO */}
       {(pedidosAprovados.length > 0 || pedidosNegados.length > 0 || pedidosPendentesAprovacao.length > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="border-orange-200 bg-orange-50">
+          <Card className="bg-white/60 backdrop-blur-md border-white/40 shadow">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
                 <p className="text-sm text-orange-700">Pendentes Aprovação</p>
@@ -298,7 +299,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
             </CardContent>
           </Card>
 
-          <Card className="border-green-200 bg-green-50">
+          <Card className="bg-white/60 backdrop-blur-md border-white/40 shadow">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
                 <p className="text-sm text-green-700">Descontos Aprovados</p>
@@ -308,7 +309,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
             </CardContent>
           </Card>
 
-          <Card className="border-red-200 bg-red-50">
+          <Card className="bg-white/60 backdrop-blur-md border-white/40 shadow">
             <CardContent className="p-4 flex items-center justify-between">
               <div>
                 <p className="text-sm text-red-700">Descontos Negados</p>

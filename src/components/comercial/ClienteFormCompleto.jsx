@@ -506,7 +506,7 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
         </TabsContent>
       </Tabs>
 
-      <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white z-10">
+      <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white/80 backdrop-blur z-10">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>

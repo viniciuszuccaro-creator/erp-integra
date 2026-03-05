@@ -263,7 +263,7 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+        <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white/80 backdrop-blur">
           {colaborador && (
             <>
               <Button
