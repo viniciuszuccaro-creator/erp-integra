@@ -716,8 +716,8 @@ export default function Dashboard() {
         <Tabs value={activeTab} onValueChange={handleTabChange}>
         <DashboardTabsNav />
 
-        <TabsContent value="tempo-real" className="overflow-auto">
-          <PanelGroup direction="vertical" className="gap-2 min-h-[760px]">
+        <TabsContent value="tempo-real" className="h-full overflow-auto">
+          <PanelGroup direction="vertical" className="gap-2 flex-1 h-full min-h-[760px]">
             <Panel defaultSize={55} minSize={35} className="overflow-auto h-full">
               {activeTab === 'tempo-real' && (
                 <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
@@ -740,8 +740,8 @@ export default function Dashboard() {
           </PanelGroup>
         </TabsContent>
 
-        <TabsContent value="bi-operacional" className="overflow-auto">
-          <PanelGroup direction="vertical" className="gap-2 min-h-[760px]">
+        <TabsContent value="bi-operacional" className="h-full overflow-auto">
+          <PanelGroup direction="vertical" className="gap-2 flex-1 h-full min-h-[760px]">
             <Panel defaultSize={70} minSize={40} className="overflow-auto h-full">
               {activeTab === 'bi-operacional' && (
                 <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>

@@ -30,6 +30,8 @@ const { getFiltroContexto, empresasDoGrupo } = useContextoVisual();
       const campoMap = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
       const campo = campoMap[entityName] || 'empresa_id';
       const fc = getFiltroContexto(campo, true) || {};
+      const hasGroup = !!fc.group_id;
+      const hasAnyEmpresa = !!fc[campo];
 
       // Entidades com compartilhamento: considerar campo da empresa, compartilhadas e group_id
       const SHARED = new Set(['Cliente','Fornecedor','Transportadora']);

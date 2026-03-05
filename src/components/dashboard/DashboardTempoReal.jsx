@@ -62,13 +62,11 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
     ? new Date(kpis.ultimaAtualizacao).toLocaleTimeString('pt-BR')
     : '-';
 
-  const containerClass = windowMode 
-    ? "w-full h-full flex flex-col overflow-auto" 
-    : "w-full space-y-6 overflow-auto";
+  const containerClass = "w-full h-full flex flex-col overflow-auto";
 
   return (
     <div className={`${containerClass} min-h-[500px]`}>
-      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
+      <div className="p-6 space-y-6 flex-1 overflow-auto">
       {/* Header com Status */}
       <Alert className="border-green-300 bg-green-50">
         <Activity className={`w-5 h-5 text-green-600 ${pulseActive ? 'animate-pulse' : ''}`} />

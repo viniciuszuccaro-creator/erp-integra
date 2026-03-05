@@ -226,7 +226,7 @@ export default function VisualizadorUniversalEntidade({
   const [direcaoOrdenacao, setDirecaoOrdenacao] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(100);
+  const [itemsPerPage, setItemsPerPage] = useState(200);
   const [sortField, setSortField] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
   const [columnFilters, setColumnFilters] = useState({});
@@ -315,6 +315,23 @@ export default function VisualizadorUniversalEntidade({
 
     return entityDefaults[nomeEntidade] || { field: 'updated_date', direction: 'desc' };
   }, [nomeEntidade, colunaOrdenacao]);
+
+  const applyOrdenacaoBackend = React.useCallback((val) => {
+    const map = {
+      descricao: { f: 'descricao', d: 'asc' },
+      descricao_desc: { f: 'descricao', d: 'desc' },
+      codigo: { f: 'codigo', d: 'asc' },
+      codigo_desc: { f: 'codigo', d: 'desc' },
+      recent: { f: 'updated_date', d: 'desc' },
+      nome: { f: 'nome', d: 'asc' },
+      nome_desc: { f: 'nome', d: 'desc' }
+    };
+    const def = getDefaultSortForEntity();
+    const m = map[val] || { f: def.field, d: def.direction };
+    setSortField(m.f);
+    setSortDirection(m.d);
+    setCurrentPage(1);
+  }, [getDefaultSortForEntity]);
 
   const buildFilterWithSearch = useCallback(() => {
     const ENTITY_CONTEXT_FIELD = {
@@ -755,7 +772,7 @@ export default function VisualizadorUniversalEntidade({
                   </Badge>
                 </CardTitle>
                 <p className="text-sm text-slate-600 mt-1">
-                  {dadosBuscadosEOrdenados.length} de {totalItemsCount} registros
+                  {dadosBuscadosEOrdenados.length} de {(totalItemsCount || dadosBuscadosEOrdenados.length)} registros
                 </p>
               </div>
             </div>
@@ -801,6 +818,7 @@ export default function VisualizadorUniversalEntidade({
               setCurrentPage(1);
               setOrdenacao(val);
               setColunaOrdenacao(null);
+              applyOrdenacaoBackend(val);
             }}>
               <SelectTrigger className="w-full sm:w-64">
                 <div className="flex items-center gap-2">

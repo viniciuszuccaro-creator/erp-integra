@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import PedidoTabsNav from './PedidoTabsNav';
 import ProtectedSection from '@/components/security/ProtectedSection';
+import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 // Lazy-loaded tabs (keep same split as original)
@@ -38,11 +39,38 @@ export default function PedidoTabsContainer({
     { id: 'auditoria', label: 'Auditoria', icon: null },
   ];
 
+  const isLocked = (['Em Trânsito','Faturado'].includes(formData?.status)) && !formData?.__liberado_gerencia;
+
+  const solicitarLiberacao = async () => {
+    try {
+      await base44.functions.invoke('solicitacoesAprovacao', { tipo: 'pedido_edicao_em_transito', entidade: 'Pedido', entidade_id: pedido?.id });
+      toast.success('Solicitação enviada ao gerente');
+    } catch (e) {
+      toast.error('Falha ao solicitar liberação');
+    }
+  };
+
+  const liberarEdicaoLocal = () => setFormData(prev => ({ ...prev, __liberado_gerencia: true }));
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
       <PedidoTabsNav abas={abas} activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <div className="flex-1 overflow-hidden">
+      {isLocked && (
+        <div className="mx-6 mb-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 flex items-center justify-between">
+          <span>Edição bloqueada para pedidos em {formData?.status}.</span>
+          <div className="flex gap-2">
+            {formData?.status === 'Em Trânsito' && (
+              <button className="px-3 py-1 rounded bg-amber-600 text-white" onClick={solicitarLiberacao}>Pedir liberação</button>
+            )}
+            <ProtectedSection module="Comercial" action="aprovar" hideInstead>
+              <button className="px-3 py-1 rounded bg-green-600 text-white" onClick={liberarEdicaoLocal}>Liberar Edição (Gerente)</button>
+            </ProtectedSection>
+          </div>
+        </div>
+      )}
+
+      <div className={`flex-1 overflow-hidden ${isLocked ? 'pointer-events-none opacity-60' : ''}`}>
         <TabsContent value="identificacao" className="h-full overflow-y-auto p-6 m-0">
           <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
             <WizardEtapa1Cliente
