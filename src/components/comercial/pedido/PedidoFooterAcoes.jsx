@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Check, CheckCircle2, Truck } from "lucide-react";
+import { Check, CheckCircle2, Truck, ShieldCheck } from "lucide-react";
 
 export default function PedidoFooterAcoes({
   valorTotal = 0,
@@ -12,15 +12,17 @@ export default function PedidoFooterAcoes({
   canFecharEnviarEntrega = false,
   canSalvarAlteracoes = false,
   canCriarPedido = false,
+  canSolicitarAprovacao = false,
   onCancelar,
   onSalvarRascunho,
   onFecharCompleto,
   onFecharEnviarEntrega,
   onSalvarAlteracoes,
   onCriarPedido,
+  onSolicitarAprovacao,
 }) {
   return (
-    <div className="flex-shrink-0 p-6 border-t bg-slate-50">
+    <div className="sticky bottom-0 z-20 flex-shrink-0 p-4 md:p-6 border-t bg-white/60 backdrop-blur">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="text-sm">
@@ -47,6 +49,13 @@ export default function PedidoFooterAcoes({
           {canSalvarRascunho && (
             <Button variant="outline" onClick={onSalvarRascunho} disabled={salvando}>
               {salvando ? 'Salvando...' : 'Salvar Rascunho'}
+            </Button>
+          )}
+
+          {canSolicitarAprovacao && (
+            <Button data-permission="Comercial.Pedido.aprovar" data-sensitive variant="outline" onClick={onSolicitarAprovacao} disabled={salvando}>
+              <ShieldCheck className="w-4 h-4 mr-2" />
+              {salvando ? 'Enviando...' : 'Solicitar Aprovação'}
             </Button>
           )}
 

@@ -108,7 +108,25 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
   useTotais(formData, setFormData);
 
-  const handleSubmit = async () => {
+    const canSolicitarAprovacao = (formData?.status_aprovacao !== 'aprovado') && (validacoes.identificacao && validacoes.itens);
+
+    const solicitarAprovacao = async () => {
+      try {
+        const { data: solicitacao } = await base44.functions.invoke('solicitacoesAprovacao', {
+          action: 'create',
+          group_id: formData.group_id || null,
+          empresa_id: formData.empresa_id || null,
+          tipo_solicitacao: 'pedido_aprovacao',
+          entidade_alvo: 'Pedido',
+          entidade_alvo_id: formData.id || `temp_${Date.now()}`,
+          dados_propostos: { status_aprovacao: 'pendente', status: 'Aguardando Aprovação' },
+          justificativa: formData.justificativa_desconto || 'Solicitação de aprovação do pedido'
+        });
+        try { await base44.entities.AuditLog.create({ acao: 'Aprovação', modulo: 'Comercial', entidade: 'Pedido', registro_id: formData?.id, descricao: `Solicitada aprovação do pedido (#${solicitacao?.id || ''})`, data_hora: new Date().toISOString() }); } catch {}
+      } catch (e) {}
+    };
+
+    const handleSubmit = async () => {
     if (!formData || salvando) return;
     
     if (!validacoes.identificacao) {
@@ -281,17 +299,19 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
       {/* Footer com Ações - FIXO */}
       <PedidoFooterAcoes
-         valorTotal={formData?.valor_total || 0}
-         pesoTotalKg={formData?.peso_total_kg || 0}
-         etapasCount={formData?.etapas_entrega?.length || 0}
-         salvando={salvando}
-         canSalvarRascunho={validacoes.identificacao && validacoes.itens}
-         canFecharCompleto={validacoes.identificacao && validacoes.itens}
-         canFecharEnviarEntrega={validacoes.identificacao && validacoes.itens}
-         canSalvarAlteracoes={validacoes.identificacao && validacoes.itens}
-         canCriarPedido={validacoes.identificacao && validacoes.itens}
-         onCancelar={onCancel}
-         onSalvarRascunho={async () => {
+          valorTotal={formData?.valor_total || 0}
+          pesoTotalKg={formData?.peso_total_kg || 0}
+          etapasCount={formData?.etapas_entrega?.length || 0}
+          salvando={salvando}
+          canSalvarRascunho={validacoes.identificacao && validacoes.itens}
+          canFecharCompleto={validacoes.identificacao && validacoes.itens}
+          canFecharEnviarEntrega={validacoes.identificacao && validacoes.itens}
+          canSalvarAlteracoes={validacoes.identificacao && validacoes.itens}
+          canCriarPedido={validacoes.identificacao && validacoes.itens}
+          canSolicitarAprovacao={canSolicitarAprovacao}
+          onSolicitarAprovacao={solicitarAprovacao}
+          onCancelar={onCancel}
+          onSalvarRascunho={async () => {
            if (salvando) return;
            setSalvando(true);
            try {

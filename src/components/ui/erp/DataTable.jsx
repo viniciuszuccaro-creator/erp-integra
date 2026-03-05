@@ -196,7 +196,7 @@ export default function ERPDataTable({
           <input
             value={globalSearchValue}
             onChange={(e) => audited.onGlobalSearchChange && audited.onGlobalSearchChange(e.target.value)}
-            className="h-8 w-full sm:w-64 border rounded px-2 text-sm"
+            className="h-8 w-full sm:w-64 border rounded-sm px-2 text-sm"
             placeholder="Busca global..."
           />
         )}
@@ -253,7 +253,7 @@ export default function ERPDataTable({
                       <input
                         value={columnFilters[col.key] || ""}
                         onChange={(e) => audited.onColumnFiltersChange && audited.onColumnFiltersChange({ ...columnFilters, [col.key]: e.target.value })}
-                        className="w-full h-7 px-2 text-xs border rounded"
+                        className="w-full h-7 px-2 text-xs border rounded-sm"
                         placeholder={`Filtrar ${col.label}`}
                       />
                     </div>
@@ -348,7 +348,7 @@ export default function ERPDataTable({
           </div>
           <div className="flex items-center gap-2">
             <select
-              className="h-8 border rounded px-2"
+              className="h-8 border rounded-sm px-2"
               value={pageSize}
               onChange={(e) => audited.onPageSizeChange && audited.onPageSizeChange(Number(e.target.value))}
             >
