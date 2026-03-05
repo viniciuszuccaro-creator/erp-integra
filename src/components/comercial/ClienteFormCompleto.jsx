@@ -93,7 +93,7 @@ const defaultFormData = {
 
 
 
-export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, onCancel }) {
+function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, onCancel }) {
   const { carimbarContexto } = useContextoVisual();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("principal");
@@ -510,10 +510,12 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" data-permission="Cadastros.Cliente.salvar" data-sensitive disabled={isSubmitting}>
           {isSubmitting ? 'Salvando...' : cliente ? 'Atualizar Cliente' : 'Cadastrar Cliente'}
         </Button>
       </div>
     </FormWrapper>
   );
 }
+
+export default React.memo(ClienteFormCompleto);

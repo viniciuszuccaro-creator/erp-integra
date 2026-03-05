@@ -16,7 +16,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * V21.1.2: Colaborador Form - Adaptado para Window Mode
  * Suporte para Dialog (fallback) e Window Mode (multitarefa)
  */
-export default function ColaboradorForm({ colaborador, onSubmit, windowMode = false }) {
+function ColaboradorForm({ colaborador, onSubmit, windowMode = false }) {
   const { carimbarContexto } = useContextoVisual();
   const [formData, setFormData] = useState(colaborador || {
     nome_completo: '',
@@ -269,6 +269,8 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
               <Button
                 type="button"
                 variant="outline"
+                data-permission="RH.Colaborador.alterarStatus"
+                data-sensitive
                 onClick={handleAlternarStatus}
                 className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
               >
@@ -285,16 +287,18 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
                 )}
               </Button>
               <Button
-                type="button"
-                variant="destructive"
-                onClick={handleExcluir}
-              >
+                                type="button"
+                                variant="destructive"
+                                data-permission="RH.Colaborador.excluir"
+                                data-sensitive
+                                onClick={handleExcluir}
+                              >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Excluir
               </Button>
             </>
           )}
-          <Button type="submit" className="bg-pink-600 hover:bg-pink-700">
+          <Button type="submit" data-permission="RH.Colaborador.salvar" data-sensitive className="bg-pink-600 hover:bg-pink-700">
             <Save className="w-4 h-4 mr-2" />
             {colaborador ? 'Atualizar' : 'Criar'} Colaborador
           </Button>
@@ -309,3 +313,5 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
 
   return content;
 }
+
+export default React.memo(ColaboradorForm);

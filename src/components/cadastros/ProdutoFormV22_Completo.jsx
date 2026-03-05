@@ -37,7 +37,7 @@ const PesoDimensoesSection = React.lazy(() => import("./produto/PesoDimensoesSec
  * ✅ Aba 6: Estoque Avançado (NOVO)
  * ✅ Aba 7: Histórico (se edição)
  */
-export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, windowMode = false, closeSelf }) {
+function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, windowMode = false, closeSelf }) {
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const [user, setUser] = useState(null);
   const { carimbarContexto } = useContextoVisual();
@@ -1216,7 +1216,7 @@ Caso contrário, sugira:
             </>
           )}
         </div>
-        <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700 px-8">
+        <Button type="submit" data-permission="Cadastros.Produto.salvar" data-sensitive disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700 px-8">
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {!isSubmitting && <Save className="w-4 h-4 mr-2" />}
           {produto ? 'Atualizar Produto' : 'Criar Produto'}
