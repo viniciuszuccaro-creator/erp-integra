@@ -175,32 +175,50 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
   const { data: todosProdutos = [] } = useQuery({
     queryKey: ['produtos'],
     queryFn: () => base44.entities.Produto.list(),
+    staleTime: 300000,
   });
+
+  useEffect(() => {
+    if (!produto && !formData.codigo && Array.isArray(todosProdutos)) {
+      const ultimoCodigo = todosProdutos
+        .map(p => p.codigo)
+        .filter(c => c && /^\d+$/.test(c))
+        .map(c => parseInt(c))
+        .sort((a, b) => b - a)[0] || 0;
+      const proximoCodigo = (ultimoCodigo + 1).toString().padStart(4, '0');
+      setFormData(prev => ({ ...prev, codigo: proximoCodigo }));
+    }
+  }, [todosProdutos, produto, formData.codigo]);
 
   // V21.2 FASE 2: Queries dos estruturantes
   const { data: setores = [] } = useQuery({
     queryKey: ['setores-atividade'],
     queryFn: () => base44.entities.SetorAtividade.list(),
+    staleTime: 300000,
   });
 
   const { data: grupos = [] } = useQuery({
     queryKey: ['grupos-produto'],
     queryFn: () => base44.entities.GrupoProduto.list(),
+    staleTime: 300000,
   });
 
   const { data: marcas = [] } = useQuery({
     queryKey: ['marcas'],
     queryFn: () => base44.entities.Marca.list(),
+    staleTime: 300000,
   });
 
   const { data: locaisEstoque = [] } = useQuery({
     queryKey: ['locais-estoque'],
     queryFn: () => base44.entities.LocalEstoque.list(),
+    staleTime: 300000,
   });
 
   const { data: planoContas = [] } = useQuery({
     queryKey: ['plano-contas'],
     queryFn: () => base44.entities.PlanoDeContas.list(),
+    staleTime: 300000,
   });
 
   useEffect(() => {

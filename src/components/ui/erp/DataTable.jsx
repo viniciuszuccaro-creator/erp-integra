@@ -214,7 +214,7 @@ export default function ERPDataTable({
         </div>
       )}
 
-      <div className="flex-1 overflow-auto border rounded-lg">
+      <div className="flex-1 overflow-auto border rounded-lg w-full h-full">
         <Table className="w-full">
           <TableHeader className="sticky top-0 bg-slate-50 z-10">
             <TableRow>

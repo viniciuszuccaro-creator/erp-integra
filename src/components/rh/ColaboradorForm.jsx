@@ -10,12 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import { Save, User, Trash2, Power, PowerOff } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2: Colaborador Form - Adaptado para Window Mode
  * Suporte para Dialog (fallback) e Window Mode (multitarefa)
  */
 export default function ColaboradorForm({ colaborador, onSubmit, windowMode = false }) {
+  const { carimbarContexto } = useContextoVisual();
   const [formData, setFormData] = useState(colaborador || {
     nome_completo: '',
     cpf: '',
@@ -49,7 +51,7 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
   });
 
   const handleSubmit = async () => {
-    onSubmit(formData);
+    onSubmit(carimbarContexto(formData, 'empresa_alocada_id'));
   };
 
   const handleExcluir = () => {
@@ -57,7 +59,7 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
       return;
     }
     if (onSubmit) {
-      onSubmit({ ...formData, _action: 'delete' });
+      onSubmit({ ...carimbarContexto(formData, 'empresa_alocada_id'), _action: 'delete' });
     }
   };
 
@@ -67,7 +69,7 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
   };
 
   const content = (
-    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`w-full h-full space-y-6 ${windowMode ? 'p-6 overflow-auto' : ''}`}>
       <div className="space-y-4">
         <Card>
           <CardContent className="p-6 space-y-4">
