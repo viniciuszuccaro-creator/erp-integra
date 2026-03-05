@@ -1,5 +1,37 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission, audit } from './_lib/guard.js';
+// Inline helpers to avoid local imports
+async function getUserAndPerfil(base44){
+  const user = await base44.auth.me();
+  return { user, perfil: null };
+}
+async function assertPermission(base44, ctx, module, entity, action){
+  try {
+    const res = await base44.functions.invoke('entityGuard', { module, section: entity, action });
+    if (res?.data && res.data.allowed === false) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+  } catch(_) {}
+  return null;
+}
+async function audit(base44, user, log){
+  try {
+    await base44.asServiceRole.entities.AuditLog.create({
+      usuario: user?.full_name || user?.email || 'Usuário',
+      usuario_id: user?.id || null,
+      acao: log.acao || 'Execução',
+      modulo: log.modulo || 'Sistema',
+      tipo_auditoria: log.tipo_auditoria || 'sistema',
+      entidade: log.entidade || 'Function',
+      registro_id: log.registro_id || null,
+      descricao: log.descricao || '',
+      empresa_id: log.empresa_id || null,
+      group_id: log.group_id || null,
+      dados_anteriores: log.dados_anteriores || null,
+      dados_novos: log.dados_novos || null,
+      data_hora: new Date().toISOString()
+    });
+  } catch(_) {}
+}
 import { computeUpdatesForContaPagar, computeUpdatesForContaReceber } from './_lib/paymentStatusUtils.js';
 
 
