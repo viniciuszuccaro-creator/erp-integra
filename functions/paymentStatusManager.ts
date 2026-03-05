@@ -32,7 +32,20 @@ async function audit(base44, user, log){
     });
   } catch(_) {}
 }
-import { computeUpdatesForContaPagar, computeUpdatesForContaReceber } from './_lib/paymentStatusUtils.js';
+// Inline minimal compute helpers (avoid external local imports)
+function computeUpdatesForContaPagar(action, justificativa, registro){
+  const up = {};
+  if (action === 'cancelar') { up.status = 'Cancelado'; up.motivo_cancelamento = justificativa || 'Sem justificativa'; }
+  if (action === 'aprovar') { up.status_pagamento = 'Aprovado'; }
+  if (action === 'rejeitar') { up.status_pagamento = 'Rejeitado'; up.motivo_rejeicao = justificativa || 'Sem justificativa'; }
+  return up;
+}
+function computeUpdatesForContaReceber(action, justificativa, registro){
+  const up = {};
+  if (action === 'cancelar') { up.status = 'Cancelado'; up.motivo_cancelamento = justificativa || 'Sem justificativa'; }
+  if (action === 'cobrar') { up.status_cobranca = 'enviada'; }
+  return up;
+}
 
 
 // Helpers Financeiro Profissional
