@@ -50,7 +50,9 @@ export default function PedidoTabsContainer({
     }
   };
 
-  return (
+  const liberarEdicaoLocal = () => setFormData(prev => ({ ...prev, __liberado_gerencia: true }));
+
+   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
       <PedidoTabsNav abas={abas} activeTab={activeTab} setActiveTab={setActiveTab} />
 
