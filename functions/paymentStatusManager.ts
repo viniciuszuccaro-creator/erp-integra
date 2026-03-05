@@ -177,6 +177,101 @@ Deno.serve(async (req) => {
       return Response.json({ ok: true, enviados });
     }
 
+    // Checkout iniciado: gera link de pagamento e dispara mensageria
+    if (action === 'checkout_iniciado') {
+      const empresaId = body?.empresa_id || null;
+      const pedidoId = body?.pedido_id || null;
+      const contaReceberId = body?.conta_receber_id || null;
+      const valor = Number(body?.valor || 0);
+      if (!empresaId || !pedidoId || !contaReceberId || !(valor > 0)) {
+        return Response.json({ error: 'Parâmetros inválidos (checkout_iniciado)' }, { status: 400 });
+      }
+      // Busca config do gateway ativo
+      let cfg = null;
+      try {
+        const cfgs = await base44.asServiceRole.entities.ConfiguracaoGatewayPagamento.filter({ empresa_id: empresaId, ativo: true }, undefined, 1);
+        cfg = cfgs?.[0] || null;
+      } catch (_) {}
+      // Gera link de pagamento via função existente (emitirBoleto como fallback)
+      let url_fatura = null;
+      try {
+        const payload = {
+          empresa_id: empresaId,
+          conta_receber_id: contaReceberId,
+          pedido_id: pedidoId,
+          valor,
+          provider: cfg?.provedor || cfg?.gateway || 'Asaas',
+          webhook: true,
+        };
+        const res = await base44.functions.invoke('emitirBoleto', payload);
+        url_fatura = res?.data?.url || res?.data?.url_boleto || res?.data?.pix_qrcode || null;
+      } catch (_) {}
+      // Atualiza CR com link (se houver)
+      try {
+        if (url_fatura) {
+          await base44.asServiceRole.entities.ContaReceber.update(contaReceberId, {
+            url_fatura: url_fatura,
+            status_cobranca: 'enviada',
+            data_envio_cobranca: new Date().toISOString()
+          });
+        }
+      } catch (_) {}
+      // Auditoria
+      try {
+        await audit(base44, user, {
+          acao: 'Criação',
+          modulo: 'Comercial',
+          entidade: 'Checkout',
+          registro_id: pedidoId,
+          descricao: 'Checkout iniciado (link gerado)',
+          empresa_id: empresaId,
+          dados_novos: { conta_receber_id: contaReceberId, valor, url_fatura }
+        });
+      } catch (_) {}
+      return Response.json({ ok: true, url_fatura });
+    }
+
+    // Webhook confirmação de pagamento do gateway
+    if (action === 'webhook_pagamento') {
+      const empresaId = body?.empresa_id || null;
+      const contaReceberId = body?.conta_receber_id || null;
+      const pedidoId = body?.pedido_id || null;
+      const status = String(body?.status || '').toLowerCase();
+      const valorPago = Number(body?.valor_pago || body?.valor || 0);
+      if (!empresaId || !contaReceberId || !status) {
+        return Response.json({ error: 'Parâmetros inválidos (webhook_pagamento)' }, { status: 400 });
+      }
+      try {
+        const cr = await base44.asServiceRole.entities.ContaReceber.get(contaReceberId);
+        const novo = Number(cr?.valor_recebido || 0) + (valorPago > 0 ? valorPago : 0);
+        const quitado = novo + 0.005 >= Number(cr?.valor || 0);
+        await base44.asServiceRole.entities.ContaReceber.update(contaReceberId, {
+          valor_recebido: novo,
+          data_recebimento: new Date().toISOString().slice(0,10),
+          status: quitado ? 'Recebido' : (status === 'pago' ? 'Recebido' : cr?.status || 'Pendente'),
+          status_cobranca: status === 'pago' ? 'paga' : status
+        });
+        // NF-e pós-pagamento (best-effort)
+        try {
+          if (quitado && pedidoId) {
+            await base44.functions.invoke('nfeActions', { action: 'emitir_pos_pagamento', pedido_id: pedidoId, empresa_id: empresaId });
+          }
+        } catch (_) {}
+        await audit(base44, user, {
+          acao: 'Edição',
+          modulo: 'Financeiro',
+          entidade: 'ContaReceber',
+          registro_id: contaReceberId,
+          descricao: 'Confirmação pagamento (webhook)',
+          empresa_id: empresaId,
+          dados_novos: { status, valorPago }
+        });
+      } catch (e) {
+        return Response.json({ error: e.message }, { status: 500 });
+      }
+      return Response.json({ ok: true, processed: true });
+    }
+
     if (action === 'conciliar_extrato') {
       // validaremos adiante
     } else if (!['ContaPagar','ContaReceber'].includes(entity) || (!id && (!ids || !Array.isArray(ids) || ids.length === 0))) {
