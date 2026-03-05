@@ -28,6 +28,7 @@ import {
  } from "lucide-react";
 import ERPDataTable from "@/components/ui/erp/DataTable";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ImprimirPedido } from "@/components/lib/impressao";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -267,7 +268,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   ]), [queryClient, toast, onEditPedido]);
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full flex flex-col space-y-6">
       {/* ETAPA 4: ALERTA DE APROVAÇÕES PENDENTES */}
       {pedidosPendentesAprovacao.length > 0 && (
         <Alert className="border-orange-300 bg-orange-50">
@@ -339,38 +340,42 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         </Button>
       </div>
 
-      <Card className="border-0 shadow-md">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <SearchInput
-              value={searchTerm}
-              onChange={setSearchTerm}
-              placeholder="Buscar por número, cliente, vendedor, tipo, origem, status..."
-              className="flex-1"
-            />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-64">
-                <SelectValue placeholder="Filtrar por status" />
-              </SelectTrigger>
-              <SelectContent className="z-[99999]">
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="Rascunho">Rascunho</SelectItem>
-                <SelectItem value="Aguardando Aprovação">Aguardando Aprovação</SelectItem>
-                <SelectItem value="Aprovado">Aprovado</SelectItem>
-                <SelectItem value="Pronto para Faturar">Pronto para Faturar</SelectItem>
-                <SelectItem value="Faturado">Faturado</SelectItem>
-                <SelectItem value="Em Expedição">Em Expedição</SelectItem>
-                <SelectItem value="Entregue">Entregue</SelectItem>
-                <SelectItem value="Cancelado">Cancelado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-0 shadow-md">
-        <CardHeader className="bg-slate-50 border-b">
-          <CardTitle>Lista de Pedidos ({filteredPedidos.length})</CardTitle>
+      <ResizablePanelGroup direction="vertical" className="w-full h-full">
+        <ResizablePanel defaultSize={25} minSize={15}>
+          <Card className="border-0 shadow-md rounded-none">
+            <CardContent className="p-6">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <SearchInput
+                  value={searchTerm}
+                  onChange={setSearchTerm}
+                  placeholder="Buscar por número, cliente, vendedor, tipo, origem, status..."
+                  className="flex-1"
+                />
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-64">
+                    <SelectValue placeholder="Filtrar por status" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[99999]">
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="Rascunho">Rascunho</SelectItem>
+                    <SelectItem value="Aguardando Aprovação">Aguardando Aprovação</SelectItem>
+                    <SelectItem value="Aprovado">Aprovado</SelectItem>
+                    <SelectItem value="Pronto para Faturar">Pronto para Faturar</SelectItem>
+                    <SelectItem value="Faturado">Faturado</SelectItem>
+                    <SelectItem value="Em Expedição">Em Expedição</SelectItem>
+                    <SelectItem value="Entregue">Entregue</SelectItem>
+                    <SelectItem value="Cancelado">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        </ResizablePanel>
+        <ResizableHandle />
+        <ResizablePanel defaultSize={75} minSize={40}>
+          <Card className="border-0 shadow-md rounded-none h-full">
+            <CardHeader className="bg-slate-50 border-b">
+              <CardTitle>Lista de Pedidos ({filteredPedidos.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {selectedPedidos.length > 0 && (
