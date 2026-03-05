@@ -39,6 +39,13 @@ export default function ERPDataTable({
   permission,
   // Seleção granular por linha
   isRowSelectable = () => true,
+  // Ações inline e menu de contexto por linha
+  rowActionsRender,
+  rowContextMenuItems,
+  // Barra superior para operações em massa
+  showBulkBar = false,
+  onBulkDeleteSelected,
+  onBulkExportSelected,
 }) {
   const [colWidths, setColWidths] = useState({});
   const headerRefs = useRef({});
