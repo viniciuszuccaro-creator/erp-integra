@@ -162,8 +162,8 @@ export default function ERPDataTable({
   }
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between pb-2 gap-2">
+    <div className="w-full h-full flex flex-col overflow-hidden bg-white/50 backdrop-blur-md rounded-xl">
+      <div className="flex items-center justify-between pb-2 gap-2 rounded-lg border bg-white/60 backdrop-blur px-2 py-1">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="gap-1">
@@ -214,9 +214,9 @@ export default function ERPDataTable({
         </div>
       )}
 
-      <div className="flex-1 overflow-auto border rounded-lg w-full h-full">
+      <div className="flex-1 overflow-auto border rounded-lg w-full h-full bg-white/60 backdrop-blur">
         <Table className="w-full">
-          <TableHeader className="sticky top-0 bg-slate-50 z-10">
+          <TableHeader className="sticky top-0 bg-white/70 backdrop-blur z-10">
             <TableRow>
               <TableHead className="w-10 px-3">
                 <Checkbox checked={allSelected} onCheckedChange={audited.onToggleSelectAll} />
