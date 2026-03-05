@@ -17,6 +17,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useRealtimeKPIs, useRealtimePedidos, useRealtimeEntregas } from '@/components/lib/useRealtimeData';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
@@ -248,8 +249,10 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
         </motion.div>
       </div>
 
-      {/* Pedidos Recentes */}
-      <Card className="border-0 shadow-md overflow-hidden">
+      {/* Pedidos Recentes + Entregas (redimensionáveis) */}
+      <ResizablePanelGroup direction="horizontal" className="w-full h-[520px] md:h-[640px]">
+        <ResizablePanel defaultSize={55} minSize={35}>
+          <Card className="border-0 shadow-md overflow-hidden">
         <CardHeader className="bg-slate-50 border-b">
           <CardTitle className="text-base flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-600" />
