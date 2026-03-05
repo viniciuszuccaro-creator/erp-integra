@@ -3,7 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronDown, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
+import { ChevronDown, ArrowUp, ArrowDown, ArrowUpDown, MoreVertical } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { uiAuditWrap } from "@/components/lib/uiAudit";
 
@@ -188,6 +189,24 @@ export default function ERPDataTable({
         )}
       </div>
 
+      {showBulkBar && selectedSet.size > 0 && (
+        <div className="sticky top-0 z-10 mb-2 rounded-lg border bg-yellow-50 text-yellow-900 px-3 py-2 flex items-center justify-between">
+          <div className="text-sm font-medium">{selectedSet.size} selecionado(s)</div>
+          <div className="flex items-center gap-2">
+            {audited.onBulkExportSelected && (
+              <Button variant="outline" size="sm" onClick={() => audited.onBulkExportSelected && audited.onBulkExportSelected(Array.from(selectedSet))}>
+                Exportar selecionados
+              </Button>
+            )}
+            {audited.onBulkDeleteSelected && (
+              <Button variant="destructive" size="sm" onClick={() => audited.onBulkDeleteSelected && audited.onBulkDeleteSelected(Array.from(selectedSet))}>
+                Excluir selecionados
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-auto border rounded-lg">
         <Table className="w-full">
           <TableHeader className="sticky top-0 bg-slate-50 z-10">
@@ -228,26 +247,69 @@ export default function ERPDataTable({
                   )}
                 </TableHead>
               ))}
-              {/* Placeholder para ações externas: manter a estrutura sem quebrar colunas */}
+              {rowActionsRender && (
+                <TableHead className="w-28 px-3 text-right">
+                  Ações
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((row) => (
-              <TableRow key={row.id} className="hover:bg-blue-50/40">
-                <TableCell className="px-3">
-                  {isRowSelectable(row) ? (
-                   <Checkbox checked={selectedSet.has(row.id)} onCheckedChange={() => audited.onToggleItem && audited.onToggleItem(row.id)} />
-                  ) : (
-                    <span className="inline-block w-4 h-4 opacity-40" />
-                  )}
-                </TableCell>
-                {visibleColumns.map((c) => (
-                  <TableCell key={c.key} className={`px-3 ${c.isNumeric ? 'text-right' : ''}`}>
-                    {typeof c.render === 'function' ? c.render(row) : (row[c.key] != null ? String(row[c.key]) : '')}
+            {data.map((row) => {
+              const tr = (
+                <TableRow key={row.id} className="hover:bg-blue-50/40">
+                  <TableCell className="px-3">
+                    {isRowSelectable(row) ? (
+                      <Checkbox checked={selectedSet.has(row.id)} onCheckedChange={() => audited.onToggleItem && audited.onToggleItem(row.id)} />
+                    ) : (
+                      <span className="inline-block w-4 h-4 opacity-40" />
+                    )}
                   </TableCell>
-                ))}
-              </TableRow>
-            ))}
+                  {visibleColumns.map((c) => (
+                    <TableCell key={c.key} className={`px-3 ${c.isNumeric ? 'text-right' : ''}`}>
+                      {typeof c.render === 'function' ? c.render(row) : (row[c.key] != null ? String(row[c.key]) : '')}
+                    </TableCell>
+                  ))}
+                  {rowActionsRender && (
+                    <TableCell className="px-3 text-right">
+                      <div className="inline-flex items-center gap-1">
+                        {rowActionsRender(row)}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {/* Itens adicionais podem ser controlados pelo caller via rowContextMenuItems */}
+                            {Array.isArray(rowContextMenuItems?.(row)) && rowContextMenuItems(row).map((it) => (
+                              <button key={it.key} className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent" onClick={it.action}>{it.label}</button>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  )}
+                </TableRow>
+              );
+              if (rowContextMenuItems) {
+                return (
+                  <ContextMenu key={`ctx-${row.id}`}>
+                    <ContextMenuTrigger asChild>
+                      {tr}
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      {rowContextMenuItems(row)?.map((it) => (
+                        <ContextMenuItem key={`ctx-${row.id}-${it.key}`} onClick={it.action}>
+                          {it.label}
+                        </ContextMenuItem>
+                      ))}
+                    </ContextMenuContent>
+                  </ContextMenu>
+                );
+              }
+              return tr;
+            })}
           </TableBody>
         </Table>
       </div>
