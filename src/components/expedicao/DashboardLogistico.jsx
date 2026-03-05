@@ -19,7 +19,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function DashboardLogistico({ empresaId, entregas: entregasProp = [], windowMode }) {
   const queryClient = useQueryClient();
-  const { filterInContext } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const [selected, setSelected] = React.useState(null);
   const [filters, setFilters] = React.useState({ q: '', statuses: [] });
   const [simResult, setSimResult] = React.useState(null);
@@ -28,7 +28,11 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
   React.useEffect(() => {
     const handler = (e) => setSimResult(e.detail || null);
     window.addEventListener('logistica:simulation', handler);
-    return () => window.removeEventListener('logistica:simulation', handler);
+    window.addEventListener('logistica:route', handler);
+    return () => {
+      window.removeEventListener('logistica:simulation', handler);
+      window.removeEventListener('logistica:route', handler);
+    };
   }, []);
 
   // Regras configuráveis salvas em ConfiguracaoSistema
@@ -98,7 +102,7 @@ export default function DashboardLogistico({ empresaId, entregas: entregasProp =
             </div>
           )}
 
-          <RouteOptimizerPanel entregas={filtradas} onSelectEntrega={setSelected} />
+          <RouteOptimizerPanel entregas={filtradas} empresaId={empresaAtual?.id} groupId={grupoAtual?.id} onSelectEntrega={setSelected} />
         </CardContent>
       </Card>
 

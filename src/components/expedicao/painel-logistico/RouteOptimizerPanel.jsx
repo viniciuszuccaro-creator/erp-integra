@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Route as RouteIcon, ListOrdered } from 'lucide-react';
 
-export default function RouteOptimizerPanel({ entregas = [], onSelectEntrega }) {
+export default function RouteOptimizerPanel({ entregas = [], empresaId, groupId, onSelectEntrega }) {
   const candidatas = useMemo(() => (
     (entregas || []).filter(e => e?.endereco_entrega_completo?.latitude && e?.endereco_entrega_completo?.longitude && !['Entregue','Cancelado','Devolvido'].includes(e.status))
   ), [entregas]);
@@ -23,27 +23,28 @@ export default function RouteOptimizerPanel({ entregas = [], onSelectEntrega }) 
     setLoading(true);
     try {
       const payload = {
-        entregas: candidatas.map(e => ({
-          id: e.id,
-          destino: {
-            lat: e.endereco_entrega_completo?.latitude,
-            lng: e.endereco_entrega_completo?.longitude,
-          },
-          janela_inicio: e.janela_entrega_inicio || null,
-          janela_fim: e.janela_entrega_fim || null,
-          peso_total_kg: e.peso_total_kg || 0,
-          volume_total_m3: e.volume_total_m3 || 0,
-        })),
+        empresa_id: empresaId,
+        group_id: groupId || null,
+        entrega_ids: candidatas.map(e => e.id),
         constraints: {
-          capacity_kg: capacidadeKg ? Number(capacidadeKg) : null,
-          max_stops: maxParadas ? Number(maxParadas) : null,
+          vehicle_capacity_kg: capacidadeKg ? Number(capacidadeKg) : undefined,
+          max_stops: maxParadas ? Number(maxParadas) : undefined,
           respect_time_windows: !!respeitarJanelas,
         },
       };
       const { data } = await base44.functions.invoke('optimizeDeliveryRoute', payload);
-      const plan = data || {};
-      setRota(plan);
-      try { window.dispatchEvent(new CustomEvent('logistica:route', { detail: plan })); } catch {}
+      const d = data || {};
+      const view = {
+        ...d,
+        total_distance_km: (d.total_distance_m || 0) / 1000,
+        total_duration_min: Math.round((d.total_duration_s || 0) / 60),
+        stops: Array.isArray(d.ordered) ? d.ordered.map((o) => {
+          const etaMin = o?.eta_iso ? Math.max(0, Math.round((new Date(o.eta_iso).getTime() - Date.now()) / 60000)) : null;
+          return { id: o.entrega_id, eta_min: etaMin, ...o };
+        }) : []
+      };
+      setRota(view);
+      try { window.dispatchEvent(new CustomEvent('logistica:route', { detail: view })); } catch {}
     } finally {
       setLoading(false);
     }
@@ -52,7 +53,7 @@ export default function RouteOptimizerPanel({ entregas = [], onSelectEntrega }) 
   const paradas = useMemo(() => {
     if (!rota) return [];
     // compatibilidade com diferentes formatos
-    const arr = rota?.stops || rota?.sequence || rota?.rota || [];
+    const arr = rota?.stops || rota?.sequence || rota?.ordered || rota?.rota || [];
     return Array.isArray(arr) ? arr : [];
   }, [rota]);
 
@@ -79,7 +80,7 @@ export default function RouteOptimizerPanel({ entregas = [], onSelectEntrega }) 
               <input type="checkbox" checked={respeitarJanelas} onChange={(e)=>setRespeitarJanelas(e.target.checked)} />
               Respeitar janelas de entrega
             </label>
-            <Button onClick={otimizar} disabled={loading || !candidatas.length} className="ml-auto">
+            <Button onClick={otimizar} disabled={loading || !candidatas.length || !empresaId} className="ml-auto">
               {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin"/> : <ListOrdered className="w-4 h-4 mr-2"/>}
               Otimizar rota
             </Button>
