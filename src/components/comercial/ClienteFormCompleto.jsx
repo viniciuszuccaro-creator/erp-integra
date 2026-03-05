@@ -25,7 +25,6 @@ const HistoricoTab = React.lazy(() => import("@/components/comercial/cliente/His
 import FormWrapper from "@/components/common/FormWrapper";
 import { clienteCompletoSchema } from './cliente/clienteCompletoSchema';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
-import { base44 } from "@/api/base44Client";
 
 const defaultFormData = {
   tipo: "Pessoa Jurídica",
