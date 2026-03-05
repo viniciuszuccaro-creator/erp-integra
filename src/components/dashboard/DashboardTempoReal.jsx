@@ -62,7 +62,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
     ? new Date(kpis.ultimaAtualizacao).toLocaleTimeString('pt-BR')
     : '-';
 
-  const containerClass = "w-full h-full flex flex-col";
+  const containerClass = "w-full h-full flex flex-col"; // layout adaptativo garantido
 
   return (
     <div className={`${containerClass}`}>

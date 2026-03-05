@@ -18,6 +18,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import FormWrapper from "@/components/common/FormWrapper";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useQuery } from "@tanstack/react-query";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import HistoricoProduto from "./HistoricoProduto";
@@ -39,6 +40,7 @@ import PesoDimensoesSection from "./produto/PesoDimensoesSection";
 export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, windowMode = false, closeSelf }) {
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const [user, setUser] = useState(null);
+  const { carimbarContexto } = useContextoVisual();
   
   useEffect(() => {
     const loadUser = async () => {
@@ -560,7 +562,7 @@ Caso contrário, sugira:
   const totalAbas = 7; // SEMPRE 7 abas - ETAPA 4 COMPLETA
 
   const content = (
-    <FormWrapper onSubmit={unifiedSubmit} externalData={formData} className={`${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'} space-y-6`}>
+    <FormWrapper onSubmit={unifiedSubmit} externalData={formData} className={`w-full h-full overflow-auto p-6 space-y-6`}>
       {/* TOGGLE MODO MANUAL */}
       <Alert className="border-blue-300 bg-blue-50">
         <AlertDescription>
