@@ -124,20 +124,6 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
           </Card>
         </TabsContent>
 
-        {/* Precificação sensível protegida já dentro do ProdutoForm; opcional proteger a aba inteira no futuro */}
-
-        <TabsContent value="conversoes">
-          <Card>
-            <div className="p-6">
-              <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
-                <AbaConversoesProduto 
-                  formData={produto || {}} 
-                  setFormData={() => {}} 
-                />
-              </Suspense>
-            </div>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="ecommerce">
           <Card>
