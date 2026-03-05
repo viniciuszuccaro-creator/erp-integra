@@ -24,7 +24,7 @@ import DocumentosTab from "@/components/comercial/cliente/DocumentosTab";
 import HistoricoTab from "@/components/comercial/cliente/HistoricoTab";
 import FormWrapper from "@/components/common/FormWrapper";
 import { clienteCompletoSchema } from './cliente/clienteCompletoSchema';
-import useContextoVisual from '@/components/lib/useContextoVisual';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { base44 } from "@/api/base44Client";
 
 const defaultFormData = {
@@ -385,7 +385,7 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
 
   return (
     <FormWrapper schema={clienteCompletoSchema} onSubmit={handleSubmit} externalData={formData} className="space-y-4 w-full h-full">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full h-full">
         <TabsList className="grid w-full grid-cols-6 mb-6">
           <TabsTrigger value="principal">
             <User className="w-4 h-4 mr-2" />
@@ -465,7 +465,7 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
         </TabsContent>
       </Tabs>
 
-      <div className="flex justify-end gap-3 pt-4 border-t" style={{zIndex:1}}>
+      <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white z-10">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
