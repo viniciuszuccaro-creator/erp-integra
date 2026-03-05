@@ -87,7 +87,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
                 <Target className="w-3 h-3 mr-1" />
                 {estaNoGrupo ? 'GRUPO' : 'EMPRESA'}
               </Badge>
-              <div className={`w-2 h-2 rounded-full ${pulseActive ? 'bg-green-600 animate-ping' : 'bg-green-600'}`} />
+              <div className={`w-2 h-2 rounded-full ${pulseActive ? 'bg-green-600 animate-ping' : 'bg-green-600'}`} aria-label={`Atualização: ${ultimaAtualizacao}`} />
             </div>
           </div>
         </AlertDescription>

@@ -71,7 +71,7 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
   const content = (
     <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`w-full h-full space-y-6 ${windowMode ? 'p-6 overflow-auto' : ''}`}>
       <div className="space-y-4">
-        <Card className="bg-white/60 backdrop-blur-md border-white/40 shadow-lg">
+        <Card className="bg-white/60 backdrop-blur-md border-white/40 shadow-md rounded-sm">
           <CardContent className="p-6 space-y-4">
             <h3 className="font-bold text-lg flex items-center gap-2">
               <User className="w-5 h-5 text-pink-600" />
@@ -127,7 +127,7 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
           </CardContent>
         </Card>
 
-        <Card className="bg-white/60 backdrop-blur-md border-white/40 shadow-lg">
+        <Card className="bg-white/60 backdrop-blur-md border-white/40 shadow-md rounded-sm">
           <CardContent className="p-6 space-y-4">
             <h3 className="font-bold text-lg">Vínculo Empregatício</h3>
 

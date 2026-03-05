@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
-import { ChevronDown, ArrowUp, ArrowDown, ArrowUpDown, MoreVertical } from "lucide-react";
+import { ChevronDown, ArrowUp, ArrowDown, ArrowUpDown, MoreVertical, SlidersHorizontal } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { uiAuditWrap } from "@/components/lib/uiAudit";
@@ -166,11 +166,16 @@ export default function ERPDataTable({
     <div className="w-full h-full flex flex-col overflow-hidden bg-white/50 backdrop-blur-md rounded-sm">
       <div className="flex items-center justify-between pb-2 gap-2 rounded-sm border bg-white/60 backdrop-blur px-2 py-1">
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1">
-              Colunas <ChevronDown className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="h-8 w-8 rounded-sm" aria-label="Configurar colunas">
+                  <SlidersHorizontal className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>Configurar colunas</TooltipContent>
+          </Tooltip>
           <DropdownMenuContent>
             {columns.map((c) => (
               <DropdownMenuCheckboxItem
