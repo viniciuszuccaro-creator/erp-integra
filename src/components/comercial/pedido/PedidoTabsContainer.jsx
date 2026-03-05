@@ -72,7 +72,13 @@ export default function PedidoTabsContainer({
     return () => { cancel = true; };
   }, [formData?.cliente_id, formData?.valor_total, formData?.forma_pagamento, pedido?.id]);
 
-  const podeLiberarVendedor = conformidade.ok && formData?.forma_pagamento === 'À Vista';
+  const statusTransfer = ['Pronto para Faturar','Em Expedição','Em Trânsito'];
+  const isFaturado = formData?.status === 'Faturado';
+  const isTransferido = statusTransfer.includes(formData?.status);
+  const isStatusBloqueado = isFaturado || isTransferido;
+  const precisaBloqueioFinanceiro = !conformidade.ok;
+
+  const podeLiberarVendedor = !isStatusBloqueado && conformidade.ok && formData?.forma_pagamento === 'À Vista';
 
   const liberarEdicaoVendedor = async () => {
     setFormData(prev => ({ ...prev, __liberado_vendedor: true }));
@@ -80,7 +86,11 @@ export default function PedidoTabsContainer({
     toast.success('Edição liberada (vendedor)');
   };
 
-  const isLocked = (['Em Trânsito','Faturado'].includes(formData?.status)) && !(formData?.__liberado_gerencia || formData?.__liberado_vendedor);
+  const isLocked = isFaturado
+    ? true
+    : isTransferido
+      ? !formData?.__liberado_gerencia
+      : (precisaBloqueioFinanceiro && !(formData?.__liberado_gerencia || formData?.__liberado_vendedor));
 
   const solicitarLiberacao = async () => {
     try {
@@ -103,15 +113,19 @@ export default function PedidoTabsContainer({
 
       {isLocked && (
         <div className="mx-6 mb-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 flex items-center justify-between">
-          <span>Edição bloqueada para pedidos em {formData?.status}.</span>
+          <span>
+            {isFaturado ? 'Edição bloqueada (pedido faturado).' : isTransferido ? `Edição bloqueada para pedidos em ${formData?.status}.` : 'Edição bloqueada por restrição de crédito/pagamento.'}
+          </span>
           <div className="flex gap-2">
-            {formData?.status === 'Em Trânsito' && (
+            {isTransferido && (
               <button className="px-3 py-1 rounded bg-amber-600 text-white" onClick={solicitarLiberacao}>Pedir liberação</button>
             )}
-            <ProtectedSection module="Comercial" action="aprovar" hideInstead>
-              <button className="px-3 py-1 rounded bg-green-600 text-white" onClick={liberarEdicaoLocal}>Liberar Edição (Gerente)</button>
-            </ProtectedSection>
-            {podeLiberarVendedor && (
+            {isTransferido && (
+              <ProtectedSection module="Comercial" action="aprovar" hideInstead>
+                <button className="px-3 py-1 rounded bg-green-600 text-white" onClick={liberarEdicaoLocal}>Liberar Edição (Gerente)</button>
+              </ProtectedSection>
+            )}
+            {!isStatusBloqueado && podeLiberarVendedor && (
               <ProtectedSection module="Comercial" action="editar" hideInstead>
                 <button className="px-3 py-1 rounded bg-blue-600 text-white" onClick={liberarEdicaoVendedor}>Liberar Edição (Vendedor)</button>
               </ProtectedSection>

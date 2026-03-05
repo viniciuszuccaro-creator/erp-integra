@@ -278,6 +278,11 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
     );
   }
 
+  const statusTransferFooter = ['Pronto para Faturar','Em Expedição','Em Trânsito'];
+  const isFaturadoFooter = formData?.status === 'Faturado';
+  const isTransferidoFooter = statusTransferFooter.includes(formData?.status);
+  const isLockedFooter = isFaturadoFooter || (isTransferidoFooter && !formData?.__liberado_gerencia);
+
   const content = (
     <FormWrapper schema={pedidoCompletoSchema} defaultValues={formData} externalData={formData} onSubmit={rhfHandleSubmit(handleSubmit)} className="w-full h-full">
       <div className="w-full h-full flex flex-col bg-white">
@@ -303,12 +308,12 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
           pesoTotalKg={formData?.peso_total_kg || 0}
           etapasCount={formData?.etapas_entrega?.length || 0}
           salvando={salvando}
-          canSalvarRascunho={validacoes.identificacao && validacoes.itens}
-          canFecharCompleto={validacoes.identificacao && validacoes.itens}
-          canFecharEnviarEntrega={validacoes.identificacao && validacoes.itens}
-          canSalvarAlteracoes={validacoes.identificacao && validacoes.itens}
-          canCriarPedido={validacoes.identificacao && validacoes.itens}
-          canSolicitarAprovacao={canSolicitarAprovacao}
+          canSalvarRascunho={!isLockedFooter && (validacoes.identificacao && validacoes.itens)}
+          canFecharCompleto={!isLockedFooter && (validacoes.identificacao && validacoes.itens)}
+          canFecharEnviarEntrega={!isLockedFooter && (validacoes.identificacao && validacoes.itens)}
+          canSalvarAlteracoes={!isLockedFooter && (validacoes.identificacao && validacoes.itens)}
+          canCriarPedido={!isLockedFooter && (validacoes.identificacao && validacoes.itens)}
+          canSolicitarAprovacao={!isLockedFooter && canSolicitarAprovacao}
           onSolicitarAprovacao={solicitarAprovacao}
           onCancelar={onCancel}
           onSalvarRascunho={async () => {
