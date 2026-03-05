@@ -511,10 +511,9 @@ Caso contrário, sugira:
       return;
     }
 
-    const dadosSubmit = {
+    const dadosBase = {
       ...formData,
       unidade_medida: formData.unidade_principal || formData.unidade_medida || 'KG',
-      empresa_id: user?.empresa_selecionada_id || user?.empresa_id || '1',
       tributacao: {
         icms_cst: formData.tributacao.icms_cst || '',
         icms_aliquota: formData.tributacao.icms_aliquota || 0,
@@ -526,6 +525,8 @@ Caso contrário, sugira:
         ipi_aliquota: formData.tributacao.ipi_aliquota || 0
       }
     };
+
+    const dadosSubmit = carimbarContexto(dadosBase, 'empresa_id');
 
     try {
       if (produto?.id) {
@@ -617,7 +618,7 @@ Caso contrário, sugira:
 
         {/* ABA 1: DADOS GERAIS */}
         <TabsContent value="dados-gerais" className="space-y-6">
-          <Card className="border-purple-200 bg-purple-50">
+          <Card className="border-purple-200 bg-white/60 backdrop-blur-md shadow-lg">
             <CardContent className="p-4 space-y-4">
               <h3 className="font-bold flex items-center gap-2 text-purple-900">
                 <Package className="w-5 h-5" />
@@ -1023,7 +1024,7 @@ Caso contrário, sugira:
               </div>
 
               {calculoConversao && (
-                <Card className="border-green-200 bg-green-50">
+                <Card className="border-green-200 bg-white/60 backdrop-blur-md shadow-lg">
                   <CardContent className="p-4">
                     <h4 className="font-semibold text-sm text-green-900 mb-3">✅ Fatores de Conversão</h4>
                     <div className="grid grid-cols-2 gap-3 text-xs">
@@ -1048,7 +1049,7 @@ Caso contrário, sugira:
 
         {/* ABA 4: E-COMMERCE */}
         <TabsContent value="ecommerce" className="space-y-6">
-          <Card className="border-purple-200 bg-purple-50">
+          <Card className="border-purple-200 bg-white/60 backdrop-blur-md shadow-lg">
             <CardContent className="p-6 space-y-4">
               <h3 className="font-bold text-purple-900">🛒 Canais de Venda</h3>
 
@@ -1079,7 +1080,7 @@ Caso contrário, sugira:
           </Card>
 
           {(formData.exibir_no_site || formData.exibir_no_marketplace) && (
-            <Card className="border-green-200 bg-green-50">
+            <Card className="border-green-200 bg-white/60 backdrop-blur-md shadow-lg">
               <CardContent className="p-6 space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="font-bold text-green-900">📝 Descrição SEO</h3>
