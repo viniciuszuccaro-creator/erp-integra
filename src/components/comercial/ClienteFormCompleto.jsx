@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,12 +16,12 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
-import EntregaTab from "@/components/comercial/cliente/EntregaTab";
-import PrincipalTab from "@/components/comercial/cliente/PrincipalTab";
-import ComercialTab from "@/components/comercial/cliente/ComercialTab";
-import FiscalTab from "@/components/comercial/cliente/FiscalTab";
-import DocumentosTab from "@/components/comercial/cliente/DocumentosTab";
-import HistoricoTab from "@/components/comercial/cliente/HistoricoTab";
+const PrincipalTab = React.lazy(() => import("@/components/comercial/cliente/PrincipalTab"));
+const ComercialTab = React.lazy(() => import("@/components/comercial/cliente/ComercialTab"));
+const EntregaTab = React.lazy(() => import("@/components/comercial/cliente/EntregaTab"));
+const FiscalTab = React.lazy(() => import("@/components/comercial/cliente/FiscalTab"));
+const DocumentosTab = React.lazy(() => import("@/components/comercial/cliente/DocumentosTab"));
+const HistoricoTab = React.lazy(() => import("@/components/comercial/cliente/HistoricoTab"));
 import FormWrapper from "@/components/common/FormWrapper";
 import { clienteCompletoSchema } from './cliente/clienteCompletoSchema';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
@@ -415,53 +415,65 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
 
         {/* ABA 1: PRINCIPAL */}
         <TabsContent value="principal" className="space-y-4">
-          <PrincipalTab
-            formData={formData}
-            setFormData={setFormData}
-            buscarCep={buscarCep}
-            buscandoCep={buscandoCep}
-            buscarCnpj={buscarCnpj}
-            buscandoCnpj={buscandoCnpj}
-            adicionarContato={adicionarContato}
-            removerContato={removerContato}
-          />
+          <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
+            <PrincipalTab
+              formData={formData}
+              setFormData={setFormData}
+              buscarCep={buscarCep}
+              buscandoCep={buscandoCep}
+              buscarCnpj={buscarCnpj}
+              buscandoCnpj={buscandoCnpj}
+              adicionarContato={adicionarContato}
+              removerContato={removerContato}
+            />
+          </Suspense>
         </TabsContent>
 
         {/* ABA 2: COMERCIAL */}
         <TabsContent value="comercial" className="space-y-4">
-          <ComercialTab formData={formData} setFormData={setFormData} />
+          <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
+            <ComercialTab formData={formData} setFormData={setFormData} />
+          </Suspense>
         </TabsContent>
 
         {/* ABA 3: ENTREGA */}
         <TabsContent value="entrega" className="space-y-4">
-          <EntregaTab
-            locaisEntrega={formData.locais_entrega || []}
-            onAddLocal={adicionarLocalEntrega}
-            onRemoveLocal={removerLocalEntrega}
-            onGeocode={geocodificarEndereco}
-            formData={formData}
-            setFormData={setFormData}
-          />
+          <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
+            <EntregaTab
+              locaisEntrega={formData.locais_entrega || []}
+              onAddLocal={adicionarLocalEntrega}
+              onRemoveLocal={removerLocalEntrega}
+              onGeocode={geocodificarEndereco}
+              formData={formData}
+              setFormData={setFormData}
+            />
+          </Suspense>
         </TabsContent>
 
         {/* ABA 4: FISCAL */}
         <TabsContent value="fiscal" className="space-y-4">
-          <FiscalTab formData={formData} setFormData={setFormData} />
+          <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
+            <FiscalTab formData={formData} setFormData={setFormData} />
+          </Suspense>
         </TabsContent>
 
         {/* ABA 5: DOCUMENTOS */}
         <TabsContent value="documentos" className="space-y-4">
-          <DocumentosTab
-            formData={formData}
-            setFormData={setFormData}
-            handleUploadDocumento={handleUploadDocumento}
-            removerDocumento={removerDocumento}
-          />
+          <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
+            <DocumentosTab
+              formData={formData}
+              setFormData={setFormData}
+              handleUploadDocumento={handleUploadDocumento}
+              removerDocumento={removerDocumento}
+            />
+          </Suspense>
         </TabsContent>
 
         {/* ABA 6: HISTÓRICO */}
         <TabsContent value="historico" className="space-y-4">
-          <HistoricoTab cliente={cliente} formData={formData} />
+          <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
+            <HistoricoTab cliente={cliente} formData={formData} />
+          </Suspense>
         </TabsContent>
       </Tabs>
 

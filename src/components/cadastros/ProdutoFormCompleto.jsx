@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,11 +9,11 @@ import ProdutoFormHeader from "./produto/ProdutoFormHeader";
 import ProtectedSection from "@/components/security/ProtectedSection"; // mantido para futuras proteções de abas
 
 import ProdutoForm from "./ProdutoForm";
-import AbaConversoesProduto from "./AbaConversoesProduto";
-import AbaEcommerceProduto from "./AbaEcommerceProduto";
-import HistoricoProduto from "./HistoricoProduto";
-import ImportacaoProdutoNFe from "./ImportacaoProdutoNFe";
-import ImportacaoProdutoLote from "./ImportacaoProdutoLote";
+const AbaConversoesProduto = React.lazy(() => import("./AbaConversoesProduto"));
+const AbaEcommerceProduto = React.lazy(() => import("./AbaEcommerceProduto"));
+const HistoricoProduto = React.lazy(() => import("./HistoricoProduto"));
+const ImportacaoProdutoNFe = React.lazy(() => import("./ImportacaoProdutoNFe"));
+const ImportacaoProdutoLote = React.lazy(() => import("./ImportacaoProdutoLote"));
 import { toast } from "sonner";
 
 /**
@@ -77,7 +77,7 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
       />
 
       {/* Abas do Formulário */}
-      <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
+      <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full h-full">
         <TabsList className="grid grid-cols-4 w-full bg-slate-100">
           <TabsTrigger value="dados-gerais" className="flex items-center gap-2">
             <Package className="w-4 h-4" />
@@ -134,17 +134,21 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
         <TabsContent value="ecommerce">
           <Card>
             <div className="p-6">
-              <AbaEcommerceProduto 
-                formData={produto || {}} 
-                setFormData={() => {}} 
-              />
+              <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
+                <AbaEcommerceProduto 
+                  formData={produto || {}} 
+                  setFormData={() => {}} 
+                />
+              </Suspense>
             </div>
           </Card>
         </TabsContent>
 
         {produto && (
           <TabsContent value="historico">
-            <HistoricoProduto produtoId={produto.id} produto={produto} />
+            <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}>
+              <HistoricoProduto produtoId={produto.id} produto={produto} />
+            </Suspense>
           </TabsContent>
         )}
       </Tabs>
