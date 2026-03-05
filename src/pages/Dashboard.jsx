@@ -701,7 +701,7 @@ export default function Dashboard() {
   return (
     <ProtectedSection module="Dashboard" action="ver">
     <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="flex-1 overflow-auto p-6 space-y-6">
+      <div className="flex-1 overflow-hidden p-6 space-y-6">
       <DashboardHeader
         empresaAtual={empresaAtual}
         estaNoGrupo={estaNoGrupo}
@@ -716,7 +716,7 @@ export default function Dashboard() {
         <Tabs value={activeTab} onValueChange={handleTabChange}>
         <DashboardTabsNav />
 
-        <TabsContent value="tempo-real" className="h-full overflow-auto">
+        <TabsContent value="tempo-real" className="w-full h-full overflow-hidden">
           <PanelGroup direction="vertical" className="gap-2 flex-1 h-full min-h-[760px]">
             <Panel defaultSize={55} minSize={35} className="overflow-auto h-full">
               {activeTab === 'tempo-real' && (
@@ -740,7 +740,7 @@ export default function Dashboard() {
           </PanelGroup>
         </TabsContent>
 
-        <TabsContent value="bi-operacional" className="h-full overflow-auto">
+        <TabsContent value="bi-operacional" className="w-full h-full overflow-hidden">
           <PanelGroup direction="vertical" className="gap-2 flex-1 h-full min-h-[760px]">
             <Panel defaultSize={70} minSize={40} className="overflow-auto h-full">
               {activeTab === 'bi-operacional' && (
@@ -756,7 +756,7 @@ export default function Dashboard() {
           </PanelGroup>
         </TabsContent>
 
-        <TabsContent value="resumo" className="space-y-6 mt-6">
+        <TabsContent value="resumo" className="w-full h-full overflow-y-auto space-y-6 mt-6">
           <PanelGroup direction="vertical" className="gap-2">
             <Panel defaultSize={50} minSize={30} className="overflow-auto">
               {/* KPIs Principais + Widget Canais */}

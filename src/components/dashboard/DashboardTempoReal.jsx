@@ -62,10 +62,10 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
     ? new Date(kpis.ultimaAtualizacao).toLocaleTimeString('pt-BR')
     : '-';
 
-  const containerClass = "w-full h-full flex flex-col overflow-auto";
+  const containerClass = "w-full h-full flex flex-col";
 
   return (
-    <div className={`${containerClass} min-h-[500px]`}>
+    <div className={`${containerClass}`}>
       <div className="p-6 space-y-6 flex-1 overflow-auto">
       {/* Header com Status */}
       <Alert className="border-green-300 bg-green-50">

@@ -760,7 +760,7 @@ export default function VisualizadorUniversalEntidade({
   return (
     <Wrapper>
       <Card className={windowMode ? 'h-full flex flex-col' : ''}>
-        <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-purple-50">
+        <CardHeader className="sticky top-0 z-10 border-b bg-gradient-to-r from-blue-50 to-purple-50 backdrop-blur supports-[backdrop-filter]:bg-white/70">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {Icone && <Icone className="w-6 h-6 text-blue-600" />}
@@ -777,6 +777,12 @@ export default function VisualizadorUniversalEntidade({
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              <ProtectedAction module={moduloPermissao} action="criar" mode="disable">
+                <Button variant="default" size="sm" onClick={handleAbrirNovo} data-permission={`${moduloPermissao}.Cadastro.criar`} data-sensitive>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo
+                </Button>
+              </ProtectedAction>
               <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
                 <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
                 Atualizar
@@ -785,12 +791,6 @@ export default function VisualizadorUniversalEntidade({
                 <Button variant="outline" size="sm" onClick={exportarDados} data-permission={`${moduloPermissao}.Relatorios.exportar`} data-sensitive>
                   <Download className="w-4 h-4 mr-2" />
                   Exportar
-                </Button>
-              </ProtectedAction>
-              <ProtectedAction module={moduloPermissao} action="criar" mode="disable">
-                <Button variant="primary" size="sm" onClick={handleAbrirNovo} data-permission={`${moduloPermissao}.Cadastro.criar`} data-sensitive>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo
                 </Button>
               </ProtectedAction>
               <Button variant="outline" size="sm" onClick={toggleSelectAll}>

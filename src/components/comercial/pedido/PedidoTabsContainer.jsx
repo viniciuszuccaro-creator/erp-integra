@@ -44,13 +44,17 @@ export default function PedidoTabsContainer({
   const solicitarLiberacao = async () => {
     try {
       await base44.functions.invoke('solicitacoesAprovacao', { tipo: 'pedido_edicao_em_transito', entidade: 'Pedido', entidade_id: pedido?.id });
+      try { await base44.entities.AuditLog.create({ acao: 'Aprovação', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido?.id, descricao: 'Solicitada liberação de edição (status bloqueado)', data_hora: new Date().toISOString() }); } catch {}
       toast.success('Solicitação enviada ao gerente');
     } catch (e) {
       toast.error('Falha ao solicitar liberação');
     }
   };
 
-  const liberarEdicaoLocal = () => setFormData(prev => ({ ...prev, __liberado_gerencia: true }));
+  const liberarEdicaoLocal = async () => {
+    setFormData(prev => ({ ...prev, __liberado_gerencia: true }));
+    try { await base44.entities.AuditLog.create({ acao: 'Aprovação', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido?.id, descricao: 'Gerente liberou edição local', data_hora: new Date().toISOString() }); } catch {}
+  };
 
    return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
