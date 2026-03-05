@@ -3,9 +3,10 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Users, Search, Plus, Edit, TrendingUp, AlertCircle } from 'lucide-react';
+import { Users, Search, Plus, Edit, TrendingUp, AlertCircle, MoreVertical } from 'lucide-react';
 import { useCountEntities } from '@/components/lib/useCountEntities';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import PaginationControls from '@/components/ui/PaginationControls';
@@ -216,15 +217,27 @@ export default function ClientesTabOptimized({ onEdit, onCreate }) {
                       </div>
                     </div>
                     {onEdit && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onEdit(cliente)}
-                        data-permission="CRM.Clientes.editar"
-                        data-sensitive
-                      >
-                        <Edit className="w-4 h-4 text-blue-600" />
-                      </Button>
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEdit(cliente)}
+                          data-permission="CRM.Clientes.editar"
+                          data-sensitive
+                        >
+                          <Edit className="w-4 h-4 text-blue-600" />
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => onEdit(cliente)}>Ver</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </>
                     )}
                   </div>
                 </CardContent>

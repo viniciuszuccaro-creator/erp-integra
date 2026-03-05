@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Users, Eye, Edit2 } from "lucide-react";
+import { Users, Eye, Edit2, MoreVertical } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import SearchInput from "@/components/ui/SearchInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +10,7 @@ import VisualizadorUniversalEntidade from '../cadastros/VisualizadorUniversalEnt
 import CadastroClienteCompleto from '../cadastros/CadastroClienteCompleto';
 // Paginação/caching backend
 import ERPDataTable from "@/components/ui/erp/DataTable";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import usePersistedSort from "@/components/lib/usePersistedSort";
 import useBackendPagination from "@/components/lib/useBackendPagination";
@@ -62,6 +63,18 @@ export default function ClientesTab({ clientes }) {
             <Edit2 className="w-3 h-3 mr-1" /> Editar
           </Button>
         </ProtectedAction>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-7 w-7">
+              <MoreVertical className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => openWindow(CadastroClienteCompleto, { cliente: r, windowMode: true }, { title: `Ver: ${r.nome || r.razao_social}`, width: 1200, height: 750 })}>
+              Ver
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     )},
   ]), [empresasDoGrupo]);
