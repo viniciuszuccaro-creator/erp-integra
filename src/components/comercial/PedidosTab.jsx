@@ -23,8 +23,9 @@ import {
   Clock,
   XCircle,
   Printer,
-  Download
-} from "lucide-react";
+  Download,
+  MoreVertical
+ } from "lucide-react";
 import ERPDataTable from "@/components/ui/erp/DataTable";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ImprimirPedido } from "@/components/lib/impressao";

@@ -178,6 +178,8 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
     queryKey: ['produtos'],
     queryFn: () => base44.entities.Produto.list(),
     staleTime: 300000,
+    keepPreviousData: true,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
@@ -197,30 +199,40 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
     queryKey: ['setores-atividade'],
     queryFn: () => base44.entities.SetorAtividade.list(),
     staleTime: 300000,
+    keepPreviousData: true,
+    refetchOnWindowFocus: false,
   });
 
   const { data: grupos = [] } = useQuery({
     queryKey: ['grupos-produto'],
     queryFn: () => base44.entities.GrupoProduto.list(),
     staleTime: 300000,
+    keepPreviousData: true,
+    refetchOnWindowFocus: false,
   });
 
   const { data: marcas = [] } = useQuery({
     queryKey: ['marcas'],
     queryFn: () => base44.entities.Marca.list(),
     staleTime: 300000,
+    keepPreviousData: true,
+    refetchOnWindowFocus: false,
   });
 
   const { data: locaisEstoque = [] } = useQuery({
     queryKey: ['locais-estoque'],
     queryFn: () => base44.entities.LocalEstoque.list(),
     staleTime: 300000,
+    keepPreviousData: true,
+    refetchOnWindowFocus: false,
   });
 
   const { data: planoContas = [] } = useQuery({
     queryKey: ['plano-contas'],
     queryFn: () => base44.entities.PlanoDeContas.list(),
     staleTime: 300000,
+    keepPreviousData: true,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
