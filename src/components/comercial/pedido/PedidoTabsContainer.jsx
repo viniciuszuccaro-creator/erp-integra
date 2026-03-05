@@ -52,19 +52,6 @@ export default function PedidoTabsContainer({
 
   const liberarEdicaoLocal = () => setFormData(prev => ({ ...prev, __liberado_gerencia: true }));
 
-  const isLocked = (['Em Trânsito','Faturado'].includes(formData?.status)) && !formData?.__liberado_gerencia;
-
-  const solicitarLiberacao = async () => {
-    try {
-      await base44.functions.invoke('solicitacoesAprovacao', { tipo: 'pedido_edicao_em_transito', entidade: 'Pedido', entidade_id: pedido?.id });
-      toast.success('Solicitação enviada ao gerente');
-    } catch (e) {
-      toast.error('Falha ao solicitar liberação');
-    }
-  };
-
-  const liberarEdicaoLocal = () => setFormData(prev => ({ ...prev, __liberado_gerencia: true }));
-
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
       <PedidoTabsNav abas={abas} activeTab={activeTab} setActiveTab={setActiveTab} />
