@@ -1235,3 +1235,5 @@ Caso contrário, sugira:
 
   return content;
 }
+
+export default React.memo(ProdutoFormV22_Completo);
