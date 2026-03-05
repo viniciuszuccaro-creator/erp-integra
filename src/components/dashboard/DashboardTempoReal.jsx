@@ -118,7 +118,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
           animate={hasChanges ? { scale: [1, 1.02, 1] } : {}}
           transition={{ duration: 0.3 }}
         >
-          <Card className="h-full border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+          <Card className="h-full border border-blue-200 bg-gradient-to-br from-white to-blue-50/60">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-blue-700 flex items-center gap-2">
                 <Package className="w-4 h-4" />
@@ -150,7 +150,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
           animate={hasChanges ? { scale: [1, 1.02, 1] } : {}}
           transition={{ duration: 0.3 }}
         >
-          <Card className="h-full border-2 border-green-200 bg-gradient-to-br from-green-50 to-white">
+          <Card className="h-full border border-green-200 bg-gradient-to-br from-white to-green-50/60">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-green-700 flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
@@ -186,7 +186,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
           animate={hasChanges ? { scale: [1, 1.02, 1] } : {}}
           transition={{ duration: 0.3 }}
         >
-          <Card className="h-full border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white">
+          <Card className="h-full border border-purple-200 bg-gradient-to-br from-white to-purple-50/60">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-purple-700 flex items-center gap-2">
                 <Factory className="w-4 h-4" />
@@ -222,7 +222,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
           animate={hasChanges ? { scale: [1, 1.02, 1] } : {}}
           transition={{ duration: 0.3 }}
         >
-          <Card className="h-full border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-white">
+          <Card className="h-full border border-orange-200 bg-gradient-to-br from-white to-orange-50/60">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-orange-700 flex items-center gap-2">
                 <Truck className="w-4 h-4" />

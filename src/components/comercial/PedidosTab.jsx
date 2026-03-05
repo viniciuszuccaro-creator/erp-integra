@@ -119,6 +119,25 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     else setSelectedPedidos([]);
   };
 
+  const notifyWhatsAppPendentes = async (ids) => {
+    const alvo = (Array.isArray(ids) && ids.length ? ids : pedidosPendentesAprovacao.map(p=>p.id)).slice(0,50);
+    if (!alvo.length) { toast({ title: 'Sem pendentes selecionados' }); return; }
+    try {
+      await base44.functions.invoke('whatsappSend', { template: 'aprovacao_pendente', pedido_ids: alvo });
+      toast({ title: '📲 WhatsApp enviado', description: `${alvo.length} pedido(s)` });
+      try { await base44.entities.AuditLog.create({ acao: 'Notificação', modulo: 'Comercial', entidade: 'Pedido', descricao: `WhatsApp aprovação pendente (${alvo.length})`, data_hora: new Date().toISOString() }); } catch {}
+    } catch { toast({ title: 'Falha ao notificar WhatsApp', variant: 'destructive' }); }
+  };
+  const notifyEmailPendentes = async (ids) => {
+    const alvo = (Array.isArray(ids) && ids.length ? ids : pedidosPendentesAprovacao.map(p=>p.id)).slice(0,50);
+    if (!alvo.length) { toast({ title: 'Sem pendentes selecionados' }); return; }
+    try {
+      await base44.functions.invoke('sendEmailProvider', { tipo: 'aprovacao_pendente', pedido_ids: alvo });
+      toast({ title: '✉️ E-mails enviados', description: `${alvo.length} pedido(s)` });
+      try { await base44.entities.AuditLog.create({ acao: 'Notificação', modulo: 'Comercial', entidade: 'Pedido', descricao: `Email aprovação pendente (${alvo.length})`, data_hora: new Date().toISOString() }); } catch {}
+    } catch { toast({ title: 'Falha ao notificar por email', variant: 'destructive' }); }
+  };
+
   const columns = React.useMemo(() => ([
     { key: 'numero_pedido', label: 'N° Pedido', render: (r) => <span className="font-semibold">{r.numero_pedido}</span> },
     { key: 'cliente_nome', label: 'Cliente' },
@@ -270,6 +289,26 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     )}
   ]), [queryClient, toast, onEditPedido]);
 
+  const menuItems = (pedido) => {
+    const items = [];
+    items.push({ key: 'ver', label: 'Visualizar', action: async () => { try { await base44.entities.AuditLog.create({ acao: 'Visualização', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Abrir visualização do pedido', data_hora: new Date().toISOString() }); } catch {} onEditPedido(pedido); } });
+    items.push({ key: 'imprimir', label: 'Imprimir', action: async () => { const empresa = empresas?.find(e => e.id === pedido.empresa_id); try { await base44.entities.AuditLog.create({ acao: 'Impressão', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Imprimir pedido', data_hora: new Date().toISOString() }); } catch {} ImprimirPedido({ pedido, empresa }); } });
+    if (pedido.status === 'Aprovado' || pedido.status === 'Pronto para Faturar') {
+      items.push({ key: 'nfe', label: 'Gerar NF-e', action: async () => { toast({ title: '🚀 Gerando NF-e...' }); try { await base44.entities.AuditLog.create({ acao: 'Emissão NF-e', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Acionada geração de NF-e', data_hora: new Date().toISOString() }); } catch {} } });
+    }
+    if (pedido.status === 'Faturado') {
+      items.push({ key: 'entrega', label: 'Criar Entrega', action: async () => { toast({ title: '📦 Criando entrega...' }); try { await base44.entities.AuditLog.create({ acao: 'Criação Entrega', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Acionada criação de entrega', data_hora: new Date().toISOString() }); } catch {} } });
+    }
+    if ((pedido.tipo_pedido === 'Produção Sob Medida' || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== 'Cancelado') {
+      items.push({ key: 'op', label: 'Gerar OP', action: async () => { toast({ title: '🏭 Criando OP...' }); try { await base44.entities.AuditLog.create({ acao: 'Gerar OP', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Acionada geração de OP', data_hora: new Date().toISOString() }); } catch {} } });
+    }
+    items.push({ key: 'excluir', label: 'Excluir', action: async () => { if (confirm('Excluir pedido?')) { try { await base44.entities.AuditLog.create({ acao: 'Exclusão', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Exclusão solicitada via UI', data_hora: new Date().toISOString() }); } catch {} deleteMutation.mutate(pedido.id); } } });
+    if (pedido.status_aprovacao === 'pendente') {
+      items.push({ key: 'aprovar', label: 'Analisar Aprovação', action: () => openWindow(CentralAprovacoesManager, { windowMode: true, initialTab: 'descontos' }, { title: '🔐 Central de Aprovações', width: 1200, height: 700 }) });
+    }
+    return items;
+  };
+
   return (
     <div className="w-full h-full flex flex-col space-y-6">
       {/* ETAPA 4: ALERTA DE APROVAÇÕES PENDENTES */}
@@ -298,6 +337,28 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
             </Button>
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* Bloco Resumido de Aprovação + Notificações */}
+      {pedidosPendentesAprovacao.length > 0 && (
+        <Card className="bg-white/60 backdrop-blur-md border-white/40 shadow">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="text-sm text-slate-700">
+              Há <span className="font-semibold">{pedidosPendentesAprovacao.length}</span> pedido(s) aguardando aprovação.
+            </div>
+            <div className="flex items-center gap-2">
+              <Button onClick={() => openWindow(CentralAprovacoesManager, { windowMode: true }, { title: '🔐 Central de Aprovações', width: 1200, height: 700 })} className="bg-orange-600 hover:bg-orange-600/90">
+                Central de Aprovações
+              </Button>
+              <Button variant="outline" onClick={() => notifyWhatsAppPendentes(selectedPedidos)}>
+                Notificar WhatsApp
+              </Button>
+              <Button variant="outline" onClick={() => notifyEmailPendentes(selectedPedidos)}>
+                Notificar Email
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* ESTATÍSTICAS DE APROVAÇÃO */}
@@ -399,6 +460,8 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                     <Download className="w-4 h-4 mr-2" /> Exportar CSV
                   </Button>
                   </ProtectedAction>
+                  <Button variant="outline" onClick={() => notifyWhatsAppPendentes(selectedPedidos)}>WhatsApp</Button>
+                  <Button variant="outline" onClick={() => notifyEmailPendentes(selectedPedidos)}>Email</Button>
                   <Button variant="ghost" onClick={() => setSelectedPedidos([])}>Limpar Seleção</Button>
                 </div>
               </AlertDescription>
@@ -416,6 +479,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
             onToggleSelectAll={onToggleSelectAll}
             onToggleItem={(id) => togglePedido(id)}
             permission="Comercial.Pedido.visualizar"
+            rowContextMenuItems={menuItems}
             page={page}
             pageSize={pageSize}
             totalItems={page * pageSize + (pedidosBackend.length < pageSize ? 0 : 1)}
