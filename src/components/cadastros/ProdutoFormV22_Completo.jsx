@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -21,11 +21,11 @@ import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useQuery } from "@tanstack/react-query";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
-import HistoricoProduto from "./HistoricoProduto";
-import FiscalContabilSection from "./produto/FiscalContabilSection";
-import EstoqueAvancadoSection from "./produto/EstoqueAvancadoSection";
-import PrecosSection from "./produto/PrecosSection";
-import PesoDimensoesSection from "./produto/PesoDimensoesSection";
+const HistoricoProduto = React.lazy(() => import("./HistoricoProduto"));
+const FiscalContabilSection = React.lazy(() => import("./produto/FiscalContabilSection"));
+const EstoqueAvancadoSection = React.lazy(() => import("./produto/EstoqueAvancadoSection"));
+const PrecosSection = React.lazy(() => import("./produto/PrecosSection"));
+const PesoDimensoesSection = React.lazy(() => import("./produto/PesoDimensoesSection"));
 
 /**
  * V21.4 ETAPA 2/3 COMPLETA - CADASTRO COMPLETO DE PRODUTOS
@@ -880,7 +880,7 @@ Caso contrário, sugira:
 
           {/* CAMPOS DE BITOLA */}
           {formData.eh_bitola && (
-            <Card className="border-blue-300 bg-blue-50">
+            <Card className="border-blue-300 bg-white/60 backdrop-blur-md shadow-lg">
               <CardContent className="p-4 space-y-4">
                 <h3 className="font-bold text-blue-900">📏 Especificações da Bitola</h3>
                 
@@ -952,10 +952,12 @@ Caso contrário, sugira:
           )}
 
           {/* PRECIFICAÇÃO */}
-          <PrecosSection formData={formData} setFormData={setFormData} />
+          <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}> 
+            <PrecosSection formData={formData} setFormData={setFormData} />
+          </Suspense>
 
           {/* STATUS */}
-          <Card>
+          <Card className="bg-white/60 backdrop-blur-md border-white/40 shadow-lg">
             <CardContent className="p-4">
               <Label>Status</Label>
               <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({...prev, status: v}))}>
@@ -974,7 +976,7 @@ Caso contrário, sugira:
 
         {/* ABA 2: CONVERSÕES */}
         <TabsContent value="conversoes" className="space-y-6">
-          <Card className="border-indigo-300 bg-indigo-50">
+          <Card className="border-indigo-300 bg-white/60 backdrop-blur-md shadow-lg">
             <CardContent className="p-4 space-y-4">
               <h3 className="font-bold text-indigo-900">V22.0: Unidades e Conversões</h3>
 
@@ -1039,7 +1041,9 @@ Caso contrário, sugira:
 
         {/* ABA 3: DIMENSÕES E PESO */}
         <TabsContent value="dimensoes" className="space-y-6">
-          <PesoDimensoesSection formData={formData} setFormData={setFormData} />
+          <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}> 
+            <PesoDimensoesSection formData={formData} setFormData={setFormData} />
+          </Suspense>
         </TabsContent>
 
         {/* ABA 4: E-COMMERCE */}
@@ -1120,30 +1124,36 @@ Caso contrário, sugira:
 
         {/* ABA 5: FISCAL E CONTÁBIL */}
         <TabsContent value="fiscal-contabil" className="space-y-6">
-          <FiscalContabilSection 
-            formData={formData}
-            setFormData={setFormData}
-            sugestoesIA={sugestoesIA}
-            handleDadosNCM={handleDadosNCM}
-            planoContas={planoContas}
-          />
+          <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}> 
+            <FiscalContabilSection 
+              formData={formData}
+              setFormData={setFormData}
+              sugestoesIA={sugestoesIA}
+              handleDadosNCM={handleDadosNCM}
+              planoContas={planoContas}
+            />
+          </Suspense>
         </TabsContent>
 
         {/* ABA 6: ESTOQUE AVANÇADO */}
         <TabsContent value="estoque-avancado" className="space-y-6">
-          <EstoqueAvancadoSection 
-            formData={formData}
-            setFormData={setFormData}
-            locaisEstoque={locaisEstoque}
-          />
+          <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}> 
+            <EstoqueAvancadoSection 
+              formData={formData}
+              setFormData={setFormData}
+              locaisEstoque={locaisEstoque}
+            />
+          </Suspense>
         </TabsContent>
 
         {/* ABA 7: HISTÓRICO */}
         <TabsContent value="historico" className="space-y-6">
           {produto ? (
-            <HistoricoProduto produtoId={produto.id} produto={produto} />
+                        <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}> 
+                          <HistoricoProduto produtoId={produto.id} produto={produto} />
+                        </Suspense>
           ) : (
-            <Card className="border-blue-200 bg-blue-50">
+            <Card className="border-blue-200 bg-white/60 backdrop-blur-md shadow-lg">
               <CardContent className="p-12 text-center">
                 <TrendingUp className="w-16 h-16 text-blue-400 mx-auto mb-4" />
                 <p className="text-slate-600">O histórico estará disponível após criar o produto</p>

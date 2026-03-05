@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -99,6 +99,10 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
   const [activeTab, setActiveTab] = useState("principal");
   const [buscandoCep, setBuscandoCep] = useState(false);
   const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+  const lastCnpjRef = useRef('');
+  const lastCepRef = useRef('');
+  const cnpjTimerRef = useRef(null);
+  const cepTimerRef = useRef(null);
 
   // Função auxiliar para fazer merge seguro
   const safeMerge = (defaultObj, sourceObj) => {
@@ -380,7 +384,33 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
     }
   }, [formData?.condicao_comercial?.condicao_pagamento]);
 
-  if (!formData) return null;
+  // Debounce CNPJ auto-busca
+  useEffect(() => {
+    const limpo = (formData?.cnpj || '').replace(/\D/g, '');
+    if (formData?.tipo === 'Pessoa Jurídica' && limpo.length === 14 && limpo !== lastCnpjRef.current) {
+      if (cnpjTimerRef.current) clearTimeout(cnpjTimerRef.current);
+      cnpjTimerRef.current = setTimeout(() => {
+        lastCnpjRef.current = limpo;
+        buscarCnpj(limpo);
+      }, 600);
+    }
+    return () => { if (cnpjTimerRef.current) clearTimeout(cnpjTimerRef.current); };
+  }, [formData?.cnpj, formData?.tipo]);
+
+  // Debounce CEP auto-busca
+  useEffect(() => {
+    const limpoCep = (formData?.endereco_principal?.cep || '').replace(/\D/g, '');
+    if (limpoCep.length >= 8 && limpoCep !== lastCepRef.current) {
+      if (cepTimerRef.current) clearTimeout(cepTimerRef.current);
+      cepTimerRef.current = setTimeout(() => {
+        lastCepRef.current = limpoCep;
+        buscarCep(limpoCep);
+      }, 600);
+    }
+    return () => { if (cepTimerRef.current) clearTimeout(cepTimerRef.current); };
+  }, [formData?.endereco_principal?.cep]);
+
+   if (!formData) return null;
 
   return (
     <FormWrapper schema={clienteCompletoSchema} onSubmit={handleSubmit} externalData={formData} className="space-y-4 w-full h-full">
