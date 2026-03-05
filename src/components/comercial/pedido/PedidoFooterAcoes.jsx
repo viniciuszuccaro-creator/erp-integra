@@ -47,7 +47,7 @@ export default function PedidoFooterAcoes({
           <Button variant="outline" onClick={onCancelar}>Cancelar</Button>
 
           {canSalvarRascunho && (
-            <Button variant="outline" onClick={onSalvarRascunho} disabled={salvando}>
+            <Button variant="outline" data-permission="Comercial.Pedido.salvarRascunho" data-sensitive onClick={onSalvarRascunho} disabled={salvando}>
               {salvando ? 'Salvando...' : 'Salvar Rascunho'}
             </Button>
           )}
@@ -61,6 +61,8 @@ export default function PedidoFooterAcoes({
 
           {canFecharCompleto && (
             <Button
+              data-permission="Comercial.Pedido.fechar"
+              data-sensitive
               onClick={onFecharCompleto}
               className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg"
               disabled={salvando}
@@ -71,21 +73,21 @@ export default function PedidoFooterAcoes({
           )}
 
           {canFecharEnviarEntrega && (
-            <Button onClick={onFecharEnviarEntrega} className="bg-blue-600 hover:bg-blue-700 shadow-lg" disabled={salvando}>
+            <Button data-permission="Comercial.Pedido.marcarProntoFaturar" data-sensitive onClick={onFecharEnviarEntrega} className="bg-blue-600 hover:bg-blue-700 shadow-lg" disabled={salvando}>
               <Truck className="w-4 h-4 mr-2" />
               {salvando ? 'Fechando...' : 'Fechar e Enviar para Entrega'}
             </Button>
           )}
 
           {canSalvarAlteracoes && (
-            <Button onClick={onSalvarAlteracoes} className="bg-slate-600 hover:bg-slate-700" disabled={salvando}>
+            <Button data-permission="Comercial.Pedido.salvar" data-sensitive onClick={onSalvarAlteracoes} className="bg-slate-600 hover:bg-slate-700" disabled={salvando}>
               <Check className="w-4 h-4 mr-2" />
               {salvando ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           )}
 
           {canCriarPedido && (
-            <Button onClick={onCriarPedido} className="bg-blue-600 hover:bg-blue-700" disabled={salvando}>
+            <Button data-permission="Comercial.Pedido.criar" data-sensitive onClick={onCriarPedido} className="bg-blue-600 hover:bg-blue-700" disabled={salvando}>
               <Check className="w-4 h-4 mr-2" />
               {salvando ? 'Salvando...' : 'Criar Pedido'}
             </Button>

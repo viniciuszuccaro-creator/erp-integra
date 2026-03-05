@@ -1190,6 +1190,8 @@ Caso contrário, sugira:
               <Button
                 type="button"
                 variant="outline"
+                data-permission="Cadastros.Produto.alterarStatus"
+                data-sensitive
                 onClick={handleAlternarStatus}
                 className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
               >
@@ -1208,6 +1210,8 @@ Caso contrário, sugira:
               <Button
                 type="button"
                 variant="destructive"
+                data-permission="Cadastros.Produto.excluir"
+                data-sensitive
                 onClick={handleExcluir}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
