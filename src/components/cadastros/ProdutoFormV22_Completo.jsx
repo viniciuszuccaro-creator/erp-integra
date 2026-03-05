@@ -180,6 +180,7 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
     staleTime: 300000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
+    enabled: !produto && abaAtiva === 'dados-gerais',
   });
 
   useEffect(() => {
@@ -201,6 +202,7 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
     staleTime: 300000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
+    enabled: abaAtiva === 'dados-gerais',
   });
 
   const { data: grupos = [] } = useQuery({
@@ -209,6 +211,7 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
     staleTime: 300000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
+    enabled: abaAtiva === 'dados-gerais',
   });
 
   const { data: marcas = [] } = useQuery({
@@ -217,6 +220,7 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
     staleTime: 300000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
+    enabled: abaAtiva === 'dados-gerais',
   });
 
   const { data: locaisEstoque = [] } = useQuery({
@@ -225,6 +229,7 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
     staleTime: 300000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
+    enabled: abaAtiva === 'estoque-avancado',
   });
 
   const { data: planoContas = [] } = useQuery({
@@ -233,6 +238,7 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
     staleTime: 300000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
+    enabled: abaAtiva === 'fiscal-contabil',
   });
 
   useEffect(() => {
