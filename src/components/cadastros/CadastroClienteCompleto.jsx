@@ -33,7 +33,7 @@ import GerenciarContatosClienteForm from "./GerenciarContatosClienteForm";
 import GerenciarEnderecosClienteForm from "./GerenciarEnderecosClienteForm";
 
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
-import HistoricoOrigemCliente from "@/components/comercial/HistoricoOrigemCliente";
+const HistoricoOrigemCliente = React.lazy(() => import("@/components/comercial/HistoricoOrigemCliente"));
 
 const TimelineCliente = React.lazy(() => import("@/components/cliente/TimelineCliente").then(m => ({ default: m.default || m.TimelineCliente })));
 const ResumoHistorico = React.lazy(() => import("@/components/cliente/TimelineCliente").then(m => ({ default: m.ResumoHistorico })));
