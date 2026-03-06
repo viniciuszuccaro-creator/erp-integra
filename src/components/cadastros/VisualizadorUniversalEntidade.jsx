@@ -924,61 +924,63 @@ export default function VisualizadorUniversalEntidade({
           ) : (
             <>
               {visualizacao === 'table' && (
-                <ERPDataTable
-                    columns={colunasOrdenacao.map(c => ({ key: c.campo, label: c.label, isNumeric: c.isNumeric }))}
-                    data={dadosBuscadosEOrdenados.map(item => {
-                      const row = { id: item.id };
-                      colunasOrdenacao.forEach(c => { row[c.campo] = c.getValue ? c.getValue(item) : item[c.campo]; });
-                      return row;
-                    })}
-                    entityName={nomeEntidade}
-                    sortField={sortField || (getDefaultSortForEntity().field)}
-                    sortDirection={sortDirection || (getDefaultSortForEntity().direction)}
-                    onSortChange={(field, direction) => { setSortField(field); setSortDirection(direction); setCurrentPage(1); setOrdenacao(''); setColunaOrdenacao(null); }}
-                    onToggleSelectAll={toggleSelectAll}
-                    onToggleItem={(id) => toggleItem(id)}
-                    allSelected={allSelected}
-                    selectedIds={selectedIds}
-                    enableColumnFilters
-                    columnFilters={columnFilters}
-                    onColumnFiltersChange={(next) => { setColumnFilters(next); setCurrentPage(1); }}
-                    hiddenColumns={hiddenCols}
-                    onHiddenColumnsChange={setHiddenCols}
-                    footerTotals
-                    page={currentPage}
-                    pageSize={itemsPerPage}
-                    totalItems={totalItemsCount}
-                    onPageChange={(p) => { setCurrentPage(p); setSelectedIds(new Set()); }}
-                    onPageSizeChange={(n) => { setItemsPerPage(n); setCurrentPage(1); setSelectedIds(new Set()); }}
-                    // Híbrido: ações inline + menu contexto + barra superior massa
-                    rowActionsRender={(row) => (
-                      <div className="inline-flex items-center gap-1">
-                        {componenteVisualizacao && (
-                          <Button size="sm" variant="ghost" onClick={() => abrirVisualizacao(dadosBuscadosEOrdenados.find(i => i.id === row.id))}>
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        )}
-                        {componenteEdicao && (
-                          <ProtectedAction module={moduloPermissao} action="editar" mode="disable">
-                            <Button size="sm" variant="ghost" onClick={() => abrirEdicao(dadosBuscadosEOrdenados.find(i => i.id === row.id))}>
-                              <Edit2 className="w-4 h-4" />
-                            </Button>
-                          </ProtectedAction>
-                        )}
-                      </div>
-                    )}
-                    rowContextMenuItems={(row) => {
-                      const item = dadosBuscadosEOrdenados.find(i => i.id === row.id);
-                      const items = [];
-                      if (componenteVisualizacao) items.push({ key: 'ver', label: 'Ver', action: () => abrirVisualizacao(item) });
-                      if (componenteEdicao) items.push({ key: 'editar', label: 'Editar', action: () => abrirEdicao(item) });
-                      items.push({ key: 'excluir', label: 'Excluir', action: () => excluirSelecionadosIds([row.id]) });
-                      return items;
-                    }}
-                    showBulkBar
-                    onBulkDeleteSelected={(ids) => excluirSelecionadosIds(ids)}
-                    onBulkExportSelected={(ids) => exportarSelecionados(ids)}
-                  />
+                <div className="overflow-x-auto">
+                   <ERPDataTable
+                     columns={colunasOrdenacao.map(c => ({ key: c.campo, label: c.label, isNumeric: c.isNumeric }))}
+                     data={dadosBuscadosEOrdenados.map(item => {
+                       const row = { id: item.id };
+                       colunasOrdenacao.forEach(c => { row[c.campo] = c.getValue ? c.getValue(item) : item[c.campo]; });
+                       return row;
+                     })}
+                     entityName={nomeEntidade}
+                     sortField={sortField || (getDefaultSortForEntity().field)}
+                     sortDirection={sortDirection || (getDefaultSortForEntity().direction)}
+                     onSortChange={(field, direction) => { setSortField(field); setSortDirection(direction); setCurrentPage(1); setOrdenacao(''); setColunaOrdenacao(null); }}
+                     onToggleSelectAll={toggleSelectAll}
+                     onToggleItem={(id) => toggleItem(id)}
+                     allSelected={allSelected}
+                     selectedIds={selectedIds}
+                     enableColumnFilters
+                     columnFilters={columnFilters}
+                     onColumnFiltersChange={(next) => { setColumnFilters(next); setCurrentPage(1); }}
+                     hiddenColumns={hiddenCols}
+                     onHiddenColumnsChange={setHiddenCols}
+                     footerTotals
+                     page={currentPage}
+                     pageSize={itemsPerPage}
+                     totalItems={totalItemsCount}
+                     onPageChange={(p) => { setCurrentPage(p); setSelectedIds(new Set()); }}
+                     onPageSizeChange={(n) => { setItemsPerPage(n); setCurrentPage(1); setSelectedIds(new Set()); }}
+                     // Híbrido: ações inline + menu contexto + barra superior massa
+                     rowActionsRender={(row) => (
+                       <div className="inline-flex items-center gap-1">
+                         {componenteVisualizacao && (
+                           <Button size="sm" variant="ghost" onClick={() => abrirVisualizacao(dadosBuscadosEOrdenados.find(i => i.id === row.id))}>
+                             <Eye className="w-4 h-4" />
+                           </Button>
+                         )}
+                         {componenteEdicao && (
+                           <ProtectedAction module={moduloPermissao} action="editar" mode="disable">
+                             <Button size="sm" variant="ghost" onClick={() => abrirEdicao(dadosBuscadosEOrdenados.find(i => i.id === row.id))}>
+                               <Edit2 className="w-4 h-4" />
+                             </Button>
+                           </ProtectedAction>
+                         )}
+                       </div>
+                     )}
+                     rowContextMenuItems={(row) => {
+                       const item = dadosBuscadosEOrdenados.find(i => i.id === row.id);
+                       const items = [];
+                       if (componenteVisualizacao) items.push({ key: 'ver', label: 'Ver', action: () => abrirVisualizacao(item) });
+                       if (componenteEdicao) items.push({ key: 'editar', label: 'Editar', action: () => abrirEdicao(item) });
+                       items.push({ key: 'excluir', label: 'Excluir', action: () => excluirSelecionadosIds([row.id]) });
+                       return items;
+                     }}
+                     showBulkBar
+                     onBulkDeleteSelected={(ids) => excluirSelecionadosIds(ids)}
+                     onBulkExportSelected={(ids) => exportarSelecionados(ids)}
+                   />
+                 </div>
 
               )}
 
