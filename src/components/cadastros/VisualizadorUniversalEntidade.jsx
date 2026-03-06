@@ -324,6 +324,8 @@ export default function VisualizadorUniversalEntidade({
       descricao_desc: { f: 'descricao', d: 'desc' },
       codigo: { f: 'codigo', d: 'asc' },
       codigo_desc: { f: 'codigo', d: 'desc' },
+      tipo_item: { f: 'tipo_item', d: 'asc' },
+      tipo_item_desc: { f: 'tipo_item', d: 'desc' },
       recent: { f: 'updated_date', d: 'desc' },
       nome: { f: 'nome', d: 'asc' },
       nome_desc: { f: 'nome', d: 'desc' }
