@@ -130,7 +130,8 @@ export default function ERPDataTable({
     if (!autoPersistSort || !entityName) return;
     try {
       if (sortField) {
-        localStorage.setItem(`sort_${entityName}`, JSON.stringify({ sortField, sortDirection }));
+        // Persistência alinhada ao padrão global: { field, direction }
+        localStorage.setItem(`sort_${entityName}`, JSON.stringify({ field: sortField, direction: sortDirection }));
       } else {
         localStorage.removeItem(`sort_${entityName}`);
       }
@@ -143,7 +144,10 @@ export default function ERPDataTable({
     try {
       const raw = localStorage.getItem(`sort_${entityName}`);
       if (raw && onSortChange) {
-        const { sortField: sf, sortDirection: sd } = JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        // Aceita tanto o formato antigo ({ sortField, sortDirection }) quanto o novo ({ field, direction })
+        const sf = parsed.field || parsed.sortField;
+        const sd = parsed.direction || parsed.sortDirection;
         if (sf && sd) onSortChange(sf, sd);
       }
     } catch {}
@@ -273,7 +277,7 @@ export default function ERPDataTable({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              Array.from({ length: 10 }).map((_, i) => (
+              Array.from({ length: 12 }).map((_, i) => (
                 <TableRow key={`sk-${i}`} className="hover:bg-transparent">
                   <TableCell className="px-3">
                     <Skeleton className="h-4 w-4 rounded" />
