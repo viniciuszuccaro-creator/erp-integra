@@ -266,11 +266,28 @@ export function useContextoVisual() {
             User: { field: 'full_name', direction: 'asc' }
           };
 
+          const normalizeSortField = (entityName, field) => {
+            if (!field) return field;
+            const f = String(field).toLowerCase();
+            if (entityName === 'Produto') {
+              if (f === 'cod' || f === 'código' || f === 'codigo') return 'codigo';
+              if (f === 'tipo' || f === 'tipoitem' || f === 'tipo_item') return 'tipo_item';
+              if (f === 'descrição' || f === 'descricao') return 'descricao';
+            }
+            return field;
+          };
           const getLastSort = (entityName) => {
-            try { return JSON.parse(localStorage.getItem(`sort_${entityName}`) || 'null'); } catch { return null; }
+            try {
+              const v = JSON.parse(localStorage.getItem(`sort_${entityName}`) || 'null');
+              if (v?.sortField) v.sortField = normalizeSortField(entityName, v.sortField);
+              return v;
+            } catch { return null; }
           };
           const setLastSort = (entityName, sort) => {
-            try { localStorage.setItem(`sort_${entityName}`, JSON.stringify(sort)); } catch {}
+            try {
+              const s = { ...sort, sortField: normalizeSortField(entityName, sort?.sortField) };
+              localStorage.setItem(`sort_${entityName}`, JSON.stringify(s));
+            } catch {}
           };
 
           const filterInContext = async (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
@@ -344,11 +361,11 @@ export function useContextoVisual() {
                    let sortField, sortDirection;
                    if (typeof order === 'string' && order.length) {
                      sortDirection = order.startsWith('-') ? 'desc' : 'asc';
-                     sortField = order.replace(/^-/, '');
+                     sortField = normalizeSortField(entityName, order.replace(/^-/, ''));
                      setLastSort(entityName, { sortField, sortDirection });
                    } else {
                      const last = getLastSort(entityName);
-                     sortField = last?.sortField || DEFAULT_SORTS[entityName]?.field || 'updated_date';
+                     sortField = normalizeSortField(entityName, last?.sortField || DEFAULT_SORTS[entityName]?.field || 'updated_date');
                      sortDirection = last?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc';
                    }
 
