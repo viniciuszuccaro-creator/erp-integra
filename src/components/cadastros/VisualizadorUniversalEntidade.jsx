@@ -894,15 +894,7 @@ export default function VisualizadorUniversalEntidade({
         </CardHeader>
 
         <CardContent className={`p-6 ${windowMode ? 'flex-1 overflow-y-auto' : ''}`}>
-          {(isLoading || (colunaOrdenacao && isFetching)) ? (
-            <div className="text-center py-12">
-              <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
-              <p className="text-slate-600">Carregando registros…</p>
-              {dados && dados.length > 0 && (
-                <p className="text-xs text-slate-500 mt-1">Mostrando dados em cache enquanto atualiza</p>
-              )}
-            </div>
-          ) : error ? (
+          {error ? (
             <div className="text-center py-12">
               <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-3" />
               <p className="text-slate-900 font-semibold mb-2">Erro ao carregar</p>
@@ -910,18 +902,6 @@ export default function VisualizadorUniversalEntidade({
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Tentar Novamente
               </Button>
-            </div>
-          ) : dadosBuscadosEOrdenados.length === 0 ? (
-            <div className="text-center py-12 space-y-3">
-              <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-              <p className="text-slate-600 font-medium">
-                {buscaBackend ? 'Nenhum resultado' : 'Nenhum registro'}
-              </p>
-              {!buscaBackend && (
-                <Button size="sm" onClick={criarSugestoes} className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-4 h-4 mr-1" /> Criar 3 sugestões
-                </Button>
-              )}
             </div>
           ) : (
             <>
@@ -953,7 +933,7 @@ export default function VisualizadorUniversalEntidade({
                      totalItems={totalItemsCount}
                      onPageChange={(p) => { setCurrentPage(p); setSelectedIds(new Set()); }}
                      onPageSizeChange={(n) => { setItemsPerPage(n); setCurrentPage(1); setSelectedIds(new Set()); }}
-                     // Híbrido: ações inline + menu contexto + barra superior massa
+                     isLoading={isLoading || (isFetching && (dadosBuscadosEOrdenados?.length || 0) === 0)}
                      rowActionsRender={(row) => (
                        <div className="inline-flex items-center gap-1">
                          {componenteVisualizacao && (
@@ -1080,6 +1060,20 @@ export default function VisualizadorUniversalEntidade({
                       </CardContent>
                     </Card>
                   ))}
+                </div>
+              )}
+
+              {!isLoading && !isFetching && dadosBuscadosEOrdenados.length === 0 && (
+                <div className="text-center py-12 space-y-3">
+                  <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                  <p className="text-slate-600 font-medium">
+                    {buscaBackend ? 'Nenhum resultado' : 'Nenhum registro'}
+                  </p>
+                  {!buscaBackend && (
+                    <Button size="sm" onClick={criarSugestoes} className="bg-blue-600 hover:bg-blue-700">
+                      <Plus className="w-4 h-4 mr-1" /> Criar 3 sugestões
+                    </Button>
+                  )}
                 </div>
               )}
             </>
