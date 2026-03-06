@@ -236,6 +236,7 @@ export default function ERPDataTable({
                   ref={(el) => (headerRefs.current[col.key] = el)}
                   style={{ width: colWidths[col.key] ? `${colWidths[col.key]}px` : undefined }}
                   className="px-3 select-none"
+                  aria-sort={sortField === col.key ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
                   <div className="flex items-center gap-2">
                     <button

@@ -31,6 +31,7 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useToast } from "@/components/ui/use-toast";
 import ProtectedAction from "@/components/ProtectedAction";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const OPCOES_ORDENACAO = {
   Cliente: [
@@ -485,7 +486,7 @@ export default function VisualizadorUniversalEntidade({
   });
 
   const { data: totalItemsCount = 0 } = useQuery({
-    queryKey: [...queryKey, 'total-count', empresaAtual?.id, grupoAtual?.id, buscaBackend],
+    queryKey: [...queryKey, 'total-count', empresaAtual?.id, grupoAtual?.id, buscaBackend, JSON.stringify(columnFilters)],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
       try {
@@ -521,7 +522,7 @@ export default function VisualizadorUniversalEntidade({
       queryClient.invalidateQueries({ queryKey }),
       queryClient.invalidateQueries({ queryKey: [...queryKey, 'total-count'] }),
       ...aliasKeys.map((k) => queryClient.invalidateQueries({ queryKey: [k] }))
-    , columnFilters]);
+    ]);
   }, [queryClient, queryKey, aliasKeys, columnFilters]);
 
   React.useEffect(() => {
@@ -909,7 +910,24 @@ export default function VisualizadorUniversalEntidade({
             </div>
           ) : (
             <>
-              {visualizacao === 'table' && (
+              {(isLoading || (isFetching && (dadosBuscadosEOrdenados?.length || 0) === 0)) && visualizacao !== 'table' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Card key={`sk-card-${i}`} className="border">
+                      <CardContent className="p-4 space-y-3">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                        <div className="flex gap-2 pt-2">
+                          <Skeleton className="h-8 w-20" />
+                          <Skeleton className="h-8 w-20" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+               {visualizacao === 'table' && (
                 <div className="overflow-x-auto">
                    <ERPDataTable
                      columns={colunasOrdenacao.map(c => ({ key: c.campo, label: c.label, isNumeric: c.isNumeric }))}
