@@ -94,7 +94,7 @@ export default function FormWrapper({
     <FormProvider {...methods}>
       <form
         onSubmit={methods.handleSubmit(handleValid, handleInvalid)}
-        className={cn('w-full h-full space-y-4', className)}
+        className={cn('w-full h-full space-y-6', className)}
       >
         <FormErrorSummary messages={errorMessages} />
         {typeof children === 'function' ? children(methods) : children}

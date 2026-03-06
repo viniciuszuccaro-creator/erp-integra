@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -31,9 +31,13 @@ import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import GerenciarContatosClienteForm from "./GerenciarContatosClienteForm";
 import GerenciarEnderecosClienteForm from "./GerenciarEnderecosClienteForm";
-import TimelineCliente, { ResumoHistorico } from "@/components/cliente/TimelineCliente";
+
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import HistoricoOrigemCliente from "@/components/comercial/HistoricoOrigemCliente";
+
+const TimelineCliente = React.lazy(() => import("@/components/cliente/TimelineCliente").then(m => ({ default: m.default || m.TimelineCliente })));
+const ResumoHistorico = React.lazy(() => import("@/components/cliente/TimelineCliente").then(m => ({ default: m.ResumoHistorico })));
+
 
 export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSuccess, windowMode = false, onSubmit }) {
   const [activeTab, setActiveTab] = useState("dados-gerais");
@@ -1206,9 +1210,13 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
             <TabsContent value="historico" className="m-0 mt-4">
               {cliente?.id ? (
                 <div className="space-y-4">
-                  <ResumoHistorico clienteId={cliente.id} />
+                  <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}>
+                    <ResumoHistorico clienteId={cliente.id} />
+                  </Suspense>
                   <HistoricoOrigemCliente clienteId={cliente.id} compact={false} />
-                  <TimelineCliente clienteId={cliente.id} showFilters={true} />
+                  <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}>
+                    <TimelineCliente clienteId={cliente.id} showFilters={true} />
+                  </Suspense>
                 </div>
               ) : (
                 <div className="text-center py-12 text-slate-500">
