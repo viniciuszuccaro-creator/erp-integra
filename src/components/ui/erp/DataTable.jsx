@@ -273,7 +273,7 @@ export default function ERPDataTable({
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              Array.from({ length: 8 }).map((_, i) => (
+              Array.from({ length: 10 }).map((_, i) => (
                 <TableRow key={`sk-${i}`} className="hover:bg-transparent">
                   <TableCell className="px-3">
                     <Skeleton className="h-4 w-4 rounded" />
