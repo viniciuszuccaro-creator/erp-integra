@@ -331,6 +331,7 @@ export default function ERPDataTable({
             })}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {footerTotals && Object.keys(totals).length > 0 && (
