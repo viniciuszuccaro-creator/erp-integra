@@ -8,6 +8,7 @@ import { ChevronDown, ArrowUp, ArrowDown, ArrowUpDown, MoreVertical, SlidersHori
 import usePermissions from "@/components/lib/usePermissions";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { uiAuditWrap } from "@/components/lib/uiAudit";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ERPDataTable({
   columns = [], // [{ key, label, isNumeric, render?: (row) => ReactNode }]
@@ -34,6 +35,7 @@ export default function ERPDataTable({
   page = 1,
   pageSize = 20,
   totalItems = 0,
+  isLoading = false,
   onPageChange,
   onPageSizeChange,
   // RBAC: permissão global opcional para visualizar a tabela
@@ -269,66 +271,85 @@ export default function ERPDataTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((row) => {
-              const tr = (
-                <TableRow key={row.id} className="hover:bg-blue-50/40">
+            {isLoading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <TableRow key={`sk-${i}`} className="hover:bg-transparent">
                   <TableCell className="px-3">
-                    {isRowSelectable(row) ? (
-                      <Checkbox checked={selectedSet.has(row.id)} onCheckedChange={() => audited.onToggleItem && audited.onToggleItem(row.id)} />
-                    ) : (
-                      <span className="inline-block w-4 h-4 opacity-40" />
-                    )}
+                    <Skeleton className="h-4 w-4 rounded" />
                   </TableCell>
-                  {visibleColumns.map((c) => (
-                    <TableCell key={c.key} className={`px-3 ${c.isNumeric ? 'text-right' : ''}`}>
-                      {typeof c.render === 'function' ? c.render(row) : (row[c.key] != null ? String(row[c.key]) : '')}
+                  {visibleColumns.map((c, idx) => (
+                    <TableCell key={`skc-${idx}`} className={`px-3 ${c.isNumeric ? 'text-right' : ''}`}>
+                      <Skeleton className={`h-4 ${c.isNumeric ? 'ml-auto w-16' : 'w-3/4'}`} />
                     </TableCell>
                   ))}
                   {rowActionsRender && (
                     <TableCell className="px-3 text-right">
-                      <div className="inline-flex items-center gap-1">
-                        {rowActionsRender(row)}
-                        <DropdownMenu>
-                          <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                          <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm">
-                                                              <MoreVertical className="w-4 h-4" />
-                                                            </Button>
-                                                          </DropdownMenuTrigger>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>Mais ações</TooltipContent>
-                                                      </Tooltip>
-                          <DropdownMenuContent align="end">
-                            {/* Itens adicionais podem ser controlados pelo caller via rowContextMenuItems */}
-                            {Array.isArray(rowContextMenuItems?.(row)) && rowContextMenuItems(row).map((it) => (
-                              <button key={it.key} className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent" onClick={it.action}>{it.label}</button>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <Skeleton className="h-4 w-12 ml-auto" />
                     </TableCell>
                   )}
                 </TableRow>
-              );
-              if (rowContextMenuItems) {
-                return (
-                  <ContextMenu key={`ctx-${row.id}`}>
-                    <ContextMenuTrigger asChild>
-                      {tr}
-                    </ContextMenuTrigger>
-                    <ContextMenuContent>
-                      {rowContextMenuItems(row)?.map((it) => (
-                        <ContextMenuItem key={`ctx-${row.id}-${it.key}`} onClick={it.action}>
-                          {it.label}
-                        </ContextMenuItem>
-                      ))}
-                    </ContextMenuContent>
-                  </ContextMenu>
+              ))
+            ) : (
+              data.map((row) => {
+                const tr = (
+                  <TableRow key={row.id} className="hover:bg-blue-50/40">
+                    <TableCell className="px-3">
+                      {isRowSelectable(row) ? (
+                        <Checkbox checked={selectedSet.has(row.id)} onCheckedChange={() => audited.onToggleItem && audited.onToggleItem(row.id)} />
+                      ) : (
+                        <span className="inline-block w-4 h-4 opacity-40" />
+                      )}
+                    </TableCell>
+                    {visibleColumns.map((c) => (
+                      <TableCell key={c.key} className={`px-3 ${c.isNumeric ? 'text-right' : ''}`}>
+                        {typeof c.render === 'function' ? c.render(row) : (row[c.key] != null ? String(row[c.key]) : '')}
+                      </TableCell>
+                    ))}
+                    {rowActionsRender && (
+                      <TableCell className="px-3 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          {rowActionsRender(row)}
+                          <DropdownMenu>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 rounded-sm">
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>Mais ações</TooltipContent>
+                            </Tooltip>
+                            <DropdownMenuContent align="end">
+                              {Array.isArray(rowContextMenuItems?.(row)) && rowContextMenuItems(row).map((it) => (
+                                <button key={it.key} className="w-full text-left px-2 py-1.5 text-sm hover:bg-accent" onClick={it.action}>{it.label}</button>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
                 );
-              }
-              return tr;
-            })}
+                if (rowContextMenuItems) {
+                  return (
+                    <ContextMenu key={`ctx-${row.id}`}>
+                      <ContextMenuTrigger asChild>
+                        {tr}
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        {rowContextMenuItems(row)?.map((it) => (
+                          <ContextMenuItem key={`ctx-${row.id}-${it.key}`} onClick={it.action}>
+                            {it.label}
+                          </ContextMenuItem>
+                        ))}
+                      </ContextMenuContent>
+                    </ContextMenu>
+                  );
+                }
+                return tr;
+              })
+            )}
           </TableBody>
         </Table>
         </div>
