@@ -18,9 +18,32 @@ export function useCountEntities(entityName, filter = {}, options = {}) {
     queryFn: async () => {
       try {
         // Tenta usar a função backend otimizada
+        // Filtro de contexto multiempresa obrigatório para contagens estáveis
+        const ctxCampoMap = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
+        const campoEmpresa = ctxCampoMap[entityName] || 'empresa_id';
+        const empresaId = empresaAtual?.id;
+        const groupId = grupoAtual?.id;
+        let finalFilter = { ...(filter || {}) };
+        if (!finalFilter.$or && !finalFilter[campoEmpresa] && !finalFilter.group_id && (empresaId || groupId)) {
+          const orConds = [];
+          if (empresaId) {
+            if (entityName === 'Cliente') {
+              orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } });
+            } else if (entityName === 'Fornecedor' || entityName === 'Transportadora') {
+              orConds.push({ empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } });
+            } else if (entityName === 'Colaborador') {
+              orConds.push({ empresa_alocada_id: empresaId });
+            } else {
+              orConds.push({ [campoEmpresa]: empresaId });
+            }
+          }
+          if (groupId) orConds.push({ group_id: groupId });
+          if (orConds.length) finalFilter = { ...finalFilter, $or: orConds };
+        }
+
         const response = await base44.functions.invoke('countEntities', {
           entityName,
-          filter
+          filter: finalFilter
         });
 
         // Expansão multiempresa genérica quando houver empresa e/ou grupo
@@ -89,6 +112,9 @@ export function useCountEntities(entityName, filter = {}, options = {}) {
     refetchOnReconnect: false,
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    enabled: !!grupoAtual?.id || !!empresaAtual?.id,
+    keepPreviousData: true,
+    placeholderData: (prev) => prev ?? 0,
     ...options
   });
 

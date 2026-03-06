@@ -276,7 +276,7 @@ export default function VisualizadorUniversalEntidade({
   }, [buscaLocal, columnFilters]);
 
   useEffect(() => {
-    const saved = localStorage.getItem(`ord_${nomeEntidade}_${empresaAtual?.id || 'all'}`);
+    const saved = localStorage.getItem(`sort_${nomeEntidade}`);
     if (saved) {
       try {
         const s = JSON.parse(saved);
@@ -284,16 +284,16 @@ export default function VisualizadorUniversalEntidade({
         if (s.direction) setSortDirection(s.direction);
       } catch {}
     }
-  }, [nomeEntidade, empresaAtual?.id, columnFilters]);
+  }, [nomeEntidade]);
 
   useEffect(() => {
     if (sortField) {
       localStorage.setItem(
-        `ord_${nomeEntidade}_${empresaAtual?.id || 'all'}`,
+        `sort_${nomeEntidade}`,
         JSON.stringify({ field: sortField, direction: sortDirection })
       );
     }
-  }, [sortField, sortDirection, nomeEntidade, empresaAtual?.id, columnFilters]);
+  }, [sortField, sortDirection, nomeEntidade]);
 
   const getDefaultSortForEntity = useCallback(() => {
     if (colunaOrdenacao) {
@@ -327,6 +327,18 @@ export default function VisualizadorUniversalEntidade({
       codigo_desc: { f: 'codigo', d: 'desc' },
       tipo_item: { f: 'tipo_item', d: 'asc' },
       tipo_item_desc: { f: 'tipo_item', d: 'desc' },
+      setor_atividade_nome: { f: 'setor_atividade_nome', d: 'asc' },
+      setor_atividade_nome_desc: { f: 'setor_atividade_nome', d: 'desc' },
+      marca_nome: { f: 'marca_nome', d: 'asc' },
+      marca_nome_desc: { f: 'marca_nome', d: 'desc' },
+      status: { f: 'status', d: 'asc' },
+      status_desc: { f: 'status', d: 'desc' },
+      estoque_atual: { f: 'estoque_atual', d: 'asc' },
+      estoque_atual_desc: { f: 'estoque_atual', d: 'desc' },
+      preco_venda: { f: 'preco_venda', d: 'asc' },
+      preco_venda_desc: { f: 'preco_venda', d: 'desc' },
+      updated_date: { f: 'updated_date', d: 'asc' },
+      updated_date_desc: { f: 'updated_date', d: 'desc' },
       recent: { f: 'updated_date', d: 'desc' },
       nome: { f: 'nome', d: 'asc' },
       nome_desc: { f: 'nome', d: 'desc' }
