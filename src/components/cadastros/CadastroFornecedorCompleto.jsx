@@ -204,6 +204,8 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                 <Button
                   type="button"
                   variant="outline"
+                  data-permission="Cadastros.Fornecedor.alterarStatus"
+                  data-sensitive
                   onClick={handleAlternarStatus}
                   className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
                 >
@@ -222,6 +224,8 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                 <Button
                   type="button"
                   variant="destructive"
+                  data-permission="Cadastros.Fornecedor.excluir"
+                  data-sensitive
                   onClick={handleExcluir}
                   disabled={deleteMutation.isPending}
                 >
@@ -232,6 +236,8 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
             )}
             <Button 
               onClick={handleSave} 
+              data-permission="Cadastros.Fornecedor.salvar"
+              data-sensitive
               disabled={saveMutation.isPending}
               className="bg-cyan-600 hover:bg-cyan-700"
             >
@@ -260,7 +266,7 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
 
         <ScrollArea className="flex-1">
           <div className="px-6 pb-6">
-            <TabsContent value="dados-gerais" className="space-y-4 m-0 mt-4">
+            <TabsContent value="dados-gerais" className="space-y-6 m-0 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <Label htmlFor="nome">Nome / Razão Social *</Label>
@@ -449,7 +455,7 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
               </div>
             </TabsContent>
 
-            <TabsContent value="contato" className="space-y-4 m-0 mt-4">
+            <TabsContent value="contato" className="space-y-6 m-0 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="email">E-mail</Label>
@@ -534,7 +540,7 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
 
             <TabsContent value="avaliacoes" className="m-0 mt-4">
               {fornecedor?.id ? (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold">Histórico de Avaliações</h3>
                     <Badge variant="outline" className="text-lg">
@@ -637,7 +643,7 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full overflow-hidden flex flex-col p-0">
         {content}
       </DialogContent>
     </Dialog>

@@ -371,10 +371,12 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               {cliente?.id && (
                 <>
                   <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAlternarStatus}
-                    className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
+                                    type="button"
+                                    variant="outline"
+                                    data-permission="Cadastros.Cliente.alterarStatus"
+                                    data-sensitive
+                                    onClick={handleAlternarStatus}
+                                    className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
                   >
                     {formData.status === 'Ativo' ? (
                       <>
@@ -389,10 +391,12 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     )}
                   </Button>
                   <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={handleExcluir}
-                    disabled={deleteMutation.isPending}
+                                    type="button"
+                                    variant="destructive"
+                                    data-permission="Cadastros.Cliente.excluir"
+                                    data-sensitive
+                                    onClick={handleExcluir}
+                                    disabled={deleteMutation.isPending}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
@@ -401,6 +405,8 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               )}
               <Button
                 onClick={handleSave}
+                data-permission="Cadastros.Cliente.salvar"
+                data-sensitive
                 disabled={saveMutation.isPending}
                 className="bg-blue-600 hover:bg-blue-700"
               >
@@ -445,7 +451,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
 
         <ScrollArea className="flex-1">
           <div className="px-6 pb-6">
-            <TabsContent value="dados-gerais" className="space-y-4 m-0 mt-4">
+            <TabsContent value="dados-gerais" className="space-y-6 m-0 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="tipo">Tipo de Pessoa *</Label>
@@ -870,7 +876,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               />
             </TabsContent>
 
-            <TabsContent value="financeiro" className="space-y-4 m-0 mt-4">
+            <TabsContent value="financeiro" className="space-y-6 m-0 mt-4">
               <Card className={`border-2 ${
                 calcularSituacaoCredito() === 'OK' ? 'border-green-300 bg-green-50' :
                 calcularSituacaoCredito() === 'Alerta' ? 'border-orange-300 bg-orange-50' :
@@ -1067,7 +1073,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               </div>
             </TabsContent>
 
-            <TabsContent value="fiscal" className="space-y-4 m-0 mt-4">
+            <TabsContent value="fiscal" className="space-y-6 m-0 mt-4">
               {ultimaNF && ultimaNF.length > 0 && (
                 <Card className="bg-blue-50 border-blue-200">
                   <CardContent className="p-4">
@@ -1209,7 +1215,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
 
             <TabsContent value="historico" className="m-0 mt-4">
               {cliente?.id ? (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}>
                     <ResumoHistorico clienteId={cliente.id} />
                   </Suspense>
@@ -1226,7 +1232,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               )}
             </TabsContent>
 
-            <TabsContent value="anexos" className="space-y-4 m-0 mt-4">
+            <TabsContent value="anexos" className="space-y-6 m-0 mt-4">
               <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
                 <Paperclip className="w-12 h-12 mx-auto mb-4 text-slate-400" />
                 <p className="text-slate-600 mb-2">Upload de Documentos</p>
@@ -1293,7 +1299,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] flex flex-col p-0 overflow-hidden">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full flex flex-col p-0 overflow-hidden">
         {content}
       </DialogContent>
     </Dialog>
