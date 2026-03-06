@@ -955,7 +955,7 @@ export default function VisualizadorUniversalEntidade({
                      totalItems={totalItemsCount}
                      onPageChange={(p) => { setCurrentPage(p); setSelectedIds(new Set()); }}
                      onPageSizeChange={(n) => { setItemsPerPage(n); setCurrentPage(1); setSelectedIds(new Set()); }}
-                     isLoading={isLoading || (isFetching && (dadosBuscadosEOrdenados?.length || 0) === 0)}
+                     isLoading={isLoading || (isFetching && (dadosBuscadosEOrdenados?.length || 0) === 0)} // skeleton rows shown when loading
                      rowActionsRender={(row) => (
                        <div className="inline-flex items-center gap-1">
                          {componenteVisualizacao && (
