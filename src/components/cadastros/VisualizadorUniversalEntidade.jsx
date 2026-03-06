@@ -472,8 +472,11 @@ export default function VisualizadorUniversalEntidade({
       if(!hasGroupField && !hasCtxField) return true; 
       return !!(fc[c]||fc.group_id); 
     })(),
+    keepPreviousData: true,
+    placeholderData: (prev) => prev ?? [],
     staleTime: Infinity,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     refetchInterval: false
   });
 
