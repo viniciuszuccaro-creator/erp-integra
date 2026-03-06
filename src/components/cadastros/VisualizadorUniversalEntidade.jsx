@@ -60,6 +60,8 @@ const OPCOES_ORDENACAO = {
     { value: 'descricao_desc', label: 'Descrição (Z-A)' },
     { value: 'codigo', label: 'Código (Crescente)' },
     { value: 'codigo_desc', label: 'Código (Decrescente)' },
+    { value: 'tipo_item', label: 'Tipo do Item (A-Z)' },
+    { value: 'tipo_item_desc', label: 'Tipo do Item (Z-A)' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   Colaborador: [
