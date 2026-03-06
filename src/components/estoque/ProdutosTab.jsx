@@ -36,37 +36,66 @@ export default function ProdutosTab(props) {
     return { total, revenda, producao, estoqueBaixo };
   };
 
-  const { data: todosProdutos = [], refetch: refetchProdutos } = useQuery({
-    queryKey: ['produtos-todos-contagem'],
+  // Contagens rápidas via backend (sem carregar todos os produtos)
+  const { data: totalCount = 0 } = useQuery({
+    queryKey: ['produtos-count-total', getFiltroContexto('empresa_id', true)],
     queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      let todos = [];
-      let skip = 0;
-      const batchSize = 500;
-      let hasMore = true;
-      
-      while (hasMore) {
-        const batch = await base44.entities.Produto.filter(filtro, undefined, batchSize, skip);
-        if (!batch || batch.length === 0) {
-          hasMore = false;
-        } else {
-          todos = [...todos, ...batch];
-          if (batch.length < batchSize) {
-            hasMore = false;
-          } else {
-            skip += batchSize;
-          }
-        }
-      }
-      
-      return todos;
+      const filtro = getFiltroContexto('empresa_id', true) || {};
+      const { data } = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtro });
+      return data?.count || 0;
     },
-    staleTime: Infinity,
-    refetchOnWindowFocus: false
+    staleTime: 60000,
+    keepPreviousData: true
+  });
+  const { data: revendaCount = 0 } = useQuery({
+    queryKey: ['produtos-count-revenda', getFiltroContexto('empresa_id', true)],
+    queryFn: async () => {
+      const filtro = { ...(getFiltroContexto('empresa_id', true) || {}), tipo_item: 'Revenda' };
+      const { data } = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtro });
+      return data?.count || 0;
+    },
+    staleTime: 60000,
+    keepPreviousData: true
+  });
+  const { data: producaoCount = 0 } = useQuery({
+    queryKey: ['produtos-count-producao', getFiltroContexto('empresa_id', true)],
+    queryFn: async () => {
+      const filtro = { ...(getFiltroContexto('empresa_id', true) || {}), tipo_item: 'Matéria-Prima Produção' };
+      const { data } = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtro });
+      return data?.count || 0;
+    },
+    staleTime: 60000,
+    keepPreviousData: true
   });
 
-  const contagensTotais = useMemo(() => calcularContagensLocal(todosProdutos), [todosProdutos]);
-  const isLoadingContagens = !todosProdutos || todosProdutos.length === 0;
+  // Estoque baixo ainda precisa avaliar campo <= mínimo (sem suporte direto no count): fallback leve por lote
+  const { data: produtosParaEstoqueBaixo = [] } = useQuery({
+    queryKey: ['produtos-estoque-baixo', getFiltroContexto('empresa_id', true)],
+    queryFn: async () => {
+      const filtro = { ...(getFiltroContexto('empresa_id', true) || {}), status: 'Ativo' };
+      // Carrega apenas coluna necessária em lotes pequenos
+      const { data } = await base44.functions.invoke('entityListSorted', {
+        entityName: 'Produto',
+        filter: filtro,
+        sortField: 'updated_date',
+        sortDirection: 'desc',
+        limit: 1000
+      });
+      return Array.isArray(data) ? data : [];
+    },
+    staleTime: 30000,
+    keepPreviousData: true
+  });
+
+  const estoqueBaixoCalc = useMemo(() => (produtosParaEstoqueBaixo || []).filter(p => (p.status === 'Ativo') && ((p.estoque_disponivel || 0) <= (p.estoque_minimo || 0))).length, [produtosParaEstoqueBaixo]);
+
+  const contagensTotais = useMemo(() => ({
+    total: totalCount,
+    revenda: revendaCount,
+    producao: producaoCount,
+    estoqueBaixo: estoqueBaixoCalc,
+  }), [totalCount, revendaCount, producaoCount, estoqueBaixoCalc]);
+  const isLoadingContagens = totalCount === 0 && revendaCount === 0 && producaoCount === 0 && (produtosParaEstoqueBaixo || []).length === 0;
 
   React.useEffect(() => {
     const unsubscribe = base44.entities.Produto.subscribe(() => {

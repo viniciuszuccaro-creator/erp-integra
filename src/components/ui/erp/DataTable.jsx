@@ -222,7 +222,7 @@ export default function ERPDataTable({
 
       <div className="flex-1 overflow-auto border rounded-sm w-full h-full bg-white/60 backdrop-blur">
         <div className="min-w-[900px]">{/* Evita quebra e corte em telas pequenas; rolagem horizontal controlada */}
-        <Table className="w-full">
+        <Table className="w-full table-fixed">
           <TableHeader className="sticky top-0 bg-white/70 backdrop-blur z-10">
             <TableRow>
               <TableHead className="w-10 px-3">

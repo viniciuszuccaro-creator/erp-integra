@@ -504,6 +504,8 @@ export default function VisualizadorUniversalEntidade({
       if(!hasGroupField && !hasCtxField) return true; 
       return !!(fc[c]||fc.group_id); 
     })(),
+    keepPreviousData: true,
+    placeholderData: (prev) => prev ?? 0,
     staleTime: Infinity,
     refetchOnWindowFocus: false
   });
@@ -799,7 +801,7 @@ export default function VisualizadorUniversalEntidade({
                   </Badge>
                 </CardTitle>
                 <p className="text-sm text-slate-600 mt-1">
-                  {dadosBuscadosEOrdenados.length} de {(totalItemsCount || dadosBuscadosEOrdenados.length)} registros
+                  {dadosBuscadosEOrdenados.length} de {totalItemsCount > 0 ? totalItemsCount : '…'} registros
                 </p>
               </div>
             </div>
