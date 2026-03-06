@@ -895,7 +895,10 @@ export default function VisualizadorUniversalEntidade({
           {(isLoading || (colunaOrdenacao && isFetching)) ? (
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
-              <p className="text-slate-600">Carregando...</p>
+              <p className="text-slate-600">Carregando registros…</p>
+              {dados && dados.length > 0 && (
+                <p className="text-xs text-slate-500 mt-1">Mostrando dados em cache enquanto atualiza</p>
+              )}
             </div>
           ) : error ? (
             <div className="text-center py-12">
