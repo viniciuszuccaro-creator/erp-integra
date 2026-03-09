@@ -988,8 +988,12 @@ export default function VisualizadorUniversalEntidade({
                        const item = dadosBuscadosEOrdenados.find(i => i.id === row.id);
                        const items = [];
                        if (componenteVisualizacao) items.push({ key: 'ver', label: 'Ver', action: () => abrirVisualizacao(item) });
-                       if (componenteEdicao) items.push({ key: 'editar', label: 'Editar', action: () => abrirEdicao(item) });
-                       items.push({ key: 'excluir', label: 'Excluir', action: () => excluirSelecionadosIds([row.id]) });
+                       if (componenteEdicao && hasPermission(moduloPermissao, 'Cadastro', 'editar')) {
+                         items.push({ key: 'editar', label: 'Editar', action: () => abrirEdicao(item) });
+                       }
+                       if (hasPermission(moduloPermissao, 'Cadastro', 'excluir')) {
+                         items.push({ key: 'excluir', label: 'Excluir', action: () => excluirSelecionadosIds([row.id]) });
+                       }
                        return items;
                      }}
                      showBulkBar
