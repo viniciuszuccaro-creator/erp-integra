@@ -436,7 +436,7 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
         </Dialog>
       )}
 
-      {/* Chatbot integrado para abertura/consulta de chamados */
+      {/* Chatbot integrado para abertura/consulta de chamados */}
       <Dialog open={chatOpen} onOpenChange={setChatOpen}>
         <DialogContent className="max-w-3xl h-[80vh]">
           <DialogHeader>
