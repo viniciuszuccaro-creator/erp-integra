@@ -94,7 +94,17 @@ export default function ERPDataTable({
     return new Set();
   }, [selectedIds]);
 
-  const handleResize = (key, e) => {
+  // Debounce interno para filtros de coluna (reduz chamadas ao backend)
+  const [localFilters, setLocalFilters] = useState(columnFilters || {});
+  useEffect(() => { setLocalFilters(columnFilters || {}); }, [columnFilters]);
+  useEffect(() => {
+    const h = setTimeout(() => {
+      if (audited.onColumnFiltersChange) audited.onColumnFiltersChange(localFilters);
+    }, 400);
+    return () => clearTimeout(h);
+  }, [localFilters]);
+
+   const handleResize = (key, e) => {
     e.preventDefault();
     const startX = e.clientX;
     const th = headerRefs.current[key];
