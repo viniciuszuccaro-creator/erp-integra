@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { MessageSquare, Send, Loader2 } from 'lucide-react';
+import ChatbotPortal from './ChatbotPortal';
 
 export default function ChamadosWidget({ cliente }) {
   const qc = useQueryClient();
@@ -38,6 +39,7 @@ export default function ChamadosWidget({ cliente }) {
 
   return (
     <div className="space-y-3">
+      <ChatbotPortal cliente={cliente} />
       <Card>
         <CardContent className="p-4 space-y-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
