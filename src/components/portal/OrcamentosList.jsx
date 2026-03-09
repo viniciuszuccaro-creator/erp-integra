@@ -35,7 +35,7 @@ export default function OrcamentosList({ cliente }) {
             </div>
             <div className="text-sm text-muted-foreground">Valor: R$ {Number(p.valor_total || 0).toFixed(2)} • Validade: {p.data_validade || '—'}</div>
             <div className="flex gap-2">
-              <Button onClick={() => aceitar.mutate(p)} className="gap-2">
+              <Button onClick={() => aceitar.mutate(p)} disabled={!cliente?.pode_aprovar_orcamento_portal} className="gap-2">
                 <CheckCircle2 className="w-4 h-4" /> Aceitar
               </Button>
               <Button variant="outline" onClick={() => revisar.mutate(p)} className="gap-2">
