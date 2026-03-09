@@ -269,8 +269,8 @@ export default function ERPDataTable({
                   {enableColumnFilters && (
                     <div className="mt-1">
                       <input
-                        value={columnFilters[col.key] || ""}
-                        onChange={(e) => audited.onColumnFiltersChange && audited.onColumnFiltersChange({ ...columnFilters, [col.key]: e.target.value })}
+                        value={localFilters[col.key] || ""}
+                        onChange={(e) => setLocalFilters({ ...localFilters, [col.key]: e.target.value })}
                         className="w-full h-7 px-2 text-xs border rounded-sm"
                         placeholder={`Filtrar ${col.label}`}
                       />
