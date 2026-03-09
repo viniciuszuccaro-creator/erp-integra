@@ -843,7 +843,7 @@ export default function VisualizadorUniversalEntidade({
                 {allSelected ? 'Limpar' : 'Selecionar Todos'}
               </Button>
               <ProtectedAction module={moduloPermissao} action="excluir" mode="disable">
-                <Button variant="outline" size="sm" onClick={excluirSelecionados} disabled={selectedIds.size === 0} className="border-red-300 text-red-700" data-permission={`${moduloPermissao}.Cadastro.excluir`} data-sensitive>
+                <Button variant="outline" size="sm" onClick={excluirSelecionados} disabled={selectedIds.size === 0 || !hasPermission(moduloPermissao, 'Cadastro', 'excluir')} className="border-red-300 text-red-700" data-permission={`${moduloPermissao}.Cadastro.excluir`} data-sensitive>
                   <Trash2 className="w-4 h-4 mr-2" />
                   Excluir ({selectedIds.size})
                 </Button>
