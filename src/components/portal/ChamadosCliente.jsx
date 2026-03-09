@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Eye, MessageSquare, Star, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
+const ChatbotWidgetAvancado = React.lazy(() => import("@/components/chatbot/ChatbotWidgetAvancado"));
 
 /**
  * V21.5 - Chamados/Suporte Cliente COMPLETO
@@ -25,6 +26,7 @@ import { format } from "date-fns";
 export default function ChamadosCliente({ clienteId, clienteNome }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [chamadoSelecionado, setChamadoSelecionado] = useState(null);
+  const [chatOpen, setChatOpen] = useState(false);
   const [formChamado, setFormChamado] = useState({
     titulo: "",
     descricao: "",
@@ -156,7 +158,7 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button data-permission="Portal.Suporte.criar" className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />
               Novo Chamado
             </Button>
@@ -240,7 +242,14 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
             </form>
           </DialogContent>
         </Dialog>
-      </div>
+        <Button
+          variant="outline"
+          data-permission="Portal.Suporte.chat"
+          onClick={() => setChatOpen(true)}
+        >
+          Atendimento via Chat
+        </Button>
+        </div>
 
       <Card className="border-0 shadow-md w-full">
         <CardContent className="p-0 w-full overflow-x-auto">
@@ -426,6 +435,25 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Chatbot integrado para abertura/consulta de chamados */
+      <Dialog open={chatOpen} onOpenChange={setChatOpen}>
+        <DialogContent className="max-w-3xl h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Assistente de Suporte</DialogTitle>
+          </DialogHeader>
+          <div className="w-full h-full">
+            <Suspense fallback={<div className="w-full h-full bg-white/60 animate-pulse rounded" />}> 
+              <ChatbotWidgetAvancado
+                clienteId={clienteId}
+                canal="Portal-Suporte"
+                exibirBotaoFlutuante={false}
+                habilitarAvaliacao={true}
+              />
+            </Suspense>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,6 +104,7 @@ export default function AprovacaoComAssinatura({ clienteId }) {
       });
 
       // 3. Criar pedido automaticamente
+      const cli = await base44.entities.Cliente.filter({ id: clienteId }).then(r => r?.[0]);
       const pedido = await base44.entities.Pedido.create({
         numero_pedido: `PED${Date.now()}`,
         cliente_id: clienteId,
@@ -114,14 +116,52 @@ export default function AprovacaoComAssinatura({ clienteId }) {
         origem_pedido: 'Portal - Orçamento Aprovado',
         observacoes_publicas: `Pedido gerado a partir do orçamento ${orcamento.numero_orcamento} com assinatura eletrônica`,
         pode_ver_no_portal: true,
-        forma_pagamento: orcamento.condicoes_pagamento || 'À Vista'
+        forma_pagamento: orcamento.condicoes_pagamento || 'À Vista',
+        empresa_id: cli?.empresa_id || undefined,
+        group_id: cli?.group_id || undefined
       });
+
+      // 3.1 Workflow de aprovação por alçada
+      try {
+        await base44.functions.invoke('solicitacoesAprovacao', {
+          entity_name: 'Pedido',
+          entity_id: pedido.id,
+          valor: pedido.valor_total,
+          empresa_id: cli?.empresa_id || undefined,
+          group_id: cli?.group_id || undefined
+        });
+      } catch (_) {}
 
       // 4. Vincular pedido
       await base44.entities.OrcamentoCliente.update(orcamento.id, {
         pedido_gerado_id: pedido.id,
         status: 'Convertido'
       });
+
+      // 5. Auditoria e notificações
+      try {
+        await base44.entities.AuditLog.create({
+          acao: 'Aprovação', modulo: 'Portal', tipo_auditoria: 'entidade', entidade: 'OrcamentoCliente', registro_id: orcamento.id,
+          descricao: `Aceite de orçamento ${orcamento.numero_orcamento} com assinatura`,
+          dados_novos: { pedido_gerado_id: pedido.id, assinatura_url: file_url },
+          data_hora: new Date().toISOString(),
+          empresa_id: cli?.empresa_id || undefined,
+          group_id: cli?.group_id || undefined
+        });
+      } catch (_) {}
+      try {
+        await base44.functions.invoke('sendEmailProvider', {
+          to: orcamento.email_contato || orcamento.cliente_email || 'noreply@invalid.local',
+          subject: `Orçamento aprovado • ${orcamento.numero_orcamento}`,
+          body: `O orçamento ${orcamento.numero_orcamento} foi aprovado. Pedido ${pedido.numero_pedido} criado e aguarda aprovação.`
+        });
+      } catch (_) {}
+      try {
+        await base44.functions.invoke('whatsappSend', {
+          to: orcamento.whatsapp_contato || '',
+          message: `✅ Orçamento ${orcamento.numero_orcamento} aprovado. Pedido ${pedido.numero_pedido} gerado e aguardando aprovação.`
+        });
+      } catch (_) {}
 
       return { orcamento, pedido, assinaturaUrl: file_url };
     },
@@ -151,6 +191,7 @@ export default function AprovacaoComAssinatura({ clienteId }) {
       try { await queryClient.invalidateQueries({ queryKey: ['orcamentos-aprovados-flag'] }); } catch {}
 
       toast.success(`✅ Orçamento aprovado! Pedido ${pedido.numero_pedido} criado.`);
+      try { window.location.href = createPageUrl('PortalCliente?tab=meus-pedidos'); } catch (_) {}
     },
     onError: (error) => {
       toast.error('Erro ao aprovar orçamento: ' + error.message);
@@ -160,14 +201,35 @@ export default function AprovacaoComAssinatura({ clienteId }) {
   const rejeitarMutation = useMutation({
     mutationFn: async ({ orcamento, motivo }) => {
       await base44.entities.OrcamentoCliente.update(orcamento.id, {
-        status: 'Rejeitado',
-        motivo_rejeicao: motivo,
+        status: 'Revisao Solicitada',
+        comentario_revisao: motivo,
         data_aprovacao: new Date().toISOString()
       });
+      try {
+        await base44.entities.AuditLog.create({
+          acao: 'Edição', modulo: 'Portal', tipo_auditoria: 'entidade', entidade: 'OrcamentoCliente', registro_id: orcamento.id,
+          descricao: `Solicitação de revisão do orçamento ${orcamento.numero_orcamento}`,
+          dados_novos: { comentario_revisao: motivo }, data_hora: new Date().toISOString()
+        });
+      } catch (_) {}
+      try {
+        await base44.functions.invoke('sendEmailProvider', {
+          to: orcamento.email_contato || orcamento.cliente_email || 'noreply@invalid.local',
+          subject: `Revisão solicitada • ${orcamento.numero_orcamento}`,
+          body: `O cliente solicitou revisão do orçamento ${orcamento.numero_orcamento}.
+Motivo: ${motivo || 'Não informado'}`
+        });
+      } catch (_) {}
+      try {
+        await base44.functions.invoke('whatsappSend', {
+          to: orcamento.whatsapp_contato || '',
+          message: `⚠️ Revisão solicitada no orçamento ${orcamento.numero_orcamento}. Motivo: ${motivo || 'Não informado'}`
+        });
+      } catch (_) {}
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['orcamentos-aprovacao']);
-      toast.success('Orçamento rejeitado');
+      toast.success('Revisão solicitada');
     }
   });
 
@@ -274,6 +336,7 @@ export default function AprovacaoComAssinatura({ clienteId }) {
                     {/* Ações */}
                     <div className="flex gap-3">
                       <Button
+                        data-permission="Portal.Orcamentos.aprovar"
                         onClick={() => {
                           setOrcamentoSelecionado(orc);
                           setAssinaturaModal(true);
@@ -285,18 +348,19 @@ export default function AprovacaoComAssinatura({ clienteId }) {
                       </Button>
 
                       <Button
+                        data-permission="Portal.Orcamentos.revisar"
                         variant="outline"
                         onClick={() => {
-                          const motivo = prompt('Motivo da rejeição (opcional):');
+                          const motivo = prompt('Descreva os pontos a revisar (opcional):');
                           rejeitarMutation.mutate({ 
                             orcamento: orc, 
                             motivo: motivo || 'Não informado' 
                           });
                         }}
-                        className="border-2 border-red-300 hover:bg-red-50"
+                        className="border-2 border-amber-300 hover:bg-amber-50"
                       >
                         <XCircle className="w-5 h-5 mr-2" />
-                        Rejeitar
+                        Solicitar Revisão
                       </Button>
                     </div>
                   </CardContent>
@@ -430,6 +494,7 @@ export default function AprovacaoComAssinatura({ clienteId }) {
                 Cancelar
               </Button>
               <Button
+                data-permission="Portal.Orcamentos.aprovar"
                 onClick={handleAprovar}
                 disabled={aprovarMutation.isPending}
                 className="flex-1 bg-green-600 hover:bg-green-700"
