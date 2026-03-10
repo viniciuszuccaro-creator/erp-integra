@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 import { getUserAndPerfil, assertPermission, assertContextPresence } from './_lib/guard.js';
 
 Deno.serve(async (req) => {
@@ -43,10 +43,30 @@ Deno.serve(async (req) => {
         dados_propostos,
         justificativa,
         aprovador_id: aprovador_id || null,
-        perfil_aprovador_necessario: perfil_aprovador_necessario || null,
+        perfil_aprovador_necessario: 'Diretoria',
         status: 'pendente',
         data_solicitacao: new Date().toISOString()
       });
+
+      // Notificações (piloto rígido: diretores/admins)
+      try {
+        const admins = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
+        const assunto = `Aprovação pendente: ${tipo_solicitacao} • ${entidade_alvo} #${entidade_alvo_id}`;
+        const corpo = `Há uma solicitação de aprovação (perfil: Diretoria)\n\nEntidade: ${entidade_alvo} #${entidade_alvo_id}\nSolicitante: ${user.full_name || user.email}\nJustificativa: ${justificativa || '-'}\nEmpresa: ${empresa_id || '-'} / Grupo: ${group_id || '-'}\n\nAcesse o ERP para aprovar.`;
+        for (const adm of admins || []) {
+          if (adm?.email) {
+            try { await base44.functions.invoke('sendEmailProvider', { to: adm.email, subject: assunto, body: corpo }); } catch {}
+          }
+          // WhatsApp opcional via Colaborador vinculado
+          try {
+            const col = (await base44.asServiceRole.entities.Colaborador.filter({ vincular_a_usuario_id: adm.id }, undefined, 1))?.[0];
+            const numero = col?.whatsapp || col?.telefone;
+            if (numero) {
+              await base44.functions.invoke('whatsappSend', { to: numero, text: `Aprovação pendente: ${entidade_alvo} #${entidade_alvo_id}. Verifique seu e-mail.` });
+            }
+          } catch {}
+        }
+      } catch {}
 
       try {
         await base44.entities.AuditLog.create({
@@ -88,9 +108,13 @@ Deno.serve(async (req) => {
           }
         } catch {}
       }
-      if (!can) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
       const s = await base44.entities.SolicitacaoAprovacao.get(solicitacao_id);
+      if (!can) return Response.json({ error: 'Forbidden' }, { status: 403 });
+      // Política piloto rígida: se requerido Diretoria, somente admin pode aprovar
+      if (s?.perfil_aprovador_necessario === 'Diretoria' && user.role !== 'admin') {
+        return Response.json({ error: 'Apenas diretoria pode aprovar esta solicitação' }, { status: 403 });
+      }
       if (!s) return Response.json({ error: 'Solicitação não encontrada' }, { status: 404 });
 
       const novoStatus = action === 'approve' ? 'aprovado' : 'rejeitado';
