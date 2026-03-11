@@ -6,18 +6,48 @@ import { useQuery } from '@tanstack/react-query';
 
 export default function PageNotFound({}) {
     const location = useLocation();
-    const pageName = location.pathname.substring(1);
+    const segs = location.pathname.split('/').filter(Boolean);
+    const pageName = segs[segs.length - 1] || '';
 
-    // Redirecionamento inteligente: se rota desconhecida bater (case-insensitive) com páginas conhecidas, normaliza para o nome correto
+    // Redirecionamento inteligente: tenta normalizar rota desconhecida (case/acentos/hífens) e aliases comuns
     useEffect(() => {
         const known = [
             'Home','Dashboard','DashboardCorporativo','Relatorios','Agenda','CRM','Cadastros','Comercial','Estoque','Compras','Expedicao','Producao','ProducaoMobile','Financeiro','RH','Fiscal','Contratos','AdministracaoSistema','Documentacao','HubAtendimento','OrcamentoSite','PortalCliente','EntregasMobile'
         ];
-        const match = known.find(n => n.toLowerCase() === (pageName || '').toLowerCase());
-        if (match && ('/' + pageName) !== ('/' + match)) {
+        const normalize = (s) => (s || '')
+          .toString()
+          .trim()
+          .toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+          .replace(/[^a-z0-9]/g, ''); // remove separadores
+        const normMap = Object.fromEntries(known.map(k => [normalize(k), k]));
+        const alias = {
+          // Portal do Cliente
+          portal: 'PortalCliente',
+          portalcliente: 'PortalCliente',
+          portalclienteapp: 'PortalCliente',
+          clienteportal: 'PortalCliente',
+          portalclientearea: 'PortalCliente',
+          // Comercial
+          comercialvendas: 'Comercial',
+          vendas: 'Comercial',
+          // Estoque
+          estoquealmoxarifado: 'Estoque',
+          almoxarifado: 'Estoque',
+          // Expedição/Logística
+          expedicaologistica: 'Expedicao',
+          logistica: 'Expedicao',
+          // Financeiro/Fiscal
+          financeirocontabil: 'Financeiro',
+          fiscaltributario: 'Fiscal'
+        };
+        const norm = normalize(pageName);
+        let target = normMap[norm] || alias[norm];
+        if (!target && norm && norm.endsWith('cliente')) target = 'PortalCliente';
+        if (target && ('/' + pageName) !== ('/' + target)) {
             const qs = window.location.search || '';
             const hash = window.location.hash || '';
-            window.location.replace('/' + match + qs + hash);
+            window.location.replace('/' + target + qs + hash);
         }
     }, [pageName]);
 
