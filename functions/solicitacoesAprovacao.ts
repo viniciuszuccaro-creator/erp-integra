@@ -240,6 +240,7 @@ Deno.serve(async (req) => {
           perfil_aprovador_necessario: 'aprovar',
         });
         try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Criação', modulo: moduleName, entidade: 'SolicitacaoAprovacao', registro_id: rec.id, descricao: `Avaliação de aprovação criada (${entity_name} ${entity_id || ''})`, dados_novos: rec, data_hora: new Date().toISOString() }); } catch {}
+        try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: empresa_id || null, groupId: group_id || null, intent: 'aprovacao_pendente', vars: { entidade: entity_name, id: entity_id || 'novo', valor: valorBase } }); } catch {}
         try { await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId: empresa_id || null, assunto: 'Aprovação pendente', destinatario: user.email || 'noreply@local', mensagem: `Gerada solicitação de aprovação para ${entity_name} (${entity_id || 'novo'}), valor ${valorBase}.` }); } catch {}
         return Response.json({ required: true, solicitacao_id: rec.id });
       }
