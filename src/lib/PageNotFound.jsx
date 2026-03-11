@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -6,6 +7,19 @@ import { useQuery } from '@tanstack/react-query';
 export default function PageNotFound({}) {
     const location = useLocation();
     const pageName = location.pathname.substring(1);
+
+    // Redirecionamento inteligente: se rota desconhecida bater (case-insensitive) com páginas conhecidas, normaliza para o nome correto
+    useEffect(() => {
+        const known = [
+            'Home','Dashboard','DashboardCorporativo','Relatorios','Agenda','CRM','Cadastros','Comercial','Estoque','Compras','Expedicao','Producao','ProducaoMobile','Financeiro','RH','Fiscal','Contratos','AdministracaoSistema','Documentacao','HubAtendimento','OrcamentoSite','PortalCliente','EntregasMobile'
+        ];
+        const match = known.find(n => n.toLowerCase() === (pageName || '').toLowerCase());
+        if (match && ('/' + pageName) !== ('/' + match)) {
+            const qs = window.location.search || '';
+            const hash = window.location.hash || '';
+            window.location.replace('/' + match + qs + hash);
+        }
+    }, [pageName]);
 
     const { data: authData, isFetched } = useQuery({
         queryKey: ['user'],
