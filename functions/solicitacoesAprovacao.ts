@@ -34,6 +34,27 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({}));
     const { action } = payload || {};
 
+    // UPSERT approval policies (admin only)
+    if (action === 'upsertPolicy') {
+      if (user?.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
+      const { group_id, empresa_id, policies } = payload || {};
+      if (!policies || typeof policies !== 'object') {
+        return Response.json({ error: 'policies inválido' }, { status: 400 });
+      }
+      const filtro = { chave: 'aprovacao_politicas' };
+      if (empresa_id) filtro['empresa_id'] = empresa_id;
+      if (!empresa_id && group_id) filtro['group_id'] = group_id;
+      const existentes = await base44.entities.ConfiguracaoSistema.filter(filtro, undefined, 1);
+      let cfg;
+      if (existentes && existentes[0]) {
+        cfg = await base44.entities.ConfiguracaoSistema.update(existentes[0].id, { valor_json: policies });
+      } else {
+        cfg = await base44.entities.ConfiguracaoSistema.create({ ...filtro, valor_json: policies });
+      }
+      try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Edição', modulo: 'Sistema', entidade: 'ConfiguracaoSistema', registro_id: cfg.id, descricao: 'Atualização de políticas de aprovação', dados_novos: policies, data_hora: new Date().toISOString() }); } catch {}
+      return Response.json({ sucesso: true, id: cfg.id });
+    }
+
     // CREATE generic approval (alçada)
     if (action === 'create') {
       const { group_id, empresa_id, tipo_solicitacao, entidade_alvo, entidade_alvo_id, dados_propostos, justificativa, aprovador_id, perfil_aprovador_necessario } = payload;
