@@ -30,11 +30,6 @@ export default function ProtectedSection({
     if (isLoading) return;
     (async () => {
       if (!modulo) { setAllowedFinal(allowed); return; }
-      // Permitir visualização do shell quando não há empresa/grupo selecionado (evita 403 desnecessário)
-      if ((action === 'visualizar' || action === 'ver') && !(empresaAtual?.id || grupoAtual?.id)) {
-        setAllowedFinal(allowed);
-        return;
-      }
       try {
         const { data } = await base44.functions.invoke('entityGuard', {
           module: modulo,
@@ -73,10 +68,6 @@ export default function ProtectedSection({
     if (!isLoading && allowedFinal === false) setOpenDenied(true);
   }, [isLoading, allowedFinal]);
 
-  // Permitir shell de visualização quando não há empresa/grupo (somente visualizar)
-  if ((action === 'visualizar' || action === 'ver') && !(empresaAtual?.id || grupoAtual?.id)) {
-    if (isLoading || allowedFinal === null) return null;
-  }
   if (isLoading || allowedFinal === null) return null;
   if (!allowedFinal) {
     if (hideInstead) return fallback;
