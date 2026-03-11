@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -6,6 +7,18 @@ import { useQuery } from '@tanstack/react-query';
 export default function PageNotFound({}) {
     const location = useLocation();
     const pageName = location.pathname.substring(1);
+
+    // Redireciona automaticamente para a rota correta se a URL foi digitada em caixa diferente (evita 404)
+    const KNOWN_PAGES = [
+      'Home','Dashboard','DashboardCorporativo','Relatorios','Agenda','CRM','Cadastros','Comercial','Estoque','Compras','Expedicao','Producao','Financeiro','RH','Fiscal','Contratos','AdministracaoSistema','Documentacao','HubAtendimento','OrcamentoSite','PortalCliente','ProducaoMobile','EntregasMobile','Empresas'
+    ];
+    useEffect(() => {
+      const lc = (pageName || '').toLowerCase();
+      const target = KNOWN_PAGES.find(p => p.toLowerCase() === lc);
+      if (target && ('/' + target) !== location.pathname) {
+        window.location.replace('/' + target);
+      }
+    }, [pageName, location.pathname]);
 
     const { data: authData, isFetched } = useQuery({
         queryKey: ['user'],
