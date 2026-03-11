@@ -80,6 +80,8 @@ Deno.serve(async (req) => {
       });
 
       try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Criação', modulo: 'Comercial', entidade: 'SolicitacaoAprovacao', registro_id: record.id, descricao: `Solicitação (${tipo_solicitacao}) para ${entidade_alvo}#${entidade_alvo_id}`, dados_novos: record, data_hora: new Date().toISOString() }); } catch {}
+      try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: empresa_id || null, groupId: group_id || null, intent: 'aprovacao_criada', vars: { entidade: entidade_alvo, id: entidade_alvo_id || 'novo' } }); } catch {}
+      try { await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId: empresa_id || null, assunto: 'Aprovação criada', destinatario: user.email || 'noreply@local', mensagem: `Solicitação de aprovação (${tipo_solicitacao}) aberta para ${entidade_alvo} ${entidade_alvo_id || 'novo'}.` }); } catch {}
       return Response.json(record);
     }
 
