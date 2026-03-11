@@ -146,6 +146,103 @@ Deno.serve(async (req) => {
       return Response.json({ sucesso: true, pedido: updated });
     }
 
+    // EVALUATE approval by value and entity (políticas personalizadas)
+    if (action === 'evaluateApproval') {
+      const { entity_name, entity_id, valor, empresa_id, group_id, operation } = payload || {};
+      if (!entity_name || (!entity_id && (valor === undefined || valor === null))) {
+        return Response.json({ error: 'entity_name e (entity_id ou valor) são obrigatórios' }, { status: 400 });
+      }
+
+      const entityToModule = {
+        Pedido: 'Comercial', ContaReceber: 'Financeiro', ContaPagar: 'Financeiro', OrdemCompra: 'Compras',
+        NotaFiscal: 'Fiscal', MovimentacaoEstoque: 'Estoque'
+      };
+      const moduleName = entityToModule[entity_name] || 'Sistema';
+
+      // Deriva valor se não fornecido
+      let valorBase = valor;
+      try {
+        if (valorBase == null && entity_id) {
+          const api = base44.entities?.[entity_name];
+          const reg = api && api.get ? await api.get(entity_id) : null;
+          if (reg) {
+            if (entity_name === 'Pedido') valorBase = reg.valor_total;
+            else if (entity_name === 'ContaPagar' || entity_name === 'ContaReceber') valorBase = reg.valor;
+            else if (entity_name === 'OrdemCompra') valorBase = reg.valor_total;
+            else if (entity_name === 'NotaFiscal') valorBase = reg.valor_total || reg.valor_produtos || 0;
+          }
+        }
+      } catch {}
+      if (valorBase == null) valorBase = 0;
+
+      // Carrega políticas (empresa > grupo)
+      let politicas = null;
+      try {
+        const byEmpresa = empresa_id ? await base44.entities.ConfiguracaoSistema.filter({ chave: 'aprovacao_politicas', empresa_id }, undefined, 1) : [];
+        const byGrupo = (!byEmpresa?.length && group_id) ? await base44.entities.ConfiguracaoSistema.filter({ chave: 'aprovacao_politicas', group_id }, undefined, 1) : [];
+        const cfg = (byEmpresa?.[0] || byGrupo?.[0]) || null;
+        politicas = cfg?.valor_json || cfg?.politicas || null; // aceita tanto valor_json quanto politicas
+      } catch {}
+      const ranges = (politicas && politicas[entity_name]) || [];
+
+      // Encontra a faixa
+      const faixa = Array.isArray(ranges) ? ranges.find(r => {
+        const min = Number(r?.min ?? 0);
+        const max = (r?.max == null) ? Infinity : Number(r.max);
+        return valorBase >= min && valorBase <= max;
+      }) : null;
+
+      // Verifica se o usuário já pode aprovar (perfil com ação 'aprovar')
+      const canApprove = await hasPermission(base44, user, moduleName, entity_name, 'aprovar');
+
+      if (!faixa) {
+        // Sem política definida para este valor → se tem permissão, segue; caso contrário, cria pendência genérica
+        if (canApprove) {
+          return Response.json({ required: false, reason: 'sem_politica' });
+        }
+        const rec = await base44.entities.SolicitacaoAprovacao.create({
+          group_id: group_id || null,
+          empresa_id: empresa_id || null,
+          solicitante_id: user.id,
+          solicitante_nome: user.full_name || user.email,
+          tipo_solicitacao: 'aprovacao_valor',
+          entidade_alvo: entity_name,
+          entidade_alvo_id: entity_id || null,
+          dados_propostos: { operation: operation || 'execucao', valor: valorBase },
+          justificativa: 'Aprovação exigida por ausência de política explícita',
+          status: 'pendente',
+          data_solicitacao: new Date().toISOString(),
+          perfil_aprovador_necessario: 'aprovar',
+        });
+        try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Criação', modulo: moduleName, entidade: 'SolicitacaoAprovacao', registro_id: rec.id, descricao: `Avaliação de aprovação criada (${entity_name} ${entity_id || ''})`, dados_novos: rec, data_hora: new Date().toISOString() }); } catch {}
+        try { await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId: empresa_id || null, assunto: 'Aprovação pendente', destinatario: user.email || 'noreply@local', mensagem: `Gerada solicitação de aprovação para ${entity_name} (${entity_id || 'novo'}), valor ${valorBase}.` }); } catch {}
+        return Response.json({ required: true, solicitacao_id: rec.id });
+      }
+
+      // Há política → se não possui permissão, cria solicitação
+      if (!canApprove) {
+        const rec = await base44.entities.SolicitacaoAprovacao.create({
+          group_id: group_id || null,
+          empresa_id: empresa_id || null,
+          solicitante_id: user.id,
+          solicitante_nome: user.full_name || user.email,
+          tipo_solicitacao: 'aprovacao_valor',
+          entidade_alvo: entity_name,
+          entidade_alvo_id: entity_id || null,
+          dados_propostos: { operation: operation || 'execucao', valor: valorBase, faixa },
+          justificativa: faixa?.justificativa_padrao || 'Aprovação por valor',
+          status: 'pendente',
+          data_solicitacao: new Date().toISOString(),
+          perfil_aprovador_necessario: 'aprovar',
+        });
+        try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Criação', modulo: moduleName, entidade: 'SolicitacaoAprovacao', registro_id: rec.id, descricao: `Solicitação por valor (${valorBase}) para ${entity_name} ${entity_id || ''}`, dados_novos: rec, data_hora: new Date().toISOString() }); } catch {}
+        try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: empresa_id || null, groupId: group_id || null, intent: 'aprovacao_pendente', vars: { entidade: entity_name, id: entity_id || 'novo', valor: valorBase } }); } catch {}
+        return Response.json({ required: true, solicitacao_id: rec.id });
+      }
+
+      return Response.json({ required: false, faixa });
+    }
+
     // LIST approvals
     if (action === 'list') {
       const { status, tipo_solicitacao, group_id, empresa_id } = payload;
