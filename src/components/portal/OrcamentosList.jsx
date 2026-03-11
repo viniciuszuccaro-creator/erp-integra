@@ -15,12 +15,15 @@ export default function OrcamentosList({ cliente }) {
   });
 
   const aceitar = useMutation({
-    mutationFn: async (p) => base44.functions.invoke('approvals', { action: 'acceptBudget', entity_name: 'Pedido', entity_id: p.id }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['portal-orcamentos', cliente?.id] })
+    mutationFn: async (p) => base44.functions.invoke('solicitacoesAprovacao', { action: 'acceptBudget', pedido_id: p.id }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['portal-orcamentos', cliente?.id] });
+      try { window.dispatchEvent(new CustomEvent('portal:setTab', { detail: 'pedidos' })); } catch {}
+    }
   });
 
-  const revisar = useMutation({
-    mutationFn: async (p) => base44.functions.invoke('approvals', { action: 'request', entity_name: 'Pedido', entity_id: p.id, comments: 'Cliente solicitou revisão pelo Portal' }),
+  const solicitarRevisao = useMutation({
+    mutationFn: async ({ p, comment }) => base44.functions.invoke('solicitacoesAprovacao', { action: 'requestRevision', pedido_id: p.id, comments: comment || 'Cliente solicitou revisão pelo Portal' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['portal-orcamentos', cliente?.id] })
   });
 
@@ -38,7 +41,7 @@ export default function OrcamentosList({ cliente }) {
               <Button onClick={() => aceitar.mutate(p)} disabled={!cliente?.pode_aprovar_orcamento_portal} className="gap-2">
                 <CheckCircle2 className="w-4 h-4" /> Aceitar
               </Button>
-              <Button variant="outline" onClick={() => revisar.mutate(p)} className="gap-2">
+              <Button variant="outline" onClick={() => { const c = window.prompt('Descreva o que deseja revisar (opcional):', ''); solicitarRevisao.mutate({ p, comment: c }); }} className="gap-2">
                 <XCircle className="w-4 h-4" /> Solicitar Revisão
               </Button>
             </div>

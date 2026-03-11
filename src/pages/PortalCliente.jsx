@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -41,6 +41,17 @@ export default function PortalCliente() {
     }
   });
 
+  // Controle da aba ativa (permite redireciono pós-aceite)
+  const [tab, setTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') || 'pedidos';
+  });
+  useEffect(() => {
+    const handler = (e) => setTab(e.detail || 'pedidos');
+    window.addEventListener('portal:setTab', handler);
+    return () => window.removeEventListener('portal:setTab', handler);
+  }, []);
+
   if (!cliente) {
     return (
       <div className="w-full h-full p-4">
@@ -58,7 +69,7 @@ export default function PortalCliente() {
     <div className="w-full h-full p-4 space-y-4">
       <PortalHeader cliente={cliente} spotlight={spotlight} />
 
-      <Tabs defaultValue="pedidos" className="w-full h-full">
+      <Tabs value={tab} onValueChange={setTab} className="w-full h-full">
         <TabsList className="grid grid-cols-5 w-full">
           <TabsTrigger value="pedidos" className="flex items-center gap-2"><Package className="w-4 h-4" /> Pedidos</TabsTrigger>
           <TabsTrigger value="entregas" className="flex items-center gap-2"><Truck className="w-4 h-4" /> Entregas</TabsTrigger>

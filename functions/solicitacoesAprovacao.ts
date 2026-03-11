@@ -129,6 +129,98 @@ Deno.serve(async (req) => {
       return Response.json(updated);
     }
 
+    // Aceite do orçamento pelo cliente (Portal)
+    if (action === 'acceptBudget') {
+      const { pedido_id, comments } = payload;
+      if (!pedido_id) return Response.json({ error: 'pedido_id é obrigatório' }, { status: 400 });
+
+      // Validação: o usuário precisa ser dono (cliente vinculado via portal_usuario_id)
+      const pedido = await base44.entities.Pedido.get(pedido_id);
+      if (!pedido || (pedido?.tipo !== 'Orçamento')) return Response.json({ error: 'Orçamento inválido' }, { status: 404 });
+
+      // Garante que este user está associado ao cliente do pedido
+      const meusClientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id }, undefined, 20);
+      const isDono = Array.isArray(meusClientes) && meusClientes.some(c => c.id === pedido.cliente_id);
+      if (!isDono) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+      const updated = await base44.entities.Pedido.update(pedido_id, {
+        status_aprovacao: 'aprovado',
+        status: pedido.status === 'Rascunho' ? 'Aprovado' : pedido.status,
+        data_aprovacao: new Date().toISOString(),
+        observacoes_publicas: (pedido.observacoes_publicas ? (pedido.observacoes_publicas + '\n') : '') + `Aceito pelo cliente via Portal: ${user.full_name || user.email}${comments ? ' — ' + comments : ''}`
+      });
+
+      try { await base44.entities.AuditLog.create({
+        usuario: user.full_name || user.email,
+        usuario_id: user.id,
+        empresa_id: pedido.empresa_id || null,
+        group_id: pedido.group_id || null,
+        acao: 'Aprovação', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido_id,
+        descricao: 'Orçamento aceito pelo cliente no Portal', dados_anteriores: pedido, dados_novos: updated,
+        data_hora: new Date().toISOString()
+      }); } catch {}
+
+      // Notificações (melhor esforço)
+      try {
+        const vendedor = pedido.vendedor || 'Equipe Comercial';
+        const vars = { cliente: pedido.cliente_nome || '', pedido: pedido.numero_pedido || pedido.id, valor_total: pedido.valor_total };
+        await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: pedido.empresa_id || null, groupId: pedido.group_id || null, intent: 'orcamento_aceito', vars, pedidoId: pedido.id });
+        await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId: pedido.empresa_id || null, destinatario: (user.email || 'noreply@local'), assunto: `Orçamento #${pedido.numero_pedido || pedido.id} aceito`, mensagem: `Olá ${vendedor},\n\nO cliente aceitou o orçamento ${pedido.numero_pedido || pedido.id}.` });
+      } catch {}
+
+      return Response.json({ sucesso: true, pedido: updated });
+    }
+
+    // Solicitar revisão de orçamento pelo cliente (Portal)
+    if (action === 'requestRevision') {
+      const { pedido_id, comments } = payload;
+      if (!pedido_id) return Response.json({ error: 'pedido_id é obrigatório' }, { status: 400 });
+      const pedido = await base44.entities.Pedido.get(pedido_id);
+      if (!pedido || (pedido?.tipo !== 'Orçamento')) return Response.json({ error: 'Orçamento inválido' }, { status: 404 });
+      const meusClientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id }, undefined, 20);
+      const isDono = Array.isArray(meusClientes) && meusClientes.some(c => c.id === pedido.cliente_id);
+      if (!isDono) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+      const updated = await base44.entities.Pedido.update(pedido_id, {
+        status_aprovacao: 'pendente',
+        observacoes_publicas: (pedido.observacoes_publicas ? (pedido.observacoes_publicas + '\n') : '') + `Revisão solicitada pelo cliente via Portal: ${comments || ''}`
+      });
+
+      // Cria registro de solicitação para o time interno (opcional)
+      try {
+        await base44.entities.SolicitacaoAprovacao.create({
+          group_id: pedido.group_id || null,
+          empresa_id: pedido.empresa_id || null,
+          solicitante_id: user.id,
+          solicitante_nome: user.full_name || user.email,
+          tipo_solicitacao: 'orcamento_revisao',
+          entidade_alvo: 'Pedido',
+          entidade_alvo_id: pedido.id,
+          justificativa: comments || 'Cliente solicitou revisão via Portal',
+          status: 'pendente',
+          data_solicitacao: new Date().toISOString()
+        });
+      } catch {}
+
+      try { await base44.entities.AuditLog.create({
+        usuario: user.full_name || user.email,
+        usuario_id: user.id,
+        empresa_id: pedido.empresa_id || null,
+        group_id: pedido.group_id || null,
+        acao: 'Criação', modulo: 'Comercial', entidade: 'SolicitacaoAprovacao', registro_id: pedido.id,
+        descricao: 'Cliente solicitou revisão de orçamento via Portal', dados_novos: { pedido_id, comments },
+        data_hora: new Date().toISOString()
+      }); } catch {}
+
+      try {
+        const vars = { cliente: pedido.cliente_nome || '', pedido: pedido.numero_pedido || pedido.id };
+        await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: pedido.empresa_id || null, groupId: pedido.group_id || null, intent: 'orcamento_revisao', vars, pedidoId: pedido.id });
+        await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId: pedido.empresa_id || null, destinatario: (user.email || 'noreply@local'), assunto: `Revisão solicitada • Orçamento #${pedido.numero_pedido || pedido.id}`, mensagem: `O cliente solicitou revisão do orçamento ${pedido.numero_pedido || pedido.id}. Comentários: ${comments || ''}` });
+      } catch {}
+
+      return Response.json({ sucesso: true, pedido: updated });
+    }
+
     if (action === 'list') {
       const { status, tipo_solicitacao, group_id, empresa_id } = payload;
 
