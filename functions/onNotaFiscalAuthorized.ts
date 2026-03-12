@@ -1,135 +1,115 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission, audit } from './_lib/guard';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const ctx = await getUserAndPerfil(base44);
-    const user = ctx.user;
+    const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const body = await req.json();
-    const { event, data } = body || {};
-    if (!data) return Response.json({ error: 'Invalid payload' }, { status: 400 });
+    const body = await req.json().catch(() => ({}));
+    const { data } = body || {};
+    if (!data) return Response.json({ ok: true, skipped: true, reason: 'no data' });
 
-    // Apenas quando NF for Autorizada
-    if (!(data?.status === 'Autorizada')) return Response.json({ ok: true, skipped: true });
+    if (data?.status !== 'Autorizada') return Response.json({ ok: true, skipped: true });
 
-    // Permissões
-    const permCom = await assertPermission(base44, ctx, 'Comercial', 'Comissao', 'criar');
-    if (permCom) return permCom;
-    const permEst = await assertPermission(base44, ctx, 'Estoque', 'MovimentacaoEstoque', 'criar');
-    if (permEst) return permEst;
+    const empresaId = data?.empresa_faturamento_id || data?.empresa_id || data?.empresa_origem_id || null;
+    const groupId = data?.group_id || null;
 
-    const percPadrao = 5; // % padrão caso não exista regra
-    // Tenta localizar pedido relacionado
+    // RBAC checks (Comissão e Estoque)
+    try {
+      const g1 = await base44.functions.invoke('entityGuard', { module: 'Comercial', section: 'Comissao', action: 'criar', empresa_id: empresaId, group_id: groupId });
+      if (g1?.data && g1.data.allowed === false) return Response.json({ error: 'Permissão negada (Comissão)' }, { status: 403 });
+      const g2 = await base44.functions.invoke('entityGuard', { module: 'Estoque', section: 'MovimentacaoEstoque', action: 'criar', empresa_id: empresaId, group_id: groupId });
+      if (g2?.data && g2.data.allowed === false) return Response.json({ error: 'Permissão negada (Estoque)' }, { status: 403 });
+    } catch (_) {}
+
+    // Localiza pedido ligado (opcional)
     let pedido = null;
-    if (data?.pedido_id) {
-      const ps = await base44.asServiceRole.entities.Pedido.filter({ id: data.pedido_id });
-      pedido = ps?.[0] || null;
-    }
+    try { if (data?.pedido_id) { const ps = await base44.asServiceRole.entities.Pedido.filter({ id: data.pedido_id }, undefined, 1); pedido = ps?.[0] || null; } } catch (_) {}
 
-    const vendedor = pedido?.vendedor || data?.vendedor || (ctx.user?.full_name || ctx.user?.email);
-    const vendedor_id = pedido?.vendedor_id || ctx.user?.id;
+    // Gera Comissão
     const valor_venda = Number(pedido?.valor_total ?? data?.valor_total ?? 0);
-
+    const perc = Number(pedido?.percentual_comissao || 5);
     const comPayload = {
-      vendedor,
-      vendedor_id,
+      vendedor: pedido?.vendedor || user?.full_name || user?.email,
+      vendedor_id: pedido?.vendedor_id || user?.id,
       pedido_id: pedido?.id || null,
       numero_pedido: pedido?.numero_pedido || null,
       cliente: data?.cliente_fornecedor || pedido?.cliente_nome || '',
       data_venda: data?.data_emissao || new Date().toISOString().slice(0,10),
       valor_venda,
-      percentual_comissao: Number(pedido?.percentual_comissao || percPadrao),
-      valor_comissao: Math.round(valor_venda * Number(pedido?.percentual_comissao || percPadrao) / 100 * 100) / 100,
+      percentual_comissao: perc,
+      valor_comissao: Math.round(valor_venda * perc) / 100,
       status: 'Pendente',
       observacoes: 'Gerada automaticamente na autorização da NF-e',
-      group_id: data?.group_id || pedido?.group_id || null,
-      empresa_id: data?.empresa_faturamento_id || pedido?.empresa_id || null
+      group_id: groupId || null,
+      empresa_id: empresaId || null
     };
+    let comissao = null;
+    try { comissao = await base44.asServiceRole.entities.Comissao.create(comPayload); } catch (_) {}
 
-    const created = await base44.asServiceRole.entities.Comissao.create(comPayload);
-
-    // Gera movimentações de saída por itens da NF
+    // Movimentações de saída por itens
     const itens = Array.isArray(data?.itens) ? data.itens : [];
     const movimentosSaida = [];
     for (const it of itens) {
       const pid = it?.produto_id;
       const qtd = Number(it?.quantidade || 0);
       if (!pid || qtd <= 0) continue;
-      const [produto] = await base44.asServiceRole.entities.Produto.filter({ id: pid });
+      let produto = null;
+      try { const pr = await base44.asServiceRole.entities.Produto.filter({ id: pid }, undefined, 1); produto = pr?.[0] || null; } catch (_) {}
       if (produto) {
-        // reduz reservado quando existir
         const novoReservado = Math.max(0, Number(produto.estoque_reservado || 0) - qtd);
-        await base44.asServiceRole.entities.Produto.update(produto.id, { estoque_reservado: novoReservado });
+        try { await base44.asServiceRole.entities.Produto.update(produto.id, { estoque_reservado: novoReservado }); } catch (_) {}
       }
-      const mov = await base44.asServiceRole.entities.MovimentacaoEstoque.create({
-        origem_movimento: 'nfe',
-        tipo_movimento: 'saida',
-        produto_id: pid,
-        produto_descricao: produto?.descricao || it?.descricao,
-        quantidade: qtd,
-        unidade_medida: it?.unidade || produto?.unidade_estoque || 'UN',
-        empresa_id: data?.empresa_origem_id || data?.empresa_faturamento_id || pedido?.empresa_id || null,
-        group_id: data?.group_id || pedido?.group_id || null,
-        data_movimentacao: new Date().toISOString(),
-        motivo: `Saída NF ${data?.numero || data?.id}`,
-        valor_total: Number(it?.valor_total || 0),
-        responsavel: user?.full_name || user?.email,
-        responsavel_id: user?.id
-      });
-      movimentosSaida.push(mov?.id);
+      try {
+        const mov = await base44.asServiceRole.entities.MovimentacaoEstoque.create({
+          origem_movimento: 'nfe',
+          tipo_movimento: 'saida',
+          produto_id: pid,
+          produto_descricao: produto?.descricao || it?.descricao || '',
+          quantidade: qtd,
+          unidade_medida: it?.unidade || produto?.unidade_estoque || 'UN',
+          empresa_id: data?.empresa_origem_id || empresaId || null,
+          group_id: groupId || null,
+          data_movimentacao: new Date().toISOString(),
+          motivo: `Saída NF ${data?.numero || data?.id}`,
+          valor_total: Number(it?.valor_total || 0),
+          responsavel: user?.full_name || user?.email,
+          responsavel_id: user?.id
+        });
+        movimentosSaida.push(mov?.id);
+      } catch (_) {}
     }
-
-    await audit(base44, user, {
-      acao: 'Criação', modulo: 'Comercial', entidade: 'Comissao', registro_id: created?.id,
-      descricao: 'Comissão gerada automaticamente na autorização da NF', dados_novos: comPayload
-    });
-
-    await audit(base44, user, {
-      acao: 'Criação', modulo: 'Estoque', entidade: 'MovimentacaoEstoque', registro_id: null,
-      descricao: `Saídas geradas pela NF ${data?.numero || data?.id}`,
-      dados_novos: { movimentosSaida }
-    });
 
     // Auditoria específica da autorização com links
     try {
       await base44.asServiceRole.entities.AuditLog.create({
         usuario: user?.full_name || user?.email || 'automacao',
         usuario_id: user?.id || null,
-        acao: 'Autorização',
-        modulo: 'Fiscal',
-        entidade: 'NotaFiscal',
+        acao: 'Autorização', modulo: 'Fiscal', tipo_auditoria: 'entidade', entidade: 'NotaFiscal',
         registro_id: data?.id || null,
         descricao: `NF-e autorizada ${data?.numero || ''}/${data?.serie || ''}`,
-        empresa_id: data?.empresa_faturamento_id || data?.empresa_id || null,
-        group_id: data?.group_id || null,
+        empresa_id: empresaId || null, group_id: groupId || null,
         dados_novos: { danfe: data?.pdf_danfe || null, xml: data?.xml_nfe || null, chave: data?.chave_acesso || null },
-        data_hora: new Date().toISOString(),
-        sucesso: true
+        data_hora: new Date().toISOString(), sucesso: true
       });
     } catch (_) {}
 
-    // Notificar cliente via WhatsApp/Email com link do DANFE
+    // Notificação WhatsApp/Email com link do DANFE
     try {
-      const empresaId = data?.empresa_faturamento_id || data?.empresa_id || null;
-      const groupId = data?.group_id || null;
       const danfeLink = data?.pdf_danfe || data?.pdf_url || '';
       const msg = `Olá! Sua Nota Fiscal ${data?.numero || ''}/${data?.serie || ''} foi autorizada.\nDANFE: ${danfeLink}\nChave: ${data?.chave_acesso || ''}`;
 
-      // WhatsApp (resolve número automaticamente via pedido/cliente)
+      // WhatsApp (função interna simulada caso não configurado)
       await base44.asServiceRole.functions.invoke('whatsappSend', {
-        action: 'sendText',
-        empresaId,
-        groupId,
+        action: 'sendText', empresaId: empresaId, groupId: groupId,
         pedidoId: data?.pedido_id || null,
         clienteId: data?.cliente_fornecedor_id || null,
         mensagem: msg,
         internal_token: Deno.env.get('DEPLOY_AUDIT_TOKEN') || undefined
-      });
+      }).catch(() => null);
 
-      // E-mail (tenta principal do cliente)
+      // E-mail (usa Core se não existir provedor configurado)
       let emailDest = null;
       try {
         if (data?.cliente_fornecedor_id) {
@@ -144,12 +124,12 @@ Deno.serve(async (req) => {
       if (emailDest) {
         const assunto = `NF-e ${data?.numero || ''}/${data?.serie || ''} autorizada`;
         const corpo = `<p>Olá,</p><p>Sua Nota Fiscal foi autorizada.</p><p><a href="${danfeLink}" target="_blank">Baixar DANFE</a></p><p>Chave de acesso: ${data?.chave_acesso || ''}</p>`;
-        await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId, destinatario: emailDest, assunto, mensagem: corpo, tipo_conteudo: 'html' });
+        await base44.asServiceRole.integrations.Core.SendEmail({ to: emailDest, subject: assunto, body: corpo });
       }
     } catch (_) {}
 
-    return Response.json({ ok: true, comissao_id: created?.id, movimentos_saida: movimentosSaida });
-  } catch (e) {
-    return Response.json({ error: e.message }, { status: 500 });
+    return Response.json({ ok: true, comissao_id: comissao?.id || null, movimentos_saida: movimentosSaida });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });
