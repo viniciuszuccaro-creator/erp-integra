@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission, assertContextPresence, audit, ensureContextFields } from './_lib/guard.js';
-import { getFiscalConfig } from './_lib/fiscalConfig.js';
-import { emitirENotas, statusENotas } from './_lib/nfeEnotas.js';
+import { getUserAndPerfil, assertPermission, assertContextPresence, audit, ensureContextFields } from './_lib/guard';
+import { getFiscalConfig } from './_lib/fiscalConfig';
+import { emitirENotas, statusENotas } from './_lib/nfeEnotas';
 
 
 

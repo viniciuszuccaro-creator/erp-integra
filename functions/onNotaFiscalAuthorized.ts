@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission, audit } from './_lib/guard.js';
+import { getUserAndPerfil, assertPermission, audit } from './_lib/guard';
 
 Deno.serve(async (req) => {
   try {
