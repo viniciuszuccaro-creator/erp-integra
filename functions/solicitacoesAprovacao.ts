@@ -34,6 +34,29 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({}));
     const { action } = payload || {};
 
+    // Auto-evaluate when called by entity automation (event + data)
+    if (payload?.event && payload?.data) {
+      try {
+        const ev = payload.event;
+        const d = payload.data;
+        const entity_name = ev?.entity_name || null;
+        const entity_id = ev?.entity_id || d?.id || null;
+        const empresa_id = d?.empresa_id || d?.empresa_faturamento_id || null;
+        const group_id = d?.group_id || null;
+        let valor = null;
+        if (entity_name === 'ContaPagar') valor = d?.valor;
+        else if (entity_name === 'NotaFiscal') valor = d?.valor_total ?? d?.valor_produtos ?? 0;
+        else if (entity_name === 'ContaReceber') valor = d?.valor;
+        else if (entity_name === 'Pedido') valor = d?.valor_total;
+        const r = await base44.asServiceRole.functions.invoke('solicitacoesAprovacao', {
+          action: 'evaluateApproval', entity_name, entity_id, valor, empresa_id, group_id, operation: 'auto'
+        });
+        return Response.json(r?.data || { success: true });
+      } catch (e) {
+        return Response.json({ error: e.message }, { status: 500 });
+      }
+    }
+
     // UPSERT approval policies (admin only)
     if (action === 'upsertPolicy') {
       if (user?.role !== 'admin') return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -240,8 +263,21 @@ Deno.serve(async (req) => {
           perfil_aprovador_necessario: 'aprovar',
         });
         try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Criação', modulo: moduleName, entidade: 'SolicitacaoAprovacao', registro_id: rec.id, descricao: `Avaliação de aprovação criada (${entity_name} ${entity_id || ''})`, dados_novos: rec, data_hora: new Date().toISOString() }); } catch {}
+        // Notifica solicitante
         try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: empresa_id || null, groupId: group_id || null, intent: 'aprovacao_pendente', vars: { entidade: entity_name, id: entity_id || 'novo', valor: valorBase } }); } catch {}
         try { await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId: empresa_id || null, assunto: 'Aprovação pendente', destinatario: user.email || 'noreply@local', mensagem: `Gerada solicitação de aprovação para ${entity_name} (${entity_id || 'novo'}), valor ${valorBase}.` }); } catch {}
+        // Notifica gestores (configuração por empresa/grupo: chave 'gestores_financeiros')
+        try {
+          const cfgEmp = empresa_id ? await base44.entities.ConfiguracaoSistema.filter({ chave: 'gestores_financeiros', empresa_id }, undefined, 1) : [];
+          const cfgGrp = (!cfgEmp?.length && group_id) ? await base44.entities.ConfiguracaoSistema.filter({ chave: 'gestores_financeiros', group_id }, undefined, 1) : [];
+          const gestores = (cfgEmp?.[0]?.valor_json || cfgGrp?.[0]?.valor_json || []);
+          if (Array.isArray(gestores)) {
+            for (const g of gestores) {
+              if (g?.whatsapp) { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: empresa_id || null, groupId: group_id || null, numero: String(g.whatsapp), mensagem: `Aprovação pendente: ${entity_name} ${entity_id || 'novo'} • Valor: R$ ${Number(valorBase).toLocaleString('pt-BR',{minimumFractionDigits:2})}` }); }
+              if (g?.email) { await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId: empresa_id || null, destinatario: g.email, assunto: 'Aprovação pendente', mensagem: `Existe uma solicitação de aprovação para ${entity_name} (${entity_id || 'novo'}) no valor de R$ ${Number(valorBase).toLocaleString('pt-BR',{minimumFractionDigits:2})}.` }); }
+            }
+          }
+        } catch {}
         return Response.json({ required: true, solicitacao_id: rec.id });
       }
 
@@ -262,7 +298,20 @@ Deno.serve(async (req) => {
           perfil_aprovador_necessario: 'aprovar',
         });
         try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: empresa_id || null, group_id: group_id || null, acao: 'Criação', modulo: moduleName, entidade: 'SolicitacaoAprovacao', registro_id: rec.id, descricao: `Solicitação por valor (${valorBase}) para ${entity_name} ${entity_id || ''}`, dados_novos: rec, data_hora: new Date().toISOString() }); } catch {}
+        // Notifica solicitante
         try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: empresa_id || null, groupId: group_id || null, intent: 'aprovacao_pendente', vars: { entidade: entity_name, id: entity_id || 'novo', valor: valorBase } }); } catch {}
+        // Notifica gestores
+        try {
+          const cfgEmp = empresa_id ? await base44.entities.ConfiguracaoSistema.filter({ chave: 'gestores_financeiros', empresa_id }, undefined, 1) : [];
+          const cfgGrp = (!cfgEmp?.length && group_id) ? await base44.entities.ConfiguracaoSistema.filter({ chave: 'gestores_financeiros', group_id }, undefined, 1) : [];
+          const gestores = (cfgEmp?.[0]?.valor_json || cfgGrp?.[0]?.valor_json || []);
+          if (Array.isArray(gestores)) {
+            for (const g of gestores) {
+              if (g?.whatsapp) { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: empresa_id || null, groupId: group_id || null, numero: String(g.whatsapp), mensagem: `Aprovação pendente: ${entity_name} ${entity_id || 'novo'} • Valor: R$ ${Number(valorBase).toLocaleString('pt-BR',{minimumFractionDigits:2})}` }); }
+              if (g?.email) { await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId: empresa_id || null, destinatario: g.email, assunto: 'Aprovação pendente', mensagem: `Existe uma solicitação de aprovação para ${entity_name} (${entity_id || 'novo'}) no valor de R$ ${Number(valorBase).toLocaleString('pt-BR',{minimumFractionDigits:2})}.` }); }
+            }
+          }
+        } catch {}
         return Response.json({ required: true, solicitacao_id: rec.id });
       }
 
