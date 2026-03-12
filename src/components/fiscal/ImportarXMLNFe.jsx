@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Upload, XCircle, AlertTriangle, Building2, TrendingUp } from 'lucide-react';
+import { Upload, XCircle, AlertTriangle, Building2, TrendingUp, FileText } from 'lucide-react';
 import ResumoNFeCard from './importar-xml/ResumoNFeCard';
 import ItensTabela from './importar-xml/ItensTabela';
 import DuplicatasTabela from './importar-xml/DuplicatasTabela';
