@@ -1,6 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { jsPDF } from 'npm:jspdf@4.0.0';
-import { getUserAndPerfil, assertPermission, assertContextPresence, audit } from './_lib/guard.js';
 
 Deno.serve(async (req) => {
   try {
@@ -11,7 +10,7 @@ Deno.serve(async (req) => {
     }
 
     const { conta_receber_id, forma_cobranca, projeto_obra, simular } = await req.json();
-    const { user: me, perfil } = await getUserAndPerfil(base44);
+    const me = await base44.auth.me();
     if (!conta_receber_id) {
       return Response.json({ error: 'conta_receber_id é obrigatório' }, { status: 400 });
     }
@@ -32,14 +31,24 @@ Deno.serve(async (req) => {
     } catch (_) {}
 
     if (!isPortalSelfAccess) {
-      const denied = await assertPermission(base44, { user: me, perfil }, 'Financeiro', 'ContaReceber', 'emitir');
-      if (denied) return denied;
+      try {
+        const guard = await base44.asServiceRole.functions.invoke('entityGuard', {
+          module: 'Financeiro', section: 'ContaReceber', action: 'emitir',
+          empresa_id: cr.empresa_id || null, group_id: cr.group_id || null,
+        });
+        if (guard?.data && guard.data.allowed === false) {
+          return Response.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      } catch (_) { /* se indisponível, segue padrão permissivo apenas para admins */
+        if (me?.role !== 'admin') {
+          return Response.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      }
     }
 
     // Contexto multiempresa obrigatório
-    {
-      const ctxErr = assertContextPresence({ empresa_id: cr.empresa_id }, true);
-      if (ctxErr) return ctxErr;
+    if (!cr.empresa_id) {
+      return Response.json({ error: 'empresa_id ausente no título' }, { status: 400 });
     }
     // Integração real: Asaas / Juno (quando configurado)
     try {
@@ -78,7 +87,14 @@ Deno.serve(async (req) => {
                 status_cobranca: 'gerada',
                 data_envio_cobranca: new Date().toISOString()
               });
-              await audit(base44, me, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: conta_receber_id, descricao: `Cobrança criada via Asaas (${billingType})`, empresa_id: cr.empresa_id || null, dados_novos: { external_id: j?.id, billingType } });
+              await base44.asServiceRole.entities.AuditLog.create({
+                usuario: me?.full_name || me?.email || 'Usuário', usuario_id: me?.id || null,
+                acao: 'Criação', modulo: 'Financeiro', tipo_auditoria: 'entidade',
+                entidade: 'ContaReceber', registro_id: conta_receber_id,
+                descricao: `Cobrança criada via Asaas (${billingType})`,
+                empresa_id: cr.empresa_id || null, group_id: cr.group_id || null,
+                dados_novos: { external_id: j?.id, billingType }, data_hora: new Date().toISOString()
+              });
               return Response.json({ url: pdf || j?.invoiceUrl || null, provider: 'Asaas', id: j?.id });
             }
           }
@@ -107,7 +123,13 @@ Deno.serve(async (req) => {
               status_cobranca: 'gerada',
               data_envio_cobranca: new Date().toISOString()
             });
-            await audit(base44, me, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: conta_receber_id, descricao: 'Boleto criado via Juno', empresa_id: cr.empresa_id || null, dados_novos: { external_id: ch?.id } });
+            await base44.asServiceRole.entities.AuditLog.create({
+              usuario: me?.full_name || me?.email || 'Usuário', usuario_id: me?.id || null,
+              acao: 'Criação', modulo: 'Financeiro', tipo_auditoria: 'entidade',
+              entidade: 'ContaReceber', registro_id: conta_receber_id,
+              descricao: 'Boleto criado via Juno', empresa_id: cr.empresa_id || null, group_id: cr.group_id || null,
+              dados_novos: { external_id: ch?.id }, data_hora: new Date().toISOString()
+            });
             return Response.json({ url: pdf, provider: 'Juno', id: ch?.id });
           }
         }
@@ -161,7 +183,15 @@ Deno.serve(async (req) => {
     });
 
     // Auditoria
-    await audit(base44, me, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: conta_receber_id, descricao: 'Boleto PDF emitido e URL assinada gerada', empresa_id: cr.empresa_id || null, dados_novos: { forma_cobranca: forma_cobranca||cr.forma_cobranca||'Boleto', projeto_obra: projeto_obra||cr.projeto_obra||null, gateway: { nome: 'Boleto (Simulado)', id: 'simulado', provedor: 'boleto_simulado' } } });
+    await base44.asServiceRole.entities.AuditLog.create({
+      usuario: me?.full_name || me?.email || 'Usuário', usuario_id: me?.id || null,
+      acao: 'Criação', modulo: 'Financeiro', tipo_auditoria: 'entidade',
+      entidade: 'ContaReceber', registro_id: conta_receber_id,
+      descricao: 'Boleto PDF emitido e URL assinada gerada',
+      empresa_id: cr.empresa_id || null, group_id: cr.group_id || null,
+      dados_novos: { forma_cobranca: forma_cobranca||cr.forma_cobranca||'Boleto', projeto_obra: projeto_obra||cr.projeto_obra||null, gateway: { nome: 'Boleto (Simulado)', id: 'simulado', provedor: 'boleto_simulado' } },
+      data_hora: new Date().toISOString()
+    });
 
     return Response.json({ url: signedUrl });
   } catch (error) {
