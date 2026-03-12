@@ -11,6 +11,7 @@ import EntregasList from '../components/portal/EntregasList';
 import BoletosList from '../components/portal/BoletosList';
 import ChamadosWidget from '../components/portal/ChamadosWidget';
 import OrcamentosList from '../components/portal/OrcamentosList';
+import DownloadsDocumentos from '../components/portal/DownloadsDocumentos';
 
 export default function PortalCliente() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -28,6 +29,12 @@ export default function PortalCliente() {
       const list = await base44.entities.Cliente.filter({ portal_usuario_id: user.id }, '-updated_date', 1);
       return list?.[0] || null;
     }
+  });
+
+  const { data: notasFiscais = [] } = useQuery({
+    queryKey: ['portal-nfs', cliente?.id],
+    enabled: !!cliente?.id,
+    queryFn: async () => base44.entities.NotaFiscal.filter({ cliente_fornecedor_id: cliente.id }, '-data_emissao', 100)
   });
 
   const { data: spotlight } = useQuery({
@@ -70,12 +77,13 @@ export default function PortalCliente() {
       <PortalHeader cliente={cliente} spotlight={spotlight} />
 
       <Tabs value={tab} onValueChange={setTab} className="w-full h-full">
-        <TabsList className="grid grid-cols-5 w-full">
+        <TabsList className="grid grid-cols-6 w-full">
           <TabsTrigger value="pedidos" className="flex items-center gap-2"><Package className="w-4 h-4" /> Pedidos</TabsTrigger>
           <TabsTrigger value="entregas" className="flex items-center gap-2"><Truck className="w-4 h-4" /> Entregas</TabsTrigger>
           <TabsTrigger value="boletos" className="flex items-center gap-2"><Receipt className="w-4 h-4" /> 2ª Via</TabsTrigger>
           <TabsTrigger value="chamados" className="flex items-center gap-2"><MessageSquare className="w-4 h-4" /> Suporte</TabsTrigger>
           <TabsTrigger value="orcamentos" className="flex items-center gap-2"><FileText className="w-4 h-4" /> Orçamentos</TabsTrigger>
+          <TabsTrigger value="documentos" className="flex items-center gap-2"><FileText className="w-4 h-4" /> Documentos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pedidos" className="mt-4"><PedidosList cliente={cliente} /></TabsContent>
@@ -83,6 +91,7 @@ export default function PortalCliente() {
         <TabsContent value="boletos" className="mt-4"><BoletosList cliente={cliente} /></TabsContent>
         <TabsContent value="chamados" className="mt-4"><ChamadosWidget cliente={cliente} /></TabsContent>
         <TabsContent value="orcamentos" className="mt-4"><OrcamentosList cliente={cliente} /></TabsContent>
+        <TabsContent value="documentos" className="mt-4"><DownloadsDocumentos clienteId={cliente.id} notasFiscais={notasFiscais} /></TabsContent>
       </Tabs>
 
       {spotlight?.raw && (

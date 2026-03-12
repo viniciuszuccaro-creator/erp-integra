@@ -1,17 +1,23 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Receipt, Clipboard } from 'lucide-react';
 
 export default function BoletosList({ cliente }) {
+  const qc = useQueryClient();
   const { data: boletos = [] } = useQuery({
     queryKey: ['portal-boletos', cliente?.id],
     enabled: !!cliente?.id,
     queryFn: async () => {
       return base44.entities.ContaReceber.filter({ cliente_id: cliente.id, visivel_no_portal: true }, '-data_vencimento', 100);
     }
+  });
+
+  const emitir = useMutation({
+    mutationFn: async (id) => base44.functions.invoke('emitirBoleto', { conta_receber_id: id }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['portal-boletos', cliente?.id] })
   });
 
   return (
@@ -35,6 +41,14 @@ export default function BoletosList({ cliente }) {
                     <Clipboard className="w-3.5 h-3.5" /> Copiar PIX
                   </Button>
                 )}
+                <Button
+                  size="sm"
+                  onClick={() => emitir.mutate(b.id)}
+                  disabled={emitir.isPending}
+                  className="h-8"
+                >
+                  {emitir.isPending ? 'Gerando 2ª via...' : (b.url_boleto_pdf ? 'Gerar 2ª via' : 'Emitir 2ª via')}
+                </Button>
               </div>
             </div>
           </CardContent>
