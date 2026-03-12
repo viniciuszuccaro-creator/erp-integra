@@ -1,7 +1,5 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { AlertTriangle } from "lucide-react";
 
 export default function PedidoHeader({ formData, pedido }) {
@@ -13,11 +11,7 @@ export default function PedidoHeader({ formData, pedido }) {
             <h2 className="text-xl font-semibold text-slate-900">
               {pedido ? 'Editar Pedido' : 'Novo Pedido'}
             </h2>
-            {pedido?.numero_pedido && (
-              <Badge variant="outline" className="text-xs">#{pedido.numero_pedido}</Badge>
-            )}
           </div>
-          <p className="text-xs text-slate-600">V21.1.2-R1 • 9 Abas • Multi-instância • Histórico</p>
         </div>
         <div className="flex items-center gap-3">
           <Badge className={
@@ -39,13 +33,6 @@ export default function PedidoHeader({ formData, pedido }) {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex justify-between text-xs text-slate-600">
-          <span>Progresso do Pedido</span>
-          <span>{Math.round(formData.percentual_conclusao_wizard || 0)}%</span>
-        </div>
-        <Progress value={formData.percentual_conclusao_wizard || 0} className="h-2" />
-      </div>
     </div>
   );
 }
