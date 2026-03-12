@@ -7,22 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Upload, 
-  FileText, 
-  CheckCircle2, 
-  XCircle, 
-  AlertTriangle,
-  Package,
-  DollarSign,
-  Truck,
-  Calendar,
-  Building2,
-  Hash,
-  TrendingUp,
-  Eye,
-  Download
-} from 'lucide-react';
+import { Upload, XCircle, AlertTriangle, Building2, TrendingUp } from 'lucide-react';
+import ResumoNFeCard from './importar-xml/ResumoNFeCard';
+import ItensTabela from './importar-xml/ItensTabela';
+import DuplicatasTabela from './importar-xml/DuplicatasTabela';
+import OpcoesImportacao from './importar-xml/OpcoesImportacao';
 import { toast } from 'sonner';
 import { parseNFeXML, validarXMLNFe, lerArquivoXML } from '../lib/parserXMLNFe';
 
