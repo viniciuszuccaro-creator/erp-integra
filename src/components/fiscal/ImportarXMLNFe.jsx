@@ -522,67 +522,7 @@ export default function ImportarXMLNFe({ empresaId }) {
           </Card>
 
           {/* Itens da NF-e */}
-          <Card className="border-0 shadow-md">
-            <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Package className="w-5 h-5 text-indigo-600" />
-                Itens da NF-e ({dadosNFe.quantidadeItens})
-                {dadosNFe.produtosNaoMapeados.length > 0 && (
-                  <Badge className="bg-orange-600">
-                    {dadosNFe.produtosNaoMapeados.length} novos
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50">
-                      <TableHead>#</TableHead>
-                      <TableHead>Código</TableHead>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>NCM</TableHead>
-                      <TableHead>Qtd</TableHead>
-                      <TableHead>Un</TableHead>
-                      <TableHead>Vlr Unit</TableHead>
-                      <TableHead>Vlr Total</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dadosNFe.itensMapeados.map((item, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell>{item.numero_item}</TableCell>
-                        <TableCell className="font-mono text-xs">{item.codigo_produto}</TableCell>
-                        <TableCell className="max-w-xs truncate">{item.descricao}</TableCell>
-                        <TableCell className="font-mono text-xs">{item.ncm}</TableCell>
-                        <TableCell>{item.quantidade}</TableCell>
-                        <TableCell>{item.unidade}</TableCell>
-                        <TableCell>R$ {item.valor_unitario.toFixed(2)}</TableCell>
-                        <TableCell className="font-semibold">
-                          R$ {item.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        <TableCell>
-                          {item.produto_encontrado ? (
-                            <Badge className="bg-green-100 text-green-700">
-                              <CheckCircle2 className="w-3 h-3 mr-1" />
-                              Mapeado
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-orange-100 text-orange-700">
-                              <AlertTriangle className="w-3 h-3 mr-1" />
-                              Criar
-                            </Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+          <ItensTabela itens={dadosNFe.itensMapeados} quantidadeItens={dadosNFe.quantidadeItens} />
 
           {/* Duplicatas */}
           {dadosNFe.duplicatas.length > 0 && (
