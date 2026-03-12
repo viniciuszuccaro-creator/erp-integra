@@ -14,12 +14,53 @@ Deno.serve(async (req) => {
     const entityName = event?.entity_name || payload?.entity_name;
     const entityId = event?.entity_id || payload?.entity_id;
 
-    if (!entityName || !entityId || !['Cliente','Fornecedor'].includes(entityName)) {
+    if (!entityName || !entityId || !['Cliente','Fornecedor','NotaFiscal'].includes(entityName)) {
       return Response.json({ error: 'Parâmetros inválidos' }, { status: 400 });
     }
 
     // Busca registro atual com service role (automação interna)
     const registro = dataIn || await base44.asServiceRole.entities[entityName].get(entityId);
+
+    // Regra: NF-e só pode ser emitida na empresa de origem do Pedido
+    if (entityName === 'NotaFiscal') {
+      const empresaNota = registro?.empresa_faturamento_id || registro?.empresa_origem_id || registro?.empresa_id || null;
+      let empresaPedido = null;
+      try {
+        if (registro?.pedido_id) {
+          const ped = await base44.asServiceRole.entities.Pedido.get(registro.pedido_id);
+          empresaPedido = ped?.empresa_id || ped?.empresa_faturamento_id || null;
+        }
+      } catch (_) {}
+      if (empresaPedido && empresaNota && empresaNota !== empresaPedido) {
+        try {
+          const prev = registro?.validacao_ia_pre_emissao || {};
+          await base44.asServiceRole.entities.NotaFiscal.update(entityId, {
+            status: 'Rascunho',
+            validacao_ia_pre_emissao: {
+              ...prev,
+              validada: false,
+              bloqueio_emissao: true,
+              data_validacao: new Date().toISOString(),
+              conflitos_detectados: [
+                ...(Array.isArray(prev?.conflitos_detectados) ? prev.conflitos_detectados : []),
+                { tipo: 'Empresa Origem Divergente', descricao: `Pedido: ${empresaPedido} → NF: ${empresaNota}`, severidade: 'Bloqueante', campo_afetado: 'empresa_faturamento_id' }
+              ]
+            }
+          });
+        } catch (_) {}
+        try {
+          await base44.asServiceRole.entities.AuditLog.create({
+            usuario: 'automacao', acao: 'Bloqueio', modulo: 'Fiscal', tipo_auditoria: 'ia', entidade: 'NotaFiscal', registro_id: entityId,
+            descricao: 'Bloqueio de emissão: empresa de origem divergente do Pedido',
+            empresa_id: empresaNota || null, group_id: registro?.group_id || null,
+            data_hora: new Date().toISOString(), sucesso: true
+          });
+        } catch (_) {}
+        return Response.json({ success: false, blocked: true, reason: 'empresa_origem_mismatch' });
+      }
+      // OK quando não há divergência
+      return Response.json({ success: true, validated: true });
+    }
 
     const cnpj = registro?.cnpj || null;
     if (!cnpj) {
