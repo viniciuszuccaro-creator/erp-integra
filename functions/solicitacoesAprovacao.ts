@@ -122,6 +122,31 @@ Deno.serve(async (req) => {
       const novoStatus = action === 'approve' ? 'aprovado' : 'rejeitado';
       const updated = await base44.entities.SolicitacaoAprovacao.update(solicitacao_id, { status: novoStatus, comentarios_aprovacao: comentarios_aprovacao || null, data_decisao: new Date().toISOString() });
 
+      // Multi-nível: se aprovado e há próximos níveis, reabrir pendência para o próximo nível e notificar aprovadores desse nível
+      if (novoStatus === 'aprovado' && s?.dados_propostos?.niveis_total > 1) {
+        const nextIndex = Number(s?.dados_propostos?.nivel_index || 0) + 1;
+        if (nextIndex < Number(s?.dados_propostos?.niveis_total)) {
+          const faixa = s?.dados_propostos?.faixa || {};
+          const niveis = Array.isArray(faixa?.niveis) ? faixa.niveis : [];
+          await base44.entities.SolicitacaoAprovacao.update(solicitacao_id, {
+            status: 'pendente',
+            dados_propostos: { ...s.dados_propostos, nivel_index: nextIndex },
+          });
+          try {
+            const lvl = niveis[nextIndex] || {};
+            const emails = Array.isArray(lvl.emails) ? lvl.emails : [];
+            const whatsapps = Array.isArray(lvl.whatsapps) ? lvl.whatsapps : [];
+            for (const em of emails) {
+              await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId: s.empresa_id || null, destinatario: em, assunto: `Aprovação pendente • ${s.entidade_alvo}` , mensagem: `Nível ${nextIndex + 1}/${niveis.length || 1} para ${s.entidade_alvo} (${s.entidade_alvo_id || 'novo'}) no valor de R$ ${Number(s?.dados_propostos?.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}.` });
+            }
+            for (const w of whatsapps) {
+              await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: s.empresa_id || null, groupId: s.group_id || null, numero: String(w), mensagem: `Aprovação pendente (nível ${nextIndex + 1}/${niveis.length || 1}): ${s.entidade_alvo} ${s.entidade_alvo_id || 'novo'} • Valor: R$ ${Number(s?.dados_propostos?.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}` });
+            }
+          } catch {}
+          return Response.json({ escalated_to_level: nextIndex + 1 });
+        }
+      }
+
       try { await base44.entities.AuditLog.create({ usuario: user.full_name || user.email, usuario_id: user.id, empresa_id: s.empresa_id || null, group_id: s.group_id || null, acao: action === 'approve' ? 'Aprovação' : 'Rejeição', modulo: 'Comercial', entidade: 'SolicitacaoAprovacao', registro_id: solicitacao_id, descricao: `${novoStatus} para ${s.entidade_alvo}#${s.entidade_alvo_id}`, dados_anteriores: s, dados_novos: updated, data_hora: new Date().toISOString() }); } catch {}
       try { await base44.asServiceRole.functions.invoke('whatsappSend', { action: 'sendText', empresaId: s.empresa_id || null, groupId: s.group_id || null, intent: novoStatus === 'aprovado' ? 'aprovacao_concedida' : 'aprovacao_recusada', vars: { entidade: s.entidade_alvo, id: s.entidade_alvo_id || 'novo' } }); } catch {}
       try { await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId: s.empresa_id || null, assunto: `Solicitação ${novoStatus}`, destinatario: user.email || 'noreply@local', mensagem: `Sua solicitação ${solicitacao_id} foi ${novoStatus}.` }); } catch {}
