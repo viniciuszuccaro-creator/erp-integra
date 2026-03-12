@@ -93,6 +93,61 @@ Deno.serve(async (req) => {
       dados_novos: { movimentosSaida }
     });
 
+    // Auditoria específica da autorização com links
+    try {
+      await base44.asServiceRole.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'automacao',
+        usuario_id: user?.id || null,
+        acao: 'Autorização',
+        modulo: 'Fiscal',
+        entidade: 'NotaFiscal',
+        registro_id: data?.id || null,
+        descricao: `NF-e autorizada ${data?.numero || ''}/${data?.serie || ''}`,
+        empresa_id: data?.empresa_faturamento_id || data?.empresa_id || null,
+        group_id: data?.group_id || null,
+        dados_novos: { danfe: data?.pdf_danfe || null, xml: data?.xml_nfe || null, chave: data?.chave_acesso || null },
+        data_hora: new Date().toISOString(),
+        sucesso: true
+      });
+    } catch (_) {}
+
+    // Notificar cliente via WhatsApp/Email com link do DANFE
+    try {
+      const empresaId = data?.empresa_faturamento_id || data?.empresa_id || null;
+      const groupId = data?.group_id || null;
+      const danfeLink = data?.pdf_danfe || data?.pdf_url || '';
+      const msg = `Olá! Sua Nota Fiscal ${data?.numero || ''}/${data?.serie || ''} foi autorizada.\nDANFE: ${danfeLink}\nChave: ${data?.chave_acesso || ''}`;
+
+      // WhatsApp (resolve número automaticamente via pedido/cliente)
+      await base44.asServiceRole.functions.invoke('whatsappSend', {
+        action: 'sendText',
+        empresaId,
+        groupId,
+        pedidoId: data?.pedido_id || null,
+        clienteId: data?.cliente_fornecedor_id || null,
+        mensagem: msg,
+        internal_token: Deno.env.get('DEPLOY_AUDIT_TOKEN') || undefined
+      });
+
+      // E-mail (tenta principal do cliente)
+      let emailDest = null;
+      try {
+        if (data?.cliente_fornecedor_id) {
+          const cli = await base44.asServiceRole.entities.Cliente.filter({ id: data.cliente_fornecedor_id }, undefined, 1);
+          const c = cli?.[0] || null;
+          if (Array.isArray(c?.contatos)) {
+            const ce = c.contatos.find(x => /e-?mail/i.test(x?.tipo || '') && x?.valor);
+            emailDest = ce?.valor || null;
+          }
+        }
+      } catch (_) {}
+      if (emailDest) {
+        const assunto = `NF-e ${data?.numero || ''}/${data?.serie || ''} autorizada`;
+        const corpo = `<p>Olá,</p><p>Sua Nota Fiscal foi autorizada.</p><p><a href="${danfeLink}" target="_blank">Baixar DANFE</a></p><p>Chave de acesso: ${data?.chave_acesso || ''}</p>`;
+        await base44.asServiceRole.functions.invoke('sendEmailProvider', { empresaId, destinatario: emailDest, assunto, mensagem: corpo, tipo_conteudo: 'html' });
+      }
+    } catch (_) {}
+
     return Response.json({ ok: true, comissao_id: created?.id, movimentos_saida: movimentosSaida });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });

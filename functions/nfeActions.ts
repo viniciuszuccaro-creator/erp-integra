@@ -35,9 +35,9 @@ Deno.serve(async (req) => {
           return Response.json({ error: 'Emissão NF-e no GRUPO bloqueada. Selecione uma EMPRESA ou inicie pela empresa do pedido/nota.' }, { status: 400 });
         }
 
-        const ctxErr = assertContextPresence({ empresa_id: empresaIdResolvedResolved }, true);
+        const ctxErr = assertContextPresence({ empresa_id: empresaIdResolved }, true);
         if (ctxErr) return ctxErr;
-        const ctxData = await ensureContextFields(base44, { empresa_id: empresaIdResolvedResolved }, true);
+        const ctxData = await ensureContextFields(base44, { empresa_id: empresaIdResolved }, true);
 
         // Carrega config fiscal com service role (refatorado)
         const { config, integracao } = await getFiscalConfig(base44, empresaIdResolved);
