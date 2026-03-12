@@ -280,12 +280,25 @@ export default function ImportarXMLNFe({ empresaId }) {
       // 5. Criar Contas a Pagar
       if (opcoes.criarContasPagar && dadosNFe.duplicatas.length > 0) {
         for (const duplicata of dadosNFe.duplicatas) {
+          // Mapear centro de custo e plano de contas por NCM/fornecedor (se existir config)
+          let centro_custo_id = null; let plano_contas_id = null;
+          try {
+            const cfgs = await base44.entities.ConfiguracaoSistema.filter({ chave: 'mapa_xml_centro_custo', empresa_id: empresaId }, undefined, 1);
+            const mapa = cfgs?.[0]?.valor_json || {};
+            const chave = dadosNFe.fornecedor.cnpj;
+            const mapFornecedor = mapa[chave] || {};
+            centro_custo_id = mapFornecedor?.centro_custo_id || null;
+            plano_contas_id = mapFornecedor?.plano_contas_id || null;
+          } catch {}
+
           const conta = await base44.entities.ContaPagar.create({
             empresa_id: empresaId,
             descricao: `NF-e ${dadosNFe.numeroNFe} - Parcela ${duplicata.numero}`,
             fornecedor: dadosNFe.fornecedor.razao_social,
             fornecedor_id: resultados.fornecedor_id,
             favorecido_cpf_cnpj: dadosNFe.fornecedor.cnpj,
+            centro_custo_id,
+            plano_contas_id,
             categoria: 'Fornecedores',
             valor: duplicata.valor,
             data_emissao: dadosNFe.dataEmissao,
@@ -293,8 +306,9 @@ export default function ImportarXMLNFe({ empresaId }) {
             status: 'Pendente',
             numero_documento: dadosNFe.numeroNFe,
             numero_parcela: duplicata.numero,
-            nota_fiscal_id: null, // Poderia vincular à NF-e se ela existir na entidade NotaFiscal
+            nota_fiscal_id: null,
             ordem_compra_id: resultados.ordem_compra_id,
+            origem_tipo: 'nfe', canal_origem: 'Importação',
             observacoes: `Importado de XML NF-e. Chave: ${dadosNFe.chaveAcesso}`
           });
 
