@@ -12,8 +12,6 @@ Deno.serve(async (req) => {
 
     const { conta_receber_id, forma_cobranca, projeto_obra, simular } = await req.json();
     const { user: me, perfil } = await getUserAndPerfil(base44);
-    const denied = await assertPermission(base44, { user: me, perfil }, 'Financeiro', 'ContaReceber', 'emitir');
-    if (denied) return denied;
     if (!conta_receber_id) {
       return Response.json({ error: 'conta_receber_id é obrigatório' }, { status: 400 });
     }
@@ -23,6 +21,19 @@ Deno.serve(async (req) => {
     const cr = crList?.[0];
     if (!cr) {
       return Response.json({ error: 'ContaReceber não encontrada' }, { status: 404 });
+    }
+
+    // Permissão: libera autoatendimento do cliente (portal) para seus próprios títulos visíveis no portal
+    let isPortalSelfAccess = false;
+    try {
+      const cList = await base44.entities.Cliente.filter({ portal_usuario_id: me.id }, undefined, 1);
+      const c = cList?.[0] || null;
+      isPortalSelfAccess = !!(c && cr.cliente_id === c.id && cr.visivel_no_portal === true);
+    } catch (_) {}
+
+    if (!isPortalSelfAccess) {
+      const denied = await assertPermission(base44, { user: me, perfil }, 'Financeiro', 'ContaReceber', 'emitir');
+      if (denied) return denied;
     }
 
     // Contexto multiempresa obrigatório
