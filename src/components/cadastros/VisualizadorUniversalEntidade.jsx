@@ -32,6 +32,7 @@ import usePermissions from '@/components/lib/usePermissions';
 import { useToast } from "@/components/ui/use-toast";
 import ProtectedAction from "@/components/ProtectedAction";
 import { Skeleton } from "@/components/ui/skeleton";
+import useEntityListSorted from "@/components/lib/useEntityListSorted";
 
 // Dedupe/backoff global p/ entityListSorted nesta tela
 const __elsInflight = (typeof window !== 'undefined' ? (window.__elsInflight || (window.__elsInflight = new Map())) : new Map());
@@ -334,6 +335,8 @@ export default function VisualizadorUniversalEntidade({
       tipo_item_desc: { f: 'tipo_item', d: 'desc' },
       setor_atividade_nome: { f: 'setor_atividade_nome', d: 'asc' },
       setor_atividade_nome_desc: { f: 'setor_atividade_nome', d: 'desc' },
+      grupo_produto_nome: { f: 'grupo_produto_nome', d: 'asc' },
+      grupo_produto_nome_desc: { f: 'grupo_produto_nome', d: 'desc' },
       marca_nome: { f: 'marca_nome', d: 'asc' },
       marca_nome_desc: { f: 'marca_nome', d: 'desc' },
       status: { f: 'status', d: 'asc' },
@@ -464,66 +467,19 @@ export default function VisualizadorUniversalEntidade({
     return combinado;
   }, [getFiltroContexto, buscaBackend, nomeEntidade, columnFilters]);
 
-  const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
-    queryKey: [...queryKey, empresaAtual?.id, grupoAtual?.id, buscaBackend, currentPage, itemsPerPage, sortField, sortDirection, JSON.stringify(columnFilters)],
-    queryFn: async () => {
-      const filtroBase = buildFilterWithSearch();
-      const filtro = filtroBase;
+  const ENTITY_CONTEXT_FIELD = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
+  const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
 
-      const skip = (currentPage - 1) * itemsPerPage;
-      const def = getDefaultSortForEntity();
-      const sf = sortField || def.field;
-      const sd = sortDirection || def.direction;
+  const filtroBase = buildFilterWithSearch();
+  const def = getDefaultSortForEntity();
+  const sf = sortField || def.field;
+  const sd = sortDirection || def.direction;
 
-      const key = JSON.stringify({ nomeEntidade, filtro, sf, sd, itemsPerPage, skip });
-      if (__elsInflight.has(key)) return __elsInflight.get(key);
-
-      const exec = async () => {
-        let attempt = 0;
-        while (true) {
-          try {
-            const resp = await base44.functions.invoke('entityListSorted', {
-              entityName: nomeEntidade,
-              filter: filtro,
-              sortField: sf,
-              sortDirection: sd,
-              limit: itemsPerPage,
-              skip
-            });
-            return resp.data || [];
-          } catch (err) {
-            const status = err?.response?.status || err?.status;
-            if (status === 429 && attempt < 2) {
-              await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
-              attempt++;
-              continue;
-            }
-            throw err;
-          }
-        }
-      };
-
-      const p = exec().finally(() => __elsInflight.delete(key));
-      __elsInflight.set(key, p);
-      return p;
-    },
-    enabled: (() => { 
-      const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; 
-      const c=m[nomeEntidade]||'empresa_id'; 
-      const fc=getFiltroContexto(c, true)||{}; 
-      const props=(entitySchema&&entitySchema.properties)||{};
-      const hasGroupField=Object.prototype.hasOwnProperty.call(props,'group_id');
-      const hasCtxField=Object.prototype.hasOwnProperty.call(props,c);
-      if(!hasGroupField && !hasCtxField) return true; 
-      return !!(fc[c]||fc.group_id); 
-    })(),
-    keepPreviousData: true,
-    placeholderData: (prev) => prev ?? [],
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false
-  });
+  const { data: dados = [], isLoading, isFetching, refetch, error } = useEntityListSorted(
+    nomeEntidade,
+    filtroBase,
+    { sortField: sf, sortDirection: sd, limit: itemsPerPage, campo: campoEmpresa, page: currentPage, pageSize: itemsPerPage }
+  );
 
   const { data: totalItemsCount = 0 } = useQuery({
     queryKey: [...queryKey, 'total-count', empresaAtual?.id, grupoAtual?.id, buscaBackend, JSON.stringify(columnFilters)],
