@@ -8,6 +8,15 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
+// Cache global leve para decisões do entityGuard (TTL: 120s) + dedupe
+const __guardCache = (typeof window !== 'undefined' ? (window.__entityGuardCache || (window.__entityGuardCache = new Map())) : new Map());
+const __guardInflight = (typeof window !== 'undefined' ? (window.__entityGuardInflight || (window.__entityGuardInflight = new Map())) : new Map());
+const GUARD_TTL_MS = 120_000;
+
+function getGuardKey(module, section, action, empresaId, groupId) {
+  return `${module || '-'}|${section || '-'}|${action || '-'}|${empresaId || '-'}|${groupId || '-'}`;
+}
+
 // ProtectedAction v2 - suporta modos: "modal" (padrão), "disable" e "hide" + auditoria opcional
 export function ProtectedAction({
   children,
@@ -27,20 +36,49 @@ export function ProtectedAction({
 
   React.useEffect(() => {
     if (isLoading) return;
-    (async () => {
-      try {
-        const { data } = await base44.functions.invoke('entityGuard', {
-          module,
-          section,
-          action,
-          empresa_id: empresaAtual?.id || null,
-          group_id: grupoAtual?.id || null,
-        });
-        setAllowedFinal(Boolean(data?.allowed) && hasPermission(module, section, action));
-      } catch (_) {
-        setAllowedFinal(hasPermission(module, section, action));
-      }
-    })();
+
+    const key = getGuardKey(module, section, action, empresaAtual?.id, grupoAtual?.id);
+    const now = Date.now();
+
+    // 1) Cache hit recente → aplica e sai
+    const cached = __guardCache.get(key);
+    if (cached && (now - cached.ts < GUARD_TTL_MS)) {
+      setAllowedFinal(Boolean(cached.allowed) && hasPermission(module, section, action));
+      return;
+    }
+
+    // 2) Valor otimista local (não bloqueia UI) enquanto valida com backend
+    setAllowedFinal(hasPermission(module, section, action));
+
+    // 3) Deduplica chamadas concorrentes por chave
+    if (__guardInflight.has(key)) {
+      __guardInflight.get(key).then((res) => {
+        const allowed = Boolean(res?.data?.allowed) && hasPermission(module, section, action);
+        __guardCache.set(key, { allowed: res?.data?.allowed === true, ts: Date.now() });
+        setAllowedFinal(allowed);
+      }).catch(() => {/* mantém valor otimista */});
+      return;
+    }
+
+    const p = base44.functions.invoke('entityGuard', {
+      module,
+      section,
+      action,
+      empresa_id: empresaAtual?.id || null,
+      group_id: grupoAtual?.id || null,
+    });
+    __guardInflight.set(key, p);
+
+    p.then(({ data }) => {
+      const backendAllowed = data?.allowed === true;
+      __guardCache.set(key, { allowed: backendAllowed, ts: Date.now() });
+      setAllowedFinal(backendAllowed && hasPermission(module, section, action));
+    }).catch((err) => {
+      // Em 429 ou falha, mantemos valor otimista local para não travar botões
+      setAllowedFinal(hasPermission(module, section, action));
+    }).finally(() => {
+      __guardInflight.delete(key);
+    });
   }, [isLoading, module, section, action, empresaAtual?.id, grupoAtual?.id]);
 
   if (isLoading || allowedFinal === null) return null;
