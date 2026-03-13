@@ -7,10 +7,10 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
   const {
     sortField = undefined,
     sortDirection = undefined,
-    limit = 500,
+    limit = undefined,
     campo = "empresa_id",
     page = 1,
-    pageSize = 20,
+    pageSize = 100,
   } = options || {};
 
   const filtroContextOutside = getFiltroContexto(campo, true);

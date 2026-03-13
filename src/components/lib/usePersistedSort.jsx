@@ -11,7 +11,9 @@ export default function usePersistedSort(entityName, defaultField = 'updated_dat
     try {
       const raw = localStorage.getItem(`sort_${entityName}`);
       if (raw) {
-        const { sortField: sf, sortDirection: sd } = JSON.parse(raw);
+        const st = JSON.parse(raw);
+        const sf = st?.sortField ?? st?.field;
+        const sd = st?.sortDirection ?? st?.direction;
         if (sf) setSortField(sf);
         if (sd) setSortDirection(sd);
       }
