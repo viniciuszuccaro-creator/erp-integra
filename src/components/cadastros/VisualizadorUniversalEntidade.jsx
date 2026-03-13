@@ -305,7 +305,7 @@ export default function VisualizadorUniversalEntidade({
 
     // Padrões por entidade (case-insensitive no backend via entityListSorted)
     const entityDefaults = {
-      Produto: { field: 'descricao', direction: 'asc' },
+      Produto: { field: 'codigo', direction: 'asc' },
       Cliente: { field: 'nome', direction: 'asc' },
       Fornecedor: { field: 'nome', direction: 'asc' },
       Pedido: { field: 'data_pedido', direction: 'desc' },

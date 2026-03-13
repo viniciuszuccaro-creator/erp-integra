@@ -79,7 +79,7 @@ export default function ProdutosTab(props) {
         filter: filtro,
         sortField: 'updated_date',
         sortDirection: 'desc',
-        limit: 1000
+        limit: 300
       });
       return Array.isArray(data) ? data : [];
     },
