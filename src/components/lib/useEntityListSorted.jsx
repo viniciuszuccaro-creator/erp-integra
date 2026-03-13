@@ -49,7 +49,7 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
   }
 
   return useQuery({
-    queryKey: ["entityListSorted", entityName, criterios, finalSortField, finalSortDirection, limit, page, pageSize, filtroContextOutside?.group_id || null, filtroContextOutside?.[campo] || null],
+    queryKey: ["entityListSorted", entityName, JSON.stringify(criterios || {}), finalSortField, finalSortDirection, limit, page, pageSize, filtroContextOutside?.group_id || null, filtroContextOutside?.[campo] || null],
     queryFn: async () => {
       const filtro = { ...criterios, ...filtroContextOutside };
       if (!filtro.group_id && !filtro[campo]) return [];
@@ -64,5 +64,7 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
       return Array.isArray(res?.data) ? res.data : [];
     },
     staleTime: 120_000,
+    keepPreviousData: true,
+    refetchOnWindowFocus: false,
   });
 }

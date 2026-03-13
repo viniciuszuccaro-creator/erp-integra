@@ -225,32 +225,92 @@ export function useContextoVisual() {
   };
 
   // Create helpers that always stamp context
-  const createInContext = (entityName, dados, campo = 'empresa_id') => {
-    const stamped = carimbarContexto(dados, campo);
+  const MODULE_BY_ENTITY = {
+    Cliente: 'CRM', Oportunidade: 'CRM', Interacao: 'CRM', Pedido: 'Comercial', NotaFiscal: 'Fiscal', Entrega: 'Expedição',
+    Fornecedor: 'Compras', SolicitacaoCompra: 'Compras', OrdemCompra: 'Compras', Produto: 'Estoque', MovimentacaoEstoque: 'Estoque',
+    ContaPagar: 'Financeiro', ContaReceber: 'Financeiro', CentroCusto: 'Financeiro', PlanoDeContas: 'Financeiro', PlanoContas: 'Financeiro', User: 'Sistema'
+  };
+  const sanitizeOnWrite = (obj) => {
+    if (!obj || typeof obj !== 'object') return obj;
+    const clean = (v) => typeof v === 'string'
+      ? v.replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi,'').replace(/javascript:\s*/gi,'')
+      : v;
+    const out = Array.isArray(obj) ? obj.map((x) => sanitizeOnWrite(x)) : Object.fromEntries(Object.entries(obj).map(([k,v]) => [k, (v && typeof v === 'object') ? sanitizeOnWrite(v) : clean(v)]));
+    return out;
+  };
+
+  const createInContext = async (entityName, dados, campo = 'empresa_id') => {
+    const stamped = carimbarContexto(sanitizeOnWrite(dados), campo);
     if (!stamped.group_id && !stamped[campo]) {
       throw new Error('Contexto multiempresa obrigatório: defina grupo ou empresa');
     }
-    return base44.entities[entityName].create(stamped);
+    const created = await base44.entities[entityName].create(stamped);
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: (await base44.auth.me())?.email || 'Usuário',
+        acao: 'Criação', modulo: MODULE_BY_ENTITY[entityName] || 'Sistema', tipo_auditoria: 'entidade', entidade: entityName,
+        descricao: `Criado registro em ${entityName}`,
+        empresa_id: stamped[campo] || null, group_id: stamped.group_id || null,
+        dados_anteriores: null, dados_novos: created,
+        data_hora: new Date().toISOString()
+      });
+    } catch {}
+    return created;
   };
-  const bulkCreateInContext = (entityName, lista, campo = 'empresa_id') => {
+  const bulkCreateInContext = async (entityName, lista, campo = 'empresa_id') => {
     const stampedList = lista.map(item => {
-      const s = carimbarContexto(item, campo);
+      const s = carimbarContexto(sanitizeOnWrite(item), campo);
       if (!s.group_id && !s[campo]) {
         throw new Error('Contexto multiempresa obrigatório em item da lista');
       }
       return s;
     });
-    return base44.entities[entityName].bulkCreate(stampedList);
+    const res = await base44.entities[entityName].bulkCreate(stampedList);
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: (await base44.auth.me())?.email || 'Usuário',
+        acao: 'Criação', modulo: MODULE_BY_ENTITY[entityName] || 'Sistema', tipo_auditoria: 'entidade', entidade: entityName,
+        descricao: `Criação em lote (${res?.length || stampedList.length})`,
+        empresa_id: stampedList[0]?.[campo] || null, group_id: stampedList[0]?.group_id || null,
+        dados_anteriores: null, dados_novos: { count: res?.length || stampedList.length },
+        data_hora: new Date().toISOString()
+      });
+    } catch {}
+    return res;
   };
-  const updateInContext = (entityName, id, dados, campo = 'empresa_id') => {
-    const stamped = carimbarContexto(dados, campo);
+  const updateInContext = async (entityName, id, dados, campo = 'empresa_id') => {
+    const stamped = carimbarContexto(sanitizeOnWrite(dados), campo);
     if (!stamped.group_id && !stamped[campo]) {
       throw new Error('Contexto multiempresa obrigatório: defina grupo ou empresa');
     }
-    return base44.entities[entityName].update(id, stamped);
+    const before = await base44.entities[entityName].get(id).catch(() => null);
+    const updated = await base44.entities[entityName].update(id, stamped);
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: (await base44.auth.me())?.email || 'Usuário',
+        acao: 'Edição', modulo: MODULE_BY_ENTITY[entityName] || 'Sistema', tipo_auditoria: 'entidade', entidade: entityName,
+        descricao: `Atualizado registro ${id} em ${entityName}`,
+        empresa_id: stamped[campo] || before?.[campo] || null, group_id: stamped.group_id || before?.group_id || null,
+        dados_anteriores: before, dados_novos: updated,
+        data_hora: new Date().toISOString()
+      });
+    } catch {}
+    return updated;
   };
-  const deleteInContext = (entityName, id) => {
-    return base44.entities[entityName].delete(id);
+  const deleteInContext = async (entityName, id) => {
+    const before = await base44.entities[entityName].get(id).catch(() => null);
+    const res = await base44.entities[entityName].delete(id);
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: (await base44.auth.me())?.email || 'Usuário',
+        acao: 'Exclusão', modulo: MODULE_BY_ENTITY[entityName] || 'Sistema', tipo_auditoria: 'entidade', entidade: entityName,
+        descricao: `Excluído registro ${id} em ${entityName}`,
+        empresa_id: before?.empresa_id || null, group_id: before?.group_id || null,
+        dados_anteriores: before, dados_novos: null,
+        data_hora: new Date().toISOString()
+      });
+    } catch {}
+    return res;
   };
   const DEFAULT_SORTS = {
             Produto: { field: 'descricao', direction: 'asc' },
