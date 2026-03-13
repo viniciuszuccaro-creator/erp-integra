@@ -86,22 +86,32 @@ function withUIAudit(props) {
   // Política híbrida: só bloquear ações sensíveis (data-sensitive ou perm); demais apenas auditar
   const isSensitive = !!(props?.__sensitive || props?.__perm);
 
+  // Reuso de cache/dedupe global do entityGuard (se existir)
+  const __guardCache = (typeof window !== 'undefined' ? (window.__entityGuardCache || (window.__entityGuardCache = new Map())) : new Map());
+  const __guardInflight = (typeof window !== 'undefined' ? (window.__entityGuardInflight || (window.__entityGuardInflight = new Map())) : new Map());
+  const GUARD_TTL_MS = 120_000;
+  const getGuardKey = (module, section, action) => `${module || '-'}|${section || '-'}|${action || '-'}`;
+
   const wrapIfDenied = (onClick) => async (e) => {
     try {
       if (isSensitive) {
         const path = typeof window !== 'undefined' ? window.location.pathname : '';
         const page = (path.split('/').pop() || '').replace(/^\//,'');
-        const pageToModule = {
-          CRM: 'CRM', Comercial: 'Comercial', Estoque: 'Estoque', Compras: 'Compras', Financeiro: 'Financeiro', Fiscal: 'Fiscal', RH: 'RH', Expedicao: 'Expedição', Producao: 'Produção'
-        };
+        const pageToModule = { CRM: 'CRM', Comercial: 'Comercial', Estoque: 'Estoque', Compras: 'Compras', Financeiro: 'Financeiro', Fiscal: 'Fiscal', RH: 'RH', Expedicao: 'Expedição', Producao: 'Produção' };
         const moduleName = pageToModule[page] || 'Sistema';
-        const res = await base44.functions.invoke('entityGuard', { module: moduleName, action: 'executar' });
-        if (res?.data && res.data.allowed === false) {
-          e?.preventDefault?.(); e?.stopPropagation?.();
-          try { await base44.entities.AuditLog.create({ acao: 'Bloqueio', modulo: moduleName, entidade: 'UI', descricao: 'Clique bloqueado (sem permissão)', data_hora: new Date().toISOString() }); } catch {}
-          try { toast.error('Permissão negada'); } catch {}
-          return;
+        const key = getGuardKey(moduleName, null, 'executar');
+        const now = Date.now();
+        const cached = __guardCache.get(key);
+        if (cached && (now - cached.ts < GUARD_TTL_MS)) {
+          if (cached.allowed === false) { e?.preventDefault?.(); e?.stopPropagation?.(); try { toast.error('Permissão negada'); } catch {} ; return; }
+        } else if (!__guardInflight.has(key)) {
+          const p = base44.functions.invoke('entityGuard', { module: moduleName, action: 'executar' })
+            .then(({ data }) => { __guardCache.set(key, { allowed: data?.allowed === true, ts: Date.now() }); })
+            .catch(() => { /* fallback otimista em 429/erro */ });
+          __guardInflight.set(key, p);
+          p.finally(() => __guardInflight.delete(key));
         }
+        // Fallback otimista: não bloquear clique enquanto valida
       }
     } catch (_) {}
     return onClick?.(e);

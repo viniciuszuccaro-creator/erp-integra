@@ -74,14 +74,19 @@ export function ProtectedAction({
       __guardCache.set(key, { allowed: backendAllowed, ts: Date.now() });
       setAllowedFinal(backendAllowed && hasPermission(module, section, action));
     }).catch((err) => {
+      const status = err?.response?.status || err?.status;
       // Em 429 ou falha, mantemos valor otimista local para não travar botões
-      setAllowedFinal(hasPermission(module, section, action));
+      if (status === 429) {
+        setAllowedFinal(hasPermission(module, section, action));
+      } else {
+        setAllowedFinal(hasPermission(module, section, action));
+      }
     }).finally(() => {
       __guardInflight.delete(key);
     });
   }, [isLoading, module, section, action, empresaAtual?.id, grupoAtual?.id]);
 
-  if (isLoading || allowedFinal === null) return null;
+  if (isLoading || allowedFinal === null) return <div className="contents" data-pa-loading />;
 
   const allowed = hasPermission(module, section, action);
 
