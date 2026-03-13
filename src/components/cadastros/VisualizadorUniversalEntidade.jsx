@@ -280,8 +280,10 @@ export default function VisualizadorUniversalEntidade({
     if (saved) {
       try {
         const s = JSON.parse(saved);
-        if (s.field) setSortField(s.field);
-        if (s.direction) setSortDirection(s.direction);
+        const sf = (s && (s.sortField ?? s.field)) || null;
+        const sd = (s && (s.sortDirection ?? s.direction)) || null;
+        if (sf) setSortField(sf);
+        if (sd) setSortDirection(sd);
       } catch {}
     }
   }, [nomeEntidade]);
@@ -290,7 +292,7 @@ export default function VisualizadorUniversalEntidade({
     if (sortField) {
       localStorage.setItem(
         `sort_${nomeEntidade}`,
-        JSON.stringify({ field: sortField, direction: sortDirection })
+        JSON.stringify({ sortField, sortDirection })
       );
     }
   }, [sortField, sortDirection, nomeEntidade]);

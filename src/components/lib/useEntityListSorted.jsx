@@ -24,9 +24,9 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     ContaPagar: { field: 'data_vencimento', direction: 'asc' },
     ContaReceber: { field: 'data_vencimento', direction: 'asc' },
     OrdemCompra: { field: 'data_solicitacao', direction: 'desc' },
-    CentroCusto: { field: 'descricao', direction: 'asc' },
-    PlanoDeContas: { field: 'descricao', direction: 'asc' },
-    PlanoContas: { field: 'descricao', direction: 'asc' },
+    CentroCusto: { field: 'codigo', direction: 'asc' },
+    PlanoDeContas: { field: 'codigo', direction: 'asc' },
+    PlanoContas: { field: 'codigo', direction: 'asc' },
     User: { field: 'full_name', direction: 'asc' }
   };
 
