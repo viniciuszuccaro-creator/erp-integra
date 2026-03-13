@@ -33,6 +33,9 @@ import { useToast } from "@/components/ui/use-toast";
 import ProtectedAction from "@/components/ProtectedAction";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Dedupe/backoff global p/ entityListSorted nesta tela
+const __elsInflight = (typeof window !== 'undefined' ? (window.__elsInflight || (window.__elsInflight = new Map())) : new Map());
+
 const OPCOES_ORDENACAO = {
   Cliente: [
     { value: 'nome', label: 'Nome (A-Z)' },
@@ -471,15 +474,38 @@ export default function VisualizadorUniversalEntidade({
       const def = getDefaultSortForEntity();
       const sf = sortField || def.field;
       const sd = sortDirection || def.direction;
-      const resp = await base44.functions.invoke('entityListSorted', {
-        entityName: nomeEntidade,
-        filter: filtro,
-        sortField: sf,
-        sortDirection: sd,
-        limit: itemsPerPage,
-        skip
-      });
-      return resp.data || [];
+
+      const key = JSON.stringify({ nomeEntidade, filtro, sf, sd, itemsPerPage, skip });
+      if (__elsInflight.has(key)) return __elsInflight.get(key);
+
+      const exec = async () => {
+        let attempt = 0;
+        while (true) {
+          try {
+            const resp = await base44.functions.invoke('entityListSorted', {
+              entityName: nomeEntidade,
+              filter: filtro,
+              sortField: sf,
+              sortDirection: sd,
+              limit: itemsPerPage,
+              skip
+            });
+            return resp.data || [];
+          } catch (err) {
+            const status = err?.response?.status || err?.status;
+            if (status === 429 && attempt < 2) {
+              await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+              attempt++;
+              continue;
+            }
+            throw err;
+          }
+        }
+      };
+
+      const p = exec().finally(() => __elsInflight.delete(key));
+      __elsInflight.set(key, p);
+      return p;
     },
     enabled: (() => { 
       const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; 

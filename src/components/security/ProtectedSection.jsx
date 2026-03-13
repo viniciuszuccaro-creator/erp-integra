@@ -5,6 +5,13 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+
+// Cache / dedupe global para entityGuard (TTL 120s)
+const __guardCache = (typeof window !== 'undefined' ? (window.__entityGuardCache || (window.__entityGuardCache = new Map())) : new Map());
+const __guardInflight = (typeof window !== 'undefined' ? (window.__entityGuardInflight || (window.__entityGuardInflight = new Map())) : new Map());
+const GUARD_TTL_MS = 120_000;
+const getGuardKey = (module, section, action, empresaId, groupId) => `${module || '-'}|${section || '-'}|${action || '-'}|${empresaId || '-'}|${groupId || '-'}`;
+
 export default function ProtectedSection({
   module: modulo,
   section,
@@ -28,21 +35,49 @@ export default function ProtectedSection({
 
   useEffect(() => {
     if (isLoading) return;
-    (async () => {
-      if (!modulo) { setAllowedFinal(allowed); return; }
-      try {
-        const { data } = await base44.functions.invoke('entityGuard', {
-          module: modulo,
-          section,
-          action,
-          empresa_id: empresaAtual?.id || null,
-          group_id: grupoAtual?.id || null,
-        });
-        setAllowedFinal(Boolean(data?.allowed) && allowed);
-      } catch (_) {
-        setAllowedFinal(allowed);
-      }
-    })();
+    if (!modulo) { setAllowedFinal(allowed); return; }
+
+    const key = getGuardKey(modulo, section, action, empresaAtual?.id, grupoAtual?.id);
+    const now = Date.now();
+    const cached = __guardCache.get(key);
+    if (cached && (now - cached.ts < GUARD_TTL_MS)) {
+      setAllowedFinal(Boolean(cached.allowed) && allowed);
+      return;
+    }
+
+    // Valor otimista para não bloquear UI
+    setAllowedFinal(allowed);
+
+    if (__guardInflight.has(key)) {
+      __guardInflight.get(key)
+        .then(({ data }) => {
+          const backendAllowed = data?.allowed === true;
+          __guardCache.set(key, { allowed: backendAllowed, ts: Date.now() });
+          setAllowedFinal(backendAllowed && allowed);
+        })
+        .catch(() => {/* mantém otimista */});
+      return;
+    }
+
+    const p = base44.functions.invoke('entityGuard', {
+      module: modulo,
+      section,
+      action,
+      empresa_id: empresaAtual?.id || null,
+      group_id: grupoAtual?.id || null,
+    });
+    __guardInflight.set(key, p);
+
+    p.then(({ data }) => {
+      const backendAllowed = data?.allowed === true;
+      __guardCache.set(key, { allowed: backendAllowed, ts: Date.now() });
+      setAllowedFinal(backendAllowed && allowed);
+    }).catch((err) => {
+      // fallback em 429/erro
+      setAllowedFinal(allowed);
+    }).finally(() => {
+      __guardInflight.delete(key);
+    });
   }, [isLoading, allowed, modulo, section, action, empresaAtual?.id, grupoAtual?.id]);
 
   useEffect(() => {
@@ -68,7 +103,7 @@ export default function ProtectedSection({
     if (!isLoading && allowedFinal === false) setOpenDenied(true);
   }, [isLoading, allowedFinal]);
 
-  if (isLoading || allowedFinal === null) return null;
+  if (isLoading || allowedFinal === null) return <div className="contents" data-ps-loading />;
   if (!allowedFinal) {
     if (hideInstead) return fallback;
     if (disableInstead) {
