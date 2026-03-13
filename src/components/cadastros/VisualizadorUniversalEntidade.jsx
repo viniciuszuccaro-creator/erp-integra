@@ -229,7 +229,7 @@ export default function VisualizadorUniversalEntidade({
   const [direcaoOrdenacao, setDirecaoOrdenacao] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(200);
+  const [itemsPerPage, setItemsPerPage] = useState(100);
   const [sortField, setSortField] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
   const [columnFilters, setColumnFilters] = useState({});

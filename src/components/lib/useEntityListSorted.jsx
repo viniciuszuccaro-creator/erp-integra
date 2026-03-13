@@ -35,9 +35,11 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
   if (!finalSortField || !finalSortDirection) {
     try {
       const last = JSON.parse(localStorage.getItem(`sort_${entityName}`) || 'null');
-      if (last?.sortField && last?.sortDirection) {
-        finalSortField = last.sortField;
-        finalSortDirection = last.sortDirection;
+      const sf = last?.sortField ?? last?.field;
+      const sd = last?.sortDirection ?? last?.direction;
+      if (sf && sd) {
+        finalSortField = sf;
+        finalSortDirection = sd;
       }
     } catch (_) {}
     if (!finalSortField || !finalSortDirection) {
