@@ -49,6 +49,8 @@ export default function ERPDataTable({
   showBulkBar = false,
   onBulkDeleteSelected,
   onBulkExportSelected,
+  // Densidade visual
+  density = "comfortable",
 }) {
   const [colWidths, setColWidths] = useState({});
   const headerRefs = useRef({});
@@ -73,6 +75,11 @@ export default function ERPDataTable({
       return true;
     })
   , [columns, hiddenColumns]);
+
+  // Densidade: controla paddings e alturas (confortável por padrão)
+  const padX = density === 'compact' ? 'px-2' : density === 'spacious' ? 'px-4' : 'px-3';
+  const padYHead = density === 'compact' ? 'py-1' : density === 'spacious' ? 'py-2.5' : 'py-1.5';
+  const padYCell = density === 'compact' ? 'py-1.5' : density === 'spacious' ? 'py-3' : 'py-2';
 
   const wrapAudit = (label, fn, meta = { kind: 'datatable' }) => (typeof fn === 'function' ? uiAuditWrap(label, fn, meta) : undefined);
 
@@ -239,9 +246,9 @@ export default function ERPDataTable({
       <div className="flex-1 overflow-auto border rounded-sm w-full h-full bg-white/60 backdrop-blur">
         <div className="min-w-[900px]">{/* Evita quebra e corte em telas pequenas; rolagem horizontal controlada */}
         <Table className="w-full">
-          <TableHeader className="sticky top-0 bg-white/70 backdrop-blur z-10">
+          <TableHeader className="sticky top-0 bg-white/70 backdrop-blur z-10 text-sm">
             <TableRow>
-              <TableHead className="w-10 px-3">
+              <TableHead className={`w-10 ${padX} ${padYHead}`}>
                 <Checkbox checked={allSelected} onCheckedChange={audited.onToggleSelectAll} />
               </TableHead>
               {visibleColumns.map((col) => (
@@ -249,7 +256,7 @@ export default function ERPDataTable({
                   key={col.key}
                   ref={(el) => (headerRefs.current[col.key] = el)}
                   style={{ width: colWidths[col.key] ? `${colWidths[col.key]}px` : undefined }}
-                  className="px-3 select-none"
+                  className={`${padX} ${padYHead} select-none`
                   aria-sort={sortField === col.key ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none'}
                 >
                   <div className="flex items-center gap-2">
@@ -279,7 +286,7 @@ export default function ERPDataTable({
                 </TableHead>
               ))}
               {rowActionsRender && (
-                <TableHead className="w-28 px-3 text-right">
+                <TableHead className={`w-28 ${padX} ${padYHead} text-right`}>
                   Ações
                 </TableHead>
               )}
@@ -293,7 +300,7 @@ export default function ERPDataTable({
                     <Skeleton className="h-4 w-4 rounded" />
                   </TableCell>
                   {visibleColumns.map((c, idx) => (
-                    <TableCell key={`skc-${idx}`} className={`px-3 ${c.isNumeric ? 'text-right' : ''}`}>
+                  <TableCell key={`skc-${idx}`} className={`${padX} ${padYCell} ${c.isNumeric ? 'text-right' : ''}`}>
                       <Skeleton className={`h-4 ${c.isNumeric ? 'ml-auto w-16' : 'w-3/4'}`} />
                     </TableCell>
                   ))}
@@ -316,12 +323,12 @@ export default function ERPDataTable({
                       )}
                     </TableCell>
                     {visibleColumns.map((c) => (
-                      <TableCell key={c.key} className={`px-3 ${c.isNumeric ? 'text-right' : ''}`}>
+                      <TableCell key={c.key} className={`${padX} ${padYCell} ${c.isNumeric ? 'text-right' : ''}`}>
                         {typeof c.render === 'function' ? c.render(row) : (row[c.key] != null ? String(row[c.key]) : '')}
                       </TableCell>
                     ))}
                     {rowActionsRender && (
-                      <TableCell className="px-3 text-right">
+                      <TableCell className={`${padX} ${padYCell} text-right`}>
                         <div className="inline-flex items-center gap-1">
                           {rowActionsRender(row)}
                           <DropdownMenu>
