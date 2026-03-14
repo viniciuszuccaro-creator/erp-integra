@@ -971,7 +971,7 @@ export default function VisualizadorUniversalEntidade({
                             footerTotals
                             page={currentPage}
                             pageSize={itemsPerPage}
-                            totalItems={totalItemsCount}
+                            totalItems={Math.max(totalItemsCount || 0, dadosBuscadosEOrdenados.length)}
                             onPageChange={(p) => { setCurrentPage(p); setSelectedIds(new Set()); }}
                             onPageSizeChange={(n) => { setItemsPerPage(n); setCurrentPage(1); setSelectedIds(new Set()); }}
                             isLoading={isLoading || isFetching} // skeleton rows shown when loading/refetch
