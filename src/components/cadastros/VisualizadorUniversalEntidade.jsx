@@ -486,8 +486,8 @@ export default function VisualizadorUniversalEntidade({
 
   const filtroBase = buildFilterWithSearch();
   const def = getDefaultSortForEntity();
-  const sf = (colunaOrdenacao || sortField || def.field);
-  const sd = (colunaOrdenacao ? direcaoOrdenacao : (sortDirection || def.direction));
+  const sf = (sortField || def.field);
+  const sd = (sortDirection || def.direction);
 
   const { data: dados = [], isLoading, isFetching, refetch, error } = useEntityListSorted(
     nomeEntidade,
@@ -958,7 +958,7 @@ export default function VisualizadorUniversalEntidade({
                             entityName={nomeEntidade}
                             sortField={colunaOrdenacao || sortField || (getDefaultSortForEntity().field)}
                             sortDirection={colunaOrdenacao ? direcaoOrdenacao : (sortDirection || (getDefaultSortForEntity().direction))}
-                            onSortChange={(field, direction) => { setColunaOrdenacao(field); setDirecaoOrdenacao(direction); setSortField(field); setSortDirection(direction); setCurrentPage(1); setOrdenacao(''); }}
+                            onSortChange={(field, direction) => { setColunaOrdenacao(field); setDirecaoOrdenacao(direction); setCurrentPage(1); setOrdenacao(''); }}
                             onToggleSelectAll={toggleSelectAll}
                             onToggleItem={(id) => toggleItem(id)}
                             allSelected={allSelected}

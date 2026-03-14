@@ -107,7 +107,7 @@ export default function ERPDataTable({
   useEffect(() => {
     const h = setTimeout(() => {
       if (audited.onColumnFiltersChange) audited.onColumnFiltersChange(localFilters);
-    }, 700);
+    }, 1000);
     return () => clearTimeout(h);
   }, [localFilters]);
 
