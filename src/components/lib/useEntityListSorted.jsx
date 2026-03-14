@@ -4,6 +4,9 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 // In-flight dedupe + tiny backoff for 429 on entityListSorted
 const __elsInflight = (typeof window !== 'undefined' ? (window.__elsInflight || (window.__elsInflight = new Map())) : new Map());
+const __elsCache = (typeof window !== 'undefined' ? (window.__elsCache || (window.__elsCache = new Map())) : new Map());
+const __elsLastCallAt = (typeof window !== 'undefined' ? (window.__elsLastCallAt || (window.__elsLastCallAt = new Map())) : new Map());
+const __elsCooldownUntil = (typeof window !== 'undefined' ? (window.__elsCooldownUntil || (window.__elsCooldownUntil = new Map())) : new Map());
 
 // Stable stringify (sorted keys) to avoid cache misses when object key order changes
 function stableStringify(value) {
@@ -79,6 +82,16 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
       }
 
       const exec = async () => {
+        // Throttle per-entity to prevent burst
+        const now = Date.now();
+        const last = __elsLastCallAt.get(entityName) || 0;
+        const since = now - last;
+        const minGap = 250; // ms throttle between calls per entity
+        const cooldown = __elsCooldownUntil.get(entityName) || 0;
+        const waitMs = Math.max(0, cooldown - now, since < minGap ? (minGap - since) : 0);
+        if (waitMs > 0) {
+          await new Promise(r => setTimeout(r, waitMs));
+        }
         let attempt = 0;
         while (true) {
           try {
@@ -90,15 +103,24 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
               limit: (typeof limit === 'number' && limit > 0) ? limit : pageSize,
               skip: (typeof page === 'number' && typeof pageSize === 'number') ? Math.max(0, (Math.max(1, page) - 1) * pageSize) : undefined,
             });
-            return Array.isArray(res?.data) ? res.data : [];
+            const out = Array.isArray(res?.data) ? res.data : [];
+            __elsCache.set(key, out);
+            __elsLastCallAt.set(entityName, Date.now());
+            return out;
           } catch (err) {
             const status = err?.response?.status || err?.status;
-            if (status === 429 && attempt < 3) {
+            if (status === 429 && attempt < 4) {
               const base = 600; // ms
               const jitter = Math.floor(Math.random() * 200);
-              await new Promise(r => setTimeout(r, base * (attempt + 1) + jitter));
+              const sleep = base * (attempt + 1) + jitter;
+              __elsCooldownUntil.set(entityName, Date.now() + Math.max(900, sleep));
+              await new Promise(r => setTimeout(r, sleep));
               attempt++;
               continue;
+            }
+            // Fallback to last successful cache if available (avoid error UI)
+            if (__elsCache.has(key)) {
+              return __elsCache.get(key);
             }
             throw err;
           }

@@ -368,8 +368,12 @@ export default function VisualizadorUniversalEntidade({
     };
     const def = getDefaultSortForEntity();
     const m = map[val] || { f: def.field, d: def.direction };
-    setSortField(m.f);
-    setSortDirection(m.d);
+    // debounce curto para evitar múltiplas chamadas
+    if (sortTimerRef.current) clearTimeout(sortTimerRef.current);
+    sortTimerRef.current = setTimeout(() => {
+      setSortField(m.f);
+      setSortDirection(m.d);
+    }, 350);
     setCurrentPage(1);
   }, [getDefaultSortForEntity]);
 
