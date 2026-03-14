@@ -108,7 +108,7 @@ export default function ERPDataTable({
   useEffect(() => {
     const h = setTimeout(() => {
       if (audited.onColumnFiltersChange) audited.onColumnFiltersChange(localFilters);
-    }, 1000);
+    }, 350);
     return () => clearTimeout(h);
   }, [localFilters]);
 
@@ -287,7 +287,13 @@ export default function ERPDataTable({
                       <input
                         value={localFilters[col.key] || ""}
                         onChange={(e) => setLocalFilters({ ...localFilters, [col.key]: e.target.value })}
-                        className="w-full h-7 px-2 text-xs border rounded-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            audited.onColumnFiltersChange && audited.onColumnFiltersChange({ ...localFilters, [col.key]: e.currentTarget.value });
+                          }
+                        }}
+                        className="w-full h-7 px-2 text-xs border rounded-sm focus:ring-1 focus:ring-blue-500"
                         placeholder={`Filtrar ${col.label}`}
                       />
                     </div>
