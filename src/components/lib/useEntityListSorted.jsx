@@ -7,7 +7,6 @@ const __elsInflight = (typeof window !== 'undefined' ? (window.__elsInflight || 
 const __elsCache = (typeof window !== 'undefined' ? (window.__elsCache || (window.__elsCache = new Map())) : new Map());
 const __elsLastCallAt = (typeof window !== 'undefined' ? (window.__elsLastCallAt || (window.__elsLastCallAt = new Map())) : new Map());
 const __elsCooldownUntil = (typeof window !== 'undefined' ? (window.__elsCooldownUntil || (window.__elsCooldownUntil = new Map())) : new Map());
-const __elsStrikeCount = (typeof window !== 'undefined' ? (window.__elsStrikeCount || (window.__elsStrikeCount = new Map())) : new Map());
 const __elsEntityBusy = (typeof window !== 'undefined' ? (window.__elsEntityBusy || (window.__elsEntityBusy = new Map())) : new Map());
 
 // Stable stringify (sorted keys) to avoid cache misses when object key order changes
