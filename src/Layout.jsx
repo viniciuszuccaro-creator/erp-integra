@@ -966,7 +966,8 @@ function LayoutContent({ children, currentPageName }) {
 
           // De-duplicação + retry com backoff para 429/500
           base44.functions.__inflight = base44.functions.__inflight || new Map();
-          const key = `${functionName}:${JSON.stringify(params || {})}`;
+          const serialize = (o)=>{try{return JSON.stringify(o, Object.keys(o||{}).sort())}catch{ return JSON.stringify(o||{})}};
+          const key = `${functionName}:${serialize(params || {})}`;
           if (base44.functions.__inflight.has(key)) {
             return await base44.functions.__inflight.get(key);
           }
@@ -977,8 +978,8 @@ function LayoutContent({ children, currentPageName }) {
                 return await origInvoke(functionName, params);
               } catch (err) {
                 const status = err?.response?.status || err?.status;
-                if (((status === 429) || (typeof status === 'number' && status >= 500)) && attempt < 2) {
-                  const delay = (600 + Math.floor(Math.random() * 600)) * (attempt + 1);
+                if (((status === 429) || (typeof status === 'number' && status >= 500)) && attempt < 3) {
+                  const delay = (800 + Math.floor(Math.random() * 600)) * (attempt + 1);
                   await new Promise(r => setTimeout(r, delay));
                   attempt++;
                   continue;
