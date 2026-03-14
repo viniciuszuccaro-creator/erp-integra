@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PaginationControls from '@/components/ui/PaginationControls';
 import ERPDataTable from '@/components/ui/erp/DataTable';
@@ -244,6 +245,7 @@ export default function VisualizadorUniversalEntidade({
   const [colunaOrdenacao, setColunaOrdenacao] = useState(null);
   const [direcaoOrdenacao, setDirecaoOrdenacao] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [autoRefresh, setAutoRefresh] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
   const [sortField, setSortField] = useState(null);
@@ -484,8 +486,8 @@ export default function VisualizadorUniversalEntidade({
 
   const filtroBase = buildFilterWithSearch();
   const def = getDefaultSortForEntity();
-  const sf = sortField || def.field;
-  const sd = sortDirection || def.direction;
+  const sf = (colunaOrdenacao || sortField || def.field);
+  const sd = (colunaOrdenacao ? direcaoOrdenacao : (sortDirection || def.direction));
 
   const { data: dados = [], isLoading, isFetching, refetch, error } = useEntityListSorted(
     nomeEntidade,
@@ -536,20 +538,21 @@ export default function VisualizadorUniversalEntidade({
   const lastInvalidateAtRef = useRef(0);
   React.useEffect(() => {
     const unsubscribe = base44.entities[nomeEntidade].subscribe(() => {
+      if (!autoRefresh) return;
       const now = Date.now();
-      if (now - lastInvalidateAtRef.current < 800) return;
+      if (now - lastInvalidateAtRef.current < 3000) return;
       lastInvalidateAtRef.current = now;
       invalidateAllRelated();
     });
     return unsubscribe;
-  }, [nomeEntidade, invalidateAllRelated, columnFilters]);
+  }, [nomeEntidade, invalidateAllRelated, columnFilters, autoRefresh]);
 
   const dadosBuscadosEOrdenados = useMemo(() => {
     let resultado = [...dados];
 
     // Ordenação local/fallback (imediata) — aplica sempre que houver sortField/direction definidos
     if (Array.isArray(resultado) && (sortField || colunaOrdenacao)) {
-      const field = sortField || colunaOrdenacao;
+      const field = colunaOrdenacao || sortField;
       const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === field) || { campo: field, isNumeric: false, getValue: (row)=>row?.[field] };
       const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[field]);
       const toNum = (v, campo) => {
@@ -566,7 +569,7 @@ export default function VisualizadorUniversalEntidade({
         return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
       };
       const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
-      const dir = sortDirection || direcaoOrdenacao || 'asc';
+      const dir = colunaOrdenacao ? (direcaoOrdenacao || 'asc') : (sortDirection || 'asc');
       resultado.sort((a,b) => {
         const avRaw = getVal(a);
         const bvRaw = getVal(b);
@@ -821,6 +824,10 @@ export default function VisualizadorUniversalEntidade({
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              <div className="hidden sm:flex items-center gap-2 pl-2 border-l">
+                <span className="text-xs text-slate-600">Auto atualizar</span>
+                <Switch checked={autoRefresh} onCheckedChange={setAutoRefresh} />
+              </div>
               <ProtectedAction module={moduloPermissao} action="criar" mode="disable">
                 <Button variant="default" size="sm" onClick={handleAbrirNovo} data-permission={`${moduloPermissao}.Cadastro.criar`} data-sensitive>
                   <Plus className="w-4 h-4 mr-2" />
@@ -949,7 +956,7 @@ export default function VisualizadorUniversalEntidade({
                             entityName={nomeEntidade}
                             sortField={colunaOrdenacao || sortField || (getDefaultSortForEntity().field)}
                             sortDirection={colunaOrdenacao ? direcaoOrdenacao : (sortDirection || (getDefaultSortForEntity().direction))}
-                            onSortChange={(field, direction) => { setColunaOrdenacao(field); setDirecaoOrdenacao(direction); setCurrentPage(1); setOrdenacao(''); }}
+                            onSortChange={(field, direction) => { setColunaOrdenacao(field); setDirecaoOrdenacao(direction); setSortField(field); setSortDirection(direction); setCurrentPage(1); setOrdenacao(''); }}
                             onToggleSelectAll={toggleSelectAll}
                             onToggleItem={(id) => toggleItem(id)}
                             allSelected={allSelected}
