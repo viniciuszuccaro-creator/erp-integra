@@ -54,6 +54,7 @@ export default function ERPDataTable({
 }) {
   const [colWidths, setColWidths] = useState({});
   const headerRefs = useRef({});
+  const lastSortClickAt = useRef(0);
 
   useEffect(() => {
     // init widths on first render
@@ -262,8 +263,16 @@ export default function ERPDataTable({
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      className="flex items-center gap-1 hover:underline"
-                      onClick={() => audited.onSortChange && audited.onSortChange(col.key, sortField === col.key && sortDirection === "asc" ? "desc" : "asc")}
+                      disabled={isLoading}
+                      className="flex items-center gap-1 hover:underline cursor-pointer disabled:opacity-50"
+                      onClick={() => {
+                        const now = Date.now();
+                        if (now - (lastSortClickAt.current || 0) < 300) return; // debounce fast double-clicks
+                        lastSortClickAt.current = now;
+                        if (audited.onSortChange) {
+                          audited.onSortChange(col.key, sortField === col.key && sortDirection === "asc" ? "desc" : "asc");
+                        }
+                      }}
                     >
                       <span className="font-semibold text-slate-700">{col.label}</span>
                       {renderSortIcon(col.key)}
