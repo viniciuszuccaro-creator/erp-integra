@@ -1,16 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
-// Seed Multiempresa (Grupo + N Empresas + dados base)
-// Payload sugerido:
-// { group_id?, group_name?, empresas_count?:3, counts?:{clientes:100,produtos:100,fornecedores:20}, dryRun?:true, strategy?:'merge'|'override'|'skip' }
+// Seed Multiempresa (Grupo atual + empresas do grupo + dados base)
+// Quando body.group_id não é informado, tenta detectar o grupo atual pelas empresas existentes.
+// NUNCA cria novo grupo/empresas se já houver contexto detectável (Regra-Mãe: melhorar, não recriar).
 // Admin-only. Multiempresa absoluta. Auditado.
+// Payload opcional:
+// { group_id?, counts?:{clientes,produtos,fornecedores}, strategy?:'merge'|'override'|'skip', dryRun?:false }
 
 function randCNPJ() {
-  // 14 dígitos não válidos oficialmente (seed apenas)
   const base = String(Math.floor(1_000_000_0000000 + Math.random() * 8_999_999_999999));
   return base.slice(0, 14);
 }
-
 function todayISODate() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -25,7 +25,6 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const dryRun = !!body?.dryRun;
-    const empresasCount = Math.max(1, Math.min(10, Number(body?.empresas_count ?? 3)));
     const counts = {
       clientes: Math.max(0, Number(body?.counts?.clientes ?? 100)),
       produtos: Math.max(0, Number(body?.counts?.produtos ?? 100)),
@@ -33,68 +32,80 @@ Deno.serve(async (req) => {
     };
     const strategy = (body?.strategy === 'override' || body?.strategy === 'merge') ? body.strategy : 'skip';
 
-    // 1) Garantir grupo
+    // 0) Descoberta de grupo/empresas existente
     let groupId = body?.group_id || null;
-    let group;
-    if (!groupId) {
+    let empresasDoGrupo = [];
+    try {
+      if (!groupId) {
+        const todas = await base44.asServiceRole.entities.Empresa.filter({}, undefined, 1000);
+        const comGrupo = (todas || []).filter(e => !!e.group_id);
+        if (comGrupo.length) {
+          groupId = comGrupo[0].group_id; // usa o grupo detectado
+          empresasDoGrupo = comGrupo.filter(e => e.group_id === groupId);
+        }
+      } else {
+        empresasDoGrupo = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, undefined, 1000);
+      }
+    } catch (_) {}
+
+    // 1) Fallback: se não houver nenhuma empresa e também não veio group_id, permite criar grupo+empresas (primeira inicialização)
+    let criouGrupoAgora = false;
+    if (!groupId && empresasDoGrupo.length === 0) {
       if (!dryRun) {
-        group = await base44.asServiceRole.entities.GrupoEmpresarial.create({
-          nome_do_grupo: body?.group_name || `Grupo Seed ${todayISODate()}`
-        });
-        groupId = group.id;
+        const grupo = await base44.asServiceRole.entities.GrupoEmpresarial.create({ nome_do_grupo: `Grupo Seed ${todayISODate()}` }).catch(() => null);
+        groupId = grupo?.id || null;
+        if (!groupId) return Response.json({ error: 'Falha ao criar grupo' }, { status: 500 });
+        criouGrupoAgora = true;
+        // cria 3 empresas padrão
+        for (let i = 1; i <= 3; i++) {
+          const emp = await base44.asServiceRole.entities.Empresa.create({
+            group_id: groupId,
+            razao_social: `Empresa ${i} • ${todayISODate()}`,
+            nome_fantasia: `Empresa ${i}`,
+            cnpj: randCNPJ(),
+            regime_tributario: 'Simples Nacional',
+            usa_multiempresa: true,
+          }).catch(() => null);
+          if (emp?.id) empresasDoGrupo.push(emp);
+        }
       } else {
         groupId = 'dry_group_id';
+        empresasDoGrupo = [1,2,3].map(i => ({ id: `dry_emp_${i}`, nome_fantasia: `Empresa ${i}` }));
       }
-    } else {
-      try { group = await base44.asServiceRole.entities.GrupoEmpresarial.get(groupId); } catch { group = { id: groupId }; }
     }
 
-    // 2) Criar 3 empresas vinculadas
-    const empresas = [];
-    if (!dryRun) {
-      for (let i = 1; i <= empresasCount; i++) {
-        const emp = await base44.asServiceRole.entities.Empresa.create({
-          group_id: groupId,
-          razao_social: `Empresa ${i} • ${todayISODate()}`,
-          nome_fantasia: `Empresa ${i}`,
-          cnpj: randCNPJ(),
-          regime_tributario: 'Simples Nacional',
-          usa_multiempresa: true,
-        });
-        empresas.push(emp);
-      }
-    } else {
-      for (let i = 1; i <= empresasCount; i++) empresas.push({ id: `dry_emp_${i}`, nome_fantasia: `Empresa ${i}` });
-    }
+    if (!groupId) return Response.json({ error: 'Contexto inválido: group_id ausente e nenhuma empresa encontrada' }, { status: 400 });
 
-    // 3) Criar configurações no nível do GRUPO (PlanoDeContas, CentroCusto) para posterior propagação
+    // 2) Configurações base no nível do GRUPO (PlanoDeContas, CentroCusto)
     const createdGroupConfigs = { PlanoDeContas: 0, CentroCusto: 0 };
     if (!dryRun) {
-      // Plano de Contas (mínimo)
-      const plano = await base44.asServiceRole.entities.PlanoDeContas.create({
-        group_id: groupId,
-        codigo: '1',
-        descricao: 'Plano Padrão Grupo',
-        tipo: 'Misto'
-      }).catch(() => null);
-      if (plano?.id) createdGroupConfigs.PlanoDeContas++;
-
-      // Centros de Custo básicos
-      const ccodes = [
-        { codigo: 'ADM', descricao: 'Administrativo', tipo: 'Despesa' },
-        { codigo: 'COM', descricao: 'Comercial', tipo: 'Despesa' },
-        { codigo: 'OPR', descricao: 'Operacional', tipo: 'Despesa' },
-      ];
-      for (const c of ccodes) {
-        await base44.asServiceRole.entities.CentroCusto.create({ ...c, group_id: groupId }).catch(() => {});
-        createdGroupConfigs.CentroCusto++;
-      }
+      try {
+        const existsPlano = await base44.asServiceRole.entities.PlanoDeContas.filter({ group_id: groupId }, undefined, 1);
+        if (!existsPlano?.length) {
+          const plano = await base44.asServiceRole.entities.PlanoDeContas.create({ group_id: groupId, codigo: '1', descricao: 'Plano Padrão Grupo', tipo: 'Misto' }).catch(() => null);
+          if (plano?.id) createdGroupConfigs.PlanoDeContas++;
+        }
+      } catch (_) {}
+      try {
+        const needed = [
+          { codigo: 'ADM', descricao: 'Administrativo', tipo: 'Despesa' },
+          { codigo: 'COM', descricao: 'Comercial', tipo: 'Despesa' },
+          { codigo: 'OPR', descricao: 'Operacional', tipo: 'Despesa' },
+        ];
+        for (const c of needed) {
+          const ja = await base44.asServiceRole.entities.CentroCusto.filter({ group_id: groupId, codigo: c.codigo }, undefined, 1);
+          if (!ja?.length) {
+            await base44.asServiceRole.entities.CentroCusto.create({ ...c, group_id: groupId }).catch(() => {});
+            createdGroupConfigs.CentroCusto++;
+          }
+        }
+      } catch (_) {}
     }
 
-    // 4) Criar dados por empresa (Clientes, Produtos, Fornecedores)
+    // 3) Dados por empresa (Clientes, Produtos, Fornecedores) nas EMPRESAS EXISTENTES do grupo
     const perEmpresa = [];
     if (!dryRun) {
-      for (const emp of empresas) {
+      for (const emp of empresasDoGrupo) {
         const created = { Cliente: 0, Produto: 0, Fornecedor: 0 };
         // Fornecedores
         for (let i = 0; i < counts.fornecedores; i++) {
@@ -117,7 +128,7 @@ Deno.serve(async (req) => {
             origem_cadastro: 'ERP',
           }).then(() => { created.Cliente++; }).catch(() => {});
         }
-        // Produtos (mistura revenda/bitola)
+        // Produtos
         const bitolas = [6.3,8.0,10.0,12.5,16.0,20.0,25.0,32.0];
         for (let i = 0; i < counts.produtos; i++) {
           const eh_bitola = i % 2 === 0;
@@ -142,7 +153,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 5) Propagar configurações de grupo para empresas
+    // 4) Propagar configurações do GRUPO para as EMPRESAS do grupo atual
     let propagation = null;
     if (!dryRun) {
       try {
@@ -167,8 +178,8 @@ Deno.serve(async (req) => {
         modulo: 'Sistema',
         tipo_auditoria: 'sistema',
         entidade: 'SeedMultiCompany',
-        descricao: dryRun ? 'DRY-RUN seed multiempresa' : 'Seed multiempresa executado',
-        dados_novos: { group_id: groupId, empresasCount, counts, createdGroupConfigs, perEmpresa, propagation, strategy },
+        descricao: dryRun ? 'DRY-RUN seed multiempresa (grupo atual)' : 'Seed multiempresa executado (grupo atual)',
+        dados_novos: { group_id: groupId, empresas: empresasDoGrupo.map(e => e.id), counts, createdGroupConfigs, perEmpresa, propagation, criouGrupoAgora },
         data_hora: new Date().toISOString(),
       });
     } catch {}
@@ -177,10 +188,11 @@ Deno.serve(async (req) => {
       ok: true,
       dryRun,
       group_id: groupId,
-      empresas: empresas.map(e => ({ id: e.id, nome: e.nome_fantasia || e.razao_social })),
+      empresas: empresasDoGrupo.map(e => ({ id: e.id, nome: e.nome_fantasia || e.razao_social })),
       createdGroupConfigs,
       perEmpresa,
       propagation,
+      created_new_group: criouGrupoAgora,
     });
   } catch (error) {
     return Response.json({ error: String(error?.message || error) }, { status: 500 });
