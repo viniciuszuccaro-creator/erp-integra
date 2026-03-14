@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,6 +67,18 @@ const OPCOES_ORDENACAO = {
     { value: 'codigo_desc', label: 'Código (Decrescente)' },
     { value: 'tipo_item', label: 'Tipo do Item (A-Z)' },
     { value: 'tipo_item_desc', label: 'Tipo do Item (Z-A)' },
+    { value: 'setor_atividade_nome', label: 'Setor Atividade (A-Z)' },
+    { value: 'setor_atividade_nome_desc', label: 'Setor Atividade (Z-A)' },
+    { value: 'grupo_produto_nome', label: 'Grupo Produto (A-Z)' },
+    { value: 'grupo_produto_nome_desc', label: 'Grupo Produto (Z-A)' },
+    { value: 'marca_nome', label: 'Marca (A-Z)' },
+    { value: 'marca_nome_desc', label: 'Marca (Z-A)' },
+    { value: 'status', label: 'Status (A-Z)' },
+    { value: 'status_desc', label: 'Status (Z-A)' },
+    { value: 'estoque_atual', label: 'Estoque (Menor→Maior)' },
+    { value: 'estoque_atual_desc', label: 'Estoque (Maior→Menor)' },
+    { value: 'preco_venda', label: 'Preço (Menor→Maior)' },
+    { value: 'preco_venda_desc', label: 'Preço (Maior→Menor)' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   Colaborador: [
@@ -521,8 +533,12 @@ export default function VisualizadorUniversalEntidade({
     ]);
   }, [queryClient, queryKey, aliasKeys, columnFilters]);
 
+  const lastInvalidateAtRef = useRef(0);
   React.useEffect(() => {
     const unsubscribe = base44.entities[nomeEntidade].subscribe(() => {
+      const now = Date.now();
+      if (now - lastInvalidateAtRef.current < 800) return;
+      lastInvalidateAtRef.current = now;
       invalidateAllRelated();
     });
     return unsubscribe;
@@ -531,49 +547,47 @@ export default function VisualizadorUniversalEntidade({
   const dadosBuscadosEOrdenados = useMemo(() => {
     let resultado = [...dados];
 
-    // Ordenação local quando usuário clica no cabeçalho
-    if (false && colunaOrdenacao && Array.isArray(resultado)) {
-      const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === colunaOrdenacao);
-      if (meta) {
-        const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[colunaOrdenacao, columnFilters]);
-        const toNum = (v, campo) => {
-          if (v == null || v === '') return Number.POSITIVE_INFINITY;
-          if (typeof v === 'number') return v;
-          const s = String(v);
-          if (campo === 'codigo') {
-            const digits = s.replace(/\D/g, '');
-            return digits ? Number(digits) : Number.POSITIVE_INFINITY;
-          }
-          const m = s.match(/\d+(?:[\.,]\d+)?/);
-          if (m) {
-            return Number(m[0].replace(',', '.'));
-          }
-          const n = Number(s);
-          return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
-        };
-        const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
-        resultado.sort((a,b) => {
-          const avRaw = getVal(a);
-          const bvRaw = getVal(b);
-          let comp;
-          if (meta.isNumeric) {
-            const an = toNum(avRaw, meta.campo);
-            const bn = toNum(bvRaw, meta.campo);
-            if (!Number.isFinite(an) || !Number.isFinite(bn)) {
-              const as = (avRaw ?? '').toString();
-              const bs = (bvRaw ?? '').toString();
-              comp = collator.compare(as, bs);
-            } else {
-              comp = an - bn;
-            }
-          } else {
+    // Ordenação local/fallback (imediata) — aplica sempre que houver sortField/direction definidos
+    if (Array.isArray(resultado) && (sortField || colunaOrdenacao)) {
+      const field = sortField || colunaOrdenacao;
+      const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === field) || { campo: field, isNumeric: false, getValue: (row)=>row?.[field] };
+      const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[field]);
+      const toNum = (v, campo) => {
+        if (v == null || v === '') return Number.POSITIVE_INFINITY;
+        if (typeof v === 'number') return v;
+        const s = String(v);
+        if (campo === 'codigo') {
+          const digits = s.replace(/\D/g, '');
+          return digits ? Number(digits) : Number.POSITIVE_INFINITY;
+        }
+        const m = s.match(/\d+(?:[\.,]\d+)?/);
+        if (m) { return Number(m[0].replace(',', '.')); }
+        const n = Number(s);
+        return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
+      };
+      const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
+      const dir = sortDirection || direcaoOrdenacao || 'asc';
+      resultado.sort((a,b) => {
+        const avRaw = getVal(a);
+        const bvRaw = getVal(b);
+        let comp;
+        if (meta.isNumeric) {
+          const an = toNum(avRaw, meta.campo);
+          const bn = toNum(bvRaw, meta.campo);
+          if (!Number.isFinite(an) || !Number.isFinite(bn)) {
             const as = (avRaw ?? '').toString();
             const bs = (bvRaw ?? '').toString();
             comp = collator.compare(as, bs);
+          } else {
+            comp = an - bn;
           }
-          return direcaoOrdenacao === 'desc' ? -comp : comp;
-        });
-      }
+        } else {
+          const as = (avRaw ?? '').toString();
+          const bs = (bvRaw ?? '').toString();
+          comp = collator.compare(as, bs);
+        }
+        return dir === 'desc' ? -comp : comp;
+      });
     }
     
     if (filtroAdicional && typeof filtroAdicional === 'function') {
