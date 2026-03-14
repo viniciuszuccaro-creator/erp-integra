@@ -245,7 +245,7 @@ export default function VisualizadorUniversalEntidade({
   const [colunaOrdenacao, setColunaOrdenacao] = useState(null);
   const [direcaoOrdenacao, setDirecaoOrdenacao] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
   const [sortField, setSortField] = useState(null);
@@ -522,7 +522,9 @@ export default function VisualizadorUniversalEntidade({
     keepPreviousData: true,
     placeholderData: (prev) => prev ?? 0,
     staleTime: Infinity,
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 0
   });
 
   const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
@@ -540,7 +542,7 @@ export default function VisualizadorUniversalEntidade({
     const unsubscribe = base44.entities[nomeEntidade].subscribe(() => {
       if (!autoRefresh) return;
       const now = Date.now();
-      if (now - lastInvalidateAtRef.current < 3000) return;
+      if (now - lastInvalidateAtRef.current < 8000) return;
       lastInvalidateAtRef.current = now;
       invalidateAllRelated();
     });

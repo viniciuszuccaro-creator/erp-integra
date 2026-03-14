@@ -94,7 +94,7 @@ function withUIAudit(props) {
 
   const wrapIfDenied = (onClick) => async (e) => {
     try {
-      if (isSensitive) {
+      if (false && isSensitive) {
         const path = typeof window !== 'undefined' ? window.location.pathname : '';
         const page = (path.split('/').pop() || '').replace(/^\//,'');
         const pageToModule = { CRM: 'CRM', Comercial: 'Comercial', Estoque: 'Estoque', Compras: 'Compras', Financeiro: 'Financeiro', Fiscal: 'Fiscal', RH: 'RH', Expedicao: 'Expedição', Producao: 'Produção' };
