@@ -296,7 +296,7 @@ export default function ERPDataTable({
             {isLoading ? (
               Array.from({ length: 12 }).map((_, i) => (
                 <TableRow key={`sk-${i}`} className="hover:bg-transparent">
-                  <TableCell className="px-3">
+                  <TableCell className={`${padX} ${padYCell}`}>
                     <Skeleton className="h-4 w-4 rounded" />
                   </TableCell>
                   {visibleColumns.map((c, idx) => (
@@ -315,7 +315,7 @@ export default function ERPDataTable({
               data.map((row) => {
                 const tr = (
                   <TableRow key={row.id} className="hover:bg-blue-50/40">
-                    <TableCell className="px-3">
+                    <TableCell className={`${padX} ${padYCell}`}>
                       {isRowSelectable(row) ? (
                         <Checkbox checked={selectedSet.has(row.id)} onCheckedChange={() => audited.onToggleItem && audited.onToggleItem(row.id)} />
                       ) : (
