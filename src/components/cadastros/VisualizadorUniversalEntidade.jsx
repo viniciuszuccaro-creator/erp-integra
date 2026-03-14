@@ -553,7 +553,7 @@ export default function VisualizadorUniversalEntidade({
     let resultado = [...dados];
 
     // Ordenação local/fallback (imediata) — aplica sempre que houver sortField/direction definidos
-    if (Array.isArray(resultado) && (sortField || colunaOrdenacao)) {
+    if (Array.isArray(resultado) && colunaOrdenacao) {
       const field = colunaOrdenacao || sortField;
       const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === field) || { campo: field, isNumeric: false, getValue: (row)=>row?.[field] };
       const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[field]);
@@ -571,7 +571,7 @@ export default function VisualizadorUniversalEntidade({
         return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
       };
       const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
-      const dir = colunaOrdenacao ? (direcaoOrdenacao || 'asc') : (sortDirection || 'asc');
+      const dir = direcaoOrdenacao || 'asc';
       resultado.sort((a,b) => {
         const avRaw = getVal(a);
         const bvRaw = getVal(b);
@@ -956,9 +956,9 @@ export default function VisualizadorUniversalEntidade({
                               return row;
                             })}
                             entityName={nomeEntidade}
-                            sortField={colunaOrdenacao || sortField || (getDefaultSortForEntity().field)}
-                            sortDirection={colunaOrdenacao ? direcaoOrdenacao : (sortDirection || (getDefaultSortForEntity().direction))}
-                            onSortChange={(field, direction) => { setColunaOrdenacao(field); setDirecaoOrdenacao(direction); setCurrentPage(1); setOrdenacao(''); }}
+                            sortField={sortField || (getDefaultSortForEntity().field)}
+                            sortDirection={sortDirection || (getDefaultSortForEntity().direction)}
+                            onSortChange={(field, direction) => { setColunaOrdenacao(null); setDirecaoOrdenacao('asc'); setSortField(field); setSortDirection(direction); setCurrentPage(1); setOrdenacao(''); }}
                             onToggleSelectAll={toggleSelectAll}
                             onToggleItem={(id) => toggleItem(id)}
                             allSelected={allSelected}
