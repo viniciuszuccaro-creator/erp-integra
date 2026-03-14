@@ -7,6 +7,7 @@ const __elsInflight = (typeof window !== 'undefined' ? (window.__elsInflight || 
 const __elsCache = (typeof window !== 'undefined' ? (window.__elsCache || (window.__elsCache = new Map())) : new Map());
 const __elsLastCallAt = (typeof window !== 'undefined' ? (window.__elsLastCallAt || (window.__elsLastCallAt = new Map())) : new Map());
 const __elsCooldownUntil = (typeof window !== 'undefined' ? (window.__elsCooldownUntil || (window.__elsCooldownUntil = new Map())) : new Map());
+const __elsEntityBusy = (typeof window !== 'undefined' ? (window.__elsEntityBusy || (window.__elsEntityBusy = new Map())) : new Map());
 
 // Stable stringify (sorted keys) to avoid cache misses when object key order changes
 function stableStringify(value) {
@@ -82,11 +83,19 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
       }
 
       const exec = async () => {
+        // Serialize per-entity to prevent concurrent bursts across different keys
+        if (__elsEntityBusy.get(entityName) === true) {
+          const startWait = Date.now();
+          while (__elsEntityBusy.get(entityName) === true && Date.now() - startWait < 1500) {
+            await new Promise(r => setTimeout(r, 80));
+          }
+        }
+        __elsEntityBusy.set(entityName, true);
         // Throttle per-entity to prevent burst
         const now = Date.now();
         const last = __elsLastCallAt.get(entityName) || 0;
         const since = now - last;
-        const minGap = 250; // ms throttle between calls per entity
+        const minGap = 500; // ms throttle between calls per entity
         const cooldown = __elsCooldownUntil.get(entityName) || 0;
         const waitMs = Math.max(0, cooldown - now, since < minGap ? (minGap - since) : 0);
         if (waitMs > 0) {
@@ -127,7 +136,7 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
         }
       };
 
-      const p = exec().finally(() => __elsInflight.delete(key));
+      const p = exec().finally(() => { __elsInflight.delete(key); __elsEntityBusy.set(entityName, false); });
       __elsInflight.set(key, p);
       return p;
     },

@@ -49,8 +49,11 @@ export function ProtectedAction({
       return;
     }
 
-    // 2) Valor otimista local (não bloqueia UI) enquanto valida com backend
-    setAllowedFinal(hasPermission(module, section, action));
+    // 2) Avaliação local imediata
+    const localAllowed = hasPermission(module, section, action);
+    setAllowedFinal(localAllowed);
+    // Se local já permite, não chama backend (evita 429 em massa)
+    if (localAllowed) return;
 
     // 3) Deduplica chamadas concorrentes por chave
     if (__guardInflight.has(key)) {
