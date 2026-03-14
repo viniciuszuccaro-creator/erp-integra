@@ -264,7 +264,7 @@ export default function ERPDataTable({
                     <button
                       type="button"
                       disabled={isLoading}
-                      className="flex items-center gap-1 hover:underline cursor-pointer disabled:opacity-50"
+                      className="flex items-center gap-1 hover:underline cursor-pointer disabled:opacity-50 select-none"
                       onClick={() => {
                         const now = Date.now();
                         if (now - (lastSortClickAt.current || 0) < 300) return; // debounce fast double-clicks

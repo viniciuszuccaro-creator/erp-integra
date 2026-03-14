@@ -247,7 +247,7 @@ export default function VisualizadorUniversalEntidade({
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(100);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
   const [sortField, setSortField] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
   const [columnFilters, setColumnFilters] = useState({});
@@ -850,16 +850,16 @@ export default function VisualizadorUniversalEntidade({
                 Atualizar
               </Button>
               <ProtectedAction module={moduloPermissao} action="exportar" mode="disable">
-                <Button variant="outline" size="sm" onClick={exportarDados} data-permission={`${moduloPermissao}.Relatorios.exportar`} data-sensitive>
+                <Button variant="outline" size="sm" onClick={exportarDados} disabled={isLoading || isFetching || (dadosBuscadosEOrdenados.length === 0)} data-permission={`${moduloPermissao}.Relatorios.exportar`} data-sensitive>
                   <Download className="w-4 h-4 mr-2" />
                   Exportar
                 </Button>
               </ProtectedAction>
-              <Button variant="outline" size="sm" onClick={toggleSelectAll}>
+              <Button variant="outline" size="sm" onClick={toggleSelectAll} disabled={isLoading || isFetching}>
                 {allSelected ? 'Limpar' : 'Selecionar Todos'}
               </Button>
               <ProtectedAction module={moduloPermissao} action="excluir" mode="disable">
-                <Button variant="outline" size="sm" onClick={excluirSelecionados} disabled={selectedIds.size === 0 || !hasPermission(moduloPermissao, 'Cadastro', 'excluir')} className="border-red-300 text-red-700" data-permission={`${moduloPermissao}.Cadastro.excluir`} data-sensitive>
+                <Button variant="outline" size="sm" onClick={excluirSelecionados} disabled={isLoading || isFetching || selectedIds.size === 0 || !hasPermission(moduloPermissao, 'Cadastro', 'excluir')} className="border-red-300 text-red-700" data-permission={`${moduloPermissao}.Cadastro.excluir`} data-sensitive>
                   <Trash2 className="w-4 h-4 mr-2" />
                   Excluir ({selectedIds.size})
                 </Button>
