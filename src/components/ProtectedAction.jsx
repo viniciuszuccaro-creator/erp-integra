@@ -11,7 +11,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 // Cache global leve para decisões do entityGuard (TTL: 120s) + dedupe
 const __guardCache = (typeof window !== 'undefined' ? (window.__entityGuardCache || (window.__entityGuardCache = new Map())) : new Map());
 const __guardInflight = (typeof window !== 'undefined' ? (window.__entityGuardInflight || (window.__entityGuardInflight = new Map())) : new Map());
-const GUARD_TTL_MS = 120_000;
+const __guardLastAt = (typeof window !== 'undefined' ? (window.__entityGuardLastAt || (window.__entityGuardLastAt = new Map())) : new Map());
+const GUARD_TTL_MS = 300_000; // 5 min
+const MIN_GAP_MS = 1200; // throttle backend guard per key
 
 function getGuardKey(module, section, action, empresaId, groupId) {
   return `${module || '-'}|${section || '-'}|${action || '-'}|${empresaId || '-'}|${groupId || '-'}`;
@@ -59,6 +61,13 @@ export function ProtectedAction({
       }).catch(() => {/* mantém valor otimista */});
       return;
     }
+
+    const lastAt = __guardLastAt.get(key) || 0;
+    if (now - lastAt < MIN_GAP_MS) {
+      // pula chamada backend; mantém valor otimista e cache atual
+      return;
+    }
+    __guardLastAt.set(key, now);
 
     const p = base44.functions.invoke('entityGuard', {
       module,
