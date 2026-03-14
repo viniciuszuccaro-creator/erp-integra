@@ -952,34 +952,34 @@ export default function VisualizadorUniversalEntidade({
                {visualizacao === 'table' && (
                 <div className="overflow-x-auto">
                    <ERPDataTable
-                     columns={colunasOrdenacao.map(c => ({ key: c.campo, label: c.label, isNumeric: c.isNumeric }))}
-                     data={dadosBuscadosEOrdenados.map(item => {
-                       const row = { id: item.id };
-                       colunasOrdenacao.forEach(c => { row[c.campo] = c.getValue ? c.getValue(item) : item[c.campo]; });
-                       return row;
-                     })}
-                     entityName={nomeEntidade}
-                     sortField={sortField || (getDefaultSortForEntity().field)}
-                     sortDirection={sortDirection || (getDefaultSortForEntity().direction)}
-                     onSortChange={(field, direction) => { setSortField(field); setSortDirection(direction); setCurrentPage(1); setOrdenacao(''); setColunaOrdenacao(null); }}
-                     onToggleSelectAll={toggleSelectAll}
-                     onToggleItem={(id) => toggleItem(id)}
-                     allSelected={allSelected}
-                     selectedIds={selectedIds}
-                     enableColumnFilters
-                     columnFilters={columnFilters}
-                     onColumnFiltersChange={(next) => { setColumnFilters(next); setCurrentPage(1); }}
-                     hiddenColumns={hiddenCols}
-                     onHiddenColumnsChange={setHiddenCols}
-                     footerTotals
-                     page={currentPage}
-                     pageSize={itemsPerPage}
-                     totalItems={totalItemsCount}
-                     onPageChange={(p) => { setCurrentPage(p); setSelectedIds(new Set()); }}
-                     onPageSizeChange={(n) => { setItemsPerPage(n); setCurrentPage(1); setSelectedIds(new Set()); }}
-                     isLoading={isLoading || isFetching} // skeleton rows shown when loading/refetch
-                     rowActionsRender={(row) => (
-                       <div className="inline-flex items-center gap-1">
+                            columns={colunasOrdenacao.map(c => ({ key: c.campo, label: c.label, isNumeric: c.isNumeric }))}
+                            data={dadosBuscadosEOrdenados.map(item => {
+                              const row = { id: item.id };
+                              colunasOrdenacao.forEach(c => { row[c.campo] = c.getValue ? c.getValue(item) : item[c.campo]; });
+                              return row;
+                            })}
+                            entityName={nomeEntidade}
+                            sortField={colunaOrdenacao || sortField || (getDefaultSortForEntity().field)}
+                            sortDirection={colunaOrdenacao ? direcaoOrdenacao : (sortDirection || (getDefaultSortForEntity().direction))}
+                            onSortChange={(field, direction) => { setColunaOrdenacao(field); setDirecaoOrdenacao(direction); setCurrentPage(1); setOrdenacao(''); }}
+                            onToggleSelectAll={toggleSelectAll}
+                            onToggleItem={(id) => toggleItem(id)}
+                            allSelected={allSelected}
+                            selectedIds={selectedIds}
+                            enableColumnFilters
+                            columnFilters={columnFilters}
+                            onColumnFiltersChange={(next) => { setColumnFilters(next); setCurrentPage(1); }}
+                            hiddenColumns={hiddenCols}
+                            onHiddenColumnsChange={setHiddenCols}
+                            footerTotals
+                            page={currentPage}
+                            pageSize={itemsPerPage}
+                            totalItems={totalItemsCount}
+                            onPageChange={(p) => { setCurrentPage(p); setSelectedIds(new Set()); }}
+                            onPageSizeChange={(n) => { setItemsPerPage(n); setCurrentPage(1); setSelectedIds(new Set()); }}
+                            isLoading={isLoading || isFetching} // skeleton rows shown when loading/refetch
+                            rowActionsRender={(row) => (
+                              <div className="inline-flex items-center gap-1">
                          {componenteVisualizacao && (
                            <Button size="sm" variant="ghost" onClick={() => abrirVisualizacao(dadosBuscadosEOrdenados.find(i => i.id === row.id))}>
                              <Eye className="w-4 h-4" />
