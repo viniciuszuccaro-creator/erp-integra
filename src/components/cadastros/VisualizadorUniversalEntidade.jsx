@@ -78,18 +78,6 @@ const OPCOES_ORDENACAO = {
     { value: 'estoque_atual', label: 'Estoque (Menor→Maior)' },
     { value: 'estoque_atual_desc', label: 'Estoque (Maior→Menor)' },
     { value: 'preco_venda', label: 'Preço (Menor→Maior)' },
-    { value: 'preco_venda_desc', label: 'Preço (Maior→Menor)' }
-    { value: 'setor_atividade_nome', label: 'Setor Atividade (A-Z)' },
-    { value: 'setor_atividade_nome_desc', label: 'Setor Atividade (Z-A)' },
-    { value: 'grupo_produto_nome', label: 'Grupo Produto (A-Z)' },
-    { value: 'grupo_produto_nome_desc', label: 'Grupo Produto (Z-A)' },
-    { value: 'marca_nome', label: 'Marca (A-Z)' },
-    { value: 'marca_nome_desc', label: 'Marca (Z-A)' },
-    { value: 'status', label: 'Status (A-Z)' },
-    { value: 'status_desc', label: 'Status (Z-A)' },
-    { value: 'estoque_atual', label: 'Estoque (Menor→Maior)' },
-    { value: 'estoque_atual_desc', label: 'Estoque (Maior→Menor)' },
-    { value: 'preco_venda', label: 'Preço (Menor→Maior)' },
     { value: 'preco_venda_desc', label: 'Preço (Maior→Menor)' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
