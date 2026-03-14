@@ -253,6 +253,7 @@ export default function VisualizadorUniversalEntidade({
   const [columnFilters, setColumnFilters] = useState({});
   const [hiddenCols, setHiddenCols] = useState(new Set());
   const sortTimerRef = useRef(null);
+  const sortPendingRef = useRef(false);
   
   const { openWindow, closeWindow } = useWindow();
   const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
@@ -369,10 +370,13 @@ export default function VisualizadorUniversalEntidade({
     const def = getDefaultSortForEntity();
     const m = map[val] || { f: def.field, d: def.direction };
     // debounce curto para evitar múltiplas chamadas
+    if (sortPendingRef.current) return;
+    sortPendingRef.current = true;
     if (sortTimerRef.current) clearTimeout(sortTimerRef.current);
     sortTimerRef.current = setTimeout(() => {
       setSortField(m.f);
       setSortDirection(m.d);
+      sortPendingRef.current = false;
     }, 350);
     setCurrentPage(1);
   }, [getDefaultSortForEntity]);
@@ -969,11 +973,14 @@ export default function VisualizadorUniversalEntidade({
                               setDirecaoOrdenacao(direction);
                               setOrdenacao('');
                               setCurrentPage(1);
-                              // Dispara backend com debounce curto para evitar 429
+                              // Evita múltiplas chamadas em sequência
+                              if (sortPendingRef.current) return;
+                              sortPendingRef.current = true;
                               if (sortTimerRef.current) clearTimeout(sortTimerRef.current);
                               sortTimerRef.current = setTimeout(() => {
                                 setSortField(field);
                                 setSortDirection(direction);
+                                sortPendingRef.current = false;
                               }, 350);
                             }}
                             onToggleSelectAll={toggleSelectAll}

@@ -7,6 +7,7 @@ const __elsInflight = (typeof window !== 'undefined' ? (window.__elsInflight || 
 const __elsCache = (typeof window !== 'undefined' ? (window.__elsCache || (window.__elsCache = new Map())) : new Map());
 const __elsLastCallAt = (typeof window !== 'undefined' ? (window.__elsLastCallAt || (window.__elsLastCallAt = new Map())) : new Map());
 const __elsCooldownUntil = (typeof window !== 'undefined' ? (window.__elsCooldownUntil || (window.__elsCooldownUntil = new Map())) : new Map());
+const __elsStrikeCount = (typeof window !== 'undefined' ? (window.__elsStrikeCount || (window.__elsStrikeCount = new Map())) : new Map());
 const __elsEntityBusy = (typeof window !== 'undefined' ? (window.__elsEntityBusy || (window.__elsEntityBusy = new Map())) : new Map());
 
 // Stable stringify (sorted keys) to avoid cache misses when object key order changes
@@ -95,7 +96,7 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
         const now = Date.now();
         const last = __elsLastCallAt.get(entityName) || 0;
         const since = now - last;
-        const minGap = 500; // ms throttle between calls per entity
+        const minGap = 700; // ms throttle between calls per entity
         const cooldown = __elsCooldownUntil.get(entityName) || 0;
         const waitMs = Math.max(0, cooldown - now, since < minGap ? (minGap - since) : 0);
         if (waitMs > 0) {
@@ -118,16 +119,25 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
             return out;
           } catch (err) {
             const status = err?.response?.status || err?.status;
-            if (status === 429 && attempt < 4) {
-              const base = 600; // ms
-              const jitter = Math.floor(Math.random() * 200);
-              const sleep = base * (attempt + 1) + jitter;
-              __elsCooldownUntil.set(entityName, Date.now() + Math.max(900, sleep));
-              await new Promise(r => setTimeout(r, sleep));
-              attempt++;
-              continue;
+            if (status === 429) {
+              const strikes = (__elsStrikeCount.get(entityName) || 0) + 1;
+              __elsStrikeCount.set(entityName, strikes);
+              if (attempt < 5) {
+                const base = 800; // ms
+                const jitter = Math.floor(Math.random() * 300);
+                const sleep = base * (attempt + 1) + jitter;
+                __elsCooldownUntil.set(entityName, Date.now() + Math.max(1200, sleep));
+                await new Promise(r => setTimeout(r, sleep));
+                attempt++;
+                continue;
+              }
+              // Circuit breaker: após várias tentativas em curto intervalo, serve cache e entra em cooldown
+              if (__elsCache.has(key)) {
+                __elsCooldownUntil.set(entityName, Date.now() + 3000);
+                return __elsCache.get(key);
+              }
             }
-            // Fallback to last successful cache if available (avoid error UI)
+            // Fallback a cache se existir (evita travar UI)
             if (__elsCache.has(key)) {
               return __elsCache.get(key);
             }
