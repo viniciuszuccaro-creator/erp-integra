@@ -5,6 +5,22 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 // In-flight dedupe + tiny backoff for 429 on entityListSorted
 const __elsInflight = (typeof window !== 'undefined' ? (window.__elsInflight || (window.__elsInflight = new Map())) : new Map());
 
+// Stable stringify (sorted keys) to avoid cache misses when object key order changes
+function stableStringify(value) {
+  const seen = new WeakSet();
+  const stringify = (val) => {
+    if (val && typeof val === 'object') {
+      if (seen.has(val)) return '"[circular]"';
+      seen.add(val);
+      if (Array.isArray(val)) return '[' + val.map(stringify).join(',') + ']';
+      const keys = Object.keys(val).sort();
+      return '{' + keys.map(k => JSON.stringify(k) + ':' + stringify(val[k])).join(',') + '}';
+    }
+    return JSON.stringify(val);
+  };
+  return stringify(value);
+}
+
 export default function useEntityListSorted(entityName, criterios = {}, options = {}) {
   const { getFiltroContexto } = useContextoVisual();
   const {
@@ -52,12 +68,12 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
   }
 
   return useQuery({
-    queryKey: ["entityListSorted", entityName, JSON.stringify(criterios || {}), finalSortField, finalSortDirection, limit, page, pageSize, filtroContextOutside?.group_id || null, filtroContextOutside?.[campo] || null],
+    queryKey: ["entityListSorted", entityName, stableStringify(criterios || {}), finalSortField, finalSortDirection, limit, page, pageSize, filtroContextOutside?.group_id || null, filtroContextOutside?.[campo] || null],
     queryFn: async () => {
       const filtro = { ...criterios, ...filtroContextOutside };
       if (!filtro.group_id && !filtro[campo]) return [];
 
-      const key = JSON.stringify({ entityName, filtro, finalSortField, finalSortDirection, limit: (typeof limit === 'number' && limit > 0) ? limit : pageSize, skip: (typeof page === 'number' && typeof pageSize === 'number') ? Math.max(0, (Math.max(1, page) - 1) * pageSize) : undefined });
+      const key = stableStringify({ entityName, filtro, finalSortField, finalSortDirection, limit: (typeof limit === 'number' && limit > 0) ? limit : pageSize, skip: (typeof page === 'number' && typeof pageSize === 'number') ? Math.max(0, (Math.max(1, page) - 1) * pageSize) : undefined });
       if (__elsInflight.has(key)) {
         return __elsInflight.get(key);
       }
@@ -77,8 +93,10 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
             return Array.isArray(res?.data) ? res.data : [];
           } catch (err) {
             const status = err?.response?.status || err?.status;
-            if (status === 429 && attempt < 2) {
-              await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
+            if (status === 429 && attempt < 3) {
+              const base = 600; // ms
+              const jitter = Math.floor(Math.random() * 200);
+              await new Promise(r => setTimeout(r, base * (attempt + 1) + jitter));
               attempt++;
               continue;
             }
@@ -94,5 +112,6 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     staleTime: 120_000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
+    enabled: Boolean(filtroContextOutside?.group_id || filtroContextOutside?.[campo]),
   });
 }
