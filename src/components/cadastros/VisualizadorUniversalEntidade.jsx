@@ -1084,7 +1084,7 @@ export default function VisualizadorUniversalEntidade({
                                 <p className="font-medium text-sm truncate">{String(valor)}</p>
                               </div>
                             );
-                          })
+                          })}
                           </div>
                           {item.status && (
                           <div className="mt-2">
