@@ -21,6 +21,7 @@ export default function ProdutosTab(props) {
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
   const { getFiltroContexto, createInContext } = useContextoVisual();
+  const filtroEmpresaKey = React.useMemo(() => JSON.stringify(getFiltroContexto('empresa_id', true) || {}), [getFiltroContexto]);
   const [filtroEstoqueBaixo, setFiltroEstoqueBaixo] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -38,7 +39,7 @@ export default function ProdutosTab(props) {
 
   // Contagens rápidas via backend (sem carregar todos os produtos)
   const { data: totalCount = 0 } = useQuery({
-    queryKey: ['produtos-count-total', getFiltroContexto('empresa_id', true)],
+    queryKey: ['produtos-count-total', filtroEmpresaKey],
     queryFn: async () => {
       const filtro = getFiltroContexto('empresa_id', true) || {};
       const { data } = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtro });
@@ -48,7 +49,7 @@ export default function ProdutosTab(props) {
     keepPreviousData: true
   });
   const { data: revendaCount = 0 } = useQuery({
-    queryKey: ['produtos-count-revenda', getFiltroContexto('empresa_id', true)],
+    queryKey: ['produtos-count-revenda', filtroEmpresaKey],
     queryFn: async () => {
       const filtro = { ...(getFiltroContexto('empresa_id', true) || {}), tipo_item: 'Revenda' };
       const { data } = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtro });
@@ -58,7 +59,7 @@ export default function ProdutosTab(props) {
     keepPreviousData: true
   });
   const { data: producaoCount = 0 } = useQuery({
-    queryKey: ['produtos-count-producao', getFiltroContexto('empresa_id', true)],
+    queryKey: ['produtos-count-producao', filtroEmpresaKey],
     queryFn: async () => {
       const filtro = { ...(getFiltroContexto('empresa_id', true) || {}), tipo_item: 'Matéria-Prima Produção' };
       const { data } = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtro });
@@ -70,7 +71,7 @@ export default function ProdutosTab(props) {
 
   // Estoque baixo ainda precisa avaliar campo <= mínimo (sem suporte direto no count): fallback leve por lote
   const { data: produtosParaEstoqueBaixo = [] } = useQuery({
-    queryKey: ['produtos-estoque-baixo', getFiltroContexto('empresa_id', true)],
+    queryKey: ['produtos-estoque-baixo', filtroEmpresaKey],
     queryFn: async () => {
       const filtro = { ...(getFiltroContexto('empresa_id', true) || {}), status: 'Ativo' };
       // Carrega apenas coluna necessária em lotes pequenos
