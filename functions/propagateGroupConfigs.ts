@@ -71,28 +71,32 @@ Deno.serve(async (req) => {
       const baseRegs = await base44.asServiceRole.entities[entityName].filter({ group_id: groupId }, undefined, 5000);
       const keys = keyFieldsByEntity(entityName);
       let created = 0, updated = 0, skipped = 0;
-      for (const emp of targetEmpresas) {
-        for (const r of baseRegs) {
-          const payload = sanitize({ ...r, group_id: undefined, empresa_id: emp.id });
-          const keyField = keys.find(k => r?.[k]);
-          const filtro = { empresa_id: emp.id };
-          if (keyField) filtro[keyField] = r[keyField];
-          const existing = await base44.asServiceRole.entities[entityName].filter(filtro, undefined, 1).then(x=>x?.[0]).catch(()=>null);
-          if (existing) {
-            if (strategy === 'override') {
-              await base44.asServiceRole.entities[entityName].update(existing.id, payload);
-              updated++;
-            } else if (strategy === 'merge') {
-              const patch = {};
-              for (const [k, v] of Object.entries(payload)) if (existing[k] == null) patch[k] = v;
-              if (Object.keys(patch).length) { await base44.asServiceRole.entities[entityName].update(existing.id, patch); updated++; } else { skipped++; }
-            } else { skipped++; }
-          } else {
-            await base44.asServiceRole.entities[entityName].create(payload);
-            created++;
-          }
+      await processChunks(targetEmpresas, 1, async (empSlice) => {
+        for (const emp of empSlice) {
+          await processChunks(baseRegs, 100, async (chunk) => {
+            for (const r of chunk) {
+              const payload = sanitize({ ...r, group_id: undefined, empresa_id: emp.id });
+              const keyField = keys.find(k => r?.[k]);
+              const filtro = { empresa_id: emp.id };
+              if (keyField) filtro[keyField] = r[keyField];
+              const existing = await base44.asServiceRole.entities[entityName].filter(filtro, undefined, 1).then(x=>x?.[0]).catch(()=>null);
+              if (existing) {
+                if (strategy === 'override') {
+                  await base44.asServiceRole.entities[entityName].update(existing.id, payload);
+                  updated++;
+                } else if (strategy === 'merge') {
+                  const patch = {};
+                  for (const [k, v] of Object.entries(payload)) if (existing[k] == null) patch[k] = v;
+                  if (Object.keys(patch).length) { await base44.asServiceRole.entities[entityName].update(existing.id, patch); updated++; } else { skipped++; }
+                } else { skipped++; }
+              } else {
+                await base44.asServiceRole.entities[entityName].create(payload);
+                created++;
+              }
+            }
+          });
         }
-      }
+      });
       return { entity: entityName, created, updated, skipped, total_source: baseRegs.length, direction: 'grupo_to_empresas' };
     };
 
