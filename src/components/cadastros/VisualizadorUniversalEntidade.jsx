@@ -252,6 +252,7 @@ export default function VisualizadorUniversalEntidade({
   const [sortDirection, setSortDirection] = useState('asc');
   const [columnFilters, setColumnFilters] = useState({});
   const [hiddenCols, setHiddenCols] = useState(new Set());
+  const [iaFiltroAtivo, setIaFiltroAtivo] = useState(false);
   const sortTimerRef = useRef(null);
   const sortPendingRef = useRef(false);
   
@@ -504,6 +505,11 @@ export default function VisualizadorUniversalEntidade({
     { sortField: sf, sortDirection: sd, limit: itemsPerPage, campo: campoEmpresa, page: currentPage, pageSize: itemsPerPage }
   );
 
+  const iaCreditoEstouradoCount = useMemo(() => {
+    if (nomeEntidade !== 'Cliente') return 0;
+    return (dados || []).reduce((acc, c) => acc + (((c?.limite_credito_utilizado || 0) > (c?.limite_credito || 0)) ? 1 : 0), 0);
+  }, [dados, nomeEntidade]);
+
   const { data: totalItemsCount = 0 } = useQuery({
     queryKey: [...queryKey, 'total-count', empresaAtual?.id, grupoAtual?.id, buscaBackend, JSON.stringify(columnFilters)],
     queryFn: async () => {
@@ -618,6 +624,10 @@ export default function VisualizadorUniversalEntidade({
     
     if (filtroAdicional && typeof filtroAdicional === 'function') {
       resultado = resultado.filter(filtroAdicional);
+    }
+    // IA leve: clientes com limite de crédito estourado
+    if (iaFiltroAtivo && nomeEntidade === 'Cliente') {
+      resultado = resultado.filter(c => (c?.limite_credito_utilizado || 0) > (c?.limite_credito || 0));
     }
     
     return resultado;
@@ -845,6 +855,11 @@ export default function VisualizadorUniversalEntidade({
                     Grupo: {groupTotalCount}
                   </Badge>
                   )}
+                  {nomeEntidade === 'Cliente' && (
+                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                      Limite estourado: {iaCreditoEstouradoCount}
+                    </Badge>
+                  )}
                 </CardTitle>
                 <p className="text-sm text-slate-600 mt-1">
                   {dadosBuscadosEOrdenados.length} de {totalItemsCount > 0 ? totalItemsCount : '…'} registros
@@ -852,6 +867,16 @@ export default function VisualizadorUniversalEntidade({
               </div>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              {nomeEntidade === 'Cliente' && iaCreditoEstouradoCount > 0 && (
+                <Button
+                  variant={iaFiltroAtivo ? 'default' : 'outline'}
+                  size="sm"
+                  className={iaFiltroAtivo ? 'bg-red-600 hover:bg-red-700' : 'border-red-300 text-red-700'}
+                  onClick={() => { setIaFiltroAtivo(v => !v); setCurrentPage(1); }}
+                >
+                  {iaFiltroAtivo ? 'Remover filtro IA' : 'Filtrar limite estourado'}
+                </Button>
+              )}
               <div className="hidden sm:flex items-center gap-2 pl-2 border-l">
                 <span className="text-xs text-slate-600">Auto atualizar</span>
                 <Switch checked={autoRefresh} onCheckedChange={setAutoRefresh} />
