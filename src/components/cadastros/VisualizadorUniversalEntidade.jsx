@@ -829,7 +829,7 @@ export default function VisualizadorUniversalEntidade({
 
   return (
     <Wrapper>
-      <Card className={`${windowMode ? 'h-full flex flex-col' : ''} rounded-lg shadow-md hover:shadow-lg transition-transform`}>
+      <Card className={`${windowMode ? 'h-full flex flex-col' : ''} rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-transform`}>
         <CardHeader className="sticky top-0 z-10 border-b bg-gradient-to-r from-blue-50 to-purple-50 backdrop-blur supports-[backdrop-filter]:bg-white/70">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
