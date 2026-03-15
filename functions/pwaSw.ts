@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
 
     const swCode = `
       const CACHE_NAME = 'zuccaro-app-cache-v1';
-      const APP_SHELL = ['/', '/index.html'];
+      const APP_SHELL = ['/', '/index.html', '/favicon.ico'];
 
       self.addEventListener('install', (event) => {
         event.waitUntil(

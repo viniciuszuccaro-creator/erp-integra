@@ -25,10 +25,12 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const dryRun = !!body?.dryRun;
+    const minimal = body?.minimal === true;
+    const defaults = minimal ? { clientes: 10, produtos: 10, fornecedores: 3 } : { clientes: 100, produtos: 100, fornecedores: 20 };
     const counts = {
-      clientes: Math.max(0, Number(body?.counts?.clientes ?? 100)),
-      produtos: Math.max(0, Number(body?.counts?.produtos ?? 100)),
-      fornecedores: Math.max(0, Number(body?.counts?.fornecedores ?? 20)),
+      clientes: Math.max(0, Number(body?.counts?.clientes ?? defaults.clientes)),
+      produtos: Math.max(0, Number(body?.counts?.produtos ?? defaults.produtos)),
+      fornecedores: Math.max(0, Number(body?.counts?.fornecedores ?? defaults.fornecedores)),
     };
     const strategy = (body?.strategy === 'override' || body?.strategy === 'merge') ? body.strategy : 'skip';
 
@@ -56,8 +58,9 @@ Deno.serve(async (req) => {
         groupId = grupo?.id || null;
         if (!groupId) return Response.json({ error: 'Falha ao criar grupo' }, { status: 500 });
         criouGrupoAgora = true;
-        // cria 3 empresas padrão
-        for (let i = 1; i <= 3; i++) {
+        // cria empresas padrão (1 se minimal=true; ou body.empresas; senão 3)
+        const companiesToCreate = Math.max(1, Number(body?.empresas ?? (minimal ? 1 : 3)));
+        for (let i = 1; i <= companiesToCreate; i++) {
           const emp = await base44.asServiceRole.entities.Empresa.create({
             group_id: groupId,
             razao_social: `Empresa ${i} • ${todayISODate()}`,
