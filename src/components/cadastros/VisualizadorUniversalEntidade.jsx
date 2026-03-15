@@ -536,6 +536,18 @@ export default function VisualizadorUniversalEntidade({
     retry: 0
   });
 
+  const { data: groupTotalCount = null } = useQuery({
+    queryKey: ['group-total', nomeEntidade, grupoAtual?.id],
+    queryFn: async () => {
+      if (!grupoAtual?.id) return null;
+      const res = await base44.functions.invoke('countEntities', { entityName: nomeEntidade, filter: { group_id: grupoAtual.id } });
+      return res.data?.count ?? 0;
+    },
+    enabled: !!grupoAtual?.id,
+    keepPreviousData: true,
+    staleTime: 60000,
+  });
+
   const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
   
   const invalidateAllRelated = useCallback(async () => {
@@ -817,7 +829,7 @@ export default function VisualizadorUniversalEntidade({
 
   return (
     <Wrapper>
-      <Card className={windowMode ? 'h-full flex flex-col' : ''}>
+      <Card className={`${windowMode ? 'h-full flex flex-col' : ''} rounded-lg shadow-md hover:shadow-lg transition-transform`}>
         <CardHeader className="sticky top-0 z-10 border-b bg-gradient-to-r from-blue-50 to-purple-50 backdrop-blur supports-[backdrop-filter]:bg-white/70">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -826,8 +838,13 @@ export default function VisualizadorUniversalEntidade({
                 <CardTitle className="text-xl flex items-center gap-2">
                   {tituloDisplay}
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    ⚡ Real-Time
+                  ⚡ Real-Time
                   </Badge>
+                  {groupTotalCount != null && (
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    Grupo: {groupTotalCount}
+                  </Badge>
+                  )}
                 </CardTitle>
                 <p className="text-sm text-slate-600 mt-1">
                   {dadosBuscadosEOrdenados.length} de {totalItemsCount > 0 ? totalItemsCount : '…'} registros
@@ -958,7 +975,21 @@ export default function VisualizadorUniversalEntidade({
                {visualizacao === 'table' && (
                 <div className="overflow-x-auto">
                    <ERPDataTable
-                            columns={colunasOrdenacao.map(c => ({ key: c.campo, label: c.label, isNumeric: c.isNumeric }))}
+                            columns={colunasOrdenacao.map(c => ({
+                              key: c.campo,
+                              label: c.label,
+                              isNumeric: c.isNumeric,
+                              render: c.campo === 'status'
+                                ? ((row) => {
+                                    const v = String(row.status || '').toLowerCase();
+                                    const cls = (v.includes('inativo') || v.includes('crit')) ? 'bg-red-100 text-red-800 border-red-200'
+                                              : (v.includes('pend')) ? 'bg-amber-100 text-amber-800 border-amber-200'
+                                              : (v.includes('ativo')) ? 'bg-green-100 text-green-800 border-green-200'
+                                              : 'bg-slate-100 text-slate-700 border-slate-200';
+                                    return <Badge variant="outline" className={cls}>{row.status || '-'}</Badge>;
+                                  })
+                                : undefined
+                            }))}
                             data={dadosBuscadosEOrdenados.map(item => {
                               const row = { id: item.id };
                               colunasOrdenacao.forEach(c => { row[c.campo] = c.getValue ? c.getValue(item) : item[c.campo]; });
@@ -1038,7 +1069,7 @@ export default function VisualizadorUniversalEntidade({
               {visualizacao === 'grid' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {dadosBuscadosEOrdenados.map((item) => (
-                    <Card key={item.id} className="border-2 hover:border-blue-400">
+                    <Card key={item.id} className="border-2 hover:border-blue-400 rounded-lg shadow-md hover:shadow-lg hover:scale-[1.01] transition">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-2">
                           <input type="checkbox" className="h-4 w-4" checked={selectedIds.has(item.id)} onChange={() => toggleItem(item.id)} />
@@ -1053,9 +1084,21 @@ export default function VisualizadorUniversalEntidade({
                                 <p className="font-medium text-sm truncate">{String(valor)}</p>
                               </div>
                             );
-                          })}
-                        </div>
-                        <div className="flex items-center gap-2 mt-4 pt-3 border-t">
+                          })
+                          </div>
+                          {item.status && (
+                          <div className="mt-2">
+                            {(() => {
+                              const v = String(item.status || '').toLowerCase();
+                              const cls = (v.includes('inativo') || v.includes('crit')) ? 'bg-red-100 text-red-800 border-red-200'
+                                        : (v.includes('pend')) ? 'bg-amber-100 text-amber-800 border-amber-200'
+                                        : (v.includes('ativo')) ? 'bg-green-100 text-green-800 border-green-200'
+                                        : 'bg-slate-100 text-slate-700 border-slate-200';
+                              return <Badge variant="outline" className={cls}>{item.status}</Badge>;
+                            })()}
+                          </div>
+                          )}
+                          <div className="flex items-center gap-2 mt-4 pt-3 border-t">
                           {componenteVisualizacao && (
                             <Button size="sm" variant="outline" onClick={() => abrirVisualizacao(item)} className="flex-1">
                               <Eye className="w-3 h-3 mr-1" />
@@ -1080,7 +1123,7 @@ export default function VisualizadorUniversalEntidade({
               {visualizacao === 'list' && (
                 <div className="space-y-2">
                   {dadosBuscadosEOrdenados.map((item) => (
-                    <Card key={item.id} className="border hover:border-blue-400">
+                    <Card key={item.id} className="border hover:border-blue-400 rounded-lg shadow-md hover:shadow-lg hover:scale-[1.01] transition">
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
                           <input type="checkbox" className="mr-3 h-4 w-4" checked={selectedIds.has(item.id)} onChange={() => toggleItem(item.id)} />
