@@ -20,8 +20,8 @@ import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUn
 export default function ProdutosTab(props) {
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
-  const { getFiltroContexto, createInContext } = useContextoVisual();
-  const filtroEmpresaKey = React.useMemo(() => JSON.stringify(getFiltroContexto('empresa_id', true) || {}), [getFiltroContexto]);
+  const { getFiltroContexto, createInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const filtroEmpresaKey = React.useMemo(() => JSON.stringify(getFiltroContexto('empresa_id', true) || {}), [getFiltroContexto, empresaAtual?.id, grupoAtual?.id]);
   const [filtroEstoqueBaixo, setFiltroEstoqueBaixo] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
