@@ -58,6 +58,15 @@ Deno.serve(async (req) => {
       return out;
     };
 
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const processChunks = async (arr, size, handler) => {
+      for (let i = 0; i < arr.length; i += size) {
+        const slice = arr.slice(i, i + size);
+        await handler(slice, i / size);
+        if (i + size < arr.length) await sleep(250); // backoff anti rate-limit
+      }
+    };
+
     const copyGroupToEmpresas = async (entityName) => {
       const baseRegs = await base44.asServiceRole.entities[entityName].filter({ group_id: groupId }, undefined, 5000);
       const keys = keyFieldsByEntity(entityName);
