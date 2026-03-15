@@ -1,167 +1,133 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
-// Propagação de configurações do nível de GRUPO para EMPRESAS do grupo
-// Suporta TabelaPreco e FormaPagamento (extensível no futuro)
-// Payload esperado: { group_id: string, entidades?: string[], override?: boolean }
+// Admin-only function to propagate configurations/data between group and companies
+// Body formats supported:
+// 1) Direct call: { group_id, empresa_id?, direction?: 'grupo_to_empresas'|'empresa_to_grupo', entidades?: string[], strategy?: 'skip'|'merge'|'override' }
+// 2) Entity automation payload: { event, data, old_data, args? }
+// Defaults: direction=grupo_to_empresas, entidades=['PlanoDeContas','CentroCusto'], strategy='merge'
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { user, perfil } = await getUserAndPerfil(base44);
+    const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    if (user?.role !== 'admin') {
-      const denied = await assertPermission(base44, { user, perfil }, 'Sistema', 'PropagacaoGrupo', 'executar');
-      if (denied) return denied;
-    }
+    if (user.role !== 'admin') return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
 
-    const raw = await req.json();
-    // Suporta chamadas diretas (payload simples) e automações de entidade (payload com event/data)
+    const raw = await req.json().catch(() => ({}));
     const event = raw?.event || null;
     const data = raw?.data || null;
-    const body = event ? {
+
+    const input = event ? {
       group_id: data?.group_id ?? raw?.group_id ?? null,
       empresa_id: data?.empresa_id ?? raw?.empresa_id ?? null,
-      entidades: raw?.entidades ?? (event?.entity_name ? [event.entity_name] : undefined),
       direction: raw?.direction,
-      override: raw?.override,
-      strategy: raw?.strategy
+      entidades: raw?.entidades,
+      strategy: raw?.strategy,
+      empresas_ids: raw?.empresas_ids
     } : raw;
 
-    const groupIdIn = body?.group_id || null;
-    const empresaIdIn = body?.empresa_id || null;
-    const direction = body?.direction || (empresaIdIn && !groupIdIn ? 'empresa_to_grupo' : 'grupo_to_empresas');
-    const entidades = Array.isArray(body?.entidades) && body.entidades.length > 0 ? body.entidades : ['PlanoDeContas','CentroCusto','TabelaPreco','FormaPagamento'];
-    const override = !!body?.override;
-    const strategy = body?.strategy || (override ? 'override' : 'skip');
+    // Resolve contexto
+    let { group_id: groupId, empresa_id: empresaId, direction, entidades, strategy, empresas_ids } = input || {};
+    direction = direction || (empresaId && !groupId ? 'empresa_to_grupo' : 'grupo_to_empresas');
+    entidades = Array.isArray(entidades) && entidades.length ? entidades : ['PlanoDeContas', 'CentroCusto'];
+    strategy = strategy || 'merge'; // 'skip' | 'merge' | 'override'
 
-    let groupId = groupIdIn;
-    if (!groupId && empresaIdIn) {
-      const emp = await base44.asServiceRole.entities.Empresa.filter({ id: empresaIdIn }, undefined, 1).then(r => r?.[0]).catch(() => null);
+    if (!groupId && empresaId) {
+      const emp = await base44.asServiceRole.entities.Empresa.filter({ id: empresaId }, undefined, 1).then(r => r?.[0]).catch(() => null);
       groupId = emp?.group_id || null;
     }
-    if (!groupId) return Response.json({ error: 'Contexto inválido: group_id ou empresa_id obrigatório' }, { status: 400 });
+    if (!groupId) return Response.json({ error: 'group_id obrigatório (ou empresa_id que pertença a um grupo)' }, { status: 400 });
 
-    const allEmpresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, undefined, 500);
+    const empresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, undefined, 500);
+    const targetEmpresas = Array.isArray(empresas_ids) && empresas_ids.length ? empresas.filter(e => empresas_ids.includes(e.id)) : empresas;
 
-    const targetEmpresas = (Array.isArray(body?.empresas_ids) && body.empresas_ids.length)
-      ? allEmpresas.filter(e => body.empresas_ids.includes(e.id))
-      : (event?.entity_name === 'Empresa' && data?.id
-          ? allEmpresas.filter(e => e.id === data.id)
-          : allEmpresas);
-
-    const results = [];
-    const ops = [];
-
-    const copiarRegistros = async (entityName) => {
-      const baseRegs = await base44.asServiceRole.entities[entityName].filter({ group_id: groupId }, undefined, 1000);
-      let created = 0, updated = 0, skipped = 0, conflicted = 0;
-      for (const emp of targetEmpresas) {
-        for (const r of baseRegs) {
-          const keyFields = ['codigo','nome','descricao','titulo'];
-          const keyField = keyFields.find(k => r?.[k]);
-          const filtro = { empresa_id: emp.id };
-          if (keyField) filtro[keyField] = r[keyField];
-          const existing = await base44.asServiceRole.entities[entityName].filter(filtro, undefined, 1);
-
-          const basePayload = { ...r };
-          delete basePayload.id; delete basePayload.created_date; delete basePayload.updated_date; delete basePayload.created_by; delete basePayload.group_id;
-          basePayload.empresa_id = emp.id;
-
-          if (existing?.length) {
-            if (strategy === 'override') {
-              await base44.asServiceRole.entities[entityName].update(existing[0].id, basePayload);
-              updated++; ops.push({ entity: entityName, action: 'update', empresa_id: emp.id, key: keyField ? r[keyField] : null });
-            } else if (strategy === 'merge') {
-              const patch = {};
-              for (const [k, v] of Object.entries(basePayload)) {
-                if (existing[0][k] === undefined || existing[0][k] === null) patch[k] = v;
-              }
-              if (Object.keys(patch).length > 0) {
-                await base44.asServiceRole.entities[entityName].update(existing[0].id, patch);
-                updated++; ops.push({ entity: entityName, action: 'merge', empresa_id: emp.id, key: keyField ? r[keyField] : null });
-              } else {
-                skipped++;
-              }
-            } else {
-              // skip
-              skipped++; conflicted++;
-            }
-          } else {
-            await base44.asServiceRole.entities[entityName].create(basePayload);
-            created++; ops.push({ entity: entityName, action: 'create', empresa_id: emp.id, key: keyField ? r[keyField] : null });
-          }
-        }
-      }
-      results.push({ entity: entityName, total: baseRegs.length, created, updated, skipped, conflicted });
+    // Helpers
+    const keyFieldsByEntity = (en) => {
+      if (en === 'Cliente') return ['cnpj', 'cpf', 'nome', 'razao_social'];
+      if (en === 'Fornecedor') return ['cnpj', 'cpf', 'nome', 'razao_social'];
+      if (en === 'TabelaPreco' || en === 'PlanoDeContas' || en === 'CentroCusto') return ['codigo', 'descricao', 'nome', 'titulo'];
+      return ['codigo', 'descricao', 'nome', 'titulo'];
     };
 
-    if (direction === 'grupo_to_empresas') {
-      for (const en of entidades) {
-        if (!base44.asServiceRole.entities?.[en]) continue;
-        await copiarRegistros(en);
+    const sanitize = (obj) => {
+      if (!obj || typeof obj !== 'object') return obj;
+      const out = Array.isArray(obj) ? [] : {};
+      for (const [k, v] of Object.entries(obj)) {
+        if (['id','created_date','updated_date','created_by'].includes(k)) continue;
+        out[k] = (v && typeof v === 'object') ? sanitize(v) : (typeof v === 'string' ? v.replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi,'').replace(/javascript:\s*/gi,'') : v);
       }
-    } else if (direction === 'empresa_to_grupo' && empresaIdIn) {
-      // Copia configurações da empresa origem para o nível do grupo (sem sobrescrever IDs)
-      const copiarEmpresaParaGrupo = async (entityName) => {
-        const baseRegs = await base44.asServiceRole.entities[entityName].filter({ empresa_id: empresaIdIn }, undefined, 1000);
-        let created = 0, updated = 0, skipped = 0, conflicted = 0;
+      return out;
+    };
+
+    const copyGroupToEmpresas = async (entityName) => {
+      const baseRegs = await base44.asServiceRole.entities[entityName].filter({ group_id: groupId }, undefined, 5000);
+      const keys = keyFieldsByEntity(entityName);
+      let created = 0, updated = 0, skipped = 0;
+      for (const emp of targetEmpresas) {
         for (const r of baseRegs) {
-          const keyFields = ['codigo','nome','descricao','titulo'];
-          const keyField = keyFields.find(k => r?.[k]);
-          const filtro = { group_id: groupId };
+          const payload = sanitize({ ...r, group_id: undefined, empresa_id: emp.id });
+          const keyField = keys.find(k => r?.[k]);
+          const filtro = { empresa_id: emp.id };
           if (keyField) filtro[keyField] = r[keyField];
-          const existing = await base44.asServiceRole.entities[entityName].filter(filtro, undefined, 1);
-
-          const basePayload = { ...r };
-          delete basePayload.id; delete basePayload.created_date; delete basePayload.updated_date; delete basePayload.created_by; delete basePayload.empresa_id;
-          basePayload.group_id = groupId;
-
-          if (existing?.length) {
+          const existing = await base44.asServiceRole.entities[entityName].filter(filtro, undefined, 1).then(x=>x?.[0]).catch(()=>null);
+          if (existing) {
             if (strategy === 'override') {
-              await base44.asServiceRole.entities[entityName].update(existing[0].id, basePayload);
-              updated++; ops.push({ entity: entityName, action: 'update', group_id: groupId, key: keyField ? r[keyField] : null });
+              await base44.asServiceRole.entities[entityName].update(existing.id, payload);
+              updated++;
             } else if (strategy === 'merge') {
               const patch = {};
-              for (const [k, v] of Object.entries(basePayload)) {
-                if (existing[0][k] === undefined || existing[0][k] === null) patch[k] = v;
-              }
-              if (Object.keys(patch).length > 0) {
-                await base44.asServiceRole.entities[entityName].update(existing[0].id, patch);
-                updated++; ops.push({ entity: entityName, action: 'merge', group_id: groupId, key: keyField ? r[keyField] : null });
-              } else {
-                skipped++;
-              }
-            } else {
-              skipped++; conflicted++;
-            }
+              for (const [k, v] of Object.entries(payload)) if (existing[k] == null) patch[k] = v;
+              if (Object.keys(patch).length) { await base44.asServiceRole.entities[entityName].update(existing.id, patch); updated++; } else { skipped++; }
+            } else { skipped++; }
           } else {
-            await base44.asServiceRole.entities[entityName].create(basePayload);
-            created++; ops.push({ entity: entityName, action: 'create', group_id: groupId, key: keyField ? r[keyField] : null });
+            await base44.asServiceRole.entities[entityName].create(payload);
+            created++;
           }
         }
-        results.push({ entity: entityName, total: baseRegs.length, created, updated, skipped, conflicted, direction });
-      };
-      for (const en of entidades) {
-        if (!base44.asServiceRole.entities?.[en]) continue;
-        await copiarEmpresaParaGrupo(en);
       }
+      return { entity: entityName, created, updated, skipped, total_source: baseRegs.length, direction: 'grupo_to_empresas' };
+    };
+
+    const copyEmpresaToGroup = async (entityName, empresaOrigemId) => {
+      const baseRegs = await base44.asServiceRole.entities[entityName].filter({ empresa_id: empresaOrigemId }, undefined, 5000);
+      const keys = keyFieldsByEntity(entityName);
+      let created = 0, updated = 0, skipped = 0;
+      for (const r of baseRegs) {
+        const payload = sanitize({ ...r, empresa_id: undefined, group_id: groupId });
+        const keyField = keys.find(k => r?.[k]);
+        const filtro = { group_id: groupId };
+        if (keyField) filtro[keyField] = r[keyField];
+        const existing = await base44.asServiceRole.entities[entityName].filter(filtro, undefined, 1).then(x=>x?.[0]).catch(()=>null);
+        if (existing) {
+          if (strategy === 'override') {
+            await base44.asServiceRole.entities[entityName].update(existing.id, payload); updated++;
+          } else if (strategy === 'merge') {
+            const patch = {};
+            for (const [k, v] of Object.entries(payload)) if (existing[k] == null) patch[k] = v;
+            if (Object.keys(patch).length) { await base44.asServiceRole.entities[entityName].update(existing.id, patch); updated++; } else { skipped++; }
+          } else { skipped++; }
+        } else {
+          await base44.asServiceRole.entities[entityName].create(payload); created++;
+        }
+      }
+      return { entity: entityName, created, updated, skipped, total_source: baseRegs.length, direction: 'empresa_to_grupo' };
+    };
+
+    const results = [];
+    if (direction === 'grupo_to_empresas') {
+      for (const en of entidades) if (base44.asServiceRole.entities?.[en]) results.push(await copyGroupToEmpresas(en));
+    } else if (direction === 'empresa_to_grupo' && empresaId) {
+      for (const en of entidades) if (base44.asServiceRole.entities?.[en]) results.push(await copyEmpresaToGroup(en, empresaId));
     }
 
-    // Auditoria
-    try {
-      await base44.asServiceRole.entities.AuditLog.create({
-        usuario: user?.full_name || user?.email || 'Sistema',
-        usuario_id: user?.id,
-        acao: 'Criação',
-        modulo: 'Sistema',
-        entidade: 'PropagacaoGrupo',
-        descricao: `Propagação (${direction}) concluída (${results.map(r=>r.entity+':'+(r.created||0)+'/'+(r.updated||0)+'/'+(r.skipped||0)).join(', ')})`,
-        dados_novos: { group_id: groupId, empresa_origem: empresaIdIn || null, direction, entidades, override, strategy, results, ops_count: ops.length },
-        data_hora: new Date().toISOString(),
-      });
-    } catch {}
+    // Audit
+    try { await base44.asServiceRole.entities.AuditLog.create({
+      usuario: user.full_name || user.email || 'Sistema', usuario_id: user.id,
+      acao: 'Execução', modulo: 'Sistema', tipo_auditoria: 'sistema', entidade: 'PropagacaoGrupo',
+      descricao: `Propagação ${direction} (${entidades.join(', ')})`, dados_novos: { group_id: groupId, empresa_id: empresaId || null, direction, strategy, results },
+      data_hora: new Date().toISOString()
+    }); } catch {}
 
-    return Response.json({ ok: true, direction, results });
+    return Response.json({ ok: true, group_id: groupId, empresa_id: empresaId || null, direction, strategy, results });
   } catch (error) {
     return Response.json({ error: String(error?.message || error) }, { status: 500 });
   }
