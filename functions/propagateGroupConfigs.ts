@@ -115,8 +115,12 @@ Deno.serve(async (req) => {
     const results = [];
     if (direction === 'grupo_to_empresas') {
       for (const en of entidades) if (base44.asServiceRole.entities?.[en]) results.push(await copyGroupToEmpresas(en));
-    } else if (direction === 'empresa_to_grupo' && empresaId) {
-      for (const en of entidades) if (base44.asServiceRole.entities?.[en]) results.push(await copyEmpresaToGroup(en, empresaId));
+    } else if (direction === 'empresa_to_grupo') {
+      const ids = Array.isArray(empresas_ids) && empresas_ids.length ? empresas_ids : (empresaId ? [empresaId] : []);
+      if (!ids.length) return Response.json({ error: 'empresa_id ou empresas_ids obrigatório para empresa_to_grupo' }, { status: 400 });
+      for (const eid of ids) {
+        for (const en of entidades) if (base44.asServiceRole.entities?.[en]) results.push(await copyEmpresaToGroup(en, eid));
+      }
     }
 
     // Audit
