@@ -89,7 +89,7 @@ export default function Bloco1Pessoas() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
       {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
-        <Card key={k} className="hover:shadow-lg transition-all">
+        <Card key={k} className="rounded-sm hover:shadow-lg transition-all">
           <CardHeader className="bg-slate-50 border-b">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">

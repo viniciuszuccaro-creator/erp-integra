@@ -24,7 +24,7 @@ import CatalogoWebForm from "@/components/cadastros/CatalogoWebForm";
 import UnidadeMedidaForm from "@/components/cadastros/UnidadeMedidaForm";
 
 function CountBadge({ entityName }) {
-  const { getFiltroContexto } = useContextoVisual();
+  const { getFiltroContexto, empresasDoGrupo } = useContextoVisual();
   const { hasGroup, hasAnyEmpresa, ctxField } = useEntityContextInfo(entityName);
   const campo = ctxField || 'empresa_id';
   const fc = getFiltroContexto(campo, true) || {};
@@ -32,9 +32,15 @@ function CountBadge({ entityName }) {
   const groupId = fc.group_id;
   let filtro = { ...(groupId ? { group_id: groupId } : {}) };
   const orConds = [];
-  if (empresaId) orConds.push({ [campo]: empresaId });
+  if (empresaId) {
+    orConds.push({ [campo]: empresaId });
+  } else if (groupId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
+    const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
+    if (empresasIds.length) {
+      orConds.push({ [campo]: { $in: empresasIds } });
+    }
+  }
   if (orConds.length) filtro.$or = orConds;
-  // Quando não houver contexto, pedimos total global (filtro vazio)
   const finalFiltro = (!hasGroup && !hasAnyEmpresa) ? {} : filtro;
   const { count = 0 } = useCountEntities(entityName, finalFiltro, { staleTime: 60000, enabled: true });
   return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
@@ -64,7 +70,7 @@ export default function Bloco2Produtos() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-      <Card className="hover:shadow-lg transition-all">
+      <Card className="rounded-sm hover:shadow-lg transition-all">
         <CardHeader className="bg-purple-50 border-b">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
