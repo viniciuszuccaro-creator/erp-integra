@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Settings, Users, Shield, FileText, Sparkles, Link2 } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
@@ -32,7 +33,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       <TabsList className="flex flex-wrap gap-2">
         {canGerais && (
           <TabsTrigger value="gerais" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <div className="flex items-center gap-2"><Settings className="w-4 h-4"/> Gerais</div>
+            <div className="flex items-center gap-2"><Settings className="w-4 h-4"/> Parâmetros Gerais</div>
           </TabsTrigger>
         )}
         {canIntegracoes && (
@@ -57,7 +58,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
         )}
         {canIA && (
           <TabsTrigger value="ia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> IA & Otimização</div>
+            <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> Tecnologia, IA & Parâmetros</div>
           </TabsTrigger>
         )}
         {canAuditoria && (
@@ -138,7 +139,20 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       <TabsContent value="apps" className="mt-4">
         <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito aos Apps Externos.</div>}>
           <div className="w-full h-full">
-            <ExternalAppsHub />
+            <Card>
+              <CardContent className="p-4">
+                <h2 className="font-semibold mb-2">Apps/Conectores consolidados</h2>
+                <p className="text-sm text-slate-600 mb-3">APIs Externas, Webhooks e Chatbot Intents foram centralizados. Use os atalhos:</p>
+                <div className="flex gap-2">
+                  <Link to="/AdministracaoSistema?tab=integracoes" className="inline-flex">
+                    <Button variant="default">Abrir Integrações</Button>
+                  </Link>
+                  <Link to="/AdministracaoSistema?tab=ia" className="inline-flex">
+                    <Button variant="outline">Tecnologia, IA & Parâmetros</Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </ProtectedSection>
       </TabsContent>
