@@ -46,9 +46,18 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
         return base44.entities.ConfiguracaoSistema.create(data);
       }
     },
-    onSuccess: () => {
+    onSuccess: async (_res, variables) => {
       queryClient.invalidateQueries({ queryKey: ['config-sistema'] });
       toast({ title: '✅ Configuração salva com sucesso!' });
+      try {
+        await base44.entities.AuditLog.create({
+          usuario: (await base44.auth.me())?.email || 'Usuário',
+          acao: 'Edição', modulo: 'Sistema', tipo_auditoria: 'sistema', entidade: 'ConfiguracaoSistema',
+          descricao: `Alteração de toggle/chave: ${variables?.chave || 'desconhecida'}`,
+          dados_novos: variables,
+          data_hora: new Date().toISOString(),
+        });
+      } catch (_) {}
     },
   });
 
@@ -131,6 +140,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                   </div>
                   <Switch
                     checked={getConfig('integracao_boletos')?.integracao_boletos?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('integracao_boletos','Integracoes',{ativa: checked})}
                   />
                 </div>
               </div>
@@ -144,6 +154,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                   </div>
                   <Switch
                     checked={getConfig('integracao_maps')?.integracao_maps?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('integracao_maps','Integracoes',{ativa: checked})}
                   />
                 </div>
               </div>
@@ -157,6 +168,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                   </div>
                   <Switch
                     checked={getConfig('integracao_whatsapp')?.integracao_whatsapp?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('integracao_whatsapp','Integracoes',{ativa: checked})}
                   />
                 </div>
               </div>
@@ -359,7 +371,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Logout após inatividade</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Input type="number" defaultValue="30" className="w-20" />
+                    <Input type="number" defaultValue={getConfig('seg_timeout')?.seguranca?.minutos || 30} className="w-20" onBlur={(e)=>handleSave('seg_timeout','Seguranca',{minutos: Number(e.target.value)||0})} />
                     <span className="text-sm text-slate-600">min</span>
                   </div>
                 </div>

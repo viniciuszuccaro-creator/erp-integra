@@ -100,7 +100,7 @@ export default function Dashboard() {
   });
 
   // Removed visualizacao state as it's replaced by Tabs
-  const [activeTab, setActiveTab] = useState("tempo-real");
+  const [activeTab, setActiveTab] = useState("resumo");
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
@@ -714,9 +714,10 @@ export default function Dashboard() {
 
       <ErrorBoundary>
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <DashboardTabsNav />
+        {/* Unificado em Resumo Geral */}
+        <div className="hidden" />
 
-        <TabsContent value="tempo-real" className="w-full h-full overflow-hidden">
+        <TabsContent value="tempo-real" className="hidden">
           <PanelGroup direction="vertical" className="gap-2 flex-1 w-full h-full min-h-[760px]">
             <Panel defaultSize={55} minSize={35} className="overflow-auto h-full">
               {activeTab === 'tempo-real' && (
@@ -740,7 +741,7 @@ export default function Dashboard() {
           </PanelGroup>
         </TabsContent>
 
-        <TabsContent value="bi-operacional" className="w-full h-full overflow-hidden">
+        <TabsContent value="bi-operacional" className="hidden">
           <PanelGroup direction="vertical" className="gap-2 flex-1 w-full h-full min-h-[760px]">
             <Panel defaultSize={70} minSize={40} className="overflow-auto h-full">
               {activeTab === 'bi-operacional' && (
@@ -757,6 +758,31 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="resumo" className="w-full h-full overflow-y-auto space-y-6 mt-6">
+          {/* Sticky KPIs principais */}
+          <div className="sticky top-0 z-20 bg-gradient-to-b from-white/80 to-white/40 backdrop-blur-sm border-b border-slate-200 py-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Card className="shadow-sm">
+                <CardContent className="p-3">
+                  <div className="text-xs text-slate-500">Faturamento</div>
+                  <div className="text-sm font-semibold text-slate-900">Dia: R$ {(pedidos.filter(p=>new Date(p.data_pedido||p.created_date).toDateString()===new Date().toDateString()).reduce((s,p)=>s+(p.valor_total||0),0)).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                  <div className="text-xs text-slate-600">Mês: R$ {pedidos.filter(p=>{const d=new Date(p.data_pedido||p.created_date);const n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).reduce((s,p)=>s+(p.valor_total||0),0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm">
+                <CardContent className="p-3">
+                  <div className="text-xs text-slate-500">Pedidos</div>
+                  <div className="text-sm font-semibold text-slate-900">Abertos: {pedidosPendentes.length}</div>
+                  <div className="text-xs text-slate-600">Em aprovação: {pedidosAguardandoAprovacao.length}</div>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm">
+                <CardContent className="p-3">
+                  <div className="text-xs text-slate-500">Estoque crítico</div>
+                  <div className="text-sm font-semibold text-slate-900">Itens: {produtosBaixoEstoque}</div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
           <PanelGroup direction="vertical" className="gap-2">
             <Panel defaultSize={50} minSize={30} className="overflow-auto">
               {/* KPIs Principais + Widget Canais */}
