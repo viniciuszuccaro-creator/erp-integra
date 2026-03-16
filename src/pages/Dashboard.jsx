@@ -126,7 +126,7 @@ export default function Dashboard() {
 
   const [autoRefresh, setAutoRefresh] = useState(true);
   const queryClient = useQueryClient();
-  const refetchInterval = (activeTab === 'resumo' && autoRefresh) ? 60000 : false; // 60 segundos
+  const refetchInterval = (empresaAtual?.id || estaNoGrupo) ? ((activeTab === 'resumo' && autoRefresh) ? 60000 : 0) : false; // evita zero-dados sem contexto
 
   const { data: pedidos = [] } = useQuery({
       enabled: canSeeComercial && (empresaAtual?.id || estaNoGrupo),
