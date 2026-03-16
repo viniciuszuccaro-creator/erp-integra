@@ -928,6 +928,16 @@ export default function VisualizadorUniversalEntidade({
                   {iaFiltroAtivo ? 'Remover filtro IA' : 'Filtrar limite estourado'}
                 </Button>
               )}
+              {nomeEntidade === 'Produto' && estoqueCriticoCount > 0 && (
+                <Button
+                  variant={iaFiltroAtivo ? 'default' : 'outline'}
+                  size="sm"
+                  className={iaFiltroAtivo ? 'bg-amber-600 hover:bg-amber-700' : 'border-amber-300 text-amber-700'}
+                  onClick={() => { setIaFiltroAtivo(v => !v); setCurrentPage(1); }}
+                >
+                  {iaFiltroAtivo ? 'Remover filtro IA' : 'Filtrar estoque crítico'}
+                </Button>
+              )}
               <div className="hidden sm:flex items-center gap-2 pl-2 border-l">
                 <span className="text-xs text-slate-600">Auto atualizar</span>
                 <Switch checked={autoRefresh} onCheckedChange={setAutoRefresh} />
