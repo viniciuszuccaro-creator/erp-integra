@@ -781,12 +781,60 @@ export default function Cadastros() {
   const { count: totalConfigNFe = 0 } = useCountEntities('ConfiguracaoNFe', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
   const { count: totalConfigBoletos = 0 } = useCountEntities('ConfiguracaoBoletos', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
   const { count: totalConfigWhatsApp = 0 } = useCountEntities('ConfiguracaoWhatsApp', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
+  // Contagens adicionais por entidade (usa backend otimizado, multiempresa-aware)
+  const { count: totalServicos = 0 } = useCountEntities('Servico', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalSetoresAtividade = 0 } = useCountEntities('SetorAtividade', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalGruposProduto = 0 } = useCountEntities('GrupoProduto', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalMarcas = 0 } = useCountEntities('Marca', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalTabelasPreco = 0 } = useCountEntities('TabelaPreco', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalCatalogoWeb = 0 } = useCountEntities('CatalogoWeb', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalKits = 0 } = useCountEntities('KitProduto', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalUnidadesMedida = 0 } = useCountEntities('UnidadeMedida', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+
+  const { count: totalBancos = 0 } = useCountEntities('Banco', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalFormasPagamento = 0 } = useCountEntities('FormaPagamento', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalOperadoresCaixa = 0 } = useCountEntities('OperadorCaixa', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalPlanoContas = 0 } = useCountEntities('PlanoDeContas', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalCentrosCusto = 0 } = useCountEntities('CentroCusto', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalCentrosResultado = 0 } = useCountEntities('CentroResultado', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalTiposDespesa = 0 } = useCountEntities('TipoDespesa', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalMoedasIndices = 0 } = useCountEntities('MoedaIndice', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalCondicoesComerciais = 0 } = useCountEntities('CondicaoComercial', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalTabelasFiscais = 0 } = useCountEntities('TabelaFiscal', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+
+  const { count: totalVeiculos = 0 } = useCountEntities('Veiculo', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalMotoristas = 0 } = useCountEntities('Motorista', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalTiposFrete = 0 } = useCountEntities('TipoFrete', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalLocaisEstoque = 0 } = useCountEntities('LocalEstoque', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalRotasPadrao = 0 } = useCountEntities('RotaPadrao', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalModelosDocumento = 0 } = useCountEntities('ModeloDocumento', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+
+  const { count: totalEmpresas = 0 } = useCountEntities('Empresa', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalGruposEmpresariais = 0 } = useCountEntities('GrupoEmpresarial', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalDepartamentos = 0 } = useCountEntities('Departamento', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalCargos = 0 } = useCountEntities('Cargo', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalTurnos = 0 } = useCountEntities('Turno', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+
+  const { count: totalEventosNotificacao = 0 } = useCountEntities('EventoNotificacao', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalWebhooks = 0 } = useCountEntities('Webhook', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalChatbotIntents = 0 } = useCountEntities('ChatbotIntent', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalChatbotCanais = 0 } = useCountEntities('ChatbotCanal', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalApisExternas = 0 } = useCountEntities('ApiExterna', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalJobsAgendados = 0 } = useCountEntities('JobAgendado', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+
+  const { count: totalParametrosPortal = 0 } = useCountEntities('ParametroPortalCliente', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalParametrosOrigemPedido = 0 } = useCountEntities('ParametroOrigemPedido', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalParametrosRecebimentoNFe = 0 } = useCountEntities('ParametroRecebimentoNFe', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalParametrosRoteirizacao = 0 } = useCountEntities('ParametroRoteirizacao', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalParametrosConciliacao = 0 } = useCountEntities('ParametroConciliacaoBancaria', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+  const { count: totalParametrosCaixa = 0 } = useCountEntities('ParametroCaixaDiario', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
+
   const totalBloco1 = totalClientes + totalFornecedores + totalTransportadoras + totalColaboradores + totalRepresentantes + totalContatosB2B + totalSegmentosCliente + totalRegioesAtendimento;
-  const totalBloco2 = totalProdutos + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
-  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length + operadoresCaixa.length + totalDespesasRecorrentes;
-  const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length + rotasPadrao.length + modelosDocumento.length;
-  const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length;
-  const totalBloco6 = eventosNotificacao.length + webhooks.length + chatbotIntents.length + chatbotCanais.length + apisExternas.length + jobsAgendados.length + totalConfigNFe + totalConfigBoletos + totalConfigWhatsApp + parametrosPortal.length + parametrosOrigemPedido.length + parametrosRecebimentoNFe.length + parametrosRoteirizacao.length + parametrosConciliacao.length + parametrosCaixa.length;
+  const totalBloco2 = totalProdutos + totalServicos + totalSetoresAtividade + totalGruposProduto + totalMarcas + totalTabelasPreco + totalCatalogoWeb + totalKits + totalUnidadesMedida;
+  const totalBloco3 = totalBancos + totalFormasPagamento + totalPlanoContas + totalCentrosCusto + totalCentrosResultado + totalTiposDespesa + totalMoedasIndices + totalCondicoesComerciais + totalTabelasFiscais + totalOperadoresCaixa + totalDespesasRecorrentes;
+  const totalBloco4 = totalVeiculos + totalMotoristas + totalTiposFrete + totalLocaisEstoque + totalRotasPadrao + totalModelosDocumento;
+  const totalBloco5 = totalEmpresas + totalGruposEmpresariais + totalDepartamentos + totalCargos + totalTurnos;
+  const totalBloco6 = totalEventosNotificacao + totalWebhooks + totalChatbotIntents + totalChatbotCanais + totalApisExternas + totalJobsAgendados + totalConfigNFe + totalConfigBoletos + totalConfigWhatsApp + totalParametrosPortal + totalParametrosOrigemPedido + totalParametrosRecebimentoNFe + totalParametrosRoteirizacao + totalParametrosConciliacao + totalParametrosCaixa;
 
   // Filtrar itens pelo termo de busca
   const filtrarPorBusca = (lista, campos) => {
