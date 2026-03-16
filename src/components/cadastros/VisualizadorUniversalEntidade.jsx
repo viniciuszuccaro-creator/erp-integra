@@ -675,6 +675,9 @@ export default function VisualizadorUniversalEntidade({
     if (iaFiltroAtivo && nomeEntidade === 'Cliente') {
       resultado = resultado.filter(c => (c?.limite_credito_utilizado || 0) > (c?.limite_credito || 0));
     }
+    if (iaFiltroAtivo && nomeEntidade === 'Produto') {
+      resultado = resultado.filter(p => (p?.estoque_atual ?? 0) < (p?.estoque_minimo ?? 0));
+    }
     
     return resultado;
   }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, nomeEntidade, columnFilters]);
