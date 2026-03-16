@@ -253,6 +253,8 @@ export default function VisualizadorUniversalEntidade({
   const [columnFilters, setColumnFilters] = useState({});
   const [hiddenCols, setHiddenCols] = useState(new Set());
   const [iaFiltroAtivo, setIaFiltroAtivo] = useState(false);
+  const [accDados, setAccDados] = useState([]);
+  const sentinelRef = useRef(null);
   const sortTimerRef = useRef(null);
   const sortPendingRef = useRef(false);
   
@@ -554,6 +556,7 @@ export default function VisualizadorUniversalEntidade({
     staleTime: 60000,
   });
 
+  const hasMore = (accDados.length < (totalItemsCount || 0));
   const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
   
   const invalidateAllRelated = useCallback(async () => {
@@ -563,6 +566,43 @@ export default function VisualizadorUniversalEntidade({
       ...aliasKeys.map((k) => queryClient.invalidateQueries({ queryKey: [k] }))
     ]);
   }, [queryClient, queryKey, aliasKeys, columnFilters]);
+
+  // Infinite scroll: acumular páginas
+  useEffect(() => {
+    if (!Array.isArray(dados)) return;
+    if (currentPage === 1) {
+      setAccDados(dados);
+    } else if (dados.length) {
+      setAccDados(prev => {
+        const seen = new Set(prev.map(i => i.id));
+        const merged = prev.slice();
+        dados.forEach(i => { if (!seen.has(i.id)) merged.push(i); });
+        return merged;
+      });
+    }
+  }, [dados, currentPage]);
+
+  // Reset ao mudar filtros/ordenacao/busca
+  useEffect(() => {
+    setCurrentPage(1);
+    setAccDados([]);
+  }, [nomeEntidade, JSON.stringify(filtroBase), sortField, sortDirection, itemsPerPage, buscaBackend, JSON.stringify(columnFilters)]);
+
+  // Observer para carregar mais
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    if (!hasMore) return;
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          if (!isFetching && hasMore) setCurrentPage(p => p + 1);
+        }
+      });
+    }, { root: null, rootMargin: '200px', threshold: 0 });
+    obs.observe(el);
+    return () => { try { obs.unobserve(el); } catch {} };
+  }, [sentinelRef, isFetching, hasMore]);
 
   const lastInvalidateAtRef = useRef(0);
   React.useEffect(() => {
@@ -577,7 +617,8 @@ export default function VisualizadorUniversalEntidade({
   }, [nomeEntidade, invalidateAllRelated, columnFilters, autoRefresh]);
 
   const dadosBuscadosEOrdenados = useMemo(() => {
-    let resultado = [...dados];
+    const baseRows = (accDados && accDados.length) ? accDados : dados;
+    let resultado = [...baseRows];
 
     // Ordenação local/fallback (imediata) — aplica sempre que houver sortField/direction definidos
     if (Array.isArray(resultado) && colunaOrdenacao) {
@@ -915,7 +956,7 @@ export default function VisualizadorUniversalEntidade({
               onChange={(val) => setBuscaLocal(val)}
               placeholder="🔍 Busca universal em todos os campos..."
               className="flex-1"
-              debounceMs={500}
+              debounceMs={400}
             />
             
             <Select value={ordenacao || 'recent'} onValueChange={(val) => {
@@ -1216,6 +1257,10 @@ export default function VisualizadorUniversalEntidade({
             </>
           )}
 
+          {isFetching && hasMore && (
+            <div className="py-3 text-center text-slate-500">Carregando…</div>
+          )}
+          <div ref={sentinelRef} className="h-8 w-full" />
           {/* Paginação consolidada no ERPDataTable (padrão global) */}
         </CardContent>
       </Card>
