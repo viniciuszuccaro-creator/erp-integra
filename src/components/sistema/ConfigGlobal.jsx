@@ -292,9 +292,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Envia link de rastreamento</p>
                   </div>
                   <Switch
-                    checked={getConfig('notif_entrega_transporte')?.notificacoes?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('notif_entrega_transporte','Notificacoes',{ativa: checked})}
-                  />
+                     checked={getConfig('notif_entrega_transporte')?.notificacoes?.ativa || false}
+                     onCheckedChange={(checked)=>handleSave('notif_entrega_transporte','Notificacoes',{ativa: checked})}
+                     data-permission="Sistema.Configurações.editar"
+                   />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -303,9 +304,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Envia boleto/PIX por WhatsApp e e-mail</p>
                   </div>
                   <Switch
-                    checked={getConfig('notif_boleto_gerado')?.notificacoes?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('notif_boleto_gerado','Notificacoes',{ativa: checked})}
-                  />
+                     checked={getConfig('notif_boleto_gerado')?.notificacoes?.ativa || false}
+                     onCheckedChange={(checked)=>handleSave('notif_boleto_gerado','Notificacoes',{ativa: checked})}
+                     data-permission="Sistema.Configurações.editar"
+                   />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -314,9 +316,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Alerta de inadimplência</p>
                   </div>
                   <Switch
-                    checked={getConfig('notif_titulo_vencido')?.notificacoes?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('notif_titulo_vencido','Notificacoes',{ativa: checked})}
-                  />
+                     checked={getConfig('notif_titulo_vencido')?.notificacoes?.ativa || false}
+                     onCheckedChange={(checked)=>handleSave('notif_titulo_vencido','Notificacoes',{ativa: checked})}
+                     data-permission="Sistema.Configurações.editar"
+                   />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -325,9 +328,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Alerta para gerente de produção</p>
                   </div>
                   <Switch
-                    checked={getConfig('notif_op_atrasada')?.notificacoes?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('notif_op_atrasada','Notificacoes',{ativa: checked})}
-                  />
+                     checked={getConfig('notif_op_atrasada')?.notificacoes?.ativa || false}
+                     onCheckedChange={(checked)=>handleSave('notif_op_atrasada','Notificacoes',{ativa: checked})}
+                     data-permission="Sistema.Configurações.editar"
+                   />
                 </div>
               </div>
 
@@ -352,9 +356,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Obrigatório para admins</p>
                   </div>
                   <Switch
-                    checked={getConfig('seg_mfa')?.seguranca?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('seg_mfa','Seguranca',{ativa: checked})}
-                  />
+                     checked={getConfig('seg_mfa')?.seguranca?.ativa || false}
+                     onCheckedChange={(checked)=>handleSave('seg_mfa','Seguranca',{ativa: checked})}
+                     data-permission="Sistema.Segurança.editar"
+                   />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -363,9 +368,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Registra todas as ações críticas</p>
                   </div>
                   <Switch
-                    checked={getConfig('seg_logs_completos')?.seguranca?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('seg_logs_completos','Seguranca',{ativa: checked})}
-                  />
+                     checked={getConfig('seg_logs_completos')?.seguranca?.ativa || false}
+                     onCheckedChange={(checked)=>handleSave('seg_logs_completos','Seguranca',{ativa: checked})}
+                     data-permission="Sistema.Segurança.editar"
+                   />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -385,9 +391,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Bloqueia após 5 tentativas falhas</p>
                   </div>
                   <Switch
-                    checked={getConfig('seg_bloqueio_tentativas')?.seguranca?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('seg_bloqueio_tentativas','Seguranca',{ativa: checked})}
-                  />
+                     checked={getConfig('seg_bloqueio_tentativas')?.seguranca?.ativa || false}
+                     onCheckedChange={(checked)=>handleSave('seg_bloqueio_tentativas','Seguranca',{ativa: checked})}
+                     data-permission="Sistema.Segurança.editar"
+                   />
                 </div>
               </div>
 
