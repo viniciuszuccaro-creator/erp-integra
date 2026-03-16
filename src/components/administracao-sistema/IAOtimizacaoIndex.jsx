@@ -1,4 +1,6 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +56,17 @@ export default function IAOtimizacaoIndex({ initialTab }) {
                 <ContextoConfigBanner />
                 <HerancaConfigNotice />
               </div>
+              <Card className="col-span-full 2xl:col-span-1">
+                <CardHeader className="bg-slate-50 border-b">
+                  <CardTitle className="text-base">Tecnologia & Parâmetros Consolidados</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 flex flex-wrap gap-2">
+                  <Link to="/AdministracaoSistema?tab=ia" className="inline-flex"><Button variant="default">APIs Externas</Button></Link>
+                  <Link to="/AdministracaoSistema?tab=ia" className="inline-flex"><Button variant="outline">Webhooks</Button></Link>
+                  <Link to="/AdministracaoSistema?tab=ia" className="inline-flex"><Button variant="outline">Chatbot Intents</Button></Link>
+                </CardContent>
+              </Card>
+
               <div className="col-span-full 2xl:col-span-1">
                 <IAPanel />
               </div>

@@ -129,8 +129,19 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
 
       <TabsContent value="integracoes" className="mt-4">
         <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Integrações.</div>}>
-          <div className="w-full h-full">
-            {/* Consolidação: Integrações, APIs Externas, Webhooks e Chatbot Intents foram unificados aqui */}
+          <div className="w-full h-full space-y-4">
+            <Card>
+              <CardContent className="p-4">
+                <h2 className="font-semibold mb-1">Consolidação aplicada</h2>
+                <p className="text-sm text-slate-600 mb-3">APIs Externas, Webhooks e Chatbot Intents agora residem em “Tecnologia, IA & Parâmetros”.</p>
+                <div className="flex gap-2">
+                  <Link to="/AdministracaoSistema?tab=ia" className="inline-flex">
+                    <Button variant="default">Abrir Tecnologia, IA & Parâmetros</Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+            {/* Integrações: conectores, gateways e status central */}
             <IntegracoesIndex initialTab="gerenciamento" />
           </div>
         </ProtectedSection>
