@@ -14,7 +14,17 @@ export default function AdministracaoSistema() {
   const { isAdmin } = usePermissions();
   const { user } = useUser();
   const params = new URLSearchParams(window.location.search);
-  const initialTab = params.get("tab") || "gerais";
+  const rawTab = params.get("tab") || "gerais";
+  const tabMap = {
+    gerais: 'gerais', parametros: 'gerais', 'parametros-gerais': 'gerais',
+    integracoes: 'integracoes', connectors: 'integracoes',
+    apps: 'apps', 'apps-externos': 'apps',
+    acessos: 'acessos', usuarios: 'acessos', 'controle-acesso': 'acessos',
+    seguranca: 'seguranca', governanca: 'seguranca',
+    ia: 'ia', tecnologia: 'ia', 'tecnologia-ia-parametros': 'ia', apis: 'ia', webhooks: 'ia', 'chatbot-intents': 'ia',
+    auditoria: 'auditoria', logs: 'auditoria'
+  };
+  const initialTab = tabMap[String(rawTab).toLowerCase()] || 'gerais';
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
   // RBAC cliente-only: se não for admin, renderiza Portal do Cliente reutilizando a página existente
