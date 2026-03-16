@@ -147,23 +147,35 @@ Deno.serve(async (req) => {
       ? 'seguranca' : 'entidade';
 
     // Persistência em AuditLog (service role)
-    await base44.asServiceRole.entities.AuditLog.create({
-      usuario: recordData?.updated_by || recordData?.created_by || 'Sistema (Automação)',
-      usuario_id: recordData?.updated_by_id || recordData?.created_by_id || null,
-      acao,
-      modulo,
-      tipo_auditoria,
-      entidade: entidade,
-      registro_id: event.entity_id,
-      descricao: `${entidade} • ${acao} • risco ${risk.level}${gaps.length ? ' • gaps: ' + gaps.join(',') : ''}${diffSensitive.length ? ' • mudança sensível' : ''}`,
-      empresa_id: empresa_id || null,
-      group_id: group_id || null,
-      dados_anteriores: tipoEvento !== 'create' ? safeTrimPayload(previousData) : null,
-      dados_novos: tipoEvento !== 'delete' ? safeTrimPayload({ ...recordData, __diff_sensitive: diffSensitive, __risk: risk }) : null,
-      ip_address: ip,
-      user_agent: ua,
-      data_hora: new Date().toISOString(),
-    });
+    {
+      const usuarioPref = recordData?.__meta?.changed_by || recordData?.updated_by || recordData?.created_by || 'Sistema (Automação)';
+      const usuarioIdPref = recordData?.updated_by_id || recordData?.created_by_id || null;
+      const paramKey = entidade === 'ConfiguracaoSistema' ? (recordData?.chave || previousData?.chave || null) : null;
+      const extractToggle = (obj) => {
+        if (!obj || typeof obj !== 'object') return undefined;
+        return (obj.notificacoes?.ativa ?? obj.seguranca?.ativa ?? obj.ia?.ativa ?? obj.integracao_nfe?.ativa ?? obj.integracao_boletos?.ativa ?? obj.integracao_maps?.ativa ?? obj.integracao_whatsapp?.ativa);
+      };
+      const beforeVal = extractToggle(previousData);
+      const afterVal = extractToggle(recordData);
+      const resumoValor = (beforeVal !== undefined || afterVal !== undefined) ? ` • valor: ${String(beforeVal)} → ${String(afterVal)}` : '';
+      await base44.asServiceRole.entities.AuditLog.create({
+        usuario: usuarioPref,
+        usuario_id: usuarioIdPref,
+        acao,
+        modulo,
+        tipo_auditoria,
+        entidade: entidade,
+        registro_id: event.entity_id,
+        descricao: `${entidade} • ${acao}${paramKey ? ' • param: ' + paramKey : ''} • risco ${risk.level}${gaps.length ? ' • gaps: ' + gaps.join(',') : ''}${diffSensitive.length ? ' • mudança sensível' : ''}${resumoValor}`,
+        empresa_id: empresa_id || null,
+        group_id: group_id || null,
+        dados_anteriores: tipoEvento !== 'create' ? safeTrimPayload(previousData) : null,
+        dados_novos: tipoEvento !== 'delete' ? safeTrimPayload({ ...recordData, __diff_sensitive: diffSensitive, __risk: risk }) : null,
+        ip_address: ip,
+        user_agent: ua,
+        data_hora: new Date().toISOString(),
+      });
+    }
 
     // Telemetria de performance
     const dur = Date.now() - t0;
