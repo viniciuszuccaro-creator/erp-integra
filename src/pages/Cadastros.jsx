@@ -465,7 +465,7 @@ export default function Cadastros() {
     queryKey: ['grupos-produto'],
     queryFn: async () => {
       try {
-        return await filterInContext('GrupoProduto', {}, '-created_date', 9999);
+        return await filterInContext('GrupoProduto', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar grupos de produto:', err);
         return [];
