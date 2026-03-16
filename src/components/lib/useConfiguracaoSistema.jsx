@@ -26,14 +26,28 @@ export default function useConfiguracaoSistema({ categoria, chave } = {}) {
   const setMutation = useMutation({
     mutationFn: async (payload) => {
       if (!data?.id) {
-        // Cria um novo registro simples (sem inventar campos fora do schema)
         const novo = { categoria: categoria || "Sistema", chave: chave || "default", ...payload };
         return base44.entities.ConfiguracaoSistema.create(novo);
       }
       return base44.entities.ConfiguracaoSistema.update(data.id, payload);
     },
-    onSuccess: () => {
+    onSuccess: async (res, variables) => {
+      // Invalida todos os consumidores conhecidos
       queryClient.invalidateQueries({ queryKey: ["configuracaoSistema"] });
+      queryClient.invalidateQueries({ queryKey: ["config-sistema"] });
+      // Auditoria detalhada (quem, parâmetro, antes/depois)
+      try {
+        const me = await base44.auth.me();
+        await base44.functions.invoke('auditEntityEvents', {
+          event: {
+            type: data?.id ? 'update' : 'create',
+            entity_name: 'ConfiguracaoSistema',
+            entity_id: (res && res.id) || data?.id || null
+          },
+          data: { ...(res || {}), __meta: { changed_by: me?.email || me?.full_name, param: chave || variables?.chave } },
+          old_data: data || null
+        });
+      } catch (_) {}
     }
   });
 
