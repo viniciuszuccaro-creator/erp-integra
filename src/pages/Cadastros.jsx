@@ -544,7 +544,7 @@ export default function Cadastros() {
   // QUERIES - BLOCO 3: FINANCEIRO
   const { data: bancos = [] } = useQuery({
     queryKey: ['bancos'],
-    queryFn: () => filterInContext('Banco', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('Banco', {}, '-created_date', 100),
     staleTime: 600000,
     gcTime: 900000,
     refetchOnWindowFocus: false,
@@ -554,7 +554,7 @@ export default function Cadastros() {
 
   const { data: formasPagamento = [] } = useQuery({
     queryKey: ['formas-pagamento'],
-    queryFn: () => filterInContext('FormaPagamento', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('FormaPagamento', {}, '-created_date', 100),
     staleTime: 600000,
     gcTime: 900000,
     refetchOnWindowFocus: false,
@@ -564,17 +564,17 @@ export default function Cadastros() {
 
   const { data: operadoresCaixa = [] } = useQuery({
     queryKey: ['operadores-caixa'],
-    queryFn: () => filterInContext('OperadorCaixa', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('OperadorCaixa', {}, '-created_date', 100),
   });
 
   const { data: planoContas = [] } = useQuery({
     queryKey: ['plano-contas'],
-    queryFn: () => filterInContext('PlanoDeContas', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('PlanoDeContas', {}, '-created_date', 100),
   });
 
   const { data: centrosCusto = [] } = useQuery({
     queryKey: ['centrosCusto'],
-    queryFn: () => filterInContext('CentroCusto', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('CentroCusto', {}, '-created_date', 100),
     staleTime: 600000,
     gcTime: 900000,
     refetchOnWindowFocus: false,
@@ -584,186 +584,186 @@ export default function Cadastros() {
 
   const { data: centrosResultado = [] } = useQuery({
     queryKey: ['centros-resultado'],
-    queryFn: () => filterInContext('CentroResultado', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('CentroResultado', {}, '-created_date', 100),
   });
 
   const { data: tiposDespesa = [] } = useQuery({
     queryKey: ['tipos-despesa'],
-    queryFn: () => filterInContext('TipoDespesa', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('TipoDespesa', {}, '-created_date', 100),
   });
 
   const { data: moedasIndices = [] } = useQuery({
     queryKey: ['moedas-indices'],
-    queryFn: () => filterInContext('MoedaIndice', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('MoedaIndice', {}, '-created_date', 100),
   });
 
   const { data: condicoesComerciais = [] } = useQuery({
     queryKey: ['condicoes-comerciais'],
-    queryFn: () => filterInContext('CondicaoComercial', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('CondicaoComercial', {}, '-created_date', 100),
   });
 
   // FASE 3: Queries adicionais
   const { data: segmentosCliente = [] } = useQuery({
     queryKey: ['segmentos-cliente'],
-    queryFn: () => filterInContext('SegmentoCliente', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('SegmentoCliente', {}, '-created_date', 100),
   });
   const { count: totalSegmentosCliente = 0 } = useCountEntities('SegmentoCliente', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
 
   const { data: regioesAtendimento = [] } = useQuery({
     queryKey: ['regioes-atendimento'],
-    queryFn: () => filterInContext('RegiaoAtendimento', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('RegiaoAtendimento', {}, '-created_date', 100),
   });
   const { count: totalRegioesAtendimento = 0 } = useCountEntities('RegiaoAtendimento', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
 
   const { data: unidadesMedida = [] } = useQuery({
     queryKey: ['unidades-medida'],
-    queryFn: () => filterInContext('UnidadeMedida', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('UnidadeMedida', {}, '-created_date', 100),
   });
 
   const { data: webhooks = [] } = useQuery({
     queryKey: ['webhooks'],
-    queryFn: () => filterInContext('Webhook', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('Webhook', {}, '-created_date', 100),
   });
 
   const { data: rotasPadrao = [] } = useQuery({
     queryKey: ['rotas-padrao'],
-    queryFn: () => filterInContext('RotaPadrao', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('RotaPadrao', {}, '-created_date', 100),
   });
 
   const { data: modelosDocumento = [] } = useQuery({
     queryKey: ['modelos-documento'],
-    queryFn: () => filterInContext('ModeloDocumento', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('ModeloDocumento', {}, '-created_date', 100),
   });
 
   const { data: apisExternas = [] } = useQuery({
     queryKey: ['apis-externas'],
-    queryFn: () => filterInContext('ApiExterna', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('ApiExterna', {}, '-created_date', 100),
   });
 
   const { data: jobsAgendados = [] } = useQuery({
     queryKey: ['jobs-agendados'],
-    queryFn: () => filterInContext('JobAgendado', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('JobAgendado', {}, '-created_date', 100),
   });
 
   const { data: configsIA = [] } = useQuery({
     queryKey: ['configs-ia'],
-    queryFn: () => filterInContext('IAConfig', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('IAConfig', {}, '-created_date', 100),
   });
 
   // PARÂMETROS OPERACIONAIS - FASE 3
   const { data: parametrosPortal = [] } = useQuery({
     queryKey: ['parametros-portal'],
-    queryFn: () => filterInContext('ParametroPortalCliente', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('ParametroPortalCliente', {}, '-created_date', 100),
   });
 
   const { data: parametrosOrigemPedido = [] } = useQuery({
     queryKey: ['parametros-origem-pedido'],
-    queryFn: () => filterInContext('ParametroOrigemPedido', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('ParametroOrigemPedido', {}, '-created_date', 100),
   });
 
   const { data: parametrosRecebimentoNFe = [] } = useQuery({
     queryKey: ['parametros-recebimento-nfe'],
-    queryFn: () => filterInContext('ParametroRecebimentoNFe', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('ParametroRecebimentoNFe', {}, '-created_date', 100),
   });
 
   const { data: parametrosRoteirizacao = [] } = useQuery({
     queryKey: ['parametros-roteirizacao'],
-    queryFn: () => filterInContext('ParametroRoteirizacao', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('ParametroRoteirizacao', {}, '-created_date', 100),
   });
 
   const { data: parametrosConciliacao = [] } = useQuery({
     queryKey: ['parametros-conciliacao'],
-    queryFn: () => filterInContext('ParametroConciliacaoBancaria', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('ParametroConciliacaoBancaria', {}, '-created_date', 100),
   });
 
   const { data: parametrosCaixa = [] } = useQuery({
     queryKey: ['parametros-caixa'],
-    queryFn: () => filterInContext('ParametroCaixaDiario', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('ParametroCaixaDiario', {}, '-created_date', 100),
   });
 
   // QUERIES - BLOCO 4: LOGÍSTICA
   const { data: veiculos = [] } = useQuery({
     queryKey: ['veiculos'],
-    queryFn: () => filterInContext('Veiculo', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('Veiculo', {}, '-created_date', 100),
   });
 
   const { data: motoristas = [] } = useQuery({
     queryKey: ['motoristas'],
-    queryFn: () => filterInContext('Motorista', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('Motorista', {}, '-created_date', 100),
   });
 
   const { data: tiposFrete = [] } = useQuery({
     queryKey: ['tipos-frete'],
-    queryFn: () => filterInContext('TipoFrete', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('TipoFrete', {}, '-created_date', 100),
   });
 
   const { data: chatbotIntents = [] } = useQuery({
     queryKey: ['chatbotIntents'],
-    queryFn: () => filterInContext('ChatbotIntent', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('ChatbotIntent', {}, '-created_date', 100),
   });
 
   const { data: chatbotCanais = [] } = useQuery({
     queryKey: ['chatbotCanais'],
-    queryFn: () => filterInContext('ChatbotCanal', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('ChatbotCanal', {}, '-created_date', 100),
   });
 
   // QUERIES - BLOCO 5: ORGANIZACIONAL
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas', empresaAtual?.id, grupoAtual?.id],
-    queryFn: () => filterInContext('Empresa', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('Empresa', {}, '-created_date', 100),
   });
 
   const { data: grupos = [] } = useQuery({
     queryKey: ['grupos', empresaAtual?.id, grupoAtual?.id],
-    queryFn: () => filterInContext('GrupoEmpresarial', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('GrupoEmpresarial', {}, '-created_date', 100),
   });
 
   const { data: departamentos = [] } = useQuery({
     queryKey: ['departamentos', empresaAtual?.id, grupoAtual?.id],
-    queryFn: () => filterInContext('Departamento', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('Departamento', {}, '-created_date', 100),
   });
 
   const { data: cargos = [] } = useQuery({
     queryKey: ['cargos', empresaAtual?.id, grupoAtual?.id],
-    queryFn: () => filterInContext('Cargo', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('Cargo', {}, '-created_date', 100),
   });
 
   const { data: turnos = [] } = useQuery({
     queryKey: ['turnos', empresaAtual?.id, grupoAtual?.id],
-    queryFn: () => filterInContext('Turno', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('Turno', {}, '-created_date', 100),
   });
 
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios'],
-    queryFn: () => base44.entities.User.list('-created_date', 9999),
+    queryFn: () => base44.entities.User.list('-created_date', 100),
   });
 
   const { data: perfisAcesso = [] } = useQuery({
     queryKey: ['perfis-acesso'],
-    queryFn: () => base44.entities.PerfilAcesso.list('-created_date', 9999),
+    queryFn: () => base44.entities.PerfilAcesso.list('-created_date', 100),
   });
 
   // QUERIES - BLOCO 6: INTEGRAÇÕES & IA
   const { data: eventosNotificacao = [] } = useQuery({
     queryKey: ['eventos-notificacao'],
-    queryFn: () => base44.entities.EventoNotificacao.list('-created_date', 9999),
+    queryFn: () => base44.entities.EventoNotificacao.list('-created_date', 100),
   });
 
   const { data: configsIntegracao = [] } = useQuery({
     queryKey: ['configs-integracao-marketplace'],
-    queryFn: () => base44.entities.ConfiguracaoIntegracaoMarketplace.list('-created_date', 9999),
+    queryFn: () => base44.entities.ConfiguracaoIntegracaoMarketplace.list('-created_date', 100),
   });
 
   // FASE 2: Novos cadastros
   const { data: locaisEstoque = [] } = useQuery({
         queryKey: ['locais-estoque'],
-        queryFn: () => filterInContext('LocalEstoque', {}, '-created_date', 9999),
+        queryFn: () => filterInContext('LocalEstoque', {}, '-created_date', 100),
         enabled: !!grupoAtual?.id || !!empresaAtual?.id,
       });
 
   const { data: tabelasFiscais = [] } = useQuery({
         queryKey: ['tabelas-fiscais'],
-        queryFn: () => filterInContext('TabelaFiscal', {}, '-created_date', 9999),
+        queryFn: () => filterInContext('TabelaFiscal', {}, '-created_date', 100),
         enabled: !!grupoAtual?.id || !!empresaAtual?.id,
       });
 
@@ -862,7 +862,7 @@ export default function Cadastros() {
           {/* DASHBOARD DE TOTAIS - INTERATIVO */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <Card
-              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100 hover:scale-105"
+              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100 "
               onClick={() => handleCardClick('bloco1')}
             >
               <CardContent className="p-4">
@@ -876,7 +876,7 @@ export default function Cadastros() {
             </Card>
 
             <Card
-              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100 hover:scale-105"
+              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100 "
               onClick={() => handleCardClick('bloco2')}
             >
               <CardContent className="p-4">
@@ -890,7 +890,7 @@ export default function Cadastros() {
             </Card>
 
             <Card
-              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-green-50 to-green-100 hover:scale-105"
+              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-green-50 to-green-100 "
               onClick={() => handleCardClick('bloco3')}
             >
               <CardContent className="p-4">
@@ -904,7 +904,7 @@ export default function Cadastros() {
             </Card>
 
             <Card
-              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100 hover:scale-105"
+              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100 "
               onClick={() => handleCardClick('bloco4')}
             >
               <CardContent className="p-4">
@@ -918,7 +918,7 @@ export default function Cadastros() {
             </Card>
 
             <Card
-              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-indigo-50 to-indigo-100 hover:scale-105"
+              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-indigo-50 to-indigo-100 "
               onClick={() => handleCardClick('bloco5')}
             >
               <CardContent className="p-4">
@@ -932,7 +932,7 @@ export default function Cadastros() {
             </Card>
 
             <Card
-              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-cyan-50 to-cyan-100 hover:scale-105"
+              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-cyan-50 to-cyan-100 "
               onClick={() => handleCardClick('bloco6')}
             >
               <CardContent className="p-4">
