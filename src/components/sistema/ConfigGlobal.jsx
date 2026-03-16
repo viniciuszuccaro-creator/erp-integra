@@ -36,24 +36,28 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
+  const canLoadConfigs = Boolean(grupoAtual?.id || empresaAtual?.id);
   const { data: configs = [] } = useQuery({
-    queryKey: ['config-sistema', empresaAtual?.id || 'sem-empresa', grupoAtual?.id || 'sem-grupo'],
-    queryFn: () => base44.entities.ConfiguracaoSistema.list(),
-    staleTime: 60000,
-  });
+      queryKey: ['config-sistema', empresaAtual?.id || 'sem-empresa', grupoAtual?.id || 'sem-grupo'],
+      queryFn: () => base44.entities.ConfiguracaoSistema.list(),
+      enabled: canLoadConfigs,
+      staleTime: 60000,
+    });
 
   const updateMutation = useMutation({
     mutationFn: async (data) => {
       const { __before, __scope, ...payload } = data || {};
+      const scope = { group_id: grupoAtual?.id || undefined, empresa_id: empresaAtual?.id || undefined };
+      const finalPayload = { ...payload, ...scope };
       const config = configs.find(c => c.chave === payload.chave);
       if (config) {
-        return base44.entities.ConfiguracaoSistema.update(config.id, payload);
+        return base44.entities.ConfiguracaoSistema.update(config.id, finalPayload);
       } else {
-        return base44.entities.ConfiguracaoSistema.create(payload);
+        return base44.entities.ConfiguracaoSistema.create(finalPayload);
       }
     },
     onSuccess: async (_res, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['config-sistema'] });
+      queryClient.invalidateQueries({ queryKey: ['config-sistema', empresaAtual?.id || 'sem-empresa', grupoAtual?.id || 'sem-grupo'] });
       toast({ title: '✅ Configuração salva com sucesso!' });
       try {
         const me = await base44.auth.me();
