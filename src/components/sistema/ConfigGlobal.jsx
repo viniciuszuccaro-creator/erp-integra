@@ -101,10 +101,15 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     const propName = categoria === 'Integracoes'
       ? ('integracao_' + (chave.split('_')[1] || chave.replace(/^integracao_/, '')))
       : categoria.toLowerCase();
+
+    // Multiempresa: exige escopo explícito para qualquer gravação
+    const scope = { group_id: grupoAtual?.id || null, empresa_id: empresaAtual?.id || null };
+
     updateMutation.mutate({
       chave,
       categoria,
       [propName]: dados,
+      ...scope,
       __before: before
     });
   };
