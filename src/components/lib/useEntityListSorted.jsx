@@ -87,7 +87,7 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     queryKey: ["entityListSorted", entityName, stableStringify(filtroFinal || {}), finalSortField, finalSortDirection, limit, page, pageSize],
     queryFn: async () => {
       const filtro = filtroFinal;
-      if (!filtro.group_id && !filtro[campo] && !filtro.$or) return [];
+      // Permitir listagem mesmo sem contexto explícito (limite e ordenação controlados no backend)
 
       const key = stableStringify({ entityName, filtro, finalSortField, finalSortDirection, limit: (typeof limit === 'number' && limit > 0) ? limit : pageSize, skip: (typeof page === 'number' && typeof pageSize === 'number') ? Math.max(0, (Math.max(1, page) - 1) * pageSize) : undefined });
       if (__elsInflight.has(key)) {
