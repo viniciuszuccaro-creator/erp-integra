@@ -914,15 +914,7 @@ export default function VisualizadorUniversalEntidade({
     setSortField(campo);
     setSortDirection(nextDir);
   }
-    setCurrentPage(1);
-    if (colunaOrdenacao === campo) {
-      setDirecaoOrdenacao(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setColunaOrdenacao(campo);
-      setDirecaoOrdenacao('asc');
-    }
-    setOrdenacao('');
-  };
+
 
   const Wrapper = ({ children }) => windowMode ? (
     <div className="w-full h-full flex flex-col overflow-hidden">{children}</div>
