@@ -316,7 +316,7 @@ export default function Cadastros() {
     queryKey: ['transportadoras', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
-        return await filterInContext('Transportadora', {}, '-created_date', 100);
+        return await filterInContext('Transportadora', {}, '-created_date', 100, 'empresa_dona_id');
       } catch (err) {
         console.error('Erro ao buscar transportadoras:', err);
         return [];
