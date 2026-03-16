@@ -1154,7 +1154,7 @@ export default function VisualizadorUniversalEntidade({
               {visualizacao === 'grid' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {dadosBuscadosEOrdenados.map((item) => (
-                    <Card key={item.id} className="border-2 hover:border-blue-400 rounded-lg shadow-md hover:shadow-lg transition">
+                    <Card key={item.id} className="border-2 hover:border-blue-400 rounded-sm shadow-md hover:shadow-lg transition">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-2">
                           <input type="checkbox" className="h-4 w-4" checked={selectedIds.has(item.id)} onChange={() => toggleItem(item.id)} />
@@ -1208,7 +1208,7 @@ export default function VisualizadorUniversalEntidade({
               {visualizacao === 'list' && (
                 <div className="space-y-2">
                   {dadosBuscadosEOrdenados.map((item) => (
-                    <Card key={item.id} className="border hover:border-blue-400 rounded-lg shadow-md hover:shadow-lg transition">
+                    <Card key={item.id} className="border hover:border-blue-400 rounded-sm shadow-md hover:shadow-lg transition">
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
                           <input type="checkbox" className="mr-3 h-4 w-4" checked={selectedIds.has(item.id)} onChange={() => toggleItem(item.id)} />
