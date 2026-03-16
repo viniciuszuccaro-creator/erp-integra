@@ -432,7 +432,7 @@ export default function Cadastros() {
     queryKey: ['servicos'],
     queryFn: async () => {
       try {
-        return await filterInContext('Servico', {}, '-created_date', 9999);
+        return await filterInContext('Servico', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar serviços:', err);
         return [];
