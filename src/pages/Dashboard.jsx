@@ -132,7 +132,7 @@ export default function Dashboard() {
       enabled: canSeeComercial && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
       queryKey: ['pedidos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo)) return [];
+        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('Pedido', {}, '-created_date', 9999);
       },
     refetchInterval,
@@ -148,7 +148,7 @@ export default function Dashboard() {
       enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
       queryKey: ['contasReceber', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo)) return [];
+        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('ContaReceber', {}, '-data_vencimento', 9999);
       },
     refetchInterval,
@@ -164,7 +164,7 @@ export default function Dashboard() {
       enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
       queryKey: ['contasPagar', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo)) return [];
+        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('ContaPagar', {}, '-data_vencimento', 9999);
       },
     refetchInterval,
@@ -180,7 +180,7 @@ export default function Dashboard() {
       enabled: canSeeExpedicao && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
       queryKey: ['entregas', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo)) return [];
+        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('Entrega', {}, '-created_date', 9999);
       },
     refetchInterval,
@@ -196,7 +196,7 @@ export default function Dashboard() {
       enabled: canSeeRH && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
       queryKey: ['colaboradores', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo)) return [];
+        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('Colaborador', {}, '-created_date', 9999);
       },
     refetchInterval,
@@ -212,7 +212,7 @@ export default function Dashboard() {
       enabled: canSeeEstoque && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
       queryKey: ['produtos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo)) return [];
+        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('Produto', {}, '-created_date', 9999);
       },
     refetchInterval,
@@ -225,7 +225,7 @@ export default function Dashboard() {
   });
 
   const { data: totalProdutos = 0 } = useQuery({
-    enabled: !!(empresaAtual?.id || estaNoGrupo) && canSeeEstoque,
+    enabled: !!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id) && canSeeEstoque,
     queryKey: ['produtos-count-dash', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
@@ -247,7 +247,7 @@ export default function Dashboard() {
       enabled: canSeeCRM && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
       queryKey: ['clientes', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo)) return [];
+        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('Cliente', {}, '-created_date', 9999);
       },
     refetchInterval,
@@ -260,7 +260,7 @@ export default function Dashboard() {
   });
 
   const { data: totalClientes = 0 } = useQuery({
-    enabled: !!(empresaAtual?.id || estaNoGrupo) && canSeeCRM,
+    enabled: !!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id) && canSeeCRM,
     queryKey: ['clientes-count', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
@@ -300,7 +300,7 @@ export default function Dashboard() {
       enabled: canSeeProducao && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
       queryKey: ['ordensProducao', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo)) return [];
+        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('OrdemProducao', {}, '-data_emissao', 9999);
       },
     refetchInterval,
@@ -316,7 +316,7 @@ export default function Dashboard() {
       enabled: (canSeeFinanceiro || hasPermission('Fiscal', null, 'ver') || canSeeComercial) && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
       queryKey: ['notasFiscais', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo)) return [];
+        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('NotaFiscal', {}, '-created_date', 9999);
       },
     refetchInterval,
@@ -333,7 +333,7 @@ export default function Dashboard() {
       enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
       queryKey: ['cobrancas', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
-        if (!(empresaAtual?.id || estaNoGrupo)) return [];
+        if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('ContaReceber', {}, '-data_vencimento', 9999);
       },
     refetchInterval,
@@ -396,7 +396,7 @@ export default function Dashboard() {
   const { data: previsoesIA = {}, isLoading: loadingPrevIA } = useQuery({
     queryKey: ['iaPrevEstoque14', empresaAtual?.id, grupoAtual?.id, periodo],
     queryFn: async () => {
-      if (!(empresaAtual?.id || estaNoGrupo)) return { previsoes: [] };
+      if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return { previsoes: [] };
       const filtros = getFiltroContexto('empresa_id', true);
       const res = await base44.functions.invoke('iaFinanceAnomalyScan', {
         filtros,
@@ -411,7 +411,7 @@ export default function Dashboard() {
   const { data: previsoesIA30 = {} } = useQuery({
     queryKey: ['iaPrevEstoque30', empresaAtual?.id, grupoAtual?.id, periodo],
     queryFn: async () => {
-      if (!(empresaAtual?.id || estaNoGrupo)) return { previsoes: [] };
+      if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return { previsoes: [] };
       const filtros = getFiltroContexto('empresa_id', true);
       const res = await base44.functions.invoke('iaFinanceAnomalyScan', {
         filtros,
@@ -426,7 +426,7 @@ export default function Dashboard() {
   const { data: anomaliasIA = {}, isLoading: loadingAnomIA } = useQuery({
     queryKey: ['iaAnomaliasFinanceiro', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
-      if (!(empresaAtual?.id || estaNoGrupo)) return { details: [] };
+      if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return { details: [] };
       const filtros = getFiltroContexto('empresa_id', true);
       const res = await base44.functions.invoke('iaFinanceAnomalyScan', { filtros });
       return res?.data || { details: [] };
@@ -475,7 +475,7 @@ export default function Dashboard() {
 
   // Assinaturas realtime locais (reforço) para invalidar KPIs do Dashboard
   useEffect(() => {
-    if (!(empresaAtual?.id || estaNoGrupo)) return;
+    if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return;
     const subs = [];
     const add = (api, key) => { if (!api?.subscribe) return; const un = api.subscribe(() => {
       try { queryClient.invalidateQueries({ queryKey: [key] }); } catch (_) {}
