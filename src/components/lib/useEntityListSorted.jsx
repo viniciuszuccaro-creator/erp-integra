@@ -152,6 +152,15 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
             if (__elsCache.has(key)) {
               return __elsCache.get(key);
             }
+            // Fallback final: usa SDK direto quando a função não responder
+            try {
+              const order = finalSortDirection === 'desc' ? `-${finalSortField}` : `${finalSortField}`;
+              const alt = await base44.entities?.[entityName]?.filter?.(filtro, order, (typeof limit === 'number' && limit > 0) ? limit : pageSize, (typeof page === 'number' && typeof pageSize === 'number') ? Math.max(0, (Math.max(1, page) - 1) * pageSize) : undefined);
+              if (Array.isArray(alt)) {
+                __elsCache.set(key, alt);
+                return alt;
+              }
+            } catch (_) {}
             throw err;
           }
         }
