@@ -512,6 +512,11 @@ export default function VisualizadorUniversalEntidade({
     return (dados || []).reduce((acc, c) => acc + (((c?.limite_credito_utilizado || 0) > (c?.limite_credito || 0)) ? 1 : 0), 0);
   }, [dados, nomeEntidade]);
 
+  const estoqueCriticoCount = useMemo(() => {
+    if (nomeEntidade !== 'Produto') return 0;
+    return (dados || []).reduce((acc, p) => acc + (((p?.estoque_atual ?? 0) < (p?.estoque_minimo ?? 0)) ? 1 : 0), 0);
+  }, [dados, nomeEntidade]);
+
   const { data: totalItemsCount = 0 } = useQuery({
     queryKey: [...queryKey, 'total-count', empresaAtual?.id, grupoAtual?.id, buscaBackend, JSON.stringify(columnFilters)],
     queryFn: async () => {
