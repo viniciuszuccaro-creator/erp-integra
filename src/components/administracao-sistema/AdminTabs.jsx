@@ -6,7 +6,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configuracoes-gerais/ConfiguracoesGeraisIndex";
 import IntegracoesIndex from "@/components/administracao-sistema/IntegracoesIndex";
-import ExternalAppsHub from "@/components/administracao-sistema/ExternalAppsHub";
+
 import CentralPerfisAcesso from "@/components/sistema/CentralPerfisAcesso";
 import GestaoUsuariosAvancada from "@/components/sistema/GestaoUsuariosAvancada";
 import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChecker";
