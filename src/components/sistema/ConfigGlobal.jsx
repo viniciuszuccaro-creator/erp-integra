@@ -280,9 +280,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Notifica cliente quando pedido for aprovado</p>
                   </div>
                   <Switch
-                    checked={getConfig('notif_pedido_aprovado')?.notificacoes?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('notif_pedido_aprovado','Notificacoes',{ativa: checked})}
-                  />
+                     checked={getConfig('notif_pedido_aprovado')?.notificacoes?.ativa || false}
+                     onCheckedChange={(checked)=>handleSave('notif_pedido_aprovado','Notificacoes',{ativa: checked})}
+                     data-permission="Sistema.Configurações.editar"
+                   />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
