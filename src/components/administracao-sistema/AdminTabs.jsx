@@ -1,6 +1,7 @@
 import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Settings, Users, Shield, FileText, Sparkles, Link2 } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configuracoes-gerais/ConfiguracoesGeraisIndex";
 import IntegracoesIndex from "@/components/administracao-sistema/IntegracoesIndex";
@@ -18,30 +19,52 @@ import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 
 export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtual }) {
+  const { hasPermission } = usePermissions();
+  const canGerais = hasPermission('Sistema', 'Configurações', 'visualizar');
+  const canIntegracoes = hasPermission('Sistema', 'Integrações', 'visualizar');
+  const canApps = hasPermission('Sistema', 'Integrações', 'visualizar');
+  const canAcessos = hasPermission('Sistema', 'Controle de Acesso', 'visualizar');
+  const canSeguranca = hasPermission('Sistema', 'Segurança', 'visualizar');
+  const canIA = hasPermission('Sistema', 'IA', 'visualizar');
+  const canAuditoria = hasPermission('Sistema', 'Auditoria', 'visualizar');
   return (
     <Tabs defaultValue={initialTab} className="w-full h-full">
       <TabsList className="flex flex-wrap gap-2">
-        <TabsTrigger value="gerais" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-          <div className="flex items-center gap-2"><Settings className="w-4 h-4"/> Gerais</div>
-        </TabsTrigger>
-        <TabsTrigger value="integracoes" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-          <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> Integrações</div>
-        </TabsTrigger>
-        <TabsTrigger value="apps" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-          <div className="flex items-center gap-2"><Link2 className="w-4 h-4"/> Apps Externos</div>
-        </TabsTrigger>
-        <TabsTrigger value="acessos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-          <div className="flex items-center gap-2"><Users className="w-4 h-4"/> Gestão de Acessos</div>
-        </TabsTrigger>
-        <TabsTrigger value="seguranca" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-          <div className="flex items-center gap-2"><Shield className="w-4 h-4"/> Segurança & Governança</div>
-        </TabsTrigger>
-        <TabsTrigger value="ia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-          <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> IA & Otimização</div>
-        </TabsTrigger>
-        <TabsTrigger value="auditoria" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-          <div className="flex items-center gap-2"><FileText className="w-4 h-4"/> Auditoria e Logs</div>
-        </TabsTrigger>
+        {canGerais && (
+          <TabsTrigger value="gerais" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <div className="flex items-center gap-2"><Settings className="w-4 h-4"/> Gerais</div>
+          </TabsTrigger>
+        )}
+        {canIntegracoes && (
+          <TabsTrigger value="integracoes" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> Integrações</div>
+          </TabsTrigger>
+        )}
+        {canApps && (
+          <TabsTrigger value="apps" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <div className="flex items-center gap-2"><Link2 className="w-4 h-4"/> Apps Externos</div>
+          </TabsTrigger>
+        )}
+        {canAcessos && (
+          <TabsTrigger value="acessos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <div className="flex items-center gap-2"><Users className="w-4 h-4"/> Gestão de Acessos</div>
+          </TabsTrigger>
+        )}
+        {canSeguranca && (
+          <TabsTrigger value="seguranca" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <div className="flex items-center gap-2"><Shield className="w-4 h-4"/> Segurança & Governança</div>
+          </TabsTrigger>
+        )}
+        {canIA && (
+          <TabsTrigger value="ia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> IA & Otimização</div>
+          </TabsTrigger>
+        )}
+        {canAuditoria && (
+          <TabsTrigger value="auditoria" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <div className="flex items-center gap-2"><FileText className="w-4 h-4"/> Auditoria e Logs</div>
+          </TabsTrigger>
+        )}
       </TabsList>
 
       <TabsContent value="gerais" className="mt-4">
