@@ -497,7 +497,7 @@ export default function Cadastros() {
     queryKey: ['tabelas-preco'],
     queryFn: async () => {
       try {
-        return await filterInContext('TabelaPreco', {}, '-created_date', 9999);
+        return await filterInContext('TabelaPreco', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar tabelas de preço:', err);
         return [];
