@@ -294,7 +294,7 @@ export default function VisualizadorUniversalEntidade({
     const handler = setTimeout(() => {
       setBuscaBackend(buscaLocal);
       setCurrentPage(1);
-    }, 500);
+    }, 400);
     return () => clearTimeout(handler);
   }, [buscaLocal, columnFilters]);
 
