@@ -129,6 +129,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       <TabsContent value="integracoes" className="mt-4">
         <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Integrações.</div>}>
           <div className="w-full h-full">
+            {/* Consolidação: Integrações, APIs Externas, Webhooks e Chatbot Intents foram unificados aqui */}
             <IntegracoesIndex initialTab="gerenciamento" />
           </div>
         </ProtectedSection>
