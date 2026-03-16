@@ -34,6 +34,7 @@ import { useToast } from "@/components/ui/use-toast";
 import ProtectedAction from "@/components/ProtectedAction";
 import { Skeleton } from "@/components/ui/skeleton";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
+import { useCountEntities } from "@/components/lib/useCountEntities";
 
 // Dedupe/backoff global p/ entityListSorted nesta tela
 const __elsInflight = (typeof window !== 'undefined' ? (window.__elsInflight || (window.__elsInflight = new Map())) : new Map());
