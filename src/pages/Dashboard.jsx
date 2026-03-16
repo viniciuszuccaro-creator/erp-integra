@@ -761,21 +761,21 @@ export default function Dashboard() {
           {/* Sticky KPIs principais */}
           <div className="sticky top-0 z-20 bg-gradient-to-b from-white/80 to-white/40 backdrop-blur-sm border-b border-slate-200 py-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Card className="shadow-sm">
+              <Card className="shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50">
                 <CardContent className="p-3">
                   <div className="text-xs text-slate-500">Faturamento</div>
                   <div className="text-sm font-semibold text-slate-900">Dia: R$ {(pedidos.filter(p=>new Date(p.data_pedido||p.created_date).toDateString()===new Date().toDateString()).reduce((s,p)=>s+(p.valor_total||0),0)).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
                   <div className="text-xs text-slate-600">Mês: R$ {pedidos.filter(p=>{const d=new Date(p.data_pedido||p.created_date);const n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).reduce((s,p)=>s+(p.valor_total||0),0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
                 </CardContent>
               </Card>
-              <Card className="shadow-sm">
+              <Card className="shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50">
                 <CardContent className="p-3">
                   <div className="text-xs text-slate-500">Pedidos</div>
                   <div className="text-sm font-semibold text-slate-900">Abertos: {pedidosPendentes.length}</div>
                   <div className="text-xs text-slate-600">Em aprovação: {pedidosAguardandoAprovacao.length}</div>
                 </CardContent>
               </Card>
-              <Card className="shadow-sm">
+              <Card className="shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50">
                 <CardContent className="p-3">
                   <div className="text-xs text-slate-500">Estoque crítico</div>
                   <div className="text-sm font-semibold text-slate-900">Itens: {produtosBaixoEstoque}</div>
@@ -783,7 +783,7 @@ export default function Dashboard() {
               </Card>
             </div>
           </div>
-          <PanelGroup direction="vertical" className="gap-2">
+          <PanelGroup direction="vertical" className="gap-2 flex-1 w-full h-full">
             <Panel defaultSize={50} minSize={30} className="overflow-auto">
               {/* KPIs Principais + Widget Canais */}
               <StatsSection statsCards={statsCards} empresaId={empresaAtual?.id} />
@@ -799,7 +799,7 @@ export default function Dashboard() {
           <SecondaryKPIsSection kpis={kpiCards} />
 
           {canSeeComercial && (
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="bg-white/80 backdrop-blur-sm rounded-md shadow-sm">
               <CardHeader>
                 <CardTitle>Pedidos (Recentes, Pendentes, Aprovação)</CardTitle>
               </CardHeader>
@@ -939,35 +939,35 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
+                  <div className="p-4 rounded-md border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Erros (24h)</div>
                       <div className="text-2xl font-bold">{ccMetrics?.errors ?? 0}</div>
                     </div>
                     <AlertCircle className="w-6 h-6 text-rose-600" />
                   </div>
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
+                  <div className="p-4 rounded-md border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Jobs/Automations</div>
                       <div className="text-2xl font-bold">{ccMetrics?.funcs ?? 0}</div>
                     </div>
                     <Activity className="w-6 h-6 text-blue-600" />
                   </div>
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
+                  <div className="p-4 rounded-md border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Integrações</div>
                       <div className="text-2xl font-bold">OK</div>
                     </div>
                     <BarChart3 className="w-6 h-6 text-emerald-600" />
                   </div>
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
+                  <div className="p-4 rounded-md border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Segurança</div>
                       <div className="text-2xl font-bold">{ccMetrics?.secAlerts ?? 0}</div>
                     </div>
                     <Shield className="w-6 h-6 text-amber-600" />
                   </div>
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
+                  <div className="p-4 rounded-md border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Chatbot (24h)</div>
                       <div className="text-xs text-slate-500">SLA 1ª resp.</div>
@@ -988,7 +988,7 @@ export default function Dashboard() {
 
           {/* Previsões de Estoque (IA) - visível apenas para quem vê Estoque */}
           {canSeeEstoque && (
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="bg-white/80 backdrop-blur-sm rounded-md shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-indigo-600" />
@@ -1030,7 +1030,7 @@ export default function Dashboard() {
           {/* Previsões de Estoque (IA) - visível apenas para quem vê Estoque */}
           <ProtectedSection module="Estoque" action="ver" hideInstead>
           {canSeeEstoque && (
-            <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="bg-white/80 backdrop-blur-sm rounded-md shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="w-5 h-5 text-indigo-600" />
