@@ -22,22 +22,12 @@ export default function PortalCliente() {
     queryFn: () => base44.auth.me(),
   });
 
-  // Restrição básica de acesso: Portal apenas para perfil de cliente/usuário padrão
-  if (user && user.role && user.role !== 'user') {
-    return (
-      <div className="w-full h-full p-6 flex items-center justify-center">
-        <Card className="max-w-lg w-full">
-          <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            Este painel é exclusivo para clientes. Acesse os módulos internos pelo menu lateral.
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // Perfil não-cliente: renderiza mensagem, mas mantém hooks estáveis
+  const isNonPortalRole = !!(user && user.role && user.role !== 'user');
 
   const { data: cliente } = useQuery({
     queryKey: ['cliente-portal', user?.id],
-    enabled: !!user?.id,
+    enabled: !!user?.id && !isNonPortalRole,
     queryFn: async () => {
       const list = await base44.entities.Cliente.filter({ portal_usuario_id: user.id }, '-updated_date', 1);
       return list?.[0] || null;
@@ -72,7 +62,17 @@ export default function PortalCliente() {
     return () => window.removeEventListener('portal:setTab', handler);
   }, []);
 
-  if (!cliente) {
+  if (isNonPortalRole) {
+    return (
+      <div className="w-full h-full p-6 flex items-center justify-center">
+        <Card className="max-w-lg w-full">
+          <CardContent className="p-6 text-center text-sm text-muted-foreground">
+            Este painel é exclusivo para clientes. Acesse os módulos internos pelo menu lateral.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  } else if (!cliente) {
     return (
       <div className="w-full h-full p-4">
         <Card className="w-full h-full flex items-center justify-center">
