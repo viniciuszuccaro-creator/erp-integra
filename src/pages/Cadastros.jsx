@@ -394,7 +394,7 @@ export default function Cadastros() {
     queryKey: ['contatos-b2b', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await filterInContext('ContatoB2B', {}, '-created_date', 9999);
+        return await filterInContext('ContatoB2B', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar contatos B2B:', err);
         return [];
