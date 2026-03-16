@@ -100,7 +100,7 @@ export function useCountEntities(entityName, filter = {}, options = {}) {
     refetchOnReconnect: false,
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
-    enabled: !!grupoAtual?.id || !!empresaAtual?.id,
+    enabled: options.enabled ?? true,
     keepPreviousData: true,
     placeholderData: (prev) => prev ?? 0,
     ...options

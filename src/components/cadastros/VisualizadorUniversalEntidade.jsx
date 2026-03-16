@@ -1266,7 +1266,7 @@ export default function VisualizadorUniversalEntidade({
                 </div>
               )}
 
-              {!isLoading && !isFetching && dadosBuscadosEOrdenados.length === 0 && (
+              {!isLoading && !isFetching && totalItemsCount === 0 && dadosBuscadosEOrdenados.length === 0 && (
                 <div className="text-center py-12 space-y-3">
                   <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
                   <p className="text-slate-600 font-medium">

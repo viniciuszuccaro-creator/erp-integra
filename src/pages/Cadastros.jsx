@@ -387,6 +387,8 @@ export default function Cadastros() {
     retry: 1,
     enabled: !!grupoAtual?.id || !!empresaAtual?.id
   });
+  // Contagem consistente para Representante
+  const { count: totalRepresentantes = 0 } = useCountEntities('Representante', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
 
   const { data: contatosB2B = [] } = useQuery({
     queryKey: ['contatos-b2b', empresaAtual?.id],
@@ -404,6 +406,7 @@ export default function Cadastros() {
     retry: 1,
     enabled: !!grupoAtual?.id || !!empresaAtual?.id
   });
+  const { count: totalContatosB2B = 0 } = useCountEntities('ContatoB2B', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
 
   // QUERIES - BLOCO 2: PRODUTOS & SERVIÇOS
   const { data: produtos = [] } = useQuery({
@@ -604,11 +607,13 @@ export default function Cadastros() {
     queryKey: ['segmentos-cliente'],
     queryFn: () => filterInContext('SegmentoCliente', {}, '-created_date', 9999),
   });
+  const { count: totalSegmentosCliente = 0 } = useCountEntities('SegmentoCliente', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
 
   const { data: regioesAtendimento = [] } = useQuery({
     queryKey: ['regioes-atendimento'],
     queryFn: () => filterInContext('RegiaoAtendimento', {}, '-created_date', 9999),
   });
+  const { count: totalRegioesAtendimento = 0 } = useCountEntities('RegiaoAtendimento', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
 
   const { data: unidadesMedida = [] } = useQuery({
     queryKey: ['unidades-medida'],
@@ -776,7 +781,7 @@ export default function Cadastros() {
   const { count: totalConfigNFe = 0 } = useCountEntities('ConfiguracaoNFe', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
   const { count: totalConfigBoletos = 0 } = useCountEntities('ConfiguracaoBoletos', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
   const { count: totalConfigWhatsApp = 0 } = useCountEntities('ConfiguracaoWhatsApp', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
-  const totalBloco1 = totalClientes + totalFornecedores + totalTransportadoras + totalColaboradores + representantes.length + contatosB2B.length + segmentosCliente.length + regioesAtendimento.length;
+  const totalBloco1 = totalClientes + totalFornecedores + totalTransportadoras + totalColaboradores + totalRepresentantes + totalContatosB2B + totalSegmentosCliente + totalRegioesAtendimento;
   const totalBloco2 = totalProdutos + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
   const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length + operadoresCaixa.length + totalDespesasRecorrentes;
   const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length + rotasPadrao.length + modelosDocumento.length;
