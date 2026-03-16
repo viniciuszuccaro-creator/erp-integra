@@ -532,6 +532,13 @@ export default function VisualizadorUniversalEntidade({
   const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
 
   const filtroBase = buildFilterWithSearch();
+
+  // Validação de escopo para evitar falso "Nenhum registro" quando não há empresa/grupo selecionado
+  const schemaProps = (entitySchema && entitySchema.properties) || {};
+  const __hasGroupField = Object.prototype.hasOwnProperty.call(schemaProps, 'group_id');
+  const __hasCtxField = Object.prototype.hasOwnProperty.call(schemaProps, campoEmpresa);
+  const __fcScope = getFiltroContexto(campoEmpresa, true) || {};
+  const __canList = (!__hasGroupField && !__hasCtxField) || !!(__fcScope[campoEmpresa] || __fcScope.group_id);
   const def = getDefaultSortForEntity();
   const sf = (sortField || def.field);
   const sd = (sortDirection || def.direction);
@@ -661,48 +668,8 @@ export default function VisualizadorUniversalEntidade({
     const baseRows = (accDados && accDados.length) ? accDados : dados;
     let resultado = [...baseRows];
 
-    // Ordenação local/fallback (imediata) — aplica sempre que houver sortField/direction definidos
-    if (Array.isArray(resultado) && colunaOrdenacao) {
-      const field = colunaOrdenacao || sortField;
-      const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === field) || { campo: field, isNumeric: false, getValue: (row)=>row?.[field] };
-      const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[field]);
-      const toNum = (v, campo) => {
-        if (v == null || v === '') return Number.POSITIVE_INFINITY;
-        if (typeof v === 'number') return v;
-        const s = String(v);
-        if (campo === 'codigo') {
-          const digits = s.replace(/\D/g, '');
-          return digits ? Number(digits) : Number.POSITIVE_INFINITY;
-        }
-        const m = s.match(/\d+(?:[\.,]\d+)?/);
-        if (m) { return Number(m[0].replace(',', '.')); }
-        const n = Number(s);
-        return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
-      };
-      const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
-      const dir = direcaoOrdenacao || 'asc';
-      resultado.sort((a,b) => {
-        const avRaw = getVal(a);
-        const bvRaw = getVal(b);
-        let comp;
-        if (meta.isNumeric) {
-          const an = toNum(avRaw, meta.campo);
-          const bn = toNum(bvRaw, meta.campo);
-          if (!Number.isFinite(an) || !Number.isFinite(bn)) {
-            const as = (avRaw ?? '').toString();
-            const bs = (bvRaw ?? '').toString();
-            comp = collator.compare(as, bs);
-          } else {
-            comp = an - bn;
-          }
-        } else {
-          const as = (avRaw ?? '').toString();
-          const bs = (bvRaw ?? '').toString();
-          comp = collator.compare(as, bs);
-        }
-        return dir === 'desc' ? -comp : comp;
-      });
-    }
+    // Ordenação passa a ser 100% server-side (entityListSorted)
+    // Mantemos apenas filtros adicionais/IA no cliente para não conflitar com o backend
     
     if (filtroAdicional && typeof filtroAdicional === 'function') {
       resultado = resultado.filter(filtroAdicional);
@@ -716,7 +683,7 @@ export default function VisualizadorUniversalEntidade({
     }
     
     return resultado;
-  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, nomeEntidade, columnFilters]);
+  }, [dados, filtroAdicional, iaFiltroAtivo, nomeEntidade]);
 
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
   
@@ -737,10 +704,16 @@ export default function VisualizadorUniversalEntidade({
   
   const excluirSelecionadosIds = async (ids) => {
     if (!ids || ids.length === 0) return;
-    await Promise.all(Array.from(ids).map(id => deleteInContext(nomeEntidade, id)));
-    try { await base44.entities.AuditLog.create({ acao: 'Exclusão', modulo: moduloPermissao, entidade: nomeEntidade, descricao: `Exclusão em massa: ${ids.length} registro(s)`, data_hora: new Date().toISOString() }); } catch {}
+    // Remoção otimista imediata (sem travar UI)
+    setAccDados(prev => Array.isArray(prev) ? prev.filter(i => !ids.includes(i.id)) : prev);
     setSelectedIds(new Set());
-    await invalidateAllRelated();
+    try { toast({ title: `🗑️ Excluindo ${ids.length} registro(s)…` }); } catch {}
+    try {
+      await Promise.all(Array.from(ids).map(id => deleteInContext(nomeEntidade, id)));
+      try { await base44.entities.AuditLog.create({ acao: 'Exclusão', modulo: moduloPermissao, entidade: nomeEntidade, descricao: `Exclusão em massa: ${ids.length} registro(s)`, data_hora: new Date().toISOString() }); } catch {}
+    } finally {
+      await invalidateAllRelated();
+    }
   };
 
   const excluirSelecionados = async () => {
@@ -1081,10 +1054,15 @@ export default function VisualizadorUniversalEntidade({
             </div>
           ) : (
             <>
+              {!__canList && (
+                <div className="mb-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
+                  Selecione uma empresa ou ative o contexto de grupo para carregar os registros.
+                </div>
+              )}
               {(isLoading || (isFetching && (dadosBuscadosEOrdenados?.length || 0) === 0)) && visualizacao !== 'table' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <Card key={`sk-card-${i}`} className="border">
+                    <Card key={`sk-card-${i}`} className="border rounded-sm">
                       <CardContent className="p-4 space-y-3">
                         <Skeleton className="h-4 w-24" />
                         <Skeleton className="h-4 w-3/4" />
@@ -1285,14 +1263,14 @@ export default function VisualizadorUniversalEntidade({
                 </div>
               )}
 
-              {!isLoading && !isFetching && totalItemsCount === 0 && dadosBuscadosEOrdenados.length === 0 && (
+              {!isLoading && !isFetching && __canList && totalItemsCount === 0 && dadosBuscadosEOrdenados.length === 0 && (
                 <div className="text-center py-12 space-y-3">
                   <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
                   <p className="text-slate-600 font-medium">
                     {buscaBackend ? 'Nenhum resultado' : 'Nenhum registro'}
                   </p>
                   {!buscaBackend && (
-                    <Button size="sm" onClick={criarSugestoes} className="bg-blue-600 hover:bg-blue-700">
+                    <Button size="sm" onClick={criarSugestoes} className="bg-blue-600 hover:bg-blue-700 rounded-sm">
                       <Plus className="w-4 h-4 mr-1" /> Criar 3 sugestões
                     </Button>
                   )}
