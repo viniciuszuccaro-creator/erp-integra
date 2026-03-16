@@ -241,7 +241,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <h3 className="font-semibold text-purple-900">IA de Leitura de Projetos</h3>
                     <p className="text-sm text-purple-700">Extrai peças automaticamente de PDF/DWG</p>
                   </div>
-                  <Switch defaultChecked={true} />
+                  <Switch
+                    checked={getConfig('ia_leitura_projetos')?.ia?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('ia_leitura_projetos','IA',{ativa: checked})}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3 mt-3">
                   <div>
@@ -262,7 +265,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <h3 className="font-semibold text-blue-900">IA Preditiva de Vendas</h3>
                     <p className="text-sm text-blue-700">Prevê tendências e sugere ações</p>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={getConfig('ia_preditiva_vendas')?.ia?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('ia_preditiva_vendas','IA',{ativa: checked})}
+                  />
                 </div>
               </div>
 
@@ -273,7 +279,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <h3 className="font-semibold text-green-900">IA de Conciliação Bancária</h3>
                     <p className="text-sm text-green-700">Match automático de extratos (85-90%)</p>
                   </div>
-                  <Switch defaultChecked={true} />
+                  <Switch
+                    checked={getConfig('ia_conciliacao')?.ia?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('ia_conciliacao','IA',{ativa: checked})}
+                  />
                 </div>
                 <div>
                   <Label className="text-xs text-green-700">Score Mínimo para Match Automático</Label>
@@ -298,7 +307,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="font-medium">Pedido Aprovado</p>
                     <p className="text-sm text-slate-600">Notifica cliente quando pedido for aprovado</p>
                   </div>
-                  <Switch defaultChecked={true} />
+                  <Switch
+                    checked={getConfig('notif_pedido_aprovado')?.notificacoes?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('notif_pedido_aprovado','Notificacoes',{ativa: checked})}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -306,7 +318,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="font-medium">Entrega Saiu para Transporte</p>
                     <p className="text-sm text-slate-600">Envia link de rastreamento</p>
                   </div>
-                  <Switch defaultChecked={true} />
+                  <Switch
+                    checked={getConfig('notif_entrega_transporte')?.notificacoes?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('notif_entrega_transporte','Notificacoes',{ativa: checked})}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -314,7 +329,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="font-medium">Boleto Gerado</p>
                     <p className="text-sm text-slate-600">Envia boleto/PIX por WhatsApp e e-mail</p>
                   </div>
-                  <Switch defaultChecked={true} />
+                  <Switch
+                    checked={getConfig('notif_boleto_gerado')?.notificacoes?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('notif_boleto_gerado','Notificacoes',{ativa: checked})}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -322,7 +340,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="font-medium">Título Vencido</p>
                     <p className="text-sm text-slate-600">Alerta de inadimplência</p>
                   </div>
-                  <Switch defaultChecked={true} />
+                  <Switch
+                    checked={getConfig('notif_titulo_vencido')?.notificacoes?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('notif_titulo_vencido','Notificacoes',{ativa: checked})}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -330,7 +351,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="font-medium">OP Atrasada</p>
                     <p className="text-sm text-slate-600">Alerta para gerente de produção</p>
                   </div>
-                  <Switch defaultChecked={true} />
+                  <Switch
+                    checked={getConfig('notif_op_atrasada')?.notificacoes?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('notif_op_atrasada','Notificacoes',{ativa: checked})}
+                  />
                 </div>
               </div>
 
@@ -354,7 +378,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="font-medium">Autenticação de Dois Fatores (MFA)</p>
                     <p className="text-sm text-slate-600">Obrigatório para admins</p>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={getConfig('seg_mfa')?.seguranca?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('seg_mfa','Seguranca',{ativa: checked})}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -362,7 +389,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="font-medium">Logs de Auditoria Completos</p>
                     <p className="text-sm text-slate-600">Registra todas as ações críticas</p>
                   </div>
-                  <Switch defaultChecked={true} />
+                  <Switch
+                    checked={getConfig('seg_logs_completos')?.seguranca?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('seg_logs_completos','Seguranca',{ativa: checked})}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -381,7 +411,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="font-medium">Bloquear Tentativas Excessivas</p>
                     <p className="text-sm text-slate-600">Bloqueia após 5 tentativas falhas</p>
                   </div>
-                  <Switch defaultChecked={true} />
+                  <Switch
+                    checked={getConfig('seg_bloqueio_tentativas')?.seguranca?.ativa || false}
+                    onCheckedChange={(checked)=>handleSave('seg_bloqueio_tentativas','Seguranca',{ativa: checked})}
+                  />
                 </div>
               </div>
 
