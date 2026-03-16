@@ -401,7 +401,9 @@ export default function VisualizadorUniversalEntidade({
       updated_date_desc: { f: 'updated_date', d: 'desc' },
       recent: { f: 'updated_date', d: 'desc' },
       nome: { f: 'nome', d: 'asc' },
-      nome_desc: { f: 'nome', d: 'desc' }
+      nome_desc: { f: 'nome', d: 'desc' },
+      cidade: { f: 'endereco_principal.cidade', d: 'asc' },
+      mais_compras: { f: 'valor_compras_12meses', d: 'desc' }
     };
     const def = getDefaultSortForEntity();
     const m = map[val] || { f: def.field, d: def.direction };
