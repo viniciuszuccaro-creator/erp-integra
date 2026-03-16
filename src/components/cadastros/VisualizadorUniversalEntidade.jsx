@@ -918,7 +918,7 @@ export default function VisualizadorUniversalEntidade({
                   )}
                 </CardTitle>
                 <p className="text-sm text-slate-600 mt-1">
-                  {dadosBuscadosEOrdenados.length} de {totalItemsCount > 0 ? totalItemsCount : '…'} registros
+                  {dadosBuscadosEOrdenados.length} de {totalItemsCount > 0 ? totalItemsCount : '…'} registros {groupTotalCount != null && (<span className="ml-2 text-slate-500">• Grupo: {groupTotalCount}</span>)}
                 </p>
               </div>
             </div>
