@@ -327,7 +327,7 @@ export default function VisualizadorUniversalEntidade({
     const handler = setTimeout(() => {
       setBuscaBackend(buscaLocal);
       setCurrentPage(1);
-    }, 400);
+    }, 400); // preferência do usuário: 400ms
     return () => clearTimeout(handler);
   }, [buscaLocal, columnFilters]);
 
@@ -905,6 +905,15 @@ export default function VisualizadorUniversalEntidade({
   };
 
   const handleOrdenarPorColuna = (campo) => {
+    // aplica ordenação globalmente (UI + backend) sem travas
+    setCurrentPage(1);
+    const nextDir = (colunaOrdenacao === campo && direcaoOrdenacao === 'asc') ? 'desc' : 'asc';
+    setColunaOrdenacao(campo);
+    setDirecaoOrdenacao(nextDir);
+    setOrdenacao('');
+    setSortField(campo);
+    setSortDirection(nextDir);
+  }
     setCurrentPage(1);
     if (colunaOrdenacao === campo) {
       setDirecaoOrdenacao(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -1103,11 +1112,7 @@ export default function VisualizadorUniversalEntidade({
                               isNumeric: c.isNumeric,
                               render: c.campo === 'status'
                                 ? ((row) => {
-                                    const v = String(row.status || '').toLowerCase();
-                                    const cls = (v.includes('inativo') || v.includes('crit')) ? 'bg-red-100 text-red-800 border-red-200'
-                                              : (v.includes('pend')) ? 'bg-amber-100 text-amber-800 border-amber-200'
-                                              : (v.includes('ativo')) ? 'bg-green-100 text-green-800 border-green-200'
-                                              : 'bg-slate-100 text-slate-700 border-slate-200';
+                                    const cls = getStatusBadgeClass(nomeEntidade, row.status);
                                     return <Badge variant="outline" className={cls}>{row.status || '-'}</Badge>;
                                   })
                                 : undefined
