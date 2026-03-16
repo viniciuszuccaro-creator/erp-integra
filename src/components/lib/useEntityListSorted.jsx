@@ -72,11 +72,22 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     }
   }
 
+  // Decide filtro final sem "estreitar" o $or vindo do caller (evita AND indevido)
+  const hasOr = !!(criterios && criterios.$or && Array.isArray(criterios.$or) && criterios.$or.length);
+  const hasCtxInCriterios = Boolean(
+    (criterios && (criterios.group_id || criterios[campo])) || hasOr
+  );
+  const filtroFinal = hasCtxInCriterios ? { ...criterios } : { ...criterios, ...filtroContextOutside };
+  const enabledFlag = Boolean(
+    (filtroFinal && (filtroFinal.group_id || filtroFinal[campo] || filtroFinal.$or)) ||
+    (filtroContextOutside && (filtroContextOutside.group_id || filtroContextOutside[campo]))
+  );
+
   return useQuery({
-    queryKey: ["entityListSorted", entityName, stableStringify(criterios || {}), finalSortField, finalSortDirection, limit, page, pageSize, filtroContextOutside?.group_id || null, filtroContextOutside?.[campo] || null],
+    queryKey: ["entityListSorted", entityName, stableStringify(filtroFinal || {}), finalSortField, finalSortDirection, limit, page, pageSize],
     queryFn: async () => {
-      const filtro = { ...criterios, ...filtroContextOutside };
-      if (!filtro.group_id && !filtro[campo]) return [];
+      const filtro = filtroFinal;
+      if (!filtro.group_id && !filtro[campo] && !filtro.$or) return [];
 
       const key = stableStringify({ entityName, filtro, finalSortField, finalSortDirection, limit: (typeof limit === 'number' && limit > 0) ? limit : pageSize, skip: (typeof page === 'number' && typeof pageSize === 'number') ? Math.max(0, (Math.max(1, page) - 1) * pageSize) : undefined });
       if (__elsInflight.has(key)) {
@@ -153,6 +164,6 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     staleTime: 120_000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
-    enabled: Boolean(filtroContextOutside?.group_id || filtroContextOutside?.[campo]),
+    enabled: enabledFlag,
   });
 }
