@@ -153,10 +153,10 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
             <Card>
               <CardContent className="p-4">
                 <h2 className="font-semibold mb-2">Apps/Conectores consolidados</h2>
-                <p className="text-sm text-slate-600 mb-3">APIs Externas, Webhooks e Chatbot Intents foram centralizados. Use os atalhos:</p>
-                <div className="flex gap-2">
+                <p className="text-sm text-slate-600 mb-3">Conteúdos antes duplicados agora estão centralizados. Atalhos:</p>
+                <div className="flex gap-2 flex-wrap">
                   <Link to="/AdministracaoSistema?tab=integracoes" className="inline-flex">
-                    <Button variant="default">Abrir Integrações</Button>
+                    <Button variant="default">Integrações</Button>
                   </Link>
                   <Link to="/AdministracaoSistema?tab=ia" className="inline-flex">
                     <Button variant="outline">Tecnologia, IA & Parâmetros</Button>
