@@ -43,7 +43,7 @@ export default function ConfiguracoesGeraisIndex({ initialTab }) {
     <div className="w-full h-full flex flex-col">
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2">
-          <TabsTrigger value="global">Gerais</TabsTrigger>
+          <TabsTrigger value="global">Parâmetros Gerais</TabsTrigger>
           <TabsTrigger value="heranca">Herança/Overrides</TabsTrigger>
           <TabsTrigger value="versionamento">Versionamento</TabsTrigger>
           <TabsTrigger value="conflitos">Conflitos</TabsTrigger>
