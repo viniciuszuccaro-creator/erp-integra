@@ -717,45 +717,9 @@ export default function Dashboard() {
         {/* Unificado em Resumo Geral */}
         <div className="hidden" />
 
-        <TabsContent value="tempo-real" className="hidden">
-          <PanelGroup direction="vertical" className="gap-2 flex-1 w-full h-full min-h-[760px]">
-            <Panel defaultSize={55} minSize={35} className="overflow-auto h-full">
-              {activeTab === 'tempo-real' && (
-                <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
-                  <DashboardTempoReal empresaId={empresaAtual?.id} />
-                </Suspense>
-              )}
-            </Panel>
-            <PanelResizeHandle className="h-1 bg-slate-200 rounded" />
-            <Panel defaultSize={25} minSize={15} className="overflow-auto h-full">
-              <KPIsOperacionaisSection kpis={kpisOperacionais} />
-            </Panel>
-            <PanelResizeHandle className="h-1 bg-slate-200 rounded" />
-            <Panel defaultSize={20} minSize={15} className="overflow-auto h-full">
-              <ProtectedSection module="Expedição" action="ver" hideInstead>
-                <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
-                  <MapaTempoReal />
-                </Suspense>
-              </ProtectedSection>
-            </Panel>
-          </PanelGroup>
-        </TabsContent>
 
-        <TabsContent value="bi-operacional" className="hidden">
-          <PanelGroup direction="vertical" className="gap-2 flex-1 w-full h-full min-h-[760px]">
-            <Panel defaultSize={70} minSize={40} className="overflow-auto h-full">
-              {activeTab === 'bi-operacional' && (
-                <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
-                  <DashboardOperacionalBI />
-                </Suspense>
-              )}
-            </Panel>
-            <PanelResizeHandle className="h-1 bg-slate-200 rounded" />
-            <Panel defaultSize={30} minSize={20} className="overflow-auto">
-              <SecondaryKPIsSection kpis={kpiCards} />
-            </Panel>
-          </PanelGroup>
-        </TabsContent>
+
+
 
         <TabsContent value="resumo" className="w-full h-full overflow-y-auto space-y-6 mt-6">
           {/* Sticky KPIs principais */}
@@ -797,6 +761,19 @@ export default function Dashboard() {
 
           {/* KPIs Secundários */}
           <SecondaryKPIsSection kpis={kpiCards} />
+
+          {/* Tempo Real - Mapa em card dentro do Dashboard unificado */}
+          <div className="mt-4">
+            <ProtectedSection module="Expedição" action="ver" hideInstead>
+              <Card className="bg-white/80 backdrop-blur-sm rounded-md shadow-sm">
+                <CardContent>
+                  <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+                    <MapaTempoReal />
+                  </Suspense>
+                </CardContent>
+              </Card>
+            </ProtectedSection>
+          </div>
 
           {canSeeComercial && (
             <Card className="bg-white/80 backdrop-blur-sm rounded-md shadow-sm">
