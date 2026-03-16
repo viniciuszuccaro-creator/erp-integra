@@ -906,6 +906,11 @@ export default function VisualizadorUniversalEntidade({
                       Limite estourado: {iaCreditoEstouradoCount}
                     </Badge>
                   )}
+                  {nomeEntidade === 'Produto' && (
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                      Estoque crítico: {estoqueCriticoCount}
+                    </Badge>
+                  )}
                 </CardTitle>
                 <p className="text-sm text-slate-600 mt-1">
                   {dadosBuscadosEOrdenados.length} de {totalItemsCount > 0 ? totalItemsCount : '…'} registros
