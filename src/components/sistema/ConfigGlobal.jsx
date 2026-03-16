@@ -42,11 +42,12 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
 
   const updateMutation = useMutation({
     mutationFn: async (data) => {
-      const config = configs.find(c => c.chave === data.chave);
+      const { __before, __scope, ...payload } = data || {};
+      const config = configs.find(c => c.chave === payload.chave);
       if (config) {
-        return base44.entities.ConfiguracaoSistema.update(config.id, data);
+        return base44.entities.ConfiguracaoSistema.update(config.id, payload);
       } else {
-        return base44.entities.ConfiguracaoSistema.create(data);
+        return base44.entities.ConfiguracaoSistema.create(payload);
       }
     },
     onSuccess: async (_res, variables) => {
@@ -55,11 +56,12 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       try {
         const me = await base44.auth.me();
         const before = variables?.__before || null;
+        const { __before: _b, __scope: _s, ...afterClean } = variables || {};
         const detalhes = {
-          chave: variables?.chave,
-          categoria: variables?.categoria,
+          chave: afterClean?.chave,
+          categoria: afterClean?.categoria,
           antes: before,
-          depois: variables,
+          depois: afterClean,
           scope: { empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null }
         };
         // Auditoria centralizada
@@ -73,9 +75,9 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
           usuario: me?.full_name || me?.email || 'Usuário',
           usuario_id: me?.id,
           acao: 'Edição', modulo: 'Sistema', tipo_auditoria: 'entidade', entidade: 'ConfiguracaoSistema',
-          descricao: `Alteração de toggle/chave: ${variables?.chave}`,
+          descricao: `Alteração de toggle/chave: ${afterClean?.chave}`,
           dados_anteriores: before,
-          dados_novos: variables,
+          dados_novos: afterClean,
           empresa_id: empresaAtual?.id || null,
           group_id: grupoAtual?.id || null,
           data_hora: new Date().toISOString(),
@@ -97,8 +99,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       chave,
       categoria,
       [propName]: dados,
-      __before: before,
-      __scope: { empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null }
+      __before: before
     });
   };
 
