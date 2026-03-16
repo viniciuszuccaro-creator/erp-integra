@@ -188,7 +188,7 @@ export default function ERPDataTable({
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-white/50 backdrop-blur-md rounded-sm">
-      <div className="flex items-center justify-between pb-2 gap-2 rounded-sm border bg-white/80 backdrop-blur-sm shadow-sm px-2 py-1">
+      <div className="flex items-center justify-between pb-2 gap-2 rounded-sm border bg-white/80 backdrop-blur-sm shadow-sm px-2 py-1 sticky top-0 z-10">
         <DropdownMenu>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -244,7 +244,7 @@ export default function ERPDataTable({
         </div>
       )}
 
-      <div className="flex-1 overflow-auto border rounded-sm w-full h-full bg-white/80 backdrop-blur-sm shadow-sm">
+      <div className="flex-1 overflow-auto border rounded-sm w-full h-full bg-white/80 backdrop-blur-sm shadow-sm" style={{scrollBehavior:'smooth'}}>
         <div className="min-w-[900px]">{/* Evita quebra e corte em telas pequenas; rolagem horizontal controlada */}
         <Table className="w-full">
           <TableHeader className="sticky top-0 bg-white/70 backdrop-blur z-10 text-sm">
@@ -307,7 +307,7 @@ export default function ERPDataTable({
               )}
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody style={{minHeight: 420}}>
             {isLoading ? (
               Array.from({ length: 12 }).map((_, i) => (
                 <TableRow key={`sk-${i}`} className="hover:bg-transparent">

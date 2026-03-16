@@ -167,6 +167,6 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     refetchOnMount: false,
     refetchOnReconnect: false,
     retry: 1,
-    enabled: enabledFlag,
+    enabled: true,
   });
 }

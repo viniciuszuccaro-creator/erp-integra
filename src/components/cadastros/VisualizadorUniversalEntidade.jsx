@@ -377,11 +377,10 @@ export default function VisualizadorUniversalEntidade({
     if (sortPendingRef.current) return;
     sortPendingRef.current = true;
     if (sortTimerRef.current) clearTimeout(sortTimerRef.current);
-    sortTimerRef.current = setTimeout(() => {
-      setSortField(m.f);
-      setSortDirection(m.d);
-      sortPendingRef.current = false;
-    }, 350);
+    // aplicação imediata no backend (sem travas)
+    setSortField(m.f);
+    setSortDirection(m.d);
+    sortPendingRef.current = false;
     setCurrentPage(1);
   }, [getDefaultSortForEntity]);
 
@@ -1095,15 +1094,10 @@ export default function VisualizadorUniversalEntidade({
                               setDirecaoOrdenacao(direction);
                               setOrdenacao('');
                               setCurrentPage(1);
-                              // Evita múltiplas chamadas em sequência
-                              if (sortPendingRef.current) return;
-                              sortPendingRef.current = true;
-                              if (sortTimerRef.current) clearTimeout(sortTimerRef.current);
-                              sortTimerRef.current = setTimeout(() => {
-                                setSortField(field);
-                                setSortDirection(direction);
-                                sortPendingRef.current = false;
-                              }, 350);
+                              // Aplicação imediata no backend (sem debounce pesado)
+                              setSortField(field);
+                              setSortDirection(direction);
+                              sortPendingRef.current = false;
                             }}
                             onToggleSelectAll={toggleSelectAll}
                             onToggleItem={(id) => toggleItem(id)}
