@@ -39,7 +39,13 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const canLoadConfigs = Boolean(grupoAtual?.id || empresaAtual?.id);
   const { data: configs = [] } = useQuery({
       queryKey: ['config-sistema', empresaAtual?.id || 'sem-empresa', grupoAtual?.id || 'sem-grupo'],
-      queryFn: () => base44.entities.ConfiguracaoSistema.list(),
+      queryFn: async () => {
+        const filtro = {};
+        if (grupoAtual?.id) filtro.group_id = grupoAtual.id;
+        if (empresaAtual?.id) filtro.empresa_id = empresaAtual.id;
+        const list = await base44.entities.ConfiguracaoSistema.filter(filtro, '-updated_date', 200);
+        return Array.isArray(list) ? list : [];
+      },
       enabled: canLoadConfigs,
       staleTime: 60000,
     });
@@ -49,51 +55,66 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       const { __before, __scope, ...payload } = data || {};
       const scope = { group_id: grupoAtual?.id || undefined, empresa_id: empresaAtual?.id || undefined };
       const finalPayload = { ...payload, ...scope };
-      const config = configs.find(c => c.chave === payload.chave);
-      if (config) {
-        return base44.entities.ConfiguracaoSistema.update(config.id, finalPayload);
-      } else {
-        return base44.entities.ConfiguracaoSistema.create(finalPayload);
+      // Atualiza o registro correto dentro do escopo (grupo/empresa)
+      const match = configs.find(c =>
+        c.chave === payload.chave &&
+        ((scope.group_id ? c.group_id === scope.group_id : !c.group_id) &&
+         (scope.empresa_id ? c.empresa_id === scope.empresa_id : !c.empresa_id))
+      );
+      if (match?.id) {
+        return base44.entities.ConfiguracaoSistema.update(match.id, finalPayload);
       }
+      return base44.entities.ConfiguracaoSistema.create(finalPayload);
     },
-    onSuccess: async (_res, variables) => {
+    onSuccess: async (res, variables) => {
+      // Recarrega todos os consumidores
       queryClient.invalidateQueries({ queryKey: ['config-sistema', empresaAtual?.id || 'sem-empresa', grupoAtual?.id || 'sem-grupo'] });
+      queryClient.invalidateQueries({ queryKey: ['configuracaoSistema'] });
       toast({ title: '✅ Configuração salva com sucesso!' });
       try {
         const me = await base44.auth.me();
         const before = variables?.__before || null;
         const { __before: _b, __scope: _s, ...afterClean } = variables || {};
-        const detalhes = {
-          chave: afterClean?.chave,
-          categoria: afterClean?.categoria,
-          antes: before,
-          depois: afterClean,
-          scope: { empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null }
-        };
-        // Auditoria centralizada
-        try { await base44.functions.invoke('auditEntityEvents', {
-          acao: 'Edição', modulo: 'Sistema', entidade: 'ConfiguracaoSistema',
-          descricao: `Toggle alterado: ${variables?.chave}`,
-          dados: detalhes,
-        }); } catch (_) {}
-        // Log dedicado
+        // Auditoria via função padronizada (formato de automação de entidade)
+        try {
+          const eventType = before?.id ? 'update' : 'create';
+          await base44.functions.invoke('auditEntityEvents', {
+            event: {
+              type: eventType,
+              entity_name: 'ConfiguracaoSistema',
+              entity_id: res?.id || before?.id || null
+            },
+            data: res || afterClean,
+            old_data: before || null
+          });
+        } catch {}
+        // Log complementar direto
         await base44.entities.AuditLog.create({
           usuario: me?.full_name || me?.email || 'Usuário',
           usuario_id: me?.id,
-          acao: 'Edição', modulo: 'Sistema', tipo_auditoria: 'entidade', entidade: 'ConfiguracaoSistema',
-          descricao: `Alteração de toggle/chave: ${afterClean?.chave}`,
+          acao: 'Edição',
+          modulo: 'Sistema',
+          tipo_auditoria: 'entidade',
+          entidade: 'ConfiguracaoSistema',
+          descricao: `Alteração: ${afterClean?.chave}`,
           dados_anteriores: before,
-          dados_novos: afterClean,
+          dados_novos: res || afterClean,
           empresa_id: empresaAtual?.id || null,
           group_id: grupoAtual?.id || null,
           data_hora: new Date().toISOString(),
         });
-      } catch (_) {}
-    },
+      } catch {}
+    }
   });
 
   const getConfig = (chave) => {
-    return configs.find(c => c.chave === chave) || {};
+    const scope = { group_id: grupoAtual?.id || null, empresa_id: empresaAtual?.id || null };
+    const list = (configs || []).filter(c => c.chave === chave);
+    const exact = list.find(c =>
+      ((scope.group_id ? c.group_id === scope.group_id : !c.group_id) &&
+       (scope.empresa_id ? c.empresa_id === scope.empresa_id : !c.empresa_id))
+    );
+    return exact || list[0] || {};
   };
 
   const handleSave = (chave, categoria, dados) => {
@@ -335,8 +356,8 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                 </div>
               </div>
 
-              <Button className="w-full" onClick={() => toast({ title: '✅ Configurações de notificações salvas!' })}>
-                Salvar Configurações
+              <Button className="w-full" onClick={() => queryClient.invalidateQueries({ queryKey: ['config-sistema', empresaAtual?.id || 'sem-empresa', grupoAtual?.id || 'sem-grupo'] })}>
+                Recarregar Estado
               </Button>
             </CardContent>
           </Card>
