@@ -323,8 +323,8 @@ export default function VisualizadorUniversalEntidade({
 
   const getDefaultSortForEntity = useCallback(() => {
     if (colunaOrdenacao) {
-      // Quando usuário clica no cabeçalho, mantemos ordenação 100% no cliente
-      return undefined;
+      // Mantemos ordenação local no UI, mas garantimos defaults seguros para o backend (nunca undefined)
+      return { field: 'updated_date', direction: 'desc' };
     }
 
     // Padrões por entidade (case-insensitive no backend via entityListSorted)
