@@ -23,6 +23,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 /**
  * Painel de Configuração Global do Sistema
@@ -138,69 +140,36 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
           </TabsTrigger>
         </TabsList>
 
-        {/* ABA: INTEGRAÇÕES */}
+        {/* ABA: INTEGRAÇÕES (CONSOLIDADO) */}
         <TabsContent value="integracoes" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Integrações Externas</CardTitle>
+              <CardTitle>Integrações (Consolidado)</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* NF-e */}
-              <div className="space-y-3 p-4 border rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-slate-900">NF-e (Nota Fiscal Eletrônica)</h3>
-                    <p className="text-sm text-slate-600">Integração com provedores de emissão</p>
-                  </div>
-                  <Switch
-                    checked={getConfig('integracao_nfe')?.integracao_nfe?.ativa || false}
-                    onCheckedChange={(checked) => handleSave('integracao_nfe', 'Integracoes', {
-                      ativa: checked
-                    })}
-                  />
+            <CardContent className="space-y-4">
+              <p className="text-sm text-slate-600">O gerenciamento completo de integrações foi consolidado na aba principal de Integrações.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="p-3 border rounded-lg bg-white">
+                  <div className="text-xs text-slate-500 mb-1">NF-e</div>
+                  <div className="text-sm font-medium">{getConfig('integracao_nfe')?.integracao_nfe?.ativa ? 'Ativo' : 'Inativo'}</div>
+                </div>
+                <div className="p-3 border rounded-lg bg-white">
+                  <div className="text-xs text-slate-500 mb-1">Boleto/PIX</div>
+                  <div className="text-sm font-medium">{getConfig('integracao_boletos')?.integracao_boletos?.ativa ? 'Ativo' : 'Inativo'}</div>
+                </div>
+                <div className="p-3 border rounded-lg bg-white">
+                  <div className="text-xs text-slate-500 mb-1">Google Maps</div>
+                  <div className="text-sm font-medium">{getConfig('integracao_maps')?.integracao_maps?.ativa ? 'Ativo' : 'Inativo'}</div>
+                </div>
+                <div className="p-3 border rounded-lg bg-white">
+                  <div className="text-xs text-slate-500 mb-1">WhatsApp</div>
+                  <div className="text-sm font-medium">{getConfig('integracao_whatsapp')?.integracao_whatsapp?.ativa ? 'Ativo' : 'Inativo'}</div>
                 </div>
               </div>
-
-              {/* Boleto/PIX */}
-              <div className="space-y-3 p-4 border rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-slate-900">Boleto e PIX</h3>
-                    <p className="text-sm text-slate-600">Gateway de pagamentos (Asaas, Juno, etc.)</p>
-                  </div>
-                  <Switch
-                    checked={getConfig('integracao_boletos')?.integracao_boletos?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('integracao_boletos','Integracoes',{ativa: checked})}
-                  />
-                </div>
-              </div>
-
-              {/* Google Maps */}
-              <div className="space-y-3 p-4 border rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-slate-900">Google Maps</h3>
-                    <p className="text-sm text-slate-600">Geocoding, roteirização e mapas</p>
-                  </div>
-                  <Switch
-                    checked={getConfig('integracao_maps')?.integracao_maps?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('integracao_maps','Integracoes',{ativa: checked})}
-                  />
-                </div>
-              </div>
-
-              {/* WhatsApp */}
-              <div className="space-y-3 p-4 border rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-slate-900">WhatsApp Business API</h3>
-                    <p className="text-sm text-slate-600">Envio de mensagens automáticas</p>
-                  </div>
-                  <Switch
-                    checked={getConfig('integracao_whatsapp')?.integracao_whatsapp?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('integracao_whatsapp','Integracoes',{ativa: checked})}
-                  />
-                </div>
+              <div className="flex justify-end">
+                <Link to={createPageUrl('AdministracaoSistema?tab=integracoes')} className="inline-flex items-center px-3 py-2 rounded-md border bg-white hover:bg-slate-50 text-sm">
+                  Abrir Gerenciamento de Integrações
+                </Link>
               </div>
             </CardContent>
           </Card>
@@ -254,71 +223,35 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
           </Card>
         </TabsContent>
 
-        {/* ABA: IA */}
+        {/* ABA: IA (CONSOLIDADA) */}
         <TabsContent value="ia" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-purple-600" />
-                Módulos de Inteligência Artificial
+                Inteligência Artificial (Consolidado)
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* IA de Produção */}
-              <div className="space-y-3 p-4 border rounded-lg bg-purple-50 border-purple-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-purple-900">IA de Leitura de Projetos</h3>
-                    <p className="text-sm text-purple-700">Extrai peças automaticamente de PDF/DWG</p>
-                  </div>
-                  <Switch
-                    checked={getConfig('ia_leitura_projetos')?.ia?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('ia_leitura_projetos','IA',{ativa: checked})}
-                  />
+            <CardContent className="space-y-4">
+              <p className="text-sm text-slate-600">Os módulos de IA foram consolidados na aba principal “IA & Otimização”.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-3 border rounded-lg bg-white">
+                  <div className="text-xs text-slate-500 mb-1">Leitura de Projetos</div>
+                  <div className="text-sm font-medium">{getConfig('ia_leitura_projetos')?.ia?.ativa ? 'Ativo' : 'Inativo'}</div>
                 </div>
-                <div className="grid grid-cols-2 gap-3 mt-3">
-                  <div>
-                    <Label className="text-xs text-purple-700">Confiança Mínima (%)</Label>
-                    <Input type="number" defaultValue="75" className="mt-1" />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-purple-700">Tamanho Máximo (MB)</Label>
-                    <Input type="number" defaultValue="10" className="mt-1" />
-                  </div>
+                <div className="p-3 border rounded-lg bg-white">
+                  <div className="text-xs text-slate-500 mb-1">Preditivo de Vendas</div>
+                  <div className="text-sm font-medium">{getConfig('ia_preditiva_vendas')?.ia?.ativa ? 'Ativo' : 'Inativo'}</div>
+                </div>
+                <div className="p-3 border rounded-lg bg-white">
+                  <div className="text-xs text-slate-500 mb-1">Conciliação Bancária</div>
+                  <div className="text-sm font-medium">{getConfig('ia_conciliacao')?.ia?.ativa ? 'Ativo' : 'Inativo'}</div>
                 </div>
               </div>
-
-              {/* IA Preditiva */}
-              <div className="space-y-3 p-4 border rounded-lg bg-blue-50 border-blue-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-blue-900">IA Preditiva de Vendas</h3>
-                    <p className="text-sm text-blue-700">Prevê tendências e sugere ações</p>
-                  </div>
-                  <Switch
-                    checked={getConfig('ia_preditiva_vendas')?.ia?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('ia_preditiva_vendas','IA',{ativa: checked})}
-                  />
-                </div>
-              </div>
-
-              {/* IA de Conciliação */}
-              <div className="space-y-3 p-4 border rounded-lg bg-green-50 border-green-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-green-900">IA de Conciliação Bancária</h3>
-                    <p className="text-sm text-green-700">Match automático de extratos (85-90%)</p>
-                  </div>
-                  <Switch
-                    checked={getConfig('ia_conciliacao')?.ia?.ativa || false}
-                    onCheckedChange={(checked)=>handleSave('ia_conciliacao','IA',{ativa: checked})}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-green-700">Score Mínimo para Match Automático</Label>
-                  <Input type="number" defaultValue="60" className="mt-1" />
-                  <p className="text-xs text-green-600 mt-1">60 pontos ou mais = match automático</p>
-                </div>
+              <div className="flex justify-end">
+                <Link to={createPageUrl('AdministracaoSistema?tab=ia')} className="inline-flex items-center px-3 py-2 rounded-md border bg-white hover:bg-slate-50 text-sm">
+                  Abrir IA & Otimização
+                </Link>
               </div>
             </CardContent>
           </Card>
