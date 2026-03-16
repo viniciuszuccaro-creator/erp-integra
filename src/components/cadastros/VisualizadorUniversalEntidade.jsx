@@ -1210,14 +1210,7 @@ export default function VisualizadorUniversalEntidade({
                           </div>
                           {item.status && (
                           <div className="mt-2">
-                            {(() => {
-                              const v = String(item.status || '').toLowerCase();
-                              const cls = (v.includes('inativo') || v.includes('crit')) ? 'bg-red-100 text-red-800 border-red-200'
-                                        : (v.includes('pend')) ? 'bg-amber-100 text-amber-800 border-amber-200'
-                                        : (v.includes('ativo')) ? 'bg-green-100 text-green-800 border-green-200'
-                                        : 'bg-slate-100 text-slate-700 border-slate-200';
-                              return <Badge variant="outline" className={cls}>{item.status}</Badge>;
-                            })()}
+                            <Badge variant="outline" className={getStatusBadgeClass(nomeEntidade, item.status)}>{item.status}</Badge>
                           </div>
                           )}
                           <div className="flex items-center gap-2 mt-4 pt-3 border-t">
