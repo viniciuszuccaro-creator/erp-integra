@@ -225,6 +225,38 @@ const ALIAS_QUERY_KEYS = {
   Fornecedor: ['fornecedores']
 };
 
+// Status visual por entidade
+const getStatusBadgeClass = (ent, statusRaw) => {
+  if (!statusRaw) return 'bg-slate-100 text-slate-700 border-slate-200';
+  const s = String(statusRaw).toLowerCase();
+  switch (ent) {
+    case 'Cliente':
+      if (s.includes('bloque')) return 'bg-red-100 text-red-800 border-red-200';
+      if (s.includes('prospect') || s.includes('pend')) return 'bg-amber-100 text-amber-800 border-amber-200';
+      if (s.includes('ativo')) return 'bg-green-100 text-green-800 border-green-200';
+      return 'bg-slate-100 text-slate-700 border-slate-200';
+    case 'Fornecedor':
+    case 'Transportadora':
+      if (s.includes('bloque')) return 'bg-red-100 text-red-800 border-red-200';
+      if (s.includes('ativo')) return 'bg-green-100 text-green-800 border-green-200';
+      return 'bg-slate-100 text-slate-700 border-slate-200';
+    case 'Colaborador':
+      if (s.includes('deslig')) return 'bg-red-100 text-red-800 border-red-200';
+      if (s.includes('fer') || s.includes('afast')) return 'bg-amber-100 text-amber-800 border-amber-200';
+      if (s.includes('ativo')) return 'bg-green-100 text-green-800 border-green-200';
+      return 'bg-slate-100 text-slate-700 border-slate-200';
+    case 'Produto':
+      if (s.includes('descontinu')) return 'bg-red-100 text-red-800 border-red-200';
+      if (s.includes('ativo')) return 'bg-green-100 text-green-800 border-green-200';
+      return 'bg-slate-100 text-slate-700 border-slate-200';
+    default:
+      if (s.includes('crit') || s.includes('erro')) return 'bg-red-100 text-red-800 border-red-200';
+      if (s.includes('pend') || s.includes('aguard')) return 'bg-amber-100 text-amber-800 border-amber-200';
+      if (s.includes('ativo') || s.includes('ok')) return 'bg-green-100 text-green-800 border-green-200';
+      return 'bg-slate-100 text-slate-700 border-slate-200';
+  }
+};
+
 export default function VisualizadorUniversalEntidade({ 
   nomeEntidade,
   tituloDisplay,
