@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * Painel de Configuração Global do Sistema
@@ -31,10 +32,12 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const [activeTab, setActiveTab] = useState('integracoes');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
 
   const { data: configs = [] } = useQuery({
-    queryKey: ['config-sistema'],
+    queryKey: ['config-sistema', empresaAtual?.id || 'sem-empresa', grupoAtual?.id || 'sem-grupo'],
     queryFn: () => base44.entities.ConfiguracaoSistema.list(),
+    staleTime: 60000,
   });
 
   const updateMutation = useMutation({
@@ -50,11 +53,31 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       queryClient.invalidateQueries({ queryKey: ['config-sistema'] });
       toast({ title: '✅ Configuração salva com sucesso!' });
       try {
+        const me = await base44.auth.me();
+        const before = variables?.__before || null;
+        const detalhes = {
+          chave: variables?.chave,
+          categoria: variables?.categoria,
+          antes: before,
+          depois: variables,
+          scope: { empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null }
+        };
+        // Auditoria centralizada
+        try { await base44.functions.invoke('auditEntityEvents', {
+          acao: 'Edição', modulo: 'Sistema', entidade: 'ConfiguracaoSistema',
+          descricao: `Toggle alterado: ${variables?.chave}`,
+          dados: detalhes,
+        }); } catch (_) {}
+        // Log dedicado
         await base44.entities.AuditLog.create({
-          usuario: (await base44.auth.me())?.email || 'Usuário',
-          acao: 'Edição', modulo: 'Sistema', tipo_auditoria: 'sistema', entidade: 'ConfiguracaoSistema',
-          descricao: `Alteração de toggle/chave: ${variables?.chave || 'desconhecida'}`,
+          usuario: me?.full_name || me?.email || 'Usuário',
+          usuario_id: me?.id,
+          acao: 'Edição', modulo: 'Sistema', tipo_auditoria: 'entidade', entidade: 'ConfiguracaoSistema',
+          descricao: `Alteração de toggle/chave: ${variables?.chave}`,
+          dados_anteriores: before,
           dados_novos: variables,
+          empresa_id: empresaAtual?.id || null,
+          group_id: grupoAtual?.id || null,
           data_hora: new Date().toISOString(),
         });
       } catch (_) {}
@@ -66,10 +89,16 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   };
 
   const handleSave = (chave, categoria, dados) => {
+    const before = getConfig(chave);
+    const propName = categoria === 'Integracoes'
+      ? ('integracao_' + (chave.split('_')[1] || chave.replace(/^integracao_/, '')))
+      : categoria.toLowerCase();
     updateMutation.mutate({
       chave,
       categoria,
-      [categoria === 'Integracoes' ? 'integracao_' + chave.split('_')[1] : categoria.toLowerCase()]: dados
+      [propName]: dados,
+      __before: before,
+      __scope: { empresa_id: empresaAtual?.id || null, group_id: grupoAtual?.id || null }
     });
   };
 
