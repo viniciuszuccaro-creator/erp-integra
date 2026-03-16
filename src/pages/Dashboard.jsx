@@ -78,7 +78,7 @@ import useDashboardDerivedData from "@/components/dashboard/hooks/useDashboardDe
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { empresaAtual, estaNoGrupo, grupoAtual, filterInContext, getFiltroContexto } = useContextoVisual();
+  const { empresaAtual, estaNoGrupo, grupoAtual, filterInContext, getFiltroContexto, alternarContexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const canSeeFinanceiro = hasPermission('Financeiro', null, 'ver');
   const canSeeCRM = hasPermission('CRM', null, 'ver');
