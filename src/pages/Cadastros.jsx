@@ -529,7 +529,7 @@ export default function Cadastros() {
     queryKey: ['kits-produto'],
     queryFn: async () => {
       try {
-        return await filterInContext('KitProduto', {}, '-created_date', 9999);
+        return await filterInContext('KitProduto', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar kits:', err);
         return [];
