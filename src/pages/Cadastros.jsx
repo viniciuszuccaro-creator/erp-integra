@@ -448,7 +448,7 @@ export default function Cadastros() {
     queryKey: ['setores-atividade'],
     queryFn: async () => {
       try {
-        return await filterInContext('SetorAtividade', {}, '-created_date', 9999);
+        return await filterInContext('SetorAtividade', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar setores:', err);
         return [];
