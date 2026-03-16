@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
+import { useCountEntities } from "@/components/lib/useCountEntities";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import useEntityContextInfo from "@/components/lib/useEntityContextInfo";
@@ -25,30 +26,17 @@ import UnidadeMedidaForm from "@/components/cadastros/UnidadeMedidaForm";
 function CountBadge({ entityName }) {
   const { getFiltroContexto } = useContextoVisual();
   const { hasGroup, hasAnyEmpresa, ctxField } = useEntityContextInfo(entityName);
-  const { data: count = 0 } = useQuery({
-    queryKey: ['count', 'cadastros', entityName, getFiltroContexto(ctxField || 'empresa_id', true)],
-    queryFn: async () => {
-      if (!hasGroup && !hasAnyEmpresa) {
-        const resp = await base44.functions.invoke('countEntities', { entityName, filter: {} });
-        return resp?.data?.count || 0;
-      }
-      const campo = ctxField || 'empresa_id';
-      const fc = getFiltroContexto(campo, true) || {};
-      const empresaId = fc[campo];
-      const groupId = fc.group_id;
-      const rest = { ...fc };
-      if (campo in rest) delete rest[campo];
-      // manter group_id TOP-LEVEL para expanso por grupo no backend
-      const filtro = { ...rest, ...(groupId ? { group_id: groupId } : {}) };
-      const orConds = [];
-      if (empresaId) orConds.push({ [campo]: empresaId });
-      if (orConds.length) filtro.$or = orConds;
-      const resp = await base44.functions.invoke('countEntities', { entityName, filter: filtro });
-      return resp?.data?.count || 0;
-    },
-    staleTime: 60000,
-    enabled: true,
-  });
+  const campo = ctxField || 'empresa_id';
+  const fc = getFiltroContexto(campo, true) || {};
+  const empresaId = fc[campo];
+  const groupId = fc.group_id;
+  let filtro = { ...(groupId ? { group_id: groupId } : {}) };
+  const orConds = [];
+  if (empresaId) orConds.push({ [campo]: empresaId });
+  if (orConds.length) filtro.$or = orConds;
+  // Quando não houver contexto, pedimos total global (filtro vazio)
+  const finalFiltro = (!hasGroup && !hasAnyEmpresa) ? {} : filtro;
+  const { count = 0 } = useCountEntities(entityName, finalFiltro, { staleTime: 60000, enabled: true });
   return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
 }
 

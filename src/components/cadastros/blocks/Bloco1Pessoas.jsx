@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
+import { useCountEntities } from "@/components/lib/useCountEntities";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import useEntityContextInfo from "@/components/lib/useEntityContextInfo";
@@ -23,59 +24,35 @@ import SegmentoClienteForm from "@/components/cadastros/SegmentoClienteForm";
 import RegiaoAtendimentoForm from "@/components/cadastros/RegiaoAtendimentoForm";
 
 function CountBadge({ entityName }) {
-const { getFiltroContexto, empresasDoGrupo } = useContextoVisual();
-  const { data: count = 0 } = useQuery({
-    queryKey: ['count', 'cadastros', entityName, (() => { const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; const c=m[entityName]||'empresa_id'; return getFiltroContexto(c, true); })()],
-    queryFn: async () => {
-      const campoMap = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
-      const campo = campoMap[entityName] || 'empresa_id';
-      const fc = getFiltroContexto(campo, true) || {};
-      const hasGroup = !!fc.group_id;
-      const hasAnyEmpresa = !!fc[campo];
+  const { getFiltroContexto, empresasDoGrupo } = useContextoVisual();
+  const campoMap = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
+  const campo = campoMap[entityName] || 'empresa_id';
+  // Monta filtro robusto (empresa, compartilhados e group) ou vazio para total global
+  const fc = getFiltroContexto(campo, true) || {};
+  const empresaId = fc[campo];
+  const groupId = fc.group_id;
+  let filtro = { ...(groupId ? { group_id: groupId } : {}) };
+  const orConds = [];
+  if (empresaId) {
+    if (entityName === 'Cliente' && campo !== 'empresa_dona_id') {
+      orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
+    } else {
+      orConds.push({ [campo]: empresaId });
+    }
+    orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
+  } else if (groupId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
+    const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
+    if (empresasIds.length) {
+      orConds.push(
+        { empresa_id: { $in: empresasIds } },
+        { empresa_dona_id: { $in: empresasIds } },
+        { empresas_compartilhadas_ids: { $in: empresasIds } }
+      );
+    }
+  }
+  if (orConds.length) filtro.$or = orConds;
 
-      // Entidades com compartilhamento: considerar campo da empresa, compartilhadas e group_id
-      const SHARED = new Set(['Cliente','Fornecedor','Transportadora']);
-      let filtro = fc;
-      if (!hasGroup && !hasAnyEmpresa) {
-        filtro = {};
-      } else if (SHARED.has(entityName) && (fc?.[campo] || fc?.group_id)) {
-        const empresaId = fc[campo];
-        const groupId = fc.group_id;
-        const rest = { ...fc };
-        if (campo in rest) delete rest[campo];
-        const orConds = [];
-        if (empresaId) {
-          if (entityName === 'Cliente' && campo !== 'empresa_dona_id') {
-            orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
-          } else {
-            orConds.push({ [campo]: empresaId });
-          }
-          orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
-        }
-        // manter group_id top-level
-        const top = { ...rest, ...(groupId ? { group_id: groupId } : {}) };
-        if (!empresaId && groupId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
-          const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
-          if (empresasIds.length) {
-            orConds.push(
-              { empresa_id: { $in: empresasIds } },
-              { empresa_dona_id: { $in: empresasIds } },
-              { empresas_compartilhadas_ids: { $in: empresasIds } }
-            );
-          }
-        }
-        filtro = { ...top, ...(orConds.length ? { $or: orConds } : {}) };
-      }
-
-      const resp = await base44.functions.invoke('countEntities', {
-        entityName,
-        filter: filtro
-      });
-      return resp?.data?.count || 0;
-    },
-    staleTime: 60000,
-    enabled: (() => { const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; const c=m[entityName]||'empresa_id'; return Object.keys(getFiltroContexto(c, true)).length>0; })(),
-  });
+  const { count = 0 } = useCountEntities(entityName, filtro, { staleTime: 60000, enabled: true });
   return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
 }
 

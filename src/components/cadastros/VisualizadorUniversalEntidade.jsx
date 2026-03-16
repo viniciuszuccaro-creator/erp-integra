@@ -518,6 +518,7 @@ export default function VisualizadorUniversalEntidade({
     return (dados || []).reduce((acc, p) => acc + (((p?.estoque_atual ?? 0) < (p?.estoque_minimo ?? 0)) ? 1 : 0), 0);
   }, [dados, nomeEntidade]);
 
+  // Contagem robusta com dedupe/cooldown (corrige zeros intermitentes em 429)
   const { data: totalItemsCount = 0 } = useQuery({
     queryKey: [...queryKey, 'total-count', empresaAtual?.id, grupoAtual?.id, buscaBackend, JSON.stringify(columnFilters)],
     queryFn: async () => {
