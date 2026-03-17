@@ -1188,6 +1188,16 @@ function LayoutContent({ children, currentPageName }) {
     }
   }, [empresaAtual?.id, grupoAtual?.id, contexto]);
 
+  // Fase 3: Limpeza do IDB expirado no idle (uma vez por sessão)
+  useEffect(() => {
+    const cleanup = () => { try { idbClearExpired(); } catch (_) {} };
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(cleanup, { timeout: 10000 });
+    } else {
+      setTimeout(cleanup, 8000);
+    }
+  }, []);
+
   // Performance metrics observer (audit slow LCP/long tasks)
   useEffect(() => {
     try {
