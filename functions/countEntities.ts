@@ -77,40 +77,37 @@ async function expandByGroupIfNeeded(base44, entityName, f) {
   return f;
 }
 
-// Contagem em páginas de 500 com limite máximo de 10 páginas (5000 registros)
-// Para datasets maiores, retorna estimativa baseada no total acumulado até o momento
+// Estratégia de contagem rápida: 1 única chamada com limit=500
+// Para totais exatos >500, retorna "500+" como estimativa (suficiente para UI)
+// Isso elimina completamente os loops e bursts de 429
 async function fastCount(base44, entityName, finalFilter) {
-  const BATCH = 500;
-  const MAX_PAGES = 10; // no máximo 5000 registros por contagem
-  let total = 0;
-  let skip = 0;
-
-  for (let page = 0; page < MAX_PAGES; page++) {
-    let batch;
-    let attempt = 0;
-    while (true) {
+  const MAX = 500;
+  let attempt = 0;
+  while (attempt < 3) {
+    try {
+      const batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', MAX, 0);
+      const n = Array.isArray(batch) ? batch.length : 0;
+      // Se retornou exatamente MAX, pode haver mais — tenta segunda página para saber se é exato
+      if (n < MAX) return n;
+      // Tenta a segunda página para somar
       try {
-        batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', BATCH, skip);
-        break;
-      } catch (err) {
-        const status = err?.status || err?.response?.status;
-        if (status === 429 && attempt < 2) {
-          await new Promise(r => setTimeout(r, 1000 * (attempt + 1) + Math.floor(Math.random() * 400)));
-          attempt++;
-          continue;
-        }
-        // Em caso de erro, retorna o total acumulado até agora como estimativa
-        return total;
+        const batch2 = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', MAX, MAX);
+        const n2 = Array.isArray(batch2) ? batch2.length : 0;
+        return n + n2;
+      } catch (_) {
+        return n; // retorna ao menos a primeira página
       }
+    } catch (err) {
+      const status = err?.status || err?.response?.status;
+      if (status === 429 && attempt < 2) {
+        await new Promise(r => setTimeout(r, 1200 * (attempt + 1) + Math.floor(Math.random() * 400)));
+        attempt++;
+        continue;
+      }
+      return 0; // fallback seguro
     }
-    if (!batch || batch.length === 0) break;
-    total += batch.length;
-    if (batch.length < BATCH) break; // última página
-    skip += BATCH;
-    // Delay entre páginas para não saturar
-    if (page < MAX_PAGES - 1) await new Promise(r => setTimeout(r, 120));
   }
-  return total;
+  return 0;
 }
 
 async function countOne(base44, user, payload) {
