@@ -44,7 +44,7 @@ export default function Bloco6Tecnologia() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Zap className="w-5 h-5 text-indigo-700"/> Tecnologia, IA & Parâmetros
-              <span className="ml-2"><GroupCountBadge entities={["ApiExterna","ChatbotCanal","ChatbotIntent","GatewayPagamento","JobAgendado","Webhook","ConfiguracaoNFe"]} /></span>
+              <CountBadgeSimplificado entities={["ApiExterna","ChatbotCanal","ChatbotIntent","GatewayPagamento","JobAgendado","Webhook","ConfiguracaoNFe"]} />
             </CardTitle>
           </div>
         </CardHeader>
