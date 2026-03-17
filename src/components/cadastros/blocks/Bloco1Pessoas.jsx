@@ -102,23 +102,26 @@ export default function Bloco1Pessoas() {
       </Card>
 
       {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
-        <Card key={k} className="rounded-sm hover:shadow-lg transition-all">
-          <CardHeader className="bg-slate-50 border-b">
+        <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
+          onClick={hasPermission('Cadastros', null, 'visualizar') ? openList(k, t, Icon, c, FormComp) : undefined}>
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Icon className="w-5 h-5 text-slate-600" /> {t}
-                <span className="ml-2"><CountBadge entityName={k} /></span>
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
+                <div className="p-1.5 rounded-sm bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                  <Icon className="w-4 h-4 text-blue-600" />
+                </div>
+                {t}
+                <span><CountBadge entityName={k} /></span>
               </CardTitle>
-              <div className="flex items-center gap-2">
-
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('Cadastros', null, 'visualizar')}>
-                  Abrir
-                </Button>
-              </div>
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
+                onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
+                disabled={!hasPermission('Cadastros', null, 'visualizar')}>
+                Abrir
+              </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-4 text-sm text-slate-600">
-            Gestão de {t}. Clique em Abrir para listar, criar e editar em janela redimensionável.
+          <CardContent className="p-3 text-xs text-slate-500">
+            Clique para listar, criar e editar em janela flutuante.
           </CardContent>
         </Card>
       ))}
