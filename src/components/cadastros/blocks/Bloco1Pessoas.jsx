@@ -63,7 +63,7 @@ export default function Bloco1Pessoas() {
                   <Icon className="w-4 h-4 text-blue-600" />
                 </div>
                 {t}
-                <EntityCountBadge entityName={k} />
+                <CountBadgeSimplificado entities={[k]} />
               </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
