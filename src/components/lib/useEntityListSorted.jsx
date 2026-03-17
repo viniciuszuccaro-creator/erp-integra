@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { idbGet, idbSet } from "@/components/lib/useIndexedDBCache";
 
 // In-flight dedupe + tiny backoff for 429 on entityListSorted
 const __elsInflight = (typeof window !== 'undefined' ? (window.__elsInflight || (window.__elsInflight = new Map())) : new Map());
