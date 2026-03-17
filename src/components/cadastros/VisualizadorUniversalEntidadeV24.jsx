@@ -361,8 +361,14 @@ export default function VisualizadorUniversalEntidadeV24({
   const content = (
     <div className="flex flex-col h-full gap-3 min-h-0">
       {/* Toolbar */}
-      <div className="flex items-center gap-2 flex-wrap shrink-0">
-        <div className="relative flex-1 min-w-[160px]">
+       <div className="flex items-center gap-2 flex-wrap shrink-0">
+         <div className="flex items-center gap-1">
+           <span className="text-sm font-semibold text-slate-700">{TITULO}:</span>
+           <Badge variant="outline" className="rounded-sm bg-blue-50 text-blue-700 border-blue-200">
+             {totalCount} total
+           </Badge>
+         </div>
+         <div className="relative flex-1 min-w-[160px]">
           <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
           <Input
             placeholder={`Buscar ${TITULO}...`}
