@@ -5,12 +5,8 @@ import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import { MessageCircle, Link2, Clock, Bell, FileText, MessageSquare, Wrench, Sparkles, ShoppingCart, MapPin } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import GroupCountBadge from "@/components/cadastros/GroupCountBadge";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import useEntityContextInfo from "@/components/lib/useEntityContextInfo";
+import GroupCountBadge from "@/components/cadastros/GroupCountBadge.jsx";
+import EntityCountBadge from "@/components/cadastros/EntityCountBadge.jsx";
 
 import ApiExternaForm from "@/components/cadastros/ApiExternaForm";
 import WebhookForm from "@/components/cadastros/WebhookForm";
@@ -36,24 +32,6 @@ import TesteTransportadoras from "@/components/integracoes/TesteTransportadoras"
 import TesteGoogleMaps from "@/components/integracoes/TesteGoogleMaps";
 import SincronizacaoMarketplacesAtiva from "@/components/integracoes/SincronizacaoMarketplacesAtiva";
 
-function CountBadge({ entityName }) {
-  const { getFiltroContexto } = useContextoVisual();
-  const { hasGroup, hasAnyEmpresa, ctxField } = useEntityContextInfo(entityName);
-  const { data: count = 0 } = useQuery({
-    queryKey: ['count','cadastros',entityName, getFiltroContexto(ctxField || 'empresa_id', true)],
-    queryFn: async () => {
-      if (!hasGroup && !hasAnyEmpresa) {
-        const resp = await base44.functions.invoke('countEntities', { entityName, filter: {} });
-        return resp?.data?.count || 0;
-      }
-      const resp = await base44.functions.invoke('countEntities', { entityName, filter: getFiltroContexto(ctxField || 'empresa_id', true) });
-      return resp?.data?.count || 0;
-    },
-    staleTime: 60000,
-    enabled: true,
-  });
-  return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
-}
 
 export default function Bloco6Tecnologia() {
   const { openWindow } = useWindow();
@@ -103,26 +81,32 @@ export default function Bloco6Tecnologia() {
           <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
         </Card>
         {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
-          <Card key={k} className="hover:shadow-lg transition-all">
-            <CardHeader className="bg-slate-50 border-b">
+          <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
+            onClick={hasPermission('Cadastros', null, 'visualizar') ? openList(k, t, Icon, c, FormComp) : undefined}>
+            <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Icon className="w-5 h-5 text-slate-600"/> {t}
-                  <span className="ml-2"><CountBadge entityName={k} /></span>
+                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
+                  <div className="p-1.5 rounded-sm bg-indigo-50 group-hover:bg-indigo-100 transition-colors">
+                    <Icon className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  {t}
+                  <EntityCountBadge entityName={k} />
                 </CardTitle>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                   {k === 'ChatbotCanal' && (
-                    <Button variant="outline" size="sm" onClick={() => openWindow(ChatbotDashboard, {}, { title: 'Chatbot Dashboard', width: 1200, height: 720 })}>
-                      Ver Dashboard Chatbot
+                    <Button variant="outline" size="sm" className="rounded-sm text-xs h-7" onClick={() => openWindow(ChatbotDashboard, {}, { title: 'Chatbot Dashboard', width: 1200, height: 720 })}>
+                      Dashboard
                     </Button>
                   )}
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('Cadastros', null, 'visualizar')}>
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
+                    onClick={() => openList(k, t, Icon, c, FormComp)()}
+                    disabled={!hasPermission('Cadastros', null, 'visualizar')}>
                     Abrir
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-4 text-sm text-slate-600">Gerencie {t} em janelas redimensionáveis.</CardContent>
+            <CardContent className="p-3 text-xs text-slate-500">Clique para listar, criar e editar.</CardContent>
           </Card>
         ))}
       </div>
