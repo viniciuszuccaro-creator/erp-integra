@@ -829,12 +829,14 @@ export default function Cadastros() {
   const { count: totalParametrosConciliacao = 0 } = useCountEntities('ParametroConciliacaoBancaria', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
   const { count: totalParametrosCaixa = 0 } = useCountEntities('ParametroCaixaDiario', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
 
-  const totalBloco1 = totalClientes + totalFornecedores + totalTransportadoras + totalColaboradores + totalRepresentantes + totalContatosB2B + totalSegmentosCliente + totalRegioesAtendimento;
-  const totalBloco2 = totalProdutos + totalServicos + totalSetoresAtividade + totalGruposProduto + totalMarcas + totalTabelasPreco + totalCatalogoWeb + totalKits + totalUnidadesMedida;
-  const totalBloco3 = totalBancos + totalFormasPagamento + totalPlanoContas + totalCentrosCusto + totalCentrosResultado + totalTiposDespesa + totalMoedasIndices + totalCondicoesComerciais + totalTabelasFiscais + totalOperadoresCaixa + totalDespesasRecorrentes;
-  const totalBloco4 = totalVeiculos + totalMotoristas + totalTiposFrete + totalLocaisEstoque + totalRotasPadrao + totalModelosDocumento;
-  const totalBloco5 = totalEmpresas + totalGruposEmpresariais + totalDepartamentos + totalCargos + totalTurnos;
-  const totalBloco6 = totalEventosNotificacao + totalWebhooks + totalChatbotIntents + totalChatbotCanais + totalApisExternas + totalJobsAgendados + totalConfigNFe + totalConfigBoletos + totalConfigWhatsApp + totalParametrosPortal + totalParametrosOrigemPedido + totalParametrosRecebimentoNFe + totalParametrosRoteirizacao + totalParametrosConciliacao + totalParametrosCaixa;
+  // Blocos com totais que usam APENAS os contadores dos componentes GroupCountBadge e EntityCountBadge
+  // Não somar aqui — deixar os badges calcular totalmente
+  const totalBloco1 = 0; // GroupCountBadge calcula
+  const totalBloco2 = 0; // GroupCountBadge calcula
+  const totalBloco3 = 0; // GroupCountBadge calcula
+  const totalBloco4 = 0; // GroupCountBadge calcula
+  const totalBloco5 = 0; // GroupCountBadge calcula
+  const totalBloco6 = 0; // GroupCountBadge calcula
 
   // Filtrar itens pelo termo de busca
   const filtrarPorBusca = (lista, campos) => {
