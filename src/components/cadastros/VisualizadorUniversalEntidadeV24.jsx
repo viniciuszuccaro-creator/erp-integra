@@ -123,6 +123,8 @@ export default function VisualizadorUniversalEntidadeV24({
   const [selectedIds, setSelectedIds] = useState(new Set());
   const debounceRef = useRef(null);
 
+  const hasContext = !!(empresaAtual?.id || grupoAtual?.id);
+
   // Debounced search (350ms)
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
