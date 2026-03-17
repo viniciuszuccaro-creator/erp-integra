@@ -5,12 +5,8 @@ import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import { Landmark, CreditCard, Wallet, Calculator, FolderKanban, Banknote, LineChart, Layers, BookText, DollarSign, Settings, Blocks } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import GroupCountBadge from "@/components/cadastros/GroupCountBadge";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import useEntityContextInfo from "@/components/lib/useEntityContextInfo";
+import GroupCountBadge from "@/components/cadastros/GroupCountBadge.jsx";
+import EntityCountBadge from "@/components/cadastros/EntityCountBadge.jsx";
 
 import BancoForm from "@/components/cadastros/BancoForm";
 import FormaPagamentoFormCompleto from "@/components/cadastros/FormaPagamentoFormCompleto";

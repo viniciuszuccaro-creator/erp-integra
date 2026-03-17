@@ -6,12 +6,8 @@ import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import { Truck, MapPin, Package, FileText, User, Settings } from "lucide-react";
 import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
-import { Badge } from "@/components/ui/badge";
-import GroupCountBadge from "@/components/cadastros/GroupCountBadge";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import useEntityContextInfo from "@/components/lib/useEntityContextInfo";
+import GroupCountBadge from "@/components/cadastros/GroupCountBadge.jsx";
+import EntityCountBadge from "@/components/cadastros/EntityCountBadge.jsx";
 
 import VeiculoForm from "@/components/cadastros/VeiculoForm";
 import MotoristaForm from "@/components/cadastros/MotoristaForm";
