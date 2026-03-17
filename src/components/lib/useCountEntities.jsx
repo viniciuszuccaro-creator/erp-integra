@@ -49,28 +49,42 @@ async function flushBatch() {
     withGroupTotal: false,
   }));
 
-  try {
-    const res = await base44.functions.invoke('countEntities', { entities });
-    const counts = res?.data?.counts || {};
-    items.forEach(it => {
-      const c = typeof counts[it.entityName] === 'number' ? counts[it.entityName] : 0;
-      cache.set(it.reqKey, c);
-      try { localStorage.setItem(`count_cache_${it.reqKey}`, String(c)); } catch (_) {}
-      it.resolvers.forEach(r => r(c));
-    });
-  } catch (err) {
-    const status = err?.response?.status || err?.status;
-    const now = Date.now();
-    items.forEach(it => {
-      if (status === 429) cooldown.set(it.entityName, now + 3000);
-      const cached = cache.get(it.reqKey)
-        ?? (() => { try { const v = Number(localStorage.getItem(`count_cache_${it.reqKey}`) || '0'); return isNaN(v) ? 0 : v; } catch { return 0; } })();
-      it.resolvers.forEach(r => r(typeof cached === 'number' ? cached : 0));
-    });
-  } finally {
-    // clear inflight for resolved keys
-    items.forEach(it => inflight.delete(it.reqKey));
+  // Retry exponencial para o batch inteiro (3 tentativas)
+  let attempt = 0;
+  while (true) {
+    try {
+      const res = await base44.functions.invoke('countEntities', { entities });
+      const counts = res?.data?.counts || {};
+      items.forEach(it => {
+        const c = typeof counts[it.entityName] === 'number' ? counts[it.entityName] : 0;
+        cache.set(it.reqKey, c);
+        try { localStorage.setItem(`count_cache_${it.reqKey}`, String(c)); } catch (_) {}
+        it.resolvers.forEach(r => r(c));
+      });
+      break; // sucesso — sai do loop
+    } catch (err) {
+      const status = err?.response?.status || err?.status;
+      const now = Date.now();
+      if (status === 429 && attempt < 3) {
+        const delay = 600 * Math.pow(2, attempt) + Math.floor(Math.random() * 300);
+        items.forEach(it => cooldown.set(it.entityName, now + delay));
+        await new Promise(r => setTimeout(r, delay));
+        attempt++;
+        continue;
+      }
+      // Fallback: serve cache para cada item
+      items.forEach(it => {
+        if (status === 429) cooldown.set(it.entityName, now + 3000);
+        const cached = cache.get(it.reqKey)
+          ?? (() => { try { const v = Number(localStorage.getItem(`count_cache_${it.reqKey}`) || '0'); return isNaN(v) ? 0 : v; } catch { return 0; } })();
+        it.resolvers.forEach(r => r(typeof cached === 'number' ? cached : 0));
+      });
+      break;
+    }
   }
+
+  // Limpa inflight após resolução (sucesso ou fallback)
+  items.forEach(it => inflight.delete(it.reqKey));
 }
 
 function enqueue(reqKey, entityName, filter) {
