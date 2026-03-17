@@ -274,17 +274,32 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const handleDeleteSelected = useCallback(async () => {
     if (selectedIds.size === 0) return;
-    if (!window.confirm(`Confirma exclusão de ${selectedIds.size} registro(s)?`)) return;
+    const isDeleteAll = window.confirm(
+      selectedIds.size === items.length
+        ? `Confirma exclusão de TODOS os ${items.length} registro(s)? Será deletado de TODAS as páginas.`
+        : `Confirma exclusão de ${selectedIds.size} registro(s)?`
+    );
+    if (!isDeleteAll) return;
+
     try {
-      for (const id of selectedIds) {
+      // Se selecionou TODOS os da página atual, delete TODOS (não só os visíveis)
+      let idsToDelete = Array.from(selectedIds);
+      if (selectedIds.size === items.length && items.length > 0) {
+        // Busca TODOS os registros da entidade para deletar
+        const allItems = await filterInContext(ENTITY, searchFilter, undefined, 10000);
+        idsToDelete = allItems.map(i => i.id);
+      }
+
+      for (const id of idsToDelete) {
         await deleteInContext(ENTITY, id);
       }
       queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
       setSelectedIds(new Set());
+      setCurrentPage(1);
     } catch (e) {
       alert("Erro ao excluir: " + (e?.message || e));
     }
-  }, [selectedIds, ENTITY, deleteInContext, queryClient]);
+  }, [selectedIds, items, ENTITY, deleteInContext, queryClient, filterInContext, searchFilter]);
 
   const toggleSelectAll = useCallback(() => {
     if (selectedIds.size === items.length) {
