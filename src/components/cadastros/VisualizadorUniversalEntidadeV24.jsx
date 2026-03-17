@@ -406,6 +406,14 @@ export default function VisualizadorUniversalEntidadeV24({
           <table className="w-full text-sm table-auto">
             <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 z-10">
               <tr>
+                <th className="px-4 py-2.5 text-center w-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.size === items.length && items.length > 0}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                </th>
                 {COLUMNS.map((col) => (
                   <th
                     key={col.field}
