@@ -64,6 +64,9 @@ import ProtectedSection from "@/components/security/ProtectedSection";
 import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { usePrefetchModuleData } from "@/components/lib/usePrefetchModuleData";
 import { useInvalidationBus } from "@/components/lib/useInvalidationBus";
+import { useNavHistory } from "@/components/lib/useNavHistory";
+import { usePredictivePrefetch } from "@/components/lib/usePredictivePrefetch";
+import { idbClearExpired } from "@/components/lib/useIndexedDBCache";
 
 
 const navigationItems = [
