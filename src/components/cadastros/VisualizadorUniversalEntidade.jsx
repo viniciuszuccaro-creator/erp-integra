@@ -561,35 +561,36 @@ export default function VisualizadorUniversalEntidade({
 
   // Contagem robusta com dedupe/cooldown (corrige zeros intermitentes em 429)
   const { data: totalItemsCount = 0 } = useQuery({
-    queryKey: [...queryKey, 'total-count', empresaAtual?.id, grupoAtual?.id, buscaBackend, JSON.stringify(columnFilters)],
-    queryFn: async () => {
-      const filtro = buildFilterWithSearch();
-      try {
-        const response = await base44.functions.invoke('countEntities', {
-          entityName: nomeEntidade,
-          filter: filtro
-        });
-        return response.data?.count || 0;
-      } catch (err) {
-        return 0;
-      }
-    },
-    enabled: (() => { 
-      const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; 
-      const c=m[nomeEntidade]||'empresa_id'; 
-      const fc=getFiltroContexto(c, true)||{}; 
-      const props=(entitySchema&&entitySchema.properties)||{};
-      const hasGroupField=Object.prototype.hasOwnProperty.call(props,'group_id');
-      const hasCtxField=Object.prototype.hasOwnProperty.call(props,c);
-      if(!hasGroupField && !hasCtxField) return true; 
-      return !!(fc[c]||fc.group_id); 
-    })(),
-    keepPreviousData: true,
-    placeholderData: (prev) => prev ?? 0,
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: 0
+   queryKey: [...queryKey, 'total-count', empresaAtual?.id, grupoAtual?.id, buscaBackend, JSON.stringify(columnFilters)],
+   queryFn: async () => {
+     const filtro = buildFilterWithSearch();
+     try {
+       const response = await base44.functions.invoke('countEntities', {
+         entityName: nomeEntidade,
+         filter: filtro,
+         withGroupTotal: !!grupoAtual?.id
+       });
+       return response.data?.count || 0;
+     } catch (err) {
+       return 0;
+     }
+   },
+   enabled: (() => { 
+     const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; 
+     const c=m[nomeEntidade]||'empresa_id'; 
+     const fc=getFiltroContexto(c, true)||{}; 
+     const props=(entitySchema&&entitySchema.properties)||{};
+     const hasGroupField=Object.prototype.hasOwnProperty.call(props,'group_id');
+     const hasCtxField=Object.prototype.hasOwnProperty.call(props,c);
+     if(!hasGroupField && !hasCtxField) return true; 
+     return !!(fc[c]||fc.group_id); 
+   })(),
+   keepPreviousData: true,
+   placeholderData: (prev) => prev ?? 0,
+   staleTime: 120000,
+   refetchOnWindowFocus: false,
+   refetchOnReconnect: false,
+   retry: 1
   });
 
   const { data: groupTotalCount = null } = useQuery({
