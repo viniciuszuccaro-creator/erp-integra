@@ -655,15 +655,38 @@ export default function VisualizadorUniversalEntidade({
 
   const lastInvalidateAtRef = useRef(0);
   React.useEffect(() => {
-    const unsubscribe = base44.entities[nomeEntidade].subscribe(() => {
+    const unsubscribe = base44.entities[nomeEntidade].subscribe((evt) => {
       if (!autoRefresh) return;
       const now = Date.now();
-      if (now - lastInvalidateAtRef.current < 1200) return;
+
+      // Atualização OTIMISTA e instantânea, sem "pulo" da UI
+      if (evt?.data && evt?.id) {
+        setAccDados((prev) => {
+          const list = Array.isArray(prev) ? [...prev] : [];
+          const idx = list.findIndex((i) => i.id === evt.id);
+          if (evt.type === 'create') {
+            // Insere no topo apenas se a paginação estiver na primeira página
+            if (currentPage === 1) {
+              // Evita duplicar
+              if (idx === -1) list.unshift(evt.data);
+            }
+          } else if (evt.type === 'update') {
+            if (idx !== -1) list[idx] = { ...list[idx], ...evt.data };
+          } else if (evt.type === 'delete') {
+            if (idx !== -1) list.splice(idx, 1);
+          }
+          return list;
+        });
+      }
+
+      // Debounce leve para invalidar dados de backend sem travar a IU
+      if (now - lastInvalidateAtRef.current < 800) return;
       lastInvalidateAtRef.current = now;
-      invalidateAllRelated();
+      // Invalidação assíncrona: mantém keepPreviousData ativo e evita "piscadas"
+      setTimeout(() => { invalidateAllRelated(); }, 50);
     });
     return unsubscribe;
-  }, [nomeEntidade, invalidateAllRelated, columnFilters, autoRefresh]);
+  }, [nomeEntidade, invalidateAllRelated, columnFilters, autoRefresh, currentPage]);
 
   const dadosBuscadosEOrdenados = useMemo(() => {
     const baseRows = (accDados && accDados.length) ? accDados : dados;
