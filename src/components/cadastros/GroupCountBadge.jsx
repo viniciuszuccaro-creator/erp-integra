@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { cn } from "@/lib/utils";
 
 const CAMPO_MAP = {
   Fornecedor: 'empresa_dona_id',
@@ -49,7 +50,7 @@ function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
   return orConds.length ? { $or: orConds } : {};
 }
 
-export default function GroupCountBadge({ entities = [] }) {
+export default function GroupCountBadge({ entities = [], badgeClassName }) {
   const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
   const empresaId = empresaAtual?.id;
   const groupId = grupoAtual?.id;
@@ -76,7 +77,13 @@ export default function GroupCountBadge({ entities = [] }) {
   });
 
   return (
-    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs rounded-sm">
+    <Badge
+      variant="outline"
+      className={cn(
+        "text-xs rounded-sm",
+        badgeClassName || "bg-blue-50 text-blue-700 border-blue-200"
+      )}
+    >
       {isLoading && total === 0 ? '…' : total.toLocaleString('pt-BR')}
     </Badge>
   );
