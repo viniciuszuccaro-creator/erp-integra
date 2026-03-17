@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 
 /**
  * useEntityCounts — Hook para contar múltiplas entidades com batch automático
