@@ -63,10 +63,11 @@ export function useCountEntities(entityName, filter = {}, options = {}) {
           return response.data.count;
         }
 
-        // Fallback: contagem local com limite
-        console.warn(`Função countEntities falhou para ${entityName}, usando fallback`);
-        const allData = await base44.entities[entityName].filter(filter, undefined, 5000);
-        return allData.length;
+        // Sem fallback pesado: retorna cache ou 0
+        console.warn(`Função countEntities não retornou count para ${entityName}; evitando fallback pesado`);
+        if (cache.has(key)) return cache.get(key);
+        try { const prev = Number(localStorage.getItem(`count_cache_${key}`) || '0'); if (!Number.isNaN(prev)) return prev; } catch {}
+        return 0;
           } finally {
             inflight.delete(key);
           }

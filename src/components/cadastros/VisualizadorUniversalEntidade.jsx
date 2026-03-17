@@ -633,8 +633,8 @@ export default function VisualizadorUniversalEntidade({
 
   // Reset ao mudar filtros/ordenacao/busca
   useEffect(() => {
+    // Mantém os dados anteriores (keepPreviousData) para evitar "branco" durante transições
     setCurrentPage(1);
-    setAccDados([]);
   }, [nomeEntidade, JSON.stringify(filtroBase), sortField, sortDirection, itemsPerPage, buscaBackend, JSON.stringify(columnFilters)]);
 
   // Observer para carregar mais
