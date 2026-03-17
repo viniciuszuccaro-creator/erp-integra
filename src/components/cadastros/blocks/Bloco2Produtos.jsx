@@ -98,19 +98,25 @@ export default function Bloco2Produtos() {
       </Card>
 
       {tiles.filter(t => !t.custom).map(({ k, title, Icon, campos, form: FormComp }) => (
-        <Card key={k} className="hover:shadow-lg transition-all">
-          <CardHeader className="bg-slate-50 border-b">
+        <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
+          onClick={hasPermission('Cadastros', null, 'visualizar') ? openList(k, title, Icon, campos, FormComp) : undefined}>
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Icon className="w-5 h-5 text-slate-600"/> {title}
-                <span className="ml-2"><CountBadge entityName={k} /></span>
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
+                <div className="p-1.5 rounded-sm bg-purple-50 group-hover:bg-purple-100 transition-colors">
+                  <Icon className="w-4 h-4 text-purple-600" />
+                </div>
+                {title}
+                <span><CountBadge entityName={k} /></span>
               </CardTitle>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, title, Icon, campos, FormComp)} disabled={!hasPermission('Cadastros', null, 'visualizar')}>
-               Abrir
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
+                onClick={(e) => { e.stopPropagation(); openList(k, title, Icon, campos, FormComp)(); }}
+                disabled={!hasPermission('Cadastros', null, 'visualizar')}>
+                Abrir
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-4 text-sm text-slate-600">Gerencie {title} em janelas redimensionáveis.</CardContent>
+          <CardContent className="p-3 text-xs text-slate-500">Clique para listar, criar e editar.</CardContent>
         </Card>
       ))}
     </div>
