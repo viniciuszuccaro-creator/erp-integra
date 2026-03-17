@@ -2,117 +2,175 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
+function stableKey(obj) {
+  try {
+    const seen = new WeakSet();
+    const s = (v) => {
+      if (v && typeof v === 'object') {
+        if (seen.has(v)) return '"[circular]"';
+        seen.add(v);
+        if (Array.isArray(v)) return '[' + v.map(s).join(',') + ']';
+        const keys = Object.keys(v).sort();
+        return '{' + keys.map(k => JSON.stringify(k) + ':' + s(v[k])).join(',') + '}';
+      }
+      return JSON.stringify(v);
+    };
+    return s(obj);
+  } catch { return JSON.stringify(obj); }
+}
+
+// --- Batching helpers (window-scoped singletons) ---
+function getHelpers() {
+  const win = typeof window !== 'undefined' ? window : {};
+  if (!win.__countBatchQueue) win.__countBatchQueue = new Map();
+  if (!win.__countBatchTimer) win.__countBatchTimer = null;
+  if (!win.__countInflight) win.__countInflight = new Map();
+  if (!win.__countCooldown) win.__countCooldown = new Map();
+  if (!win.__countCache) win.__countCache = new Map();
+  return {
+    queue: win.__countBatchQueue,
+    getTimer: () => win.__countBatchTimer,
+    setTimer: (t) => { win.__countBatchTimer = t; },
+    inflight: win.__countInflight,
+    cooldown: win.__countCooldown,
+    cache: win.__countCache,
+  };
+}
+
+async function flushBatch() {
+  const { queue, inflight, cache, cooldown } = getHelpers();
+  const items = Array.from(queue.values());
+  queue.clear();
+  if (!items.length) return;
+
+  const entities = items.map(it => ({
+    entityName: it.entityName,
+    filter: it.filter,
+    withGroupTotal: false,
+  }));
+
+  try {
+    const res = await base44.functions.invoke('countEntities', { entities });
+    const counts = res?.data?.counts || {};
+    items.forEach(it => {
+      const c = typeof counts[it.entityName] === 'number' ? counts[it.entityName] : 0;
+      cache.set(it.reqKey, c);
+      try { localStorage.setItem(`count_cache_${it.reqKey}`, String(c)); } catch (_) {}
+      it.resolvers.forEach(r => r(c));
+    });
+  } catch (err) {
+    const status = err?.response?.status || err?.status;
+    const now = Date.now();
+    items.forEach(it => {
+      if (status === 429) cooldown.set(it.entityName, now + 3000);
+      const cached = cache.get(it.reqKey)
+        ?? (() => { try { const v = Number(localStorage.getItem(`count_cache_${it.reqKey}`) || '0'); return isNaN(v) ? 0 : v; } catch { return 0; } })();
+      it.resolvers.forEach(r => r(typeof cached === 'number' ? cached : 0));
+    });
+  } finally {
+    // clear inflight for resolved keys
+    items.forEach(it => inflight.delete(it.reqKey));
+  }
+}
+
+function enqueue(reqKey, entityName, filter) {
+  const { queue, inflight, cache, cooldown, getTimer, setTimer } = getHelpers();
+
+  // Se já há inflight p/ esta chave, retorna a mesma promise
+  if (inflight.has(reqKey)) return inflight.get(reqKey);
+
+  const p = new Promise(resolve => {
+    const existing = queue.get(reqKey);
+    if (existing) {
+      existing.resolvers.push(resolve);
+    } else {
+      queue.set(reqKey, { reqKey, entityName, filter, resolvers: [resolve] });
+    }
+  });
+
+  inflight.set(reqKey, p);
+
+  if (!getTimer()) {
+    const BATCH_WINDOW = 12; // ms
+    setTimer(setTimeout(async () => {
+      setTimer(null);
+      await flushBatch();
+    }, BATCH_WINDOW));
+  }
+
+  return p;
+}
+
 /**
- * Hook customizado para contagem eficiente de entidades
- * Usa função backend otimizada para grandes volumes (25k+ registros)
- * 
- * @param {string} entityName - Nome da entidade
- * @param {object} filter - Filtro a ser aplicado
- * @param {object} options - Opções adicionais do useQuery
- * @returns {object} { count, isLoading, error, refetch }
+ * Hook de contagem de entidades com micro-batching automático.
+ * Agrupa múltiplas chamadas no mesmo tick em um único request ao backend.
+ * Retrocompatível com a interface anterior.
  */
 export function useCountEntities(entityName, filter = {}, options = {}) {
   const { empresaAtual, grupoAtual } = useContextoVisual();
-  // Dedupe + cooldown global para 429
-  const key = `${entityName}|${JSON.stringify(filter)}|${empresaAtual?.id || ''}|${grupoAtual?.id || ''}`;
-  const win = typeof window !== 'undefined' ? window : {};
-  const inflight = win.__countInflight || (win.__countInflight = new Map());
-  const cooldown = win.__countCooldown || (win.__countCooldown = new Map());
-  const cache = win.__countCache || (win.__countCache = new Map());
+  const { cache, cooldown } = getHelpers();
+
+  // Monta filtro com contexto multiempresa quando não explicitado
+  const ctxCampoMap = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
+  const campoEmpresa = ctxCampoMap[entityName] || 'empresa_id';
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id;
+
+  let finalFilter = { ...(filter || {}) };
+  if (!finalFilter.$or && !finalFilter[campoEmpresa] && !finalFilter.group_id && (empresaId || groupId)) {
+    const orConds = [];
+    if (empresaId) {
+      if (entityName === 'Cliente') {
+        orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } });
+      } else if (entityName === 'Fornecedor' || entityName === 'Transportadora') {
+        orConds.push({ empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } });
+      } else if (entityName === 'Colaborador') {
+        orConds.push({ empresa_alocada_id: empresaId });
+      } else {
+        orConds.push({ [campoEmpresa]: empresaId });
+      }
+    }
+    if (groupId) orConds.push({ group_id: groupId });
+    if (orConds.length) finalFilter = { ...finalFilter, $or: orConds };
+  }
+
+  const reqKey = `${entityName}|${stableKey(finalFilter)}|${empresaId || ''}|${groupId || ''}`;
 
   const { data: count = 0, isLoading, error, refetch } = useQuery({
-    queryKey: [entityName, 'count', JSON.stringify(filter), empresaAtual?.id || null, grupoAtual?.id || null],
+    queryKey: [entityName, 'count', stableKey(finalFilter), empresaId || null, groupId || null],
     queryFn: async () => {
-      try {
-        const cd = cooldown.get(entityName) || 0;
-        if (Date.now() < cd && cache.has(key)) return cache.get(key);
-        if (inflight.has(key)) return await inflight.get(key);
-        const p = (async () => {
-          try {
-        // Tenta usar a função backend otimizada
-        // Filtro de contexto multiempresa obrigatório para contagens estáveis
-        const ctxCampoMap = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
-        const campoEmpresa = ctxCampoMap[entityName] || 'empresa_id';
-        const empresaId = empresaAtual?.id;
-        const groupId = grupoAtual?.id;
-        let finalFilter = { ...(filter || {}) };
-        if (!finalFilter.$or && !finalFilter[campoEmpresa] && !finalFilter.group_id && (empresaId || groupId)) {
-          const orConds = [];
-          if (empresaId) {
-            if (entityName === 'Cliente') {
-              orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } });
-            } else if (entityName === 'Fornecedor' || entityName === 'Transportadora') {
-              orConds.push({ empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } });
-            } else if (entityName === 'Colaborador') {
-              orConds.push({ empresa_alocada_id: empresaId });
-            } else {
-              orConds.push({ [campoEmpresa]: empresaId });
-            }
-          }
-          if (groupId) orConds.push({ group_id: groupId });
-          if (orConds.length) finalFilter = { ...finalFilter, $or: orConds };
-        }
-
-        const response = await base44.functions.invoke('countEntities', {
-          entityName,
-          filter: finalFilter
-        });
-        if (response.data?.count !== undefined) {
-          cache.set(key, response.data.count);
-          try { localStorage.setItem(`count_cache_${key}`, String(response.data.count)); } catch {}
-          return response.data.count;
-        }
-
-        // Sem fallback pesado: retorna cache ou 0
-        console.warn(`Função countEntities não retornou count para ${entityName}; evitando fallback pesado`);
-        if (cache.has(key)) return cache.get(key);
-        try { const prev = Number(localStorage.getItem(`count_cache_${key}`) || '0'); if (!Number.isNaN(prev)) return prev; } catch {}
+      // cooldown anti-429
+      const cd = cooldown.get(entityName) || 0;
+      if (Date.now() < cd) {
+        const cached = cache.get(reqKey);
+        if (typeof cached === 'number') return cached;
+        try { const v = Number(localStorage.getItem(`count_cache_${reqKey}`) || '0'); if (!isNaN(v)) return v; } catch (_) {}
         return 0;
-          } finally {
-            inflight.delete(key);
-          }
-        })();
-        inflight.set(key, p);
-        return await p;
-      } catch (err) {
-        console.error(`Erro ao contar ${entityName}:`, err);
-        const status = err?.response?.status || err?.status;
-        if (status === 429) {
-          cooldown.set(entityName, Date.now() + 3000);
-          const cached = cache.get(key) || Number(localStorage.getItem(`count_cache_${key}`) || 0);
-          if (cached) return cached;
-        }
-        // Último fallback leve: tenta apenas pegar alguns itens e estimar
-        try {
-          const sample = await base44.entities[entityName].filter(filter, undefined, 50);
-          const approx = sample.length;
-          cache.set(key, approx);
-          return approx;
-        } catch (fallbackErr) {
-          console.error(`Fallback final falhou para ${entityName}:`, fallbackErr);
-          return cache.get(key) || 0;
-        }
       }
+      // micro-batching: agrupa chamadas no mesmo tick
+      const result = await enqueue(reqKey, entityName, finalFilter);
+      return typeof result === 'number' ? result : 0;
     },
-    staleTime: options.staleTime || 120000, // 2 minutos de cache padrão (listas estáveis)
-    gcTime: options.gcTime || 120000,
+    staleTime: options.staleTime ?? 120000,
+    gcTime: options.gcTime ?? 120000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
     retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    retryDelay: (i) => Math.min(1000 * 2 ** i, 5000),
     enabled: options.enabled ?? true,
     keepPreviousData: true,
-    placeholderData: (prev) => prev ?? 0,
-    ...options
+    placeholderData: (prev) => {
+      if (prev !== undefined) return prev;
+      const cached = cache.get(reqKey);
+      if (typeof cached === 'number') return cached;
+      try { const v = Number(localStorage.getItem(`count_cache_${reqKey}`) || '0'); if (!isNaN(v)) return v; } catch (_) {}
+      return 0;
+    },
+    ...options,
   });
 
-  return {
-    count,
-    isLoading,
-    error,
-    refetch
-  };
+  return { count, isLoading, error, refetch };
 }
 
 export default useCountEntities;
