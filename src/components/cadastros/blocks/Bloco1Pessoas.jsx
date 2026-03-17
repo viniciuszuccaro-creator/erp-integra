@@ -1,19 +1,12 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
-import { useCountEntities } from "@/components/lib/useCountEntities";
-import { base44 } from "@/api/base44Client";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import useEntityContextInfo from "@/components/lib/useEntityContextInfo";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
-import { Users, Building2, Truck, User, Award, MessageCircle, TrendingUp, MapPin, Plus } from "lucide-react";
+import { Users, Building2, Truck, User, Award, MessageCircle, TrendingUp, MapPin } from "lucide-react";
 import GroupCountBadge from "@/components/cadastros/GroupCountBadge.jsx";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import EntityCountBadge from "@/components/cadastros/EntityCountBadge.jsx";
 
 import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompleto";
 import CadastroFornecedorCompleto from "@/components/cadastros/CadastroFornecedorCompleto";
@@ -24,39 +17,6 @@ import ContatoB2BForm from "@/components/cadastros/ContatoB2BForm";
 import SegmentoClienteForm from "@/components/cadastros/SegmentoClienteForm";
 import RegiaoAtendimentoForm from "@/components/cadastros/RegiaoAtendimentoForm";
 
-function CountBadge({ entityName }) {
-  const { getFiltroContexto, empresasDoGrupo } = useContextoVisual();
-  const campoMap = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
-  const campo = campoMap[entityName] || 'empresa_id';
-  // Monta filtro robusto (empresa, compartilhados e group) ou vazio para total global
-  const fc = getFiltroContexto(campo, true) || {};
-  const empresaId = fc[campo];
-  const groupId = fc.group_id;
-  let filtro = { ...(groupId ? { group_id: groupId } : {}) };
-  const orConds = [];
-  if (empresaId) {
-    if (entityName === 'Cliente' && campo !== 'empresa_dona_id') {
-      orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
-    } else {
-      orConds.push({ [campo]: empresaId });
-    }
-    orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
-  } else if (groupId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
-    const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
-    if (empresasIds.length) {
-      orConds.push(
-        { empresa_id: { $in: empresasIds } },
-        { empresa_dona_id: { $in: empresasIds } },
-        { empresas_compartilhadas_ids: { $in: empresasIds } }
-      );
-    }
-  }
-  if (orConds.length) filtro.$or = orConds;
-
-  const { count = 0 } = useCountEntities(entityName, filtro, { staleTime: 60000, enabled: true });
-  return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
-}
-
 export default function Bloco1Pessoas() {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
@@ -64,26 +24,19 @@ export default function Bloco1Pessoas() {
   const openList = (entidade, titulo, Icon, campos, FormComp) => () => {
     openWindow(
       VisualizadorUniversalEntidade,
-      {
-        nomeEntidade: entidade,
-        tituloDisplay: titulo,
-        icone: Icon,
-        camposPrincipais: campos,
-        componenteEdicao: FormComp,
-        windowMode: true,
-      },
+      { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true },
       { title: titulo, width: 1400, height: 800 }
     );
   };
 
   const tiles = [
-    { k: 'Cliente', t: 'Clientes', i: Users, c: ['nome','razao_social','cnpj','cpf','status','email'], f: CadastroClienteCompleto },
+    { k: 'Cliente', t: 'Clientes', i: Users, c: ['nome','razao_social','cnpj','cpf','status'], f: CadastroClienteCompleto },
     { k: 'Fornecedor', t: 'Fornecedores', i: Building2, c: ['nome','razao_social','cnpj','status','categoria'], f: CadastroFornecedorCompleto },
     { k: 'Transportadora', t: 'Transportadoras', i: Truck, c: ['razao_social','nome_fantasia','cnpj','status'], f: TransportadoraForm },
-    { k: 'Colaborador', t: 'Colaboradores', i: User, c: ['nome_completo','cpf','cargo','departamento','status','email'], f: ColaboradorForm },
-    { k: 'Representante', t: 'Representantes & Indicadores', i: Award, c: ['nome','tipo_representante','percentual_comissao','email','telefone'], f: RepresentanteFormCompleto },
+    { k: 'Colaborador', t: 'Colaboradores', i: User, c: ['nome_completo','cpf','cargo','departamento','status'], f: ColaboradorForm },
+    { k: 'Representante', t: 'Representantes & Indicadores', i: Award, c: ['nome','tipo_representante','percentual_comissao','email'], f: RepresentanteFormCompleto },
     { k: 'ContatoB2B', t: 'Contatos B2B', i: MessageCircle, c: ['nome','empresa','cargo','email','telefone'], f: ContatoB2BForm },
-    { k: 'SegmentoCliente', t: 'Segmentos de Cliente', i: TrendingUp, c: ['nome_segmento','descricao','criterios'], f: SegmentoClienteForm },
+    { k: 'SegmentoCliente', t: 'Segmentos de Cliente', i: TrendingUp, c: ['nome_segmento','descricao'], f: SegmentoClienteForm },
     { k: 'RegiaoAtendimento', t: 'Regiões de Atendimento', i: MapPin, c: ['nome_regiao','tipo_regiao','estados_abrangidos'], f: RegiaoAtendimentoForm },
   ];
 
@@ -94,11 +47,11 @@ export default function Bloco1Pessoas() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Users className="w-5 h-5 text-blue-700" /> Pessoas & Parceiros
-              <span className="ml-2"><GroupCountBadge entities={["Cliente","Fornecedor","Colaborador","Representante","ContatoB2B"]} /></span>
+              <GroupCountBadge entities={["Cliente","Fornecedor","Colaborador","Representante","ContatoB2B","SegmentoCliente","RegiaoAtendimento"]} />
             </CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
+        <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo/empresa.</CardContent>
       </Card>
 
       {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
@@ -111,7 +64,7 @@ export default function Bloco1Pessoas() {
                   <Icon className="w-4 h-4 text-blue-600" />
                 </div>
                 {t}
-                <span><CountBadge entityName={k} /></span>
+                <EntityCountBadge entityName={k} />
               </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
