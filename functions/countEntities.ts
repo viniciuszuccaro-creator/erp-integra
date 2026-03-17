@@ -77,13 +77,28 @@ async function expandByGroupIfNeeded(base44, entityName, f) {
   return f;
 }
 
-// Contagem via cursor: busca apenas IDs para minimizar payload
+// Contagem via cursor com retry exponencial
 async function fastCount(base44, entityName, finalFilter) {
   let total = 0;
-  const BATCH = 1000; // máximo por request; só IDs (campo id) reduz payload
+  const BATCH = 500;
   let skip = 0;
   while (true) {
-    const batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, 'id', BATCH, skip);
+    let attempt = 0;
+    let batch;
+    while (true) {
+      try {
+        batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, undefined, BATCH, skip);
+        break;
+      } catch (err) {
+        const status = err?.status || err?.response?.status;
+        if (status === 429 && attempt < 3) {
+          await new Promise(r => setTimeout(r, 600 * Math.pow(2, attempt) + Math.floor(Math.random() * 200)));
+          attempt++;
+          continue;
+        }
+        throw err;
+      }
+    }
     if (!batch || batch.length === 0) break;
     total += batch.length;
     if (batch.length < BATCH) break;
