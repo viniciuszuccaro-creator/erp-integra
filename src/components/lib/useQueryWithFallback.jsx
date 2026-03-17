@@ -26,12 +26,14 @@ export function useQueryWithFallback(storageKey, queryOptions, emptyValue = []) 
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
-    keepPreviousData: true,
     ...queryOptions,
     placeholderData: (prev) => {
       if (prev !== undefined) return prev;
       if (persistedValue !== undefined) return persistedValue;
-      return queryOptions.placeholderData ?? emptyValue;
+      const qph = queryOptions.placeholderData;
+      if (typeof qph === 'function') return qph(prev);
+      if (qph !== undefined) return qph;
+      return emptyValue;
     },
   });
 
