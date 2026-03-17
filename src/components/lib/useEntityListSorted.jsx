@@ -139,6 +139,7 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
               sortDirection: finalSortDirection,
               limit: effLimit,
               skip: effSkip,
+              __headers: { 'Accept-Encoding': 'gzip' },
             });
             const out = Array.isArray(res?.data) ? res.data : [];
             __elsCache.set(key, out);
