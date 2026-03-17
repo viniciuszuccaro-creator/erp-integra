@@ -1,18 +1,13 @@
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
-import { useCountEntities } from "@/components/lib/useCountEntities";
-import { base44 } from "@/api/base44Client";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import useEntityContextInfo from "@/components/lib/useEntityContextInfo";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import VisualizadorProdutos from "@/components/cadastros/VisualizadorProdutos";
-import { Package, Stars, Factory, Boxes, Award, TrendingUp, Globe, Ruler, Plus } from "lucide-react";
-import GroupCountBadge from "@/components/cadastros/GroupCountBadge";
+import { Package, Stars, Factory, Boxes, Award, TrendingUp, Globe, Ruler } from "lucide-react";
+import GroupCountBadge from "@/components/cadastros/GroupCountBadge.jsx";
+import EntityCountBadge from "@/components/cadastros/EntityCountBadge.jsx";
 
 import ProdutoFormV22_Completo from "@/components/cadastros/ProdutoFormV22_Completo";
 import ServicoForm from "@/components/cadastros/ServicoForm";
@@ -23,29 +18,6 @@ import TabelaPrecoFormCompleto from "@/components/cadastros/TabelaPrecoFormCompl
 import KitProdutoForm from "@/components/cadastros/KitProdutoForm";
 import CatalogoWebForm from "@/components/cadastros/CatalogoWebForm";
 import UnidadeMedidaForm from "@/components/cadastros/UnidadeMedidaForm";
-
-function CountBadge({ entityName }) {
-  const { getFiltroContexto, empresasDoGrupo } = useContextoVisual();
-  const { hasGroup, hasAnyEmpresa, ctxField } = useEntityContextInfo(entityName);
-  const campo = ctxField || 'empresa_id';
-  const fc = getFiltroContexto(campo, true) || {};
-  const empresaId = fc[campo];
-  const groupId = fc.group_id;
-  let filtro = { ...(groupId ? { group_id: groupId } : {}) };
-  const orConds = [];
-  if (empresaId) {
-    orConds.push({ [campo]: empresaId });
-  } else if (groupId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
-    const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
-    if (empresasIds.length) {
-      orConds.push({ [campo]: { $in: empresasIds } });
-    }
-  }
-  if (orConds.length) filtro.$or = orConds;
-  const finalFiltro = (!hasGroup && !hasAnyEmpresa) ? {} : filtro;
-  const { count = 0 } = useCountEntities(entityName, finalFiltro, { staleTime: 60000, enabled: true });
-  return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
-}
 
 export default function Bloco2Produtos() {
   const { openWindow } = useWindow();
@@ -58,12 +30,11 @@ export default function Bloco2Produtos() {
   };
 
   const tiles = [
-    { k: 'Produto', custom: true, title: 'Produtos', Icon: Package },
     { k: 'Servico', title: 'Serviços', Icon: Stars, campos: ['nome','descricao','valor_padrao','unidade_medida'], form: ServicoForm },
-    { k: 'SetorAtividade', title: 'Setores de Atividade', Icon: Factory, campos: ['nome','tipo_operacao','icone','descricao'], form: SetorAtividadeForm },
+    { k: 'SetorAtividade', title: 'Setores de Atividade', Icon: Factory, campos: ['nome','tipo_operacao','descricao'], form: SetorAtividadeForm },
     { k: 'GrupoProduto', title: 'Grupos/Linhas de Produto', Icon: Boxes, campos: ['nome_grupo','descricao','codigo'], form: GrupoProdutoForm },
-    { k: 'Marca', title: 'Marcas', Icon: Award, campos: ['nome_marca','pais_origem','site','descricao'], form: MarcaForm },
-    { k: 'TabelaPreco', title: 'Tabelas de Preço', Icon: TrendingUp, campos: ['nome','tipo','ativo','data_inicio','data_fim'], form: TabelaPrecoFormCompleto },
+    { k: 'Marca', title: 'Marcas', Icon: Award, campos: ['nome_marca','pais_origem','site'], form: MarcaForm },
+    { k: 'TabelaPreco', title: 'Tabelas de Preço', Icon: TrendingUp, campos: ['nome','tipo','ativo','data_inicio'], form: TabelaPrecoFormCompleto },
     { k: 'KitProduto', title: 'Kits de Produto', Icon: Package, campos: ['nome_kit','descricao','valor_total','ativo'], form: KitProdutoForm },
     { k: 'CatalogoWeb', title: 'Catálogo Web', Icon: Globe, campos: ['titulo','slug','ativo'], form: CatalogoWebForm },
     { k: 'UnidadeMedida', title: 'Unidades de Medida', Icon: Ruler, campos: ['sigla','descricao'], form: UnidadeMedidaForm },
@@ -76,28 +47,36 @@ export default function Bloco2Produtos() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Package className="w-5 h-5 text-purple-700"/> Produtos & Serviços
-              <span className="ml-2"><GroupCountBadge entities={["Produto","Servico","SetorAtividade","GrupoProduto","Marca","TabelaPreco","KitProduto","CatalogoWeb","UnidadeMedida"]} /></span>
+              <GroupCountBadge entities={["Produto","Servico","SetorAtividade","GrupoProduto","Marca","TabelaPreco","KitProduto","UnidadeMedida"]} />
             </CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
+        <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo/empresa.</CardContent>
       </Card>
-      <Card className="rounded-sm hover:shadow-lg transition-all">
-        <CardHeader className="bg-purple-50 border-b">
+
+      {/* Card especial para Produtos */}
+      <Card className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
+        onClick={hasPermission('Estoque', null, 'visualizar') ? openProdutos : undefined}>
+        <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Package className="w-5 h-5 text-purple-600"/> Produtos
-              <span className="ml-2"><CountBadge entityName="Produto" /></span>
+            <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
+              <div className="p-1.5 rounded-sm bg-purple-50 group-hover:bg-purple-100 transition-colors">
+                <Package className="w-4 h-4 text-purple-600" />
+              </div>
+              Produtos
+              <EntityCountBadge entityName="Produto" />
             </CardTitle>
-            <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={openProdutos} disabled={!hasPermission('Estoque', null, 'visualizar')}>
-             Abrir
+            <Button size="sm" className="bg-purple-600 hover:bg-purple-700 rounded-sm text-xs h-7"
+              onClick={(e) => { e.stopPropagation(); openProdutos(); }}
+              disabled={!hasPermission('Estoque', null, 'visualizar')}>
+              Abrir
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-4 text-sm text-slate-600">Listagem e edição completa via janela com filtros avançados.</CardContent>
+        <CardContent className="p-3 text-xs text-slate-500">Listagem e edição completa com filtros avançados.</CardContent>
       </Card>
 
-      {tiles.filter(t => !t.custom).map(({ k, title, Icon, campos, form: FormComp }) => (
+      {tiles.map(({ k, title, Icon, campos, form: FormComp }) => (
         <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
           onClick={hasPermission('Cadastros', null, 'visualizar') ? openList(k, title, Icon, campos, FormComp) : undefined}>
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
@@ -107,7 +86,7 @@ export default function Bloco2Produtos() {
                   <Icon className="w-4 h-4 text-purple-600" />
                 </div>
                 {title}
-                <span><CountBadge entityName={k} /></span>
+                <EntityCountBadge entityName={k} />
               </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, title, Icon, campos, FormComp)(); }}
