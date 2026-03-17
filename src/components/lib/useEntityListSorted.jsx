@@ -123,8 +123,8 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
               filter: filtro,
               sortField: finalSortField,
               sortDirection: finalSortDirection,
-              limit: (typeof limit === 'number' && limit > 0) ? limit : pageSize,
-              skip: (typeof page === 'number' && typeof pageSize === 'number') ? Math.max(0, (Math.max(1, page) - 1) * pageSize) : undefined,
+              limit: effLimit,
+              skip: effSkip,
             });
             const out = Array.isArray(res?.data) ? res.data : [];
             __elsCache.set(key, out);
