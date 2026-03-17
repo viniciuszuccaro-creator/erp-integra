@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
-import { Zap, Code, Settings, Package, Webhook, Cloud, MessageCircle } from "lucide-react";
+import { Zap, Code, Settings, Package, Link2, Cloud, MessageCircle } from "lucide-react";
 import GroupCountBadge from "@/components/cadastros/GroupCountBadge.jsx";
 import EntityCountBadge from "@/components/cadastros/EntityCountBadge.jsx";
 
