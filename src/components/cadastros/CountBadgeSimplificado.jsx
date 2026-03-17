@@ -1,31 +1,24 @@
-/**
- * CountBadgeSimplificado — Badge de contagem para uma ou múltiplas entidades
- * ✅ Usa useEntityCounts centralizado
- * ✅ Não faz queries próprias — apenas lê do hook
- * ✅ Suporta múltiplas entidades (soma automática)
- * ✅ Loading state limpo
- */
 import React from "react";
-import useEntityCounts from "./hooks/useEntityCounts";
+import { Badge } from "@/components/ui/badge";
+import useEntityCounts from "@/components/lib/useEntityCounts";
 
-export default function CountBadgeSimplificado({
-  entities = [],
-  className = "",
-}) {
-  const normalized = Array.isArray(entities) ? entities : entities ? [entities] : [];
-  const { counts, isLoading } = useEntityCounts(normalized);
+/**
+ * CountBadgeSimplificado — Badge de contagem com hook centralizado
+ * ✅ Sem queries próprias (usa useEntityCounts)
+ * ✅ Batch automático + cache
+ * ✅ Real-time instantâneo
+ */
+export default function CountBadgeSimplificado({ entities = [] }) {
+  const { total, isLoading } = useEntityCounts(Array.isArray(entities) ? entities : [entities]);
 
-  if (!normalized.length) return null;
-
-  const total = normalized.reduce((sum, ent) => sum + (counts[ent] || 0), 0);
+  if (!entities || entities.length === 0) return null;
 
   return (
-    <span
-      className={`inline-flex items-center justify-center h-6 min-w-6 px-2 rounded-full text-xs font-semibold transition-all
-        ${isLoading ? "bg-slate-200 text-slate-400 animate-pulse" : "bg-blue-100 text-blue-700 border border-blue-300"}
-        ${className}`}
+    <Badge
+      variant="outline"
+      className="ml-2 rounded-sm bg-slate-100 text-slate-700 border-slate-300 text-xs font-semibold"
     >
-      {isLoading ? "..." : total.toLocaleString("pt-BR")}
-    </span>
+      {isLoading ? <span className="animate-pulse">•••</span> : total}
+    </Badge>
   );
 }
