@@ -11,7 +11,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import { Users, Building2, Truck, User, Award, MessageCircle, TrendingUp, MapPin, Plus } from "lucide-react";
-import GroupCountBadge from "@/components/cadastros/GroupCountBadge";
+import GroupCountBadge from "@/components/cadastros/GroupCountBadge.jsx";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
