@@ -140,8 +140,8 @@ export default function VisualizadorUniversalEntidadeV24({
     queryFn: async () => {
       if (!ENTITY || !hasContext) return 0;
       try {
-        const allItems = await filterInContext(ENTITY, {}, undefined, 10000);
-        return allItems.length;
+        const all = await filterInContext(ENTITY, {}, undefined, 10000);
+        return all.length;
       } catch {
         return 0;
       }
