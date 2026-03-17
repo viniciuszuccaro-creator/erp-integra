@@ -21,25 +21,6 @@ import TipoDespesaForm from "@/components/cadastros/TipoDespesaForm";
 import MoedaIndiceForm from "@/components/cadastros/MoedaIndiceForm";
 import OperadorCaixaForm from "@/components/cadastros/OperadorCaixaForm";
 
-function CountBadge({ entityName }) {
-  const { getFiltroContexto } = useContextoVisual();
-  const { hasGroup, hasAnyEmpresa, ctxField } = useEntityContextInfo(entityName);
-  const { data: count = 0 } = useQuery({
-    queryKey: ['count','cadastros',entityName, getFiltroContexto(ctxField || 'empresa_id', true)],
-    queryFn: async () => {
-      if (!hasGroup && !hasAnyEmpresa) {
-        const resp = await base44.functions.invoke('countEntities', { entityName, filter: {} });
-        return resp?.data?.count || 0;
-      }
-      const filtro = getFiltroContexto(ctxField || 'empresa_id', true) || {};
-      const resp = await base44.functions.invoke('countEntities', { entityName, filter: filtro });
-      return resp?.data?.count || 0;
-    },
-    staleTime: 60000,
-    enabled: true,
-  });
-  return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
-}
 
 export default function Bloco3Financeiro() {
   const { openWindow } = useWindow();
@@ -84,7 +65,7 @@ export default function Bloco3Financeiro() {
                   <Icon className="w-4 h-4 text-emerald-600" />
                 </div>
                 {t}
-                <span><CountBadge entityName={k} /></span>
+                <EntityCountBadge entityName={k} />
               </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); (custom ? (() => openWindow(GestorGatewaysPagamento, { windowMode: true }, { title: t, width: 1200, height: 720 })) : openList(k, t, Icon, c, FormComp))(); }}
