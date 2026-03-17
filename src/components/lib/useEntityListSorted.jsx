@@ -194,14 +194,11 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     staleTime: 90_000,
     gcTime: 300_000,
     keepPreviousData: true,
-    placeholderData: async (prev) => {
+    placeholderData: (prev) => {
       if (prev !== undefined) return prev;
       if (__elsCache.has(cacheKey)) return __elsCache.get(cacheKey);
-      // Fase 3: tenta IDB como placeholder imediato
-      try {
-        const cached = await idbGet(idbKey);
-        if (Array.isArray(cached)) return cached;
-      } catch (_) {}
+      // Fase 3: IDB pré-carregado via ref (síncrono)
+      if (idbRef.current !== undefined) return idbRef.current;
       return undefined;
     },
     refetchOnWindowFocus: false,
