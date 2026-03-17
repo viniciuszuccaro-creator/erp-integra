@@ -909,91 +909,31 @@ export default function Cadastros() {
 
         {/* ABA: CADASTROS */}
         <TabsContent value="cadastros" className="space-y-6 mt-6">
-          {/* DASHBOARD DE TOTAIS - INTERATIVO */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <Card
-              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100 "
-              onClick={() => handleCardClick('bloco1')}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Users className="w-5 h-5 text-blue-600" />
-                  <Badge className="bg-blue-600 text-white">{totalBloco1}</Badge>
-                </div>
-                <div className="text-2xl font-bold text-blue-900">Bloco 1</div>
-                <p className="text-xs text-blue-700">Pessoas & Parceiros</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100 "
-              onClick={() => handleCardClick('bloco2')}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Package className="w-5 h-5 text-purple-600" />
-                  <Badge className="bg-purple-600 text-white">{totalBloco2}</Badge>
-                </div>
-                <div className="text-2xl font-bold text-purple-900">Bloco 2</div>
-                <p className="text-xs text-purple-700">Produtos & Serviços</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-green-50 to-green-100 "
-              onClick={() => handleCardClick('bloco3')}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                  <Badge className="bg-green-600 text-white">{totalBloco3}</Badge>
-                </div>
-                <div className="text-2xl font-bold text-green-900">Bloco 3</div>
-                <p className="text-xs text-green-700">Financeiro</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100 "
-              onClick={() => handleCardClick('bloco4')}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Truck className="w-5 h-5 text-orange-600" />
-                  <Badge className="bg-orange-600 text-white">{totalBloco4}</Badge>
-                </div>
-                <div className="text-2xl font-bold text-orange-900">Bloco 4</div>
-                <p className="text-xs text-orange-700">Logística</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-indigo-50 to-indigo-100 "
-              onClick={() => handleCardClick('bloco5')}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Building2 className="w-5 h-5 text-indigo-600" />
-                  <Badge className="bg-indigo-600 text-white">{totalBloco5}</Badge>
-                </div>
-                <div className="text-2xl font-bold text-indigo-900">Bloco 5</div>
-                <p className="text-xs text-indigo-700">Organizacional</p>
-              </CardContent>
-            </Card>
-
-            <Card
-              className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-cyan-50 to-cyan-100 "
-              onClick={() => handleCardClick('bloco6')}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Cpu className="w-5 h-5 text-cyan-600" />
-                  <Badge className="bg-cyan-600 text-white">{totalBloco6}</Badge>
-                </div>
-                <div className="text-2xl font-bold text-cyan-900">Bloco 6</div>
-                <p className="text-xs text-cyan-700">Integrações & IA</p>
-              </CardContent>
-            </Card>
+          {/* DASHBOARD DE TOTAIS - usa GroupCountBadge para contagem real e precisa */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { id: 'bloco1', label: 'Pessoas & Parceiros', Icon: Users, color: 'blue', entities: ["Cliente","Fornecedor","Transportadora","Colaborador","Representante","ContatoB2B","SegmentoCliente","RegiaoAtendimento"] },
+              { id: 'bloco2', label: 'Produtos & Serviços', Icon: Package, color: 'purple', entities: ["Produto","Servico","SetorAtividade","GrupoProduto","Marca","TabelaPreco","CatalogoWeb","KitProduto","UnidadeMedida"] },
+              { id: 'bloco3', label: 'Financeiro & Fiscal', Icon: DollarSign, color: 'green', entities: ["Banco","FormaPagamento","PlanoDeContas","CentroCusto","CentroResultado","TipoDespesa","MoedaIndice","CondicaoComercial","TabelaFiscal","OperadorCaixa","ConfiguracaoDespesaRecorrente"] },
+              { id: 'bloco4', label: 'Logística', Icon: Truck, color: 'orange', entities: ["Veiculo","Motorista","TipoFrete","LocalEstoque","RotaPadrao","ModeloDocumento"] },
+              { id: 'bloco5', label: 'Organizacional', Icon: Building2, color: 'indigo', entities: ["Empresa","GrupoEmpresarial","Departamento","Cargo","Turno"] },
+              { id: 'bloco6', label: 'Tecnologia & IA', Icon: Cpu, color: 'cyan', entities: ["ApiExterna","ChatbotCanal","ChatbotIntent","GatewayPagamento","JobAgendado","Webhook","ConfiguracaoNFe","ConfiguracaoBoletos","ConfiguracaoWhatsApp","ParametroPortalCliente","ParametroOrigemPedido","ParametroRecebimentoNFe","ParametroRoteirizacao","ParametroConciliacaoBancaria","ParametroCaixaDiario","EventoNotificacao"] },
+            ].map(({ id, label, Icon, color, entities }) => (
+              <Card
+                key={id}
+                className={`border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-${color}-50 to-${color}-100`}
+                onClick={() => handleCardClick(id)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <Icon className={`w-5 h-5 text-${color}-600`} />
+                    <GroupCountBadge entities={entities} badgeClassName={`bg-${color}-600 text-white text-xs px-1.5`} />
+                  </div>
+                  <div className={`text-lg font-bold text-${color}-900`}>{label.split(' ')[0]}</div>
+                  <p className={`text-xs text-${color}-700`}>{label}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
           {/* ✅ V22.0 ETAPA 5 e 6: BUSCA UNIVERSAL LIMPA */}
