@@ -1,6 +1,5 @@
 /**
  * EntityCountBadge — contagem individual por entidade com filtro multiempresa correto.
- * Usa batch do countEntities para eficiência máxima.
  */
 import React from "react";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +17,6 @@ const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
 function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
   const campo = CAMPO_MAP[entityName] || 'empresa_id';
   const orConds = [];
-
   const allIds = new Set();
   if (empresaId) allIds.add(empresaId);
   if (Array.isArray(empresasDoGrupo)) empresasDoGrupo.forEach(e => { if (e?.id) allIds.add(e.id); });
@@ -34,9 +32,7 @@ function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
     else orConds.push({ [campo]: { $in: ids } });
     if (SHARED.has(entityName)) orConds.push({ empresas_compartilhadas_ids: { $in: ids } });
   }
-
   if (groupId) orConds.push({ group_id: groupId });
-
   return orConds.length ? { $or: orConds } : {};
 }
 
