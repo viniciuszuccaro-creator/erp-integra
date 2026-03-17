@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ChevronUp, ChevronDown, Search, Edit, Trash2, Plus, RefreshCw } from "lucide-react";
 
@@ -30,30 +29,25 @@ const STATUS_COLORS = {
   Atrasado: "bg-red-100 text-red-700 border-red-300",
 };
 
-const STATUS_FIELDS = new Set(["status", "status_fornecedor", "situacao", "ativo", "ativa"]);
+const STATUS_FIELDS = new Set(["status", "status_fornecedor", "situacao"]);
+const BOOL_FIELDS = new Set(["ativo", "ativa"]);
 
 const PAGE_SIZES = [10, 20, 50, 100];
 
 export default function VisualizadorUniversalEntidade({
-  // Props do modo janela (via openWindow nos Blocos)
   nomeEntidade,
   tituloDisplay,
   icone: IconeProp,
   camposPrincipais = [],
   componenteEdicao: FormComponent,
   windowMode = false,
-  // Props diretas (modo embutido)
   entityName,
   columns,
-  onEdit,
-  onDelete,
   pageSize: pageSizeProp,
 }) {
-  // Normalizar props (suporta ambos os formatos)
   const ENTITY = nomeEntidade || entityName || "";
   const TITULO = tituloDisplay || ENTITY;
 
-  // Gerar colunas automaticamente dos camposPrincipais (compatibilidade com Blocos)
   const COLUMNS = useMemo(() => {
     if (columns && columns.length > 0) return columns;
     if (camposPrincipais && camposPrincipais.length > 0) {
@@ -61,7 +55,7 @@ export default function VisualizadorUniversalEntidade({
         field: campo,
         label: campo.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
         sortable: true,
-        searchable: !STATUS_FIELDS.has(campo),
+        searchable: !STATUS_FIELDS.has(campo) && !BOOL_FIELDS.has(campo),
       }));
     }
     return [
@@ -81,7 +75,6 @@ export default function VisualizadorUniversalEntidade({
   const [editItem, setEditItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  // Debounce search 350ms
   useEffect(() => {
     const t = setTimeout(() => {
       setDebouncedSearch(search);
@@ -90,18 +83,15 @@ export default function VisualizadorUniversalEntidade({
     return () => clearTimeout(t);
   }, [search]);
 
-  // Build search filter
   const searchFilter = useMemo(() => {
     if (!debouncedSearch) return {};
-    const term = debouncedSearch.toLowerCase();
     const searchableCols = COLUMNS.filter((c) => c.searchable !== false).map((c) => c.field);
     if (!searchableCols.length) return {};
-    return { $or: searchableCols.map((f) => ({ [f]: { $regex: term, $options: "i" } })) };
+    return { $or: searchableCols.map((f) => ({ [f]: { $regex: debouncedSearch, $options: "i" } })) };
   }, [debouncedSearch, COLUMNS]);
 
-  // Fetch data — server-side, paginado
   const { data: items = [], isLoading, isFetching } = useQuery({
-    queryKey: [ENTITY, "list", sortField, currentPage, pageSize, debouncedSearch, empresaAtual?.id, grupoAtual?.id],
+    queryKey: [ENTITY, "vis-list", sortField, currentPage, pageSize, debouncedSearch, empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       if (!ENTITY) return [];
       try {
@@ -113,45 +103,38 @@ export default function VisualizadorUniversalEntidade({
     staleTime: 45_000,
     gcTime: 120_000,
     refetchOnWindowFocus: false,
-    keepPreviousData: true, // evita pulos visuais
+    placeholderData: (prev) => prev,
     enabled: !!(empresaAtual?.id || grupoAtual?.id) && !!ENTITY,
   });
 
-  // Real-time updates
   useEffect(() => {
     if (!ENTITY) return;
     const api = base44.entities?.[ENTITY];
     if (!api?.subscribe) return;
     const unsub = api.subscribe(() => {
-      queryClient.invalidateQueries({ queryKey: [ENTITY, "list"] });
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "vis-list"] });
     });
     return unsub;
   }, [ENTITY, queryClient]);
 
   const handleSort = useCallback((field) => {
-    setSortField((prev) => {
-      const isCurrentAsc = prev === field;
-      const isCurrentDesc = prev === `-${field}`;
-      return isCurrentDesc ? field : `-${field}`;
-    });
+    setSortField((prev) => prev === `-${field}` ? field : `-${field}`);
     setCurrentPage(1);
   }, []);
 
   const formatValue = (value, col) => {
     if (value === null || value === undefined) return "—";
-    if (col.field === "ativo" || col.field === "ativa") {
-      return value ? (
-        <Badge variant="outline" className="text-xs rounded-sm bg-green-100 text-green-700 border-green-300">Ativo</Badge>
-      ) : (
-        <Badge variant="outline" className="text-xs rounded-sm bg-slate-100 text-slate-600 border-slate-300">Inativo</Badge>
-      );
+    if (BOOL_FIELDS.has(col.field)) {
+      return value
+        ? <Badge variant="outline" className="text-xs rounded-sm bg-green-100 text-green-700 border-green-300">Ativo</Badge>
+        : <Badge variant="outline" className="text-xs rounded-sm bg-slate-100 text-slate-600 border-slate-300">Inativo</Badge>;
     }
     if (STATUS_FIELDS.has(col.field) && typeof value === "string") {
       const cls = STATUS_COLORS[value] || "bg-slate-100 text-slate-600 border-slate-200";
       return <Badge variant="outline" className={`text-xs rounded-sm ${cls}`}>{value}</Badge>;
     }
     if (col.type === "date") {
-      try { return new Date(value).toLocaleDateString("pt-BR"); } catch { return value; }
+      try { return new Date(value).toLocaleDateString("pt-BR"); } catch { return String(value); }
     }
     if (col.type === "number") return Number(value).toLocaleString("pt-BR");
     if (typeof value === "boolean") return value ? "✓" : "—";
@@ -159,10 +142,10 @@ export default function VisualizadorUniversalEntidade({
   };
 
   const handleDelete = async (item) => {
-    if (!window.confirm(`Confirma exclusão?`)) return;
+    if (!window.confirm("Confirma exclusão?")) return;
     try {
       await deleteInContext(ENTITY, item.id);
-      queryClient.invalidateQueries({ queryKey: [ENTITY, "list"] });
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "vis-list"] });
     } catch (e) {
       alert("Erro ao excluir: " + e.message);
     }
@@ -171,7 +154,7 @@ export default function VisualizadorUniversalEntidade({
   const handleSave = () => {
     setShowForm(false);
     setEditItem(null);
-    queryClient.invalidateQueries({ queryKey: [ENTITY, "list"] });
+    queryClient.invalidateQueries({ queryKey: [ENTITY, "vis-list"] });
   };
 
   const isDesc = (field) => sortField === `-${field}`;
@@ -203,8 +186,8 @@ export default function VisualizadorUniversalEntidade({
         <Button
           size="sm"
           variant="outline"
-          onClick={() => queryClient.invalidateQueries({ queryKey: [ENTITY, "list"] })}
-          className="h-9 rounded-sm"
+          onClick={() => queryClient.invalidateQueries({ queryKey: [ENTITY, "vis-list"] })}
+          className="h-9 w-9 p-0 rounded-sm"
           title="Atualizar"
         >
           <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
@@ -221,7 +204,7 @@ export default function VisualizadorUniversalEntidade({
       </div>
 
       {/* Table */}
-      <div className="flex-1 overflow-auto rounded-sm border border-slate-200 bg-white">
+      <div className="flex-1 overflow-auto rounded-sm border border-slate-200 bg-white min-h-[200px]">
         {isLoading ? (
           <div className="space-y-2 p-4">
             {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-9" />)}
@@ -237,7 +220,7 @@ export default function VisualizadorUniversalEntidade({
                 {COLUMNS.map((col) => (
                   <th
                     key={col.field}
-                    className="px-4 py-2.5 text-left font-medium text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                    className="px-4 py-2.5 text-left font-medium text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors select-none whitespace-nowrap"
                     onClick={() => col.sortable !== false && handleSort(col.field)}
                   >
                     <div className="flex items-center gap-1.5">
@@ -255,9 +238,9 @@ export default function VisualizadorUniversalEntidade({
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
+                <tr key={item.id} className="hover:bg-blue-50/40 transition-colors">
                   {COLUMNS.map((col) => (
-                    <td key={col.field} className="px-4 py-2.5 text-slate-600">
+                    <td key={col.field} className="px-4 py-2.5 text-slate-600 max-w-[300px] truncate">
                       {formatValue(item[col.field], col)}
                     </td>
                   ))}
@@ -294,7 +277,7 @@ export default function VisualizadorUniversalEntidade({
 
       {/* Pagination */}
       <div className="flex items-center justify-between text-xs text-slate-500 flex-wrap gap-2">
-        <span>Página {currentPage} · {items.length} registro(s)</span>
+        <span>Página {currentPage} · {items.length} registro(s) nesta página</span>
         <div className="flex gap-2">
           <Button
             size="sm"
