@@ -132,8 +132,6 @@ export default function VisualizadorUniversalEntidadeV24({
     };
   }, [debouncedSearch, COLUMNS]);
 
-  const hasContext = !!(empresaAtual?.id || grupoAtual?.id);
-
   // Query para contar TODOS os registros
   const { data: totalCount = 0 } = useQuery({
     queryKey: [ENTITY, "total-count", empresaAtual?.id, grupoAtual?.id],
