@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { idbGet, idbSet } from "@/components/lib/useIndexedDBCache";
