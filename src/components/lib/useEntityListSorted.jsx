@@ -193,7 +193,6 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     },
     staleTime: 90_000,
     gcTime: 300_000,
-    keepPreviousData: true,
     placeholderData: (prev) => {
       if (prev !== undefined) return prev;
       if (__elsCache.has(cacheKey)) return __elsCache.get(cacheKey);
