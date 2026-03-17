@@ -3,11 +3,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
-import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
+import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
 import VisualizadorProdutos from "@/components/cadastros/VisualizadorProdutos";
 import { Package, Stars, Factory, Boxes, Award, TrendingUp, Globe, Ruler } from "lucide-react";
-import GroupCountBadge from "@/components/cadastros/GroupCountBadge.jsx";
-import EntityCountBadge from "@/components/cadastros/EntityCountBadge.jsx";
+import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
 import ProdutoFormV22_Completo from "@/components/cadastros/ProdutoFormV22_Completo";
 import ServicoForm from "@/components/cadastros/ServicoForm";
@@ -26,7 +25,7 @@ export default function Bloco2Produtos() {
   const openProdutos = () => openWindow(VisualizadorProdutos, { windowMode: true }, { title: 'Todos os Produtos', width: 1400, height: 800 });
 
   const openList = (entidade, titulo, Icon, campos, FormComp) => () => {
-    openWindow(VisualizadorUniversalEntidade, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
+    openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
   };
 
   const tiles = [
@@ -47,14 +46,13 @@ export default function Bloco2Produtos() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Package className="w-5 h-5 text-purple-700"/> Produtos & Serviços
-              <GroupCountBadge entities={["Produto","Servico","SetorAtividade","GrupoProduto","Marca","TabelaPreco","KitProduto","UnidadeMedida"]} />
+              <CountBadgeSimplificado entities={["Produto","Servico","SetorAtividade","GrupoProduto","Marca","TabelaPreco","KitProduto","UnidadeMedida"]} />
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo/empresa.</CardContent>
       </Card>
 
-      {/* Card especial para Produtos */}
       <Card className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
         onClick={hasPermission('Estoque', null, 'visualizar') ? openProdutos : undefined}>
         <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
@@ -64,7 +62,7 @@ export default function Bloco2Produtos() {
                 <Package className="w-4 h-4 text-purple-600" />
               </div>
               Produtos
-              <EntityCountBadge entityName="Produto" />
+              <CountBadgeSimplificado entities={["Produto"]} />
             </CardTitle>
             <Button size="sm" className="bg-purple-600 hover:bg-purple-700 rounded-sm text-xs h-7"
               onClick={(e) => { e.stopPropagation(); openProdutos(); }}
@@ -86,7 +84,7 @@ export default function Bloco2Produtos() {
                   <Icon className="w-4 h-4 text-purple-600" />
                 </div>
                 {title}
-                <EntityCountBadge entityName={k} />
+                <CountBadgeSimplificado entities={[k]} />
               </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, title, Icon, campos, FormComp)(); }}
