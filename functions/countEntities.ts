@@ -80,19 +80,20 @@ async function expandByGroupIfNeeded(base44, entityName, f) {
 // Contagem via cursor com retry exponencial
 async function fastCount(base44, entityName, finalFilter) {
   let total = 0;
-  const BATCH = 500;
+  const BATCH = 1000; // maior batch = menos chamadas
   let skip = 0;
   while (true) {
     let attempt = 0;
     let batch;
     while (true) {
       try {
-        batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, undefined, BATCH, skip);
+        // Busca apenas o campo id para reduzir payload ~90%
+        batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, 'id', BATCH, skip);
         break;
       } catch (err) {
         const status = err?.status || err?.response?.status;
         if (status === 429 && attempt < 3) {
-          await new Promise(r => setTimeout(r, 600 * Math.pow(2, attempt) + Math.floor(Math.random() * 200)));
+          await new Promise(r => setTimeout(r, 800 * Math.pow(2, attempt) + Math.floor(Math.random() * 300)));
           attempt++;
           continue;
         }
