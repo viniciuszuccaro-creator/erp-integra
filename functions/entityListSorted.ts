@@ -201,6 +201,33 @@ async function listOne(base44, user, q) {
   return { entityName, items: rows };
 }
 
+// Fase 3: resposta comprimida com gzip quando cliente suporta
+async function compressedJson(data, req) {
+  const json = JSON.stringify(data);
+  const acceptEncoding = req.headers.get('accept-encoding') || '';
+  if (!acceptEncoding.includes('gzip')) {
+    return new Response(json, { headers: { 'Content-Type': 'application/json' } });
+  }
+  try {
+    const encoded = new TextEncoder().encode(json);
+    const cs = new CompressionStream('gzip');
+    const writer = cs.writable.getWriter();
+    writer.write(encoded);
+    writer.close();
+    const compressed = await new Response(cs.readable).arrayBuffer();
+    return new Response(compressed, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Encoding': 'gzip',
+        'Vary': 'Accept-Encoding',
+      },
+    });
+  } catch (_) {
+    // fallback sem compressão
+    return new Response(json, { headers: { 'Content-Type': 'application/json' } });
+  }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -231,7 +258,7 @@ Deno.serve(async (req) => {
 
       const ws = Array.from({ length: Math.min(MAX_CONCURRENCY, queries.length) }, () => worker());
       await Promise.all(ws);
-      return Response.json({ results });
+      return compressedJson({ results }, req);
     }
 
     // MODO SINGLE (retrocompatível: retorna array de itens)
@@ -245,7 +272,7 @@ Deno.serve(async (req) => {
     if (single.error === 'escopo_multiempresa_obrigatorio') {
       return Response.json({ error: single.error }, { status: 400 });
     }
-    return Response.json(single.items);
+    return compressedJson(single.items, req);
 
   } catch (err) {
     return Response.json({ error: String(err?.message || err) }, { status: 500 });
