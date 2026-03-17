@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
 
     // MODO LOTE: { entities: [{ entityName, filter, withGroupTotal? }, ...] }
     if (entitiesBatch && entitiesBatch.length > 0) {
-      const MAX_CONCURRENCY = 4;
+      const MAX_CONCURRENCY = 2; // reduzido para evitar 429 em cascata
       const results = new Array(entitiesBatch.length);
       let idx = 0;
 
