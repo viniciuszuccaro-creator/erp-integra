@@ -183,21 +183,6 @@ async function listOne(base44, user, q) {
 
   const rows = await base44.asServiceRole.entities[entityName].filter(finalWithSearch, orderHint, limit, skip) || [];
 
-  try {
-    await base44.entities.AuditLog.create({
-      usuario: user.full_name || user.email || 'Usuário',
-      usuario_id: user.id,
-      acao: 'Visualização',
-      modulo: MODULE_BY_ENTITY[entityName] || 'Sistema',
-      tipo_auditoria: 'entidade',
-      entidade: entityName,
-      descricao: `Listagem ordenada por ${sortField} (${sortDirection})`,
-      dados_novos: { filtros, sortField, sortDirection, count: rows.length, search: term || null },
-      empresa_id: filtros?.empresa_id || null,
-      data_hora: new Date().toISOString(),
-    });
-  } catch (_) { }
-
   return { entityName, items: rows };
 }
 
