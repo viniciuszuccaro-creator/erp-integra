@@ -134,6 +134,7 @@ import Bloco3Financeiro from "@/components/cadastros/blocks/Bloco3Financeiro.jsx
 import Bloco4Logistica from "@/components/cadastros/blocks/Bloco4Logistica.jsx";
 import Bloco5Organizacional from "@/components/cadastros/blocks/Bloco5Organizacional.jsx";
 import Bloco6Tecnologia from "@/components/cadastros/blocks/Bloco6Tecnologia.jsx";
+import GroupCountBadge from "@/components/cadastros/GroupCountBadge.jsx";
 import TesteNFe from "../components/integracoes/TesteNFe";
 import TesteBoletos from "../components/integracoes/TesteBoletos";
 import ConfigWhatsAppBusiness from '@/components/integracoes/ConfigWhatsAppBusiness';
