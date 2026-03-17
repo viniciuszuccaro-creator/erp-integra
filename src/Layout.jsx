@@ -160,6 +160,10 @@ function LayoutContent({ children, currentPageName }) {
           'ContatoB2B', 'SegmentoCliente', 'RegiaoAtendimento',
         ], { enabled: true });
 
+        // Fase 3: Rastreamento de histórico + prefetch preditivo
+        useNavHistory();
+        usePredictivePrefetch();
+
         const [integracoesOk, setIntegracoesOk] = useState(true);
 
   // pageToModule/moduleName movidos para antes dos efeitos para evitar TDZ
