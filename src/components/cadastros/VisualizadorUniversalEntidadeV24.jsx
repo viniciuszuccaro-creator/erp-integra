@@ -264,12 +264,35 @@ export default function VisualizadorUniversalEntidadeV24({
       try {
         await deleteInContext(ENTITY, item.id);
         queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
+        setSelectedIds(new Set());
       } catch (e) {
         alert("Erro ao excluir: " + (e?.message || e));
       }
     },
     [ENTITY, deleteInContext, queryClient]
   );
+
+  const handleDeleteSelected = useCallback(async () => {
+    if (selectedIds.size === 0) return;
+    if (!window.confirm(`Confirma exclusão de ${selectedIds.size} registro(s)?`)) return;
+    try {
+      for (const id of selectedIds) {
+        await deleteInContext(ENTITY, id);
+      }
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
+      setSelectedIds(new Set());
+    } catch (e) {
+      alert("Erro ao excluir: " + (e?.message || e));
+    }
+  }, [selectedIds, ENTITY, deleteInContext, queryClient]);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedIds.size === items.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map(i => i.id)));
+    }
+  }, [selectedIds.size, items]);
 
   const handleSave = useCallback(() => {
     setShowForm(false);
