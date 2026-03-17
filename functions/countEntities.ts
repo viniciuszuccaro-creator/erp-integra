@@ -41,6 +41,12 @@ Deno.serve(async (req) => {
 
     const { entityName, filter = {}, withGroupTotal = false } = await req.json();
 
+    // Enforce multiempresa: não-admin deve enviar empresa_id ou group_id
+    const scopeProvided = !!filter?.empresa_id || !!filter?.group_id || (!!filter?.$or && Array.isArray(filter.$or) && filter.$or.some(c => c?.empresa_id || c?.empresa_dona_id || c?.empresa_alocada_id || c?.group_id));
+    if (user.role !== 'admin' && !scopeProvided) {
+      return Response.json({ error: 'escopo_multiempresa_obrigatorio' }, { status: 400 });
+    }
+
     // Normaliza filtro para campos array (empresas_compartilhadas_ids)
     const normalizedFilter = (() => {
       // Top-level ajuste
