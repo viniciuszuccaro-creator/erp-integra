@@ -89,6 +89,18 @@ export default function Bloco1Pessoas() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <Card className="rounded-sm shadow-sm border bg-white/80 backdrop-blur">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b rounded-t-sm">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-700" /> Pessoas & Parceiros
+              <span className="ml-2"><GroupCountBadge entities={["Cliente","Fornecedor","Colaborador","Representante","ContatoB2B"]} /></span>
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
+      </Card>
+
       {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
         <Card key={k} className="rounded-sm hover:shadow-lg transition-all">
           <CardHeader className="bg-slate-50 border-b">

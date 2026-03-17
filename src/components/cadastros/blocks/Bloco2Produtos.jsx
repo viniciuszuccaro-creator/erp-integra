@@ -12,6 +12,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import VisualizadorProdutos from "@/components/cadastros/VisualizadorProdutos";
 import { Package, Stars, Factory, Boxes, Award, TrendingUp, Globe, Ruler, Plus } from "lucide-react";
+import GroupCountBadge from "@/components/cadastros/GroupCountBadge";
 
 import ProdutoFormV22_Completo from "@/components/cadastros/ProdutoFormV22_Completo";
 import ServicoForm from "@/components/cadastros/ServicoForm";
@@ -70,6 +71,17 @@ export default function Bloco2Produtos() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <Card className="rounded-sm shadow-sm border bg-white/80 backdrop-blur">
+        <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b rounded-t-sm">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Package className="w-5 h-5 text-purple-700"/> Produtos & Serviços
+              <span className="ml-2"><GroupCountBadge entities={["Produto","Servico","SetorAtividade","GrupoProduto","Marca","TabelaPreco","KitProduto","CatalogoWeb","UnidadeMedida"]} /></span>
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
+      </Card>
       <Card className="rounded-sm hover:shadow-lg transition-all">
         <CardHeader className="bg-purple-50 border-b">
           <div className="flex items-center justify-between">

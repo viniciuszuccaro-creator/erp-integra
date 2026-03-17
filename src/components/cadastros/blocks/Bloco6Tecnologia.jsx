@@ -6,6 +6,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import { MessageCircle, Link2, Clock, Bell, FileText, MessageSquare, Wrench, Sparkles, ShoppingCart, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import GroupCountBadge from "@/components/cadastros/GroupCountBadge";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -90,6 +91,17 @@ export default function Bloco6Tecnologia() {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        <Card className="rounded-sm shadow-sm border bg-white/80 backdrop-blur col-span-1 lg:col-span-2 xl:col-span-3">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-indigo-50 border-b rounded-t-sm">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-indigo-700"/> Tecnologia, IA & Parâmetros
+                <span className="ml-2"><GroupCountBadge entities={["ApiExterna","Webhook","ChatbotIntent","ChatbotCanal","JobAgendado","EventoNotificacao","ConfiguracaoNFe","ConfiguracaoBoletos","ConfiguracaoWhatsApp","ParametroPortalCliente","ParametroOrigemPedido","ParametroRecebimentoNFe","ParametroRoteirizacao","ParametroConciliacaoBancaria","ParametroCaixaDiario"]} /></span>
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
+        </Card>
         {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
           <Card key={k} className="hover:shadow-lg transition-all">
             <CardHeader className="bg-slate-50 border-b">

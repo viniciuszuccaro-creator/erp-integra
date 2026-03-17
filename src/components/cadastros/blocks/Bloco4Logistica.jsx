@@ -7,6 +7,7 @@ import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUn
 import { Truck, MapPin, Package, FileText, User, Settings } from "lucide-react";
 import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
 import { Badge } from "@/components/ui/badge";
+import GroupCountBadge from "@/components/cadastros/GroupCountBadge";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -70,6 +71,17 @@ export default function Bloco4Logistica() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <Card className="rounded-sm shadow-sm border bg-white/80 backdrop-blur">
+        <CardHeader className="bg-gradient-to-r from-sky-50 to-cyan-50 border-b rounded-t-sm">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Truck className="w-5 h-5 text-sky-700"/> Logística, Frotas & Almoxarifado
+              <span className="ml-2"><GroupCountBadge entities={["Veiculo","Motorista","TipoFrete","LocalEstoque","RotaPadrao","ModeloDocumento"]} /></span>
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
+      </Card>
       {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
         <Card key={k} className="hover:shadow-lg transition-all">
           <CardHeader className="bg-slate-50 border-b">
