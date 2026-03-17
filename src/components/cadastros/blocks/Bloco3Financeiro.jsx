@@ -3,10 +3,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
-import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
+import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
 import { Landmark, CreditCard, Wallet, Calculator, FolderKanban, Banknote, LineChart, Layers, BookText, DollarSign, Settings, Blocks } from "lucide-react";
-import GroupCountBadge from "@/components/cadastros/GroupCountBadge.jsx";
-import EntityCountBadge from "@/components/cadastros/EntityCountBadge.jsx";
+import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
 import BancoForm from "@/components/cadastros/BancoForm";
 import FormaPagamentoFormCompleto from "@/components/cadastros/FormaPagamentoFormCompleto";
@@ -21,11 +20,10 @@ import TipoDespesaForm from "@/components/cadastros/TipoDespesaForm";
 import MoedaIndiceForm from "@/components/cadastros/MoedaIndiceForm";
 import OperadorCaixaForm from "@/components/cadastros/OperadorCaixaForm";
 
-
 export default function Bloco3Financeiro() {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
-  const openList = (entidade, titulo, Icon, campos, FormComp) => () => openWindow(VisualizadorUniversalEntidade, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
+  const openList = (entidade, titulo, Icon, campos, FormComp) => () => openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
 
   const tiles = [
     { k: 'Banco', t: 'Bancos', i: Landmark, c: ['codigo','nome','agencia','conta'], f: BancoForm },
@@ -49,7 +47,7 @@ export default function Bloco3Financeiro() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Landmark className="w-5 h-5 text-emerald-700"/> Financeiro & Fiscal
-              <span className="ml-2"><GroupCountBadge entities={["Banco","FormaPagamento","PlanoDeContas","CentroCusto","CentroResultado","TipoDespesa","MoedaIndice","OperadorCaixa","GatewayPagamento","TabelaFiscal","CondicaoComercial"]} /></span>
+              <CountBadgeSimplificado entities={["Banco","FormaPagamento","PlanoDeContas","CentroCusto","CentroResultado","TipoDespesa","MoedaIndice","OperadorCaixa","GatewayPagamento","TabelaFiscal","CondicaoComercial"]} />
             </CardTitle>
           </div>
         </CardHeader>
@@ -65,7 +63,7 @@ export default function Bloco3Financeiro() {
                   <Icon className="w-4 h-4 text-emerald-600" />
                 </div>
                 {t}
-                <EntityCountBadge entityName={k} />
+                <CountBadgeSimplificado entities={[k]} />
               </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); (custom ? (() => openWindow(GestorGatewaysPagamento, { windowMode: true }, { title: t, width: 1200, height: 720 })) : openList(k, t, Icon, c, FormComp))(); }}
