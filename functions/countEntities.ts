@@ -77,6 +77,21 @@ async function expandByGroupIfNeeded(base44, entityName, f) {
   return f;
 }
 
+// Contagem via cursor: busca apenas IDs para minimizar payload
+async function fastCount(base44, entityName, finalFilter) {
+  let total = 0;
+  const BATCH = 1000; // máximo por request; só IDs (campo id) reduz payload
+  let skip = 0;
+  while (true) {
+    const batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, 'id', BATCH, skip);
+    if (!batch || batch.length === 0) break;
+    total += batch.length;
+    if (batch.length < BATCH) break;
+    skip += BATCH;
+  }
+  return total;
+}
+
 async function countOne(base44, user, payload) {
   const { entityName, filter = {}, withGroupTotal = false } = payload || {};
   if (!entityName) return { entityName, count: 0, isEstimate: true };
@@ -90,17 +105,7 @@ async function countOne(base44, user, payload) {
   const normalized = normalizeSharedFilter(entityName, filter);
   const finalFilter = await expandByGroupIfNeeded(base44, entityName, normalized);
 
-  let totalCount = 0;
-  const BATCH_SIZE = 500;
-  let skip = 0;
-  while (true) {
-    const batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, undefined, BATCH_SIZE, skip);
-    if (!batch || batch.length === 0) break;
-    totalCount += batch.length;
-    if (batch.length < BATCH_SIZE) break;
-    skip += BATCH_SIZE;
-  }
-
+  const totalCount = await fastCount(base44, entityName, finalFilter);
   const result = { entityName, count: totalCount, isEstimate: false };
 
   if (withGroupTotal && (filter?.group_id || finalFilter?.group_id)) {
@@ -125,17 +130,7 @@ async function countOne(base44, user, payload) {
         gf = { $or: [{ [ctxCampo]: { $in: empresasIds } }, { group_id: groupId }] };
       }
 
-      let gCount = 0;
-      const BATCH = 1000;
-      let gSkip = 0;
-      while (true) {
-        const bx = await base44.asServiceRole.entities[entityName].filter(gf, undefined, BATCH, gSkip);
-        if (!bx || bx.length === 0) break;
-        gCount += bx.length;
-        if (bx.length < BATCH) break;
-        gSkip += BATCH;
-      }
-      result.group_total = gCount;
+      result.group_total = await fastCount(base44, entityName, gf);
     } catch (_) { }
   }
 
