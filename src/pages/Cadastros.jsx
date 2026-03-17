@@ -912,29 +912,66 @@ export default function Cadastros() {
         <TabsContent value="cadastros" className="space-y-6 mt-6">
           {/* DASHBOARD DE TOTAIS - usa GroupCountBadge para contagem real e precisa */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {[
-              { id: 'bloco1', label: 'Pessoas & Parceiros', Icon: Users, color: 'blue', entities: ["Cliente","Fornecedor","Transportadora","Colaborador","Representante","ContatoB2B","SegmentoCliente","RegiaoAtendimento"] },
-              { id: 'bloco2', label: 'Produtos & Serviços', Icon: Package, color: 'purple', entities: ["Produto","Servico","SetorAtividade","GrupoProduto","Marca","TabelaPreco","CatalogoWeb","KitProduto","UnidadeMedida"] },
-              { id: 'bloco3', label: 'Financeiro & Fiscal', Icon: DollarSign, color: 'green', entities: ["Banco","FormaPagamento","PlanoDeContas","CentroCusto","CentroResultado","TipoDespesa","MoedaIndice","CondicaoComercial","TabelaFiscal","OperadorCaixa","ConfiguracaoDespesaRecorrente"] },
-              { id: 'bloco4', label: 'Logística', Icon: Truck, color: 'orange', entities: ["Veiculo","Motorista","TipoFrete","LocalEstoque","RotaPadrao","ModeloDocumento"] },
-              { id: 'bloco5', label: 'Organizacional', Icon: Building2, color: 'indigo', entities: ["Empresa","GrupoEmpresarial","Departamento","Cargo","Turno"] },
-              { id: 'bloco6', label: 'Tecnologia & IA', Icon: Cpu, color: 'cyan', entities: ["ApiExterna","ChatbotCanal","ChatbotIntent","GatewayPagamento","JobAgendado","Webhook","ConfiguracaoNFe","ConfiguracaoBoletos","ConfiguracaoWhatsApp","ParametroPortalCliente","ParametroOrigemPedido","ParametroRecebimentoNFe","ParametroRoteirizacao","ParametroConciliacaoBancaria","ParametroCaixaDiario","EventoNotificacao"] },
-            ].map(({ id, label, Icon, color, entities }) => (
-              <Card
-                key={id}
-                className={`border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-${color}-50 to-${color}-100`}
-                onClick={() => handleCardClick(id)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <Icon className={`w-5 h-5 text-${color}-600`} />
-                    <GroupCountBadge entities={entities} badgeClassName={`bg-${color}-600 text-white text-xs px-1.5`} />
-                  </div>
-                  <div className={`text-lg font-bold text-${color}-900`}>{label.split(' ')[0]}</div>
-                  <p className={`text-xs text-${color}-700`}>{label}</p>
-                </CardContent>
-              </Card>
-            ))}
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100" onClick={() => handleCardClick('bloco1')}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Users className="w-5 h-5 text-blue-600" />
+                  <GroupCountBadge entities={["Cliente","Fornecedor","Transportadora","Colaborador","Representante","ContatoB2B","SegmentoCliente","RegiaoAtendimento"]} badgeClassName="bg-blue-600 text-white text-xs px-1.5 border-blue-600" />
+                </div>
+                <div className="text-lg font-bold text-blue-900">Pessoas</div>
+                <p className="text-xs text-blue-700">& Parceiros</p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100" onClick={() => handleCardClick('bloco2')}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Package className="w-5 h-5 text-purple-600" />
+                  <GroupCountBadge entities={["Produto","Servico","SetorAtividade","GrupoProduto","Marca","TabelaPreco","CatalogoWeb","KitProduto","UnidadeMedida"]} badgeClassName="bg-purple-600 text-white text-xs px-1.5 border-purple-600" />
+                </div>
+                <div className="text-lg font-bold text-purple-900">Produtos</div>
+                <p className="text-xs text-purple-700">& Serviços</p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-green-50 to-green-100" onClick={() => handleCardClick('bloco3')}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                  <GroupCountBadge entities={["Banco","FormaPagamento","PlanoDeContas","CentroCusto","CentroResultado","TipoDespesa","MoedaIndice","CondicaoComercial","TabelaFiscal","OperadorCaixa","ConfiguracaoDespesaRecorrente"]} badgeClassName="bg-green-600 text-white text-xs px-1.5 border-green-600" />
+                </div>
+                <div className="text-lg font-bold text-green-900">Financeiro</div>
+                <p className="text-xs text-green-700">& Fiscal</p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100" onClick={() => handleCardClick('bloco4')}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Truck className="w-5 h-5 text-orange-600" />
+                  <GroupCountBadge entities={["Veiculo","Motorista","TipoFrete","LocalEstoque","RotaPadrao","ModeloDocumento"]} badgeClassName="bg-orange-600 text-white text-xs px-1.5 border-orange-600" />
+                </div>
+                <div className="text-lg font-bold text-orange-900">Logística</div>
+                <p className="text-xs text-orange-700">Frota & Almox.</p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-indigo-50 to-indigo-100" onClick={() => handleCardClick('bloco5')}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Building2 className="w-5 h-5 text-indigo-600" />
+                  <GroupCountBadge entities={["Empresa","GrupoEmpresarial","Departamento","Cargo","Turno"]} badgeClassName="bg-indigo-600 text-white text-xs px-1.5 border-indigo-600" />
+                </div>
+                <div className="text-lg font-bold text-indigo-900">Organizacional</div>
+                <p className="text-xs text-indigo-700">Estrutura</p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-cyan-50 to-cyan-100" onClick={() => handleCardClick('bloco6')}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Cpu className="w-5 h-5 text-cyan-600" />
+                  <GroupCountBadge entities={["ApiExterna","ChatbotCanal","ChatbotIntent","GatewayPagamento","JobAgendado","Webhook","ConfiguracaoNFe","ConfiguracaoBoletos","ConfiguracaoWhatsApp","ParametroPortalCliente","ParametroOrigemPedido","ParametroRecebimentoNFe","ParametroRoteirizacao","ParametroConciliacaoBancaria","ParametroCaixaDiario","EventoNotificacao"]} badgeClassName="bg-cyan-600 text-white text-xs px-1.5 border-cyan-600" />
+                </div>
+                <div className="text-lg font-bold text-cyan-900">Tecnologia</div>
+                <p className="text-xs text-cyan-700">IA & Parâmetros</p>
+              </CardContent>
+            </Card>
           </div>
 
           {/* ✅ V22.0 ETAPA 5 e 6: BUSCA UNIVERSAL LIMPA */}
