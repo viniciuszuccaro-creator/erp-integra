@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { entityName, filter = {} } = await req.json();
+    const { entityName, filter = {}, withGroupTotal = false } = await req.json();
 
     // Normaliza filtro para campos array (empresas_compartilhadas_ids)
     const normalizedFilter = (() => {
@@ -145,12 +145,56 @@ Deno.serve(async (req) => {
         }
       }
 
-      return Response.json({
+      const result = {
         count: totalCount,
         isEstimate: false,
         entityName,
         filter: expandedFilter
-        });
+      };
+
+      // Opcional: retornar total consolidado por grupo, quando solicitado e houver group_id no filtro de entrada
+      if (withGroupTotal && (filter?.group_id || expandedFilter?.group_id)) {
+        try {
+          let groupFilter = { group_id: (filter?.group_id || expandedFilter?.group_id) };
+          // Reaproveita a mesma lógica de expansão por grupo para garantir consistência
+          let gf = groupFilter;
+          if (gf?.group_id) {
+            const groupId = gf.group_id;
+            const empresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, undefined, 1000);
+            const empresasIds = (empresas || []).map(e => e.id).filter(Boolean);
+            const ctxCampo = (entityName === 'Fornecedor' || entityName === 'Transportadora') ? 'empresa_dona_id' : (entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id');
+            if (EXPAND_SET.has(entityName)) {
+              gf = {
+                $or: [
+                  { [ctxCampo]: { $in: empresasIds } },
+                  ...(ctxCampo !== 'empresa_id' ? [{ empresa_id: { $in: empresasIds } }] : []),
+                  { empresas_compartilhadas_ids: { $in: empresasIds } },
+                  { group_id: groupId }
+                ]
+              };
+            } else {
+              gf = { $or: [ { [ctxCampo]: { $in: empresasIds } }, { group_id: groupId } ] };
+            }
+          }
+
+          let gCount = 0;
+          const BATCH = 1000;
+          let gSkip = 0; let more = true;
+          while (more) {
+            const batch = await base44.asServiceRole.entities[entityName].filter(gf, undefined, BATCH, gSkip);
+            if (!batch || batch.length === 0) { more = false; }
+            else {
+              gCount += batch.length;
+              if (batch.length < BATCH) more = false; else gSkip += BATCH;
+            }
+          }
+          result.group_total = gCount;
+        } catch (_) {
+          // se falhar, mantém apenas o count principal
+        }
+      }
+
+      return Response.json(result);
 
     } catch (error) {
       console.error(`Erro ao contar ${entityName}:`, error);
