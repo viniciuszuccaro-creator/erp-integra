@@ -16,40 +16,6 @@ import LocalEstoqueForm from "@/components/cadastros/LocalEstoqueForm";
 import RotaPadraoForm from "@/components/cadastros/RotaPadraoForm";
 import ModeloDocumentoForm from "@/components/cadastros/ModeloDocumentoForm";
 
-function CountBadge({ entityName }) {
-  const { getFiltroContexto } = useContextoVisual();
-  const { hasGroup, hasAnyEmpresa, ctxField } = useEntityContextInfo(entityName);
-  const { data: count = 0 } = useQuery({
-    queryKey: ['count','cadastros',entityName, getFiltroContexto(ctxField || 'empresa_id', true)],
-    queryFn: async () => {
-      if (!hasGroup && !hasAnyEmpresa) {
-        const resp = await base44.functions.invoke('countEntities', { entityName, filter: {} });
-        return resp?.data?.count || 0;
-      }
-      const campo = ctxField || 'empresa_id';
-      const fc = getFiltroContexto(campo, true) || {};
-      const empresaId = fc[campo];
-      const groupId = fc.group_id;
-      const rest = { ...fc };
-      if (campo in rest) delete rest[campo];
-      const filtro = { ...rest, ...(groupId ? { group_id: groupId } : {}) };
-      const orConds = [];
-      if (empresaId) {
-        if (entityName === 'Transportadora') {
-          orConds.push({ [campo]: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } });
-        } else {
-          orConds.push({ [campo]: empresaId });
-        }
-      }
-      if (orConds.length) filtro.$or = orConds;
-      const resp = await base44.functions.invoke('countEntities', { entityName, filter: filtro });
-      return resp?.data?.count || 0;
-    },
-    staleTime: 60000,
-    enabled: true,
-  });
-  return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
-}
 
 export default function Bloco4Logistica() {
   const { openWindow } = useWindow();
@@ -88,7 +54,7 @@ export default function Bloco4Logistica() {
                   <Icon className="w-4 h-4 text-sky-600" />
                 </div>
                 {t}
-                <span><CountBadge entityName={k} /></span>
+                <EntityCountBadge entityName={k} />
               </CardTitle>
               <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                 {k === 'Motorista' && (
