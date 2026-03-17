@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
           results[mine] = { entityName: payload?.entityName, count: 0, isEstimate: true, error: String(err?.message || err) };
         }
         if (mine < entitiesBatch.length - 1) {
-          await new Promise(r => setTimeout(r, 150)); // 150ms entre entidades
+          await new Promise(r => setTimeout(r, 300)); // 300ms entre entidades para evitar 429
         }
       }
 
