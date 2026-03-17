@@ -164,7 +164,7 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
       __elsInflight.set(key, p);
       return p;
     },
-    staleTime: 60_000,
+    staleTime: 90_000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
