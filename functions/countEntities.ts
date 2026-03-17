@@ -166,24 +166,20 @@ Deno.serve(async (req) => {
 
     // MODO LOTE: { entities: [{ entityName, filter, withGroupTotal? }, ...] }
     if (entitiesBatch && entitiesBatch.length > 0) {
-      const MAX_CONCURRENCY = 2; // reduzido para evitar 429 em cascata
       const results = new Array(entitiesBatch.length);
-      let idx = 0;
 
-      async function worker() {
-        while (idx < entitiesBatch.length) {
-          const mine = idx++;
-          const payload = entitiesBatch[mine] || {};
-          try {
-            results[mine] = await countOne(base44, user, payload);
-          } catch (err) {
-            results[mine] = { entityName: payload?.entityName, count: 0, isEstimate: true, error: String(err?.message || err) };
-          }
+      // Sequencial com delay entre cada para evitar burst de 429
+      for (let mine = 0; mine < entitiesBatch.length; mine++) {
+        const payload = entitiesBatch[mine] || {};
+        try {
+          results[mine] = await countOne(base44, user, payload);
+        } catch (err) {
+          results[mine] = { entityName: payload?.entityName, count: 0, isEstimate: true, error: String(err?.message || err) };
+        }
+        if (mine < entitiesBatch.length - 1) {
+          await new Promise(r => setTimeout(r, 150)); // 150ms entre entidades
         }
       }
-
-      const ws = Array.from({ length: Math.min(MAX_CONCURRENCY, entitiesBatch.length) }, () => worker());
-      await Promise.all(ws);
 
       const counts = {};
       const group_totals = {};
