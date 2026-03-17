@@ -832,14 +832,7 @@ export default function Cadastros() {
   const { count: totalParametrosConciliacao = 0 } = useCountEntities('ParametroConciliacaoBancaria', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
   const { count: totalParametrosCaixa = 0 } = useCountEntities('ParametroCaixaDiario', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: true });
 
-  // Blocos com totais que usam APENAS os contadores dos componentes GroupCountBadge e EntityCountBadge
-  // Não somar aqui — deixar os badges calcular totalmente
-  const totalBloco1 = 0; // GroupCountBadge calcula
-  const totalBloco2 = 0; // GroupCountBadge calcula
-  const totalBloco3 = 0; // GroupCountBadge calcula
-  const totalBloco4 = 0; // GroupCountBadge calcula
-  const totalBloco5 = 0; // GroupCountBadge calcula
-  const totalBloco6 = 0; // GroupCountBadge calcula
+  // Totais dos blocos calculados pelos GroupCountBadge — não precisa de variáveis locais
 
   // Filtrar itens pelo termo de busca
   const filtrarPorBusca = (lista, campos) => {
