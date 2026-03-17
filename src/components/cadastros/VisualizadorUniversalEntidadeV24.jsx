@@ -487,7 +487,9 @@ export default function VisualizadorUniversalEntidadeV24({
                     <div className="flex items-center justify-center gap-1 opacity-60 group-hover/row:opacity-100 transition-opacity">
                       {FormComponent && (
                         <button
-                          onClick={() => {
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setEditItem(item);
                             setShowForm(true);
                           }}
