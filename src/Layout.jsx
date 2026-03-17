@@ -62,6 +62,7 @@ import GuardRails from "@/components/lib/GuardRails";
 import GlobalContextStamp from "@/components/lib/GlobalContextStamp";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
+import { usePrefetchModuleData } from "@/components/lib/usePrefetchModuleData";
 
 
 const navigationItems = [
