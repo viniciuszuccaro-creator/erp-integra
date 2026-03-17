@@ -444,6 +444,22 @@ export default function VisualizadorUniversalEntidadeV24({
                   key={item.id}
                   className="hover:bg-blue-50/30 transition-colors group/row"
                 >
+                  <td className="px-4 py-2 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(item.id)}
+                      onChange={(e) => {
+                        const newSet = new Set(selectedIds);
+                        if (e.target.checked) {
+                          newSet.add(item.id);
+                        } else {
+                          newSet.delete(item.id);
+                        }
+                        setSelectedIds(newSet);
+                      }}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                  </td>
                   {COLUMNS.map((col) => (
                     <td
                       key={col.field}
