@@ -454,7 +454,8 @@ export default function VisualizadorUniversalEntidadeV24({
                 <th className="px-4 py-2.5 text-center w-10">
                   <input
                     type="checkbox"
-                    checked={selectedIds.size === items.length && items.length > 0}
+                    checked={selectedIds.size > 0 && selectedIds.size === totalCount}
+                    indeterminate={selectedIds.size > 0 && selectedIds.size < totalCount}
                     onChange={toggleSelectAll}
                     className="w-4 h-4 cursor-pointer"
                   />
