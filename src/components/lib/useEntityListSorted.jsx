@@ -88,7 +88,13 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
 
   // Chave estável da query para SWR placeholderData + IDB
   const cacheKey = stableStringify({ entityName, filtroFinal, finalSortField, finalSortDirection, limit, page, pageSize });
-  const idbKey = `els_${entityName}_${cacheKey}`.slice(0, 200); // IDB key limitada
+  const idbKey = `els_${entityName}_${cacheKey}`.slice(0, 200);
+
+  // Fase 3: carrega IDB de forma assíncrona no ref para placeholder síncrono
+  const idbRef = useRef(undefined);
+  useEffect(() => {
+    idbGet(idbKey).then((v) => { if (Array.isArray(v)) idbRef.current = v; }).catch(() => {});
+  }, [idbKey]);
 
   return useQuery({
     queryKey: ["entityListSorted", entityName, stableStringify(filtroFinal || {}), finalSortField, finalSortDirection, limit, page, pageSize],
