@@ -31,16 +31,18 @@ export function useQueryWithIDB(idbKey, queryOptions, options = {}) {
 
   const result = useQuery({
     staleTime: 90_000,
-    gcTime: 600_000, // 10 min — mais longo pois IDB é o backup
+    gcTime: 600_000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    keepPreviousData: true,
     ...queryOptions,
     placeholderData: (prev) => {
       if (prev !== undefined) return prev;
       if (idbDataRef.current !== undefined) return idbDataRef.current;
       if (lsFallback !== undefined) return lsFallback;
-      return queryOptions.placeholderData ?? emptyValue;
+      const qph = queryOptions.placeholderData;
+      if (typeof qph === 'function') return qph(prev);
+      if (qph !== undefined) return qph;
+      return emptyValue;
     },
   });
 
