@@ -573,24 +573,40 @@ export default function VisualizadorUniversalEntidadeV24({
         </div>
       </div>
 
-      {/* Form Modal */}
+      {/* Form Modal - sem overlay escuro */}
       {FormComponent && showForm && (
-        <Dialog open={showForm} onOpenChange={(open) => !open && handleSave()}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto rounded-sm">
-            <DialogHeader>
-              <DialogTitle>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-auto w-full shadow-lg">
+            <div className="sticky top-0 bg-white border-b p-4">
+              <h2 className="text-lg font-semibold">
                 {editItem ? `Editar ${TITULO}` : `Novo ${TITULO}`}
-              </DialogTitle>
-            </DialogHeader>
-            <FormComponent
-              item={editItem}
-              data={editItem}
-              onClose={handleSave}
-              onSave={handleSave}
-              onSubmit={handleSave}
-            />
-          </DialogContent>
-        </Dialog>
+              </h2>
+            </div>
+            <div className="p-4">
+              <FormComponent
+                item={editItem}
+                data={editItem}
+                onClose={handleSave}
+                onSave={handleSave}
+                onSubmit={handleSave}
+              />
+            </div>
+            <button
+              onClick={handleSave}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+              aria-label="Fechar"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+      {/* Backdrop click to close */}
+      {FormComponent && showForm && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={handleSave}
+        />
       )}
     </div>
   );
