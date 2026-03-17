@@ -64,7 +64,7 @@ export default function Bloco6Tecnologia() {
                   <Icon className="w-4 h-4 text-indigo-600" />
                 </div>
                 {t}
-                <EntityCountBadge entityName={k} />
+                <CountBadgeSimplificado entities={[k]} />
               </CardTitle>
               <Button 
                 size="sm" 
