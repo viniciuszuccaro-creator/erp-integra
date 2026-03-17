@@ -317,13 +317,21 @@ export default function VisualizadorUniversalEntidadeV24({
     }
   }, [selectedIds, items, ENTITY, deleteInContext, queryClient, filterInContext, searchFilter]);
 
-  const toggleSelectAll = useCallback(() => {
-    if (selectedIds.size === items.length) {
+  const toggleSelectAll = useCallback(async () => {
+    if (selectedIds.size === totalCount) {
+      // Desselecionar tudo
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(items.map(i => i.id)));
+      // Selecionar TODOS os registros (não só a página atual)
+      try {
+        const allItems = await filterInContext(ENTITY, searchFilter, undefined, 10000);
+        setSelectedIds(new Set(allItems.map(i => i.id)));
+      } catch {
+        // Fallback: selecionar só a página atual
+        setSelectedIds(new Set(items.map(i => i.id)));
+      }
     }
-  }, [selectedIds.size, items]);
+  }, [selectedIds.size, totalCount, items, ENTITY, searchFilter, filterInContext]);
 
   const handleSave = useCallback(() => {
     setShowForm(false);
