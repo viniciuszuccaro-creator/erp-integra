@@ -97,7 +97,7 @@ export function useEntityCounts(entities = []) {
   });
 
   // Real-time subscribe — invalida cache quando muda
-  React.useEffect(() => {
+  useEffect(() => {
     const unsubs = entities.map((entity) => {
       const api = base44.entities?.[entity];
       if (!api?.subscribe) return null;
