@@ -77,33 +77,38 @@ async function expandByGroupIfNeeded(base44, entityName, f) {
   return f;
 }
 
-// Contagem via cursor com retry exponencial
+// Contagem em páginas de 500 com limite máximo de 10 páginas (5000 registros)
+// Para datasets maiores, retorna estimativa baseada no total acumulado até o momento
 async function fastCount(base44, entityName, finalFilter) {
+  const BATCH = 500;
+  const MAX_PAGES = 10; // no máximo 5000 registros por contagem
   let total = 0;
-  const BATCH = 1000; // maior batch = menos chamadas
   let skip = 0;
-  while (true) {
-    let attempt = 0;
+
+  for (let page = 0; page < MAX_PAGES; page++) {
     let batch;
+    let attempt = 0;
     while (true) {
       try {
-        // Busca apenas o campo id para reduzir payload ~90%
-        batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, 'id', BATCH, skip);
+        batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', BATCH, skip);
         break;
       } catch (err) {
         const status = err?.status || err?.response?.status;
-        if (status === 429 && attempt < 3) {
-          await new Promise(r => setTimeout(r, 800 * Math.pow(2, attempt) + Math.floor(Math.random() * 300)));
+        if (status === 429 && attempt < 2) {
+          await new Promise(r => setTimeout(r, 1000 * (attempt + 1) + Math.floor(Math.random() * 400)));
           attempt++;
           continue;
         }
-        throw err;
+        // Em caso de erro, retorna o total acumulado até agora como estimativa
+        return total;
       }
     }
     if (!batch || batch.length === 0) break;
     total += batch.length;
-    if (batch.length < BATCH) break;
+    if (batch.length < BATCH) break; // última página
     skip += BATCH;
+    // Delay entre páginas para não saturar
+    if (page < MAX_PAGES - 1) await new Promise(r => setTimeout(r, 120));
   }
   return total;
 }
