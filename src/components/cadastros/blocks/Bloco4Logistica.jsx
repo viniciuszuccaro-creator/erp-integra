@@ -3,11 +3,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
-import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
+import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
 import { Truck, MapPin, Package, FileText, User, Settings } from "lucide-react";
 import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
-import GroupCountBadge from "@/components/cadastros/GroupCountBadge.jsx";
-import EntityCountBadge from "@/components/cadastros/EntityCountBadge.jsx";
+import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
 import VeiculoForm from "@/components/cadastros/VeiculoForm";
 import MotoristaForm from "@/components/cadastros/MotoristaForm";
@@ -16,11 +15,10 @@ import LocalEstoqueForm from "@/components/cadastros/LocalEstoqueForm";
 import RotaPadraoForm from "@/components/cadastros/RotaPadraoForm";
 import ModeloDocumentoForm from "@/components/cadastros/ModeloDocumentoForm";
 
-
 export default function Bloco4Logistica() {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
-  const openList = (entidade, titulo, Icon, campos, FormComp) => () => openWindow(VisualizadorUniversalEntidade, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
+  const openList = (entidade, titulo, Icon, campos, FormComp) => () => openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
 
   const tiles = [
     { k: 'Veiculo', t: 'Veículos', i: Truck, c: ['placa','modelo','capacidade_kg','ativo'], f: VeiculoForm },
@@ -38,7 +36,7 @@ export default function Bloco4Logistica() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Truck className="w-5 h-5 text-sky-700"/> Logística, Frotas & Almoxarifado
-              <span className="ml-2"><GroupCountBadge entities={["Veiculo","Motorista","TipoFrete","LocalEstoque","RotaPadrao","ModeloDocumento"]} /></span>
+              <CountBadgeSimplificado entities={["Veiculo","Motorista","TipoFrete","LocalEstoque","RotaPadrao","ModeloDocumento"]} />
             </CardTitle>
           </div>
         </CardHeader>
@@ -54,7 +52,7 @@ export default function Bloco4Logistica() {
                   <Icon className="w-4 h-4 text-sky-600" />
                 </div>
                 {t}
-                <EntityCountBadge entityName={k} />
+                <CountBadgeSimplificado entities={[k]} />
               </CardTitle>
               <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                 {k === 'Motorista' && (
