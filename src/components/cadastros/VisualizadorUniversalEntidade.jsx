@@ -6,258 +6,284 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import PaginationControls from '@/components/ui/PaginationControls';
 import ERPDataTable from '@/components/ui/erp/DataTable';
 import SearchInputIsolado from '@/components/ui/SearchInputIsolado';
-import { 
-  Search, 
-  Eye, 
-  Edit2, 
-  Trash2, 
-  Download,
-  RefreshCw,
-  Grid3x3,
-  List,
-  ChevronDown,
-  ChevronUp,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Plus,
-  Table as TableIcon,
-  AlertCircle
-  } from 'lucide-react';
+import {
+  Search, Eye, Edit2, Trash2, Download, RefreshCw,
+  Grid3x3, List, ArrowUpDown, Plus, Table as TableIcon, AlertCircle
+} from 'lucide-react';
 import { useWindow } from '@/components/lib/useWindow';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useToast } from "@/components/ui/use-toast";
 import ProtectedAction from "@/components/ProtectedAction";
 import { Skeleton } from "@/components/ui/skeleton";
-import useEntityListSorted from "@/components/lib/useEntityListSorted";
-import { useCountEntities } from "@/components/lib/useCountEntities";
 
-// Dedupe/backoff global p/ entityListSorted nesta tela
-const __elsInflight = (typeof window !== 'undefined' ? (window.__elsInflight || (window.__elsInflight = new Map())) : new Map());
+// ─── Configurações por entidade ───────────────────────────────────────────────
 
 const OPCOES_ORDENACAO = {
   Cliente: [
-    { value: 'nome', label: 'Nome (A-Z)' },
+    { value: 'nome_asc', label: 'Nome (A-Z)' },
     { value: 'nome_desc', label: 'Nome (Z-A)' },
-    { value: 'cidade', label: 'Cidade (A-Z)' },
-    { value: 'limite_credito', label: 'Limite de Crédito (Maior)' },
+    { value: 'cidade_asc', label: 'Cidade (A-Z)' },
     { value: 'mais_compras', label: 'Que Mais Compra' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   Fornecedor: [
-    { value: 'nome', label: 'Nome (A-Z)' },
+    { value: 'nome_asc', label: 'Nome (A-Z)' },
     { value: 'nome_desc', label: 'Nome (Z-A)' },
-    { value: 'razao_social', label: 'Razão Social (A-Z)' },
-    { value: 'razao_social_desc', label: 'Razão Social (Z-A)' },
+    { value: 'razao_social_asc', label: 'Razão Social (A-Z)' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   Transportadora: [
-    { value: 'razao_social', label: 'Razão Social (A-Z)' },
+    { value: 'razao_social_asc', label: 'Razão Social (A-Z)' },
     { value: 'razao_social_desc', label: 'Razão Social (Z-A)' },
-    { value: 'nome_fantasia', label: 'Nome Fantasia (A-Z)' },
-    { value: 'nome_fantasia_desc', label: 'Nome Fantasia (Z-A)' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   Produto: [
-    { value: 'descricao', label: 'Descrição (A-Z)' },
+    { value: 'descricao_asc', label: 'Descrição (A-Z)' },
     { value: 'descricao_desc', label: 'Descrição (Z-A)' },
-    { value: 'codigo', label: 'Código (Crescente)' },
-    { value: 'codigo_desc', label: 'Código (Decrescente)' },
-    { value: 'tipo_item', label: 'Tipo do Item (A-Z)' },
-    { value: 'tipo_item_desc', label: 'Tipo do Item (Z-A)' },
-    { value: 'setor_atividade_nome', label: 'Setor Atividade (A-Z)' },
-    { value: 'setor_atividade_nome_desc', label: 'Setor Atividade (Z-A)' },
-    { value: 'grupo_produto_nome', label: 'Grupo Produto (A-Z)' },
-    { value: 'grupo_produto_nome_desc', label: 'Grupo Produto (Z-A)' },
-    { value: 'marca_nome', label: 'Marca (A-Z)' },
-    { value: 'marca_nome_desc', label: 'Marca (Z-A)' },
-    { value: 'status', label: 'Status (A-Z)' },
-    { value: 'status_desc', label: 'Status (Z-A)' },
-    { value: 'estoque_atual', label: 'Estoque (Menor→Maior)' },
-    { value: 'estoque_atual_desc', label: 'Estoque (Maior→Menor)' },
-    { value: 'preco_venda', label: 'Preço (Menor→Maior)' },
-    { value: 'preco_venda_desc', label: 'Preço (Maior→Menor)' },
+    { value: 'codigo_asc', label: 'Código ↑' },
+    { value: 'estoque_asc', label: 'Estoque (Menor→Maior)' },
+    { value: 'estoque_desc', label: 'Estoque (Maior→Menor)' },
+    { value: 'preco_asc', label: 'Preço ↑' },
+    { value: 'preco_desc', label: 'Preço ↓' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   Colaborador: [
-    { value: 'nome_completo', label: 'Nome (A-Z)' },
-    { value: 'nome_completo_desc', label: 'Nome (Z-A)' },
-    { value: 'cargo', label: 'Cargo' },
-    { value: 'departamento', label: 'Departamento' },
-    { value: 'recent', label: 'Mais Recentes' }
-  ],
-  Representante: [
-    { value: 'nome', label: 'Nome (A-Z)' },
+    { value: 'nome_asc', label: 'Nome (A-Z)' },
     { value: 'nome_desc', label: 'Nome (Z-A)' },
-    { value: 'percentual_comissao', label: '% Comissão (Maior)' },
+    { value: 'cargo_asc', label: 'Cargo (A-Z)' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
-  ContatoB2B: [
-    { value: 'nome', label: 'Nome (A-Z)' },
-    { value: 'empresa', label: 'Empresa (A-Z)' },
-    { value: 'recent', label: 'Mais Recentes' }
-  ],
-  Marca: [
-    { value: 'nome_marca', label: 'Marca (A-Z)' },
-    { value: 'nome_marca_desc', label: 'Marca (Z-A)' },
-    { value: 'recent', label: 'Mais Recentes' }
-  ],
-  GrupoProduto: [
-    { value: 'nome_grupo', label: 'Grupo (A-Z)' },
-    { value: 'nome_grupo_desc', label: 'Grupo (Z-A)' },
-    { value: 'codigo', label: 'Código (Crescente)' },
-    { value: 'codigo_desc', label: 'Código (Decrescente)' },
-    { value: 'recent', label: 'Mais Recentes' }
-  ],
-  SetorAtividade: [
-    { value: 'nome', label: 'Nome (A-Z)' },
-    { value: 'nome_desc', label: 'Nome (Z-A)' },
-    { value: 'tipo_operacao', label: 'Tipo' },
-    { value: 'recent', label: 'Mais Recentes' }
-  ],
-  UnidadeMedida: [
-    { value: 'sigla', label: 'Sigla (A-Z)' },
-    { value: 'sigla_desc', label: 'Sigla (Z-A)' },
-    { value: 'recent', label: 'Mais Recentes' }
-  ],
-  SegmentoCliente: [
-    { value: 'nome_segmento', label: 'Segmento (A-Z)' },
-    { value: 'nome_segmento_desc', label: 'Segmento (Z-A)' },
-    { value: 'recent', label: 'Mais Recentes' }
-  ],
-  RegiaoAtendimento: [
-    { value: 'nome_regiao', label: 'Região (A-Z)' },
-    { value: 'nome_regiao_desc', label: 'Região (Z-A)' },
-    { value: 'recent', label: 'Mais Recentes' }
-  ],
-  default: [
-    { value: 'recent', label: 'Mais Recentes' }
-  ]
+  default: [{ value: 'recent', label: 'Mais Recentes' }]
 };
 
-const COLUNAS_ORDENACAO = {
+// Mapa de valor de ordenação → { field, direction }
+const ORDENACAO_MAP = {
+  recent: { f: 'updated_date', d: 'desc' },
+  nome_asc: { f: 'nome', d: 'asc' }, nome_desc: { f: 'nome', d: 'desc' },
+  razao_social_asc: { f: 'razao_social', d: 'asc' }, razao_social_desc: { f: 'razao_social', d: 'desc' },
+  descricao_asc: { f: 'descricao', d: 'asc' }, descricao_desc: { f: 'descricao', d: 'desc' },
+  codigo_asc: { f: 'codigo', d: 'asc' }, codigo_desc: { f: 'codigo', d: 'desc' },
+  cargo_asc: { f: 'cargo', d: 'asc' },
+  cidade_asc: { f: 'endereco_principal.cidade', d: 'asc' },
+  mais_compras: { f: 'valor_compras_12meses', d: 'desc' },
+  estoque_asc: { f: 'estoque_atual', d: 'asc' }, estoque_desc: { f: 'estoque_atual', d: 'desc' },
+  preco_asc: { f: 'preco_venda', d: 'asc' }, preco_desc: { f: 'preco_venda', d: 'desc' },
+};
+
+const ENTITY_DEFAULTS = {
+  Produto: { f: 'descricao', d: 'asc' }, Cliente: { f: 'nome', d: 'asc' },
+  Fornecedor: { f: 'nome', d: 'asc' }, Transportadora: { f: 'razao_social', d: 'asc' },
+  Colaborador: { f: 'nome_completo', d: 'asc' }, CentroCusto: { f: 'codigo', d: 'asc' },
+  PlanoDeContas: { f: 'codigo', d: 'asc' },
+};
+
+const COLUNAS_TABELA = {
   Produto: [
-    { campo: 'codigo', label: 'Código', getValue: (item) => item.codigo || '', isNumeric: true },
-    { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' },
-    { campo: 'tipo_item', label: 'Tipo', getValue: (item) => item.tipo_item || '' },
-    { campo: 'setor_atividade_nome', label: 'Setor', getValue: (item) => item.setor_atividade_nome || '' },
-    { campo: 'grupo_produto_nome', label: 'Categoria', getValue: (item) => item.grupo_produto_nome || '' },
-    { campo: 'marca_nome', label: 'Marca', getValue: (item) => item.marca_nome || '' },
-    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' },
-    { campo: 'estoque_atual', label: 'Estoque', getValue: (item) => item.estoque_atual ?? 0, isNumeric: true },
-    { campo: 'preco_venda', label: 'Preço', getValue: (item) => item.preco_venda ?? 0, isNumeric: true }
+    { campo: 'codigo', label: 'Código', isNumeric: false },
+    { campo: 'descricao', label: 'Descrição' },
+    { campo: 'tipo_item', label: 'Tipo' },
+    { campo: 'setor_atividade_nome', label: 'Setor' },
+    { campo: 'grupo_produto_nome', label: 'Grupo' },
+    { campo: 'marca_nome', label: 'Marca' },
+    { campo: 'status', label: 'Status' },
+    { campo: 'estoque_atual', label: 'Estoque', isNumeric: true },
+    { campo: 'preco_venda', label: 'Preço (R$)', isNumeric: true }
   ],
   Cliente: [
-    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
-    { campo: 'tipo', label: 'Tipo', getValue: (item) => item.tipo || '' },
-    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
+    { campo: 'nome', label: 'Nome' },
+    { campo: 'cpf', label: 'CPF/CNPJ' },
+    { campo: 'tipo', label: 'Tipo' },
+    { campo: 'status', label: 'Status' }
   ],
   Fornecedor: [
-    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
-    { campo: 'razao_social', label: 'Razão Social', getValue: (item) => item.razao_social || '' },
-    { campo: 'cnpj', label: 'CNPJ', getValue: (item) => item.cnpj || '' },
-    { campo: 'categoria', label: 'Categoria', getValue: (item) => item.categoria || '' },
-    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
+    { campo: 'nome', label: 'Nome' },
+    { campo: 'razao_social', label: 'Razão Social' },
+    { campo: 'cnpj', label: 'CNPJ' },
+    { campo: 'categoria', label: 'Categoria' },
+    { campo: 'status', label: 'Status' }
   ],
   Transportadora: [
-    { campo: 'razao_social', label: 'Razão Social', getValue: (item) => item.razao_social || '' },
-    { campo: 'nome_fantasia', label: 'Nome Fantasia', getValue: (item) => item.nome_fantasia || '' },
-    { campo: 'cnpj', label: 'CNPJ', getValue: (item) => item.cnpj || '' },
-    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
+    { campo: 'razao_social', label: 'Razão Social' },
+    { campo: 'nome_fantasia', label: 'Nome Fantasia' },
+    { campo: 'cnpj', label: 'CNPJ' },
+    { campo: 'status', label: 'Status' }
   ],
   Colaborador: [
-    { campo: 'nome_completo', label: 'Nome', getValue: (item) => item.nome_completo || '' },
-    { campo: 'cargo', label: 'Cargo', getValue: (item) => item.cargo || '' },
-    { campo: 'departamento', label: 'Departamento', getValue: (item) => item.departamento || '' },
-    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
+    { campo: 'nome_completo', label: 'Nome' },
+    { campo: 'cpf', label: 'CPF' },
+    { campo: 'cargo', label: 'Cargo' },
+    { campo: 'departamento', label: 'Departamento' },
+    { campo: 'status', label: 'Status' }
   ],
   Representante: [
-    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
-    { campo: 'tipo_representante', label: 'Tipo', getValue: (item) => item.tipo_representante || '' },
-    { campo: 'percentual_comissao', label: '% Comissão', getValue: (item) => item.percentual_comissao ?? 0, isNumeric: true }
+    { campo: 'nome', label: 'Nome' },
+    { campo: 'tipo_representante', label: 'Tipo' },
+    { campo: 'percentual_comissao', label: '% Comissão', isNumeric: true }
   ],
   ContatoB2B: [
-    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
-    { campo: 'empresa', label: 'Empresa', getValue: (item) => item.empresa || '' },
-    { campo: 'cargo', label: 'Cargo', getValue: (item) => item.cargo || '' },
-    { campo: 'email', label: 'E-mail', getValue: (item) => item.email || '' },
-    { campo: 'telefone', label: 'Telefone', getValue: (item) => item.telefone || '' }
+    { campo: 'nome', label: 'Nome' },
+    { campo: 'empresa', label: 'Empresa' },
+    { campo: 'cargo', label: 'Cargo' },
+    { campo: 'email', label: 'E-mail' }
   ],
-  Marca: [
-    { campo: 'nome_marca', label: 'Marca', getValue: (item) => item.nome_marca || '' },
-    { campo: 'pais_origem', label: 'País', getValue: (item) => item.pais_origem || '' }
-  ],
-  GrupoProduto: [
-    { campo: 'nome_grupo', label: 'Grupo', getValue: (item) => item.nome_grupo || '' },
-    { campo: 'codigo', label: 'Código', getValue: (item) => item.codigo || '' },
-    { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' }
-  ],
-  SetorAtividade: [
-    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
-    { campo: 'tipo_operacao', label: 'Tipo', getValue: (item) => item.tipo_operacao || '' },
-    { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' }
-  ],
-  UnidadeMedida: [
-    { campo: 'sigla', label: 'Sigla', getValue: (item) => item.sigla || '' },
-    { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' }
-  ],
-  SegmentoCliente: [
-    { campo: 'nome_segmento', label: 'Segmento', getValue: (item) => item.nome_segmento || '' },
-    { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' }
-  ],
-  RegiaoAtendimento: [
-    { campo: 'nome_regiao', label: 'Região', getValue: (item) => item.nome_regiao || '' },
-    { campo: 'tipo_regiao', label: 'Tipo', getValue: (item) => item.tipo_regiao || '' }
-  ],
+  Marca: [{ campo: 'nome_marca', label: 'Marca' }, { campo: 'pais_origem', label: 'País' }],
+  GrupoProduto: [{ campo: 'nome_grupo', label: 'Grupo' }, { campo: 'codigo', label: 'Código' }],
+  SetorAtividade: [{ campo: 'nome', label: 'Nome' }, { campo: 'tipo_operacao', label: 'Tipo' }],
+  UnidadeMedida: [{ campo: 'sigla', label: 'Sigla' }, { campo: 'descricao', label: 'Descrição' }],
+  SegmentoCliente: [{ campo: 'nome_segmento', label: 'Segmento' }, { campo: 'descricao', label: 'Descrição' }],
+  RegiaoAtendimento: [{ campo: 'nome_regiao', label: 'Região' }, { campo: 'tipo_regiao', label: 'Tipo' }],
+  Banco: [{ campo: 'codigo', label: 'Código' }, { campo: 'descricao', label: 'Nome' }, { campo: 'status', label: 'Status' }],
+  FormaPagamento: [{ campo: 'descricao', label: 'Descrição' }, { campo: 'codigo', label: 'Código' }, { campo: 'status', label: 'Status' }],
+  Departamento: [{ campo: 'nome', label: 'Nome' }, { campo: 'sigla', label: 'Sigla' }, { campo: 'status', label: 'Status' }],
+  Cargo: [{ campo: 'nome', label: 'Cargo' }, { campo: 'nivel', label: 'Nível' }, { campo: 'status', label: 'Status' }],
+  Turno: [{ campo: 'nome', label: 'Turno' }, { campo: 'hora_inicio', label: 'Início' }, { campo: 'hora_fim', label: 'Fim' }],
+  CentroCusto: [{ campo: 'codigo', label: 'Código' }, { campo: 'descricao', label: 'Descrição' }, { campo: 'tipo', label: 'Tipo' }, { campo: 'status', label: 'Status' }],
   default: [
-    { campo: 'nome_generico', label: 'Nome', getValue: (item) => item.nome || item.nome_completo || item.razao_social || item.nome_fantasia || item.titulo || item.descricao || '' },
-    { campo: 'descricao_generica', label: 'Descrição', getValue: (item) => item.descricao || item.observacoes || item.observacao || item.cargo || item.departamento || '' }
+    { campo: '_nome', label: 'Nome' },
+    { campo: '_descricao', label: 'Descrição' }
   ]
 };
 
-const ALIAS_QUERY_KEYS = {
-  Produto: ['produtos'],
-  Cliente: ['clientes'],
-  Fornecedor: ['fornecedores']
+const CAMPOS_BUSCA = {
+  Produto: ['descricao', 'codigo', 'codigo_barras', 'grupo_produto_nome', 'marca_nome', 'setor_atividade_nome'],
+  Cliente: ['nome', 'razao_social', 'nome_fantasia', 'cpf', 'cnpj'],
+  Fornecedor: ['nome', 'razao_social', 'cnpj', 'categoria'],
+  Colaborador: ['nome_completo', 'cpf', 'email', 'cargo', 'departamento'],
+  Transportadora: ['razao_social', 'nome_fantasia', 'cnpj'],
+  Representante: ['nome', 'tipo_representante', 'email'],
+  ContatoB2B: ['nome', 'empresa', 'cargo', 'email'],
+  Marca: ['nome_marca'], GrupoProduto: ['nome_grupo', 'codigo'],
+  SetorAtividade: ['nome', 'tipo_operacao'],
+  UnidadeMedida: ['sigla', 'descricao'],
+  SegmentoCliente: ['nome_segmento'], RegiaoAtendimento: ['nome_regiao'],
+  Banco: ['codigo', 'descricao'], FormaPagamento: ['descricao', 'codigo'],
+  Departamento: ['nome', 'sigla'], Cargo: ['nome'], Turno: ['nome'],
+  CentroCusto: ['codigo', 'descricao'],
+  default: ['nome', 'descricao', 'codigo', 'razao_social']
 };
 
-// Status visual por entidade
-const getStatusBadgeClass = (ent, statusRaw) => {
-  if (!statusRaw) return 'bg-slate-100 text-slate-700 border-slate-200';
-  const s = String(statusRaw).toLowerCase();
-  switch (ent) {
-    case 'Cliente':
-      if (s.includes('bloque')) return 'bg-red-100 text-red-800 border-red-200';
-      if (s.includes('prospect') || s.includes('pend')) return 'bg-amber-100 text-amber-800 border-amber-200';
-      if (s.includes('ativo')) return 'bg-green-100 text-green-800 border-green-200';
-      return 'bg-slate-100 text-slate-700 border-slate-200';
-    case 'Fornecedor':
-    case 'Transportadora':
-      if (s.includes('bloque')) return 'bg-red-100 text-red-800 border-red-200';
-      if (s.includes('ativo')) return 'bg-green-100 text-green-800 border-green-200';
-      return 'bg-slate-100 text-slate-700 border-slate-200';
-    case 'Colaborador':
-      if (s.includes('deslig')) return 'bg-red-100 text-red-800 border-red-200';
-      if (s.includes('fer') || s.includes('afast')) return 'bg-amber-100 text-amber-800 border-amber-200';
-      if (s.includes('ativo')) return 'bg-green-100 text-green-800 border-green-200';
-      return 'bg-slate-100 text-slate-700 border-slate-200';
-    case 'Produto':
-      if (s.includes('descontinu')) return 'bg-red-100 text-red-800 border-red-200';
-      if (s.includes('ativo')) return 'bg-green-100 text-green-800 border-green-200';
-      return 'bg-slate-100 text-slate-700 border-slate-200';
-    default:
-      if (s.includes('crit') || s.includes('erro')) return 'bg-red-100 text-red-800 border-red-200';
-      if (s.includes('pend') || s.includes('aguard')) return 'bg-amber-100 text-amber-800 border-amber-200';
-      if (s.includes('ativo') || s.includes('ok')) return 'bg-green-100 text-green-800 border-green-200';
-      return 'bg-slate-100 text-slate-700 border-slate-200';
+const ENTITY_CONTEXT_FIELD = {
+  Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id'
+};
+
+// ─── Status badge visual ──────────────────────────────────────────────────────
+
+const getStatusClass = (status) => {
+  if (!status) return 'bg-slate-100 text-slate-600 border-slate-200';
+  const s = String(status).toLowerCase();
+  if (s.includes('bloque') || s.includes('deslig') || s.includes('inat') || s.includes('descontinu') || s.includes('crítico')) return 'bg-red-100 text-red-700 border-red-200';
+  if (s.includes('prospect') || s.includes('pend') || s.includes('fer') || s.includes('afast') || s.includes('análise')) return 'bg-amber-100 text-amber-700 border-amber-200';
+  if (s.includes('ativo') || s.includes('ok') || s.includes('aprovado') || s.includes('entregue')) return 'bg-green-100 text-green-700 border-green-200';
+  return 'bg-slate-100 text-slate-600 border-slate-200';
+};
+
+// ─── Hook de dados backend ────────────────────────────────────────────────────
+
+function useEntityData({ nomeEntidade, filtro, sortField, sortDirection, limit, skip, enabled }) {
+  return useQuery({
+    queryKey: ['vue', nomeEntidade, JSON.stringify(filtro), sortField, sortDirection, limit, skip],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('entityListSorted', {
+        entityName: nomeEntidade,
+        filter: filtro,
+        sortField,
+        sortDirection,
+        limit,
+        skip,
+      });
+      return Array.isArray(res?.data) ? res.data : [];
+    },
+    enabled: !!enabled,
+    staleTime: 60_000,
+    gcTime: 300_000,
+    placeholderData: (prev) => prev,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 2,
+    retryDelay: (i) => Math.min(800 * 2 ** i, 5000),
+  });
+}
+
+function useEntityCount({ nomeEntidade, filtro, enabled }) {
+  return useQuery({
+    queryKey: ['vue-count', nomeEntidade, JSON.stringify(filtro)],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('countEntities', {
+        entities: [{ entityName: nomeEntidade, filter: filtro }]
+      });
+      return Number(res?.data?.counts?.[nomeEntidade] ?? 0);
+    },
+    enabled: !!enabled,
+    staleTime: 90_000,
+    gcTime: 300_000,
+    placeholderData: (prev) => prev ?? 0,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+}
+
+// ─── Monta filtro multiempresa ────────────────────────────────────────────────
+
+function buildFilter({ nomeEntidade, empresaAtual, grupoAtual, empresasDoGrupo, busca, columnFilters }) {
+  const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id;
+
+  const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
+  const orConds = [];
+
+  if (empresaId) {
+    if (nomeEntidade === 'Cliente') {
+      orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
+    } else {
+      orConds.push({ [campoEmpresa]: empresaId });
+    }
+    orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
   }
-};
+  if (groupId) {
+    orConds.push({ group_id: groupId });
+    if (!empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
+      const ids = empresasDoGrupo.map(e => e.id).filter(Boolean);
+      if (ids.length) {
+        if (nomeEntidade === 'Cliente') {
+          orConds.push({ empresa_id: { $in: ids } }, { empresa_dona_id: { $in: ids } });
+        } else {
+          orConds.push({ [campoEmpresa]: { $in: ids } });
+        }
+        if (SHARED.has(nomeEntidade)) {
+          orConds.push({ empresas_compartilhadas_ids: { $in: ids } });
+        }
+      }
+    }
+  }
 
-export default function VisualizadorUniversalEntidade({ 
+  let filtroBase = orConds.length ? { $or: orConds } : {};
+
+  // busca de texto
+  if (busca && busca.trim()) {
+    const campos = CAMPOS_BUSCA[nomeEntidade] || CAMPOS_BUSCA.default;
+    const term = busca.trim();
+    const orBusca = campos.map(c => ({ [c]: { $regex: term, $options: 'i' } }));
+    filtroBase = { ...filtroBase, $and: [{ $or: orBusca }] };
+  }
+
+  // filtros de colunas
+  const filtrosColunas = Object.entries(columnFilters || {})
+    .filter(([, v]) => String(v || '').trim())
+    .map(([k, v]) => ({ [k]: { $regex: String(v).trim(), $options: 'i' } }));
+  if (filtrosColunas.length) {
+    filtroBase.$and = [...(filtroBase.$and || []), ...filtrosColunas];
+  }
+
+  return filtroBase;
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
+
+export default function VisualizadorUniversalEntidade({
   nomeEntidade,
   tituloDisplay,
   icone: Icone,
@@ -270,1044 +296,579 @@ export default function VisualizadorUniversalEntidade({
   onSelectionChange,
   filtroAdicional = null
 }) {
-  const [buscaLocal, setBuscaLocal] = useState('');
-  const [buscaBackend, setBuscaBackend] = useState('');
+  const [busca, setBusca] = useState('');
+  const [buscaDebounced, setBuscaDebounced] = useState('');
   const [visualizacao, setVisualizacao] = useState('table');
-  const [expandidos, setExpandidos] = useState({});
   const [ordenacao, setOrdenacao] = useState('recent');
-  const [colunaOrdenacao, setColunaOrdenacao] = useState(null);
-  const [direcaoOrdenacao, setDirecaoOrdenacao] = useState('asc');
+  const [sortField, setSortField] = useState(() => {
+    const d = ENTITY_DEFAULTS[nomeEntidade];
+    return d?.f || 'updated_date';
+  });
+  const [sortDirection, setSortDirection] = useState(() => {
+    const d = ENTITY_DEFAULTS[nomeEntidade];
+    return d?.d || 'desc';
+  });
+  const [columnFilters, setColumnFilters] = useState({});
+  const [hiddenCols, setHiddenCols] = useState(new Set());
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
-  const [sortField, setSortField] = useState(null);
-  const [sortDirection, setSortDirection] = useState('asc');
-  const [columnFilters, setColumnFilters] = useState({});
-  const [hiddenCols, setHiddenCols] = useState(new Set());
   const [iaFiltroAtivo, setIaFiltroAtivo] = useState(false);
-  const [accDados, setAccDados] = useState([]);
-  const sentinelRef = useRef(null);
-  const sortTimerRef = useRef(null);
-  const sortPendingRef = useRef(false);
-  
+  const [expandidos, setExpandidos] = useState({});
+
   const { openWindow, closeWindow } = useWindow();
-  const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
+  const { empresaAtual, grupoAtual, empresasDoGrupo, createInContext, updateInContext, deleteInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const lastInvalidateRef = useRef(0);
 
-  const moduloPermissao = React.useMemo(() => {
-    const estoque = ['Produto','UnidadeMedida','LocalEstoque','GrupoProduto','Marca'];
-    if (estoque.includes(nomeEntidade)) return 'Estoque';
-    return 'Cadastros';
-  }, [nomeEntidade, columnFilters]);
-
-  const opcoesOrdenacao = OPCOES_ORDENACAO[nomeEntidade] || OPCOES_ORDENACAO.default;
-  let colunasOrdenacao = COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default;
-  if (Array.isArray(camposPrincipais) && camposPrincipais.length > 0) {
-    colunasOrdenacao = camposPrincipais.map((c) => ({
-      campo: c,
-      label: c.replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase()),
-      getValue: (item) => item?.[c] ?? ''
-    }));
-  }
-
-  const override = (typeof legacyQueryKey !== 'undefined' ? legacyQueryKey : queryKeyOverride);
-  const queryKey = Array.isArray(override) ? override : [override || nomeEntidade.toLowerCase()];
-
-  const { getFiltroContexto, createInContext, updateInContext, deleteInContext } = useContextoVisual();
-  const { data: entitySchema } = useQuery({
-    queryKey: ['schema', nomeEntidade],
-    queryFn: () => (base44.entities?.[nomeEntidade]?.schema ? base44.entities[nomeEntidade].schema() : null),
-    staleTime: 600000,
-  });
-
-  React.useEffect(() => {
-    const handler = setTimeout(() => {
-      setBuscaBackend(buscaLocal);
-      setCurrentPage(1);
-    }, 400); // preferência do usuário: 400ms
-    return () => clearTimeout(handler);
-  }, [buscaLocal, columnFilters]);
-
+  // Debounce busca: 350ms
   useEffect(() => {
-    const saved = localStorage.getItem(`sort_${nomeEntidade}`);
-    if (saved) {
-      try {
-        const s = JSON.parse(saved);
-        const sf = (s && (s.sortField ?? s.field)) || null;
-        const sd = (s && (s.sortDirection ?? s.direction)) || null;
-        if (sf) setSortField(sf);
-        if (sd) setSortDirection(sd);
-      } catch {}
-    }
+    const h = setTimeout(() => { setBuscaDebounced(busca); setCurrentPage(1); }, 350);
+    return () => clearTimeout(h);
+  }, [busca]);
+
+  // Reset página ao mudar filtros
+  useEffect(() => { setCurrentPage(1); }, [nomeEntidade, empresaAtual?.id, grupoAtual?.id, sortField, sortDirection, itemsPerPage]);
+
+  const moduloPermissao = useMemo(() => {
+    if (['Produto', 'UnidadeMedida', 'LocalEstoque', 'GrupoProduto', 'Marca'].includes(nomeEntidade)) return 'Estoque';
+    return 'Cadastros';
   }, [nomeEntidade]);
 
-  useEffect(() => {
-    if (sortField) {
-      localStorage.setItem(
-        `sort_${nomeEntidade}`,
-        JSON.stringify({ sortField, sortDirection })
-      );
+  const opcoesOrdenacao = OPCOES_ORDENACAO[nomeEntidade] || OPCOES_ORDENACAO.default;
+
+  // Colunas: usa camposPrincipais se fornecidos, senão configs predefinidas
+  const colunas = useMemo(() => {
+    if (Array.isArray(camposPrincipais) && camposPrincipais.length > 0) {
+      return camposPrincipais.map(c => ({
+        campo: c,
+        label: c.replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase())
+      }));
     }
-  }, [sortField, sortDirection, nomeEntidade]);
+    return COLUNAS_TABELA[nomeEntidade] || COLUNAS_TABELA.default;
+  }, [nomeEntidade, camposPrincipais]);
 
-  const getDefaultSortForEntity = useCallback(() => {
-    if (colunaOrdenacao) {
-      // Mantemos ordenação local no UI, mas garantimos defaults seguros para o backend (nunca undefined)
-      return { field: 'updated_date', direction: 'desc' };
-    }
+  const filtro = useMemo(() => buildFilter({
+    nomeEntidade, empresaAtual, grupoAtual, empresasDoGrupo,
+    busca: buscaDebounced, columnFilters
+  }), [nomeEntidade, empresaAtual?.id, grupoAtual?.id, JSON.stringify(empresasDoGrupo?.map(e => e.id)), buscaDebounced, JSON.stringify(columnFilters)]);
 
-    // Padrões por entidade (case-insensitive no backend via entityListSorted)
-    const entityDefaults = {
-      Produto: { field: 'codigo', direction: 'asc' },
-      Cliente: { field: 'nome', direction: 'asc' },
-      Fornecedor: { field: 'nome', direction: 'asc' },
-      Pedido: { field: 'data_pedido', direction: 'desc' },
-      ContaPagar: { field: 'data_vencimento', direction: 'asc' },
-      ContaReceber: { field: 'data_vencimento', direction: 'asc' },
-      OrdemCompra: { field: 'data_solicitacao', direction: 'desc' },
-      User: { field: 'full_name', direction: 'asc' },
-      CentroCusto: { field: 'codigo', direction: 'asc' },
-      PlanoDeContas: { field: 'codigo', direction: 'asc' },
-      PlanoContas: { field: 'codigo', direction: 'asc' }
-    };
+  const hasScope = !!(empresaAtual?.id || grupoAtual?.id);
+  const skip = (currentPage - 1) * itemsPerPage;
 
-    return entityDefaults[nomeEntidade] || { field: 'updated_date', direction: 'desc' };
-  }, [nomeEntidade, colunaOrdenacao]);
-
-  const applyOrdenacaoBackend = React.useCallback((val) => {
-    const map = {
-      descricao: { f: 'descricao', d: 'asc' },
-      descricao_desc: { f: 'descricao', d: 'desc' },
-      codigo: { f: 'codigo', d: 'asc' },
-      codigo_desc: { f: 'codigo', d: 'desc' },
-      tipo_item: { f: 'tipo_item', d: 'asc' },
-      tipo_item_desc: { f: 'tipo_item', d: 'desc' },
-      setor_atividade_nome: { f: 'setor_atividade_nome', d: 'asc' },
-      setor_atividade_nome_desc: { f: 'setor_atividade_nome', d: 'desc' },
-      grupo_produto_nome: { f: 'grupo_produto_nome', d: 'asc' },
-      grupo_produto_nome_desc: { f: 'grupo_produto_nome', d: 'desc' },
-      marca_nome: { f: 'marca_nome', d: 'asc' },
-      marca_nome_desc: { f: 'marca_nome', d: 'desc' },
-      status: { f: 'status', d: 'asc' },
-      status_desc: { f: 'status', d: 'desc' },
-      estoque_atual: { f: 'estoque_atual', d: 'asc' },
-      estoque_atual_desc: { f: 'estoque_atual', d: 'desc' },
-      preco_venda: { f: 'preco_venda', d: 'asc' },
-      preco_venda_desc: { f: 'preco_venda', d: 'desc' },
-      updated_date: { f: 'updated_date', d: 'asc' },
-      updated_date_desc: { f: 'updated_date', d: 'desc' },
-      recent: { f: 'updated_date', d: 'desc' },
-      nome: { f: 'nome', d: 'asc' },
-      nome_desc: { f: 'nome', d: 'desc' },
-      cidade: { f: 'endereco_principal.cidade', d: 'asc' },
-      mais_compras: { f: 'valor_compras_12meses', d: 'desc' },
-      limite_credito: { f: 'condicao_comercial.limite_credito', d: 'desc' }
-    };
-    const def = getDefaultSortForEntity();
-    const m = map[val] || { f: def.field, d: def.direction };
-    // debounce curto para evitar múltiplas chamadas
-    if (sortPendingRef.current) return;
-    sortPendingRef.current = true;
-    if (sortTimerRef.current) clearTimeout(sortTimerRef.current);
-    // aplicação imediata no backend (sem travas)
-    setSortField(m.f);
-    setSortDirection(m.d);
-    sortPendingRef.current = false;
-    setCurrentPage(1);
-  }, [getDefaultSortForEntity]);
-
-  const buildFilterWithSearch = useCallback(() => {
-    const ENTITY_CONTEXT_FIELD = {
-      Fornecedor: 'empresa_dona_id',
-      Transportadora: 'empresa_dona_id',
-      Colaborador: 'empresa_alocada_id',
-    };
-    const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
-    const fc = getFiltroContexto(campoEmpresa, true) || {};
-
-    // Detecção de campos de contexto via schema: se a entidade NÃO tem group_id nem campo de empresa, não filtrar por contexto
-    const schemaProps = (entitySchema && entitySchema.properties) || {};
-    const hasGroupField = Object.prototype.hasOwnProperty.call(schemaProps, 'group_id');
-    const hasEmpresaCtxField = Object.prototype.hasOwnProperty.call(schemaProps, campoEmpresa);
-    if (!hasGroupField && !hasEmpresaCtxField) {
-      // Apenas filtros de busca/colunas serão aplicados abaixo
-      let combinadoSemContexto = {};
-      if (!buscaBackend.trim()) return combinadoSemContexto;
-      // segue fluxo normal para busca, mas sem contexto
-    }
-
-    // Ajuste para entidades compartilhadas (Cliente/Fornecedor/Transportadora)
-    const SHARED = new Set(['Cliente','Fornecedor','Transportadora']);
-    let filtroBase = { ...fc };
-    if ((fc?.[campoEmpresa] || fc?.group_id) && (hasGroupField || hasEmpresaCtxField)) {
-      const empresaId = fc[campoEmpresa];
-      const groupId = fc.group_id;
-      const rest = { ...fc };
-      if (campoEmpresa in rest) delete rest[campoEmpresa];
-      if ('group_id' in rest) delete rest.group_id;
-      const orConds = [];
-
-      if (SHARED.has(nomeEntidade)) {
-        if (empresaId) {
-          if (nomeEntidade === 'Cliente' && campoEmpresa !== 'empresa_dona_id') {
-            // Cliente pode estar em empresa_id OU empresa_dona_id
-            orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
-          } else {
-            orConds.push({ [campoEmpresa]: empresaId });
-          }
-          // Itens compartilhados com a empresa atual
-          orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
-        }
-        if (groupId) {
-          orConds.push({ group_id: groupId });
-          // Contexto no grupo sem empresa selecionada → incluir todas empresas do grupo
-          if (!empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
-            const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
-            if (empresasIds.length) {
-              orConds.push(
-                { empresa_id: { $in: empresasIds } },
-                { empresa_dona_id: { $in: empresasIds } },
-                { empresas_compartilhadas_ids: { $in: empresasIds } }
-              );
-            }
-          }
-        }
-      } else {
-        // Genérico para entidades não compartilhadas: aceitar empresa OU grupo
-        if (empresaId) orConds.push({ [campoEmpresa]: empresaId });
-        if (groupId) {
-          orConds.push({ group_id: groupId });
-          if (!empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
-            const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
-            if (empresasIds.length) orConds.push({ [campoEmpresa]: { $in: empresasIds } });
-          }
-        }
-      }
-
-      filtroBase = { ...rest, ...(orConds.length ? { $or: orConds } : {}) };
-    }
-    
-    if (!buscaBackend.trim()) {
-      return filtroBase;
-    }
-
-    const termoBusca = buscaBackend.trim();
-    const buscaFiltros = [];
-    
-    const camposBusca = {
-      'Produto': ['descricao', 'codigo', 'codigo_barras', 'grupo_produto_nome', 'marca_nome', 'setor_atividade_nome'],
-      'Cliente': ['nome', 'razao_social', 'nome_fantasia', 'cpf', 'cnpj', 'email'],
-      'Fornecedor': ['nome', 'razao_social', 'cnpj', 'categoria', 'email'],
-      'Colaborador': ['nome_completo', 'cpf', 'email', 'cargo', 'departamento'],
-      'Transportadora': ['razao_social', 'nome_fantasia', 'cnpj'],
-      'Representante': ['nome', 'tipo_representante', 'email', 'telefone'],
-      'ContatoB2B': ['nome', 'empresa', 'cargo', 'email', 'telefone'],
-      'Marca': ['nome_marca', 'pais_origem'],
-      'GrupoProduto': ['nome_grupo', 'codigo', 'descricao'],
-      'SetorAtividade': ['nome', 'tipo_operacao', 'descricao'],
-      'UnidadeMedida': ['sigla', 'descricao'],
-      'SegmentoCliente': ['nome_segmento', 'descricao'],
-      'RegiaoAtendimento': ['nome_regiao', 'tipo_regiao', 'estados_abrangidos']
-    };
-
-    const campos = camposBusca[nomeEntidade] || ['nome', 'descricao', 'codigo'];
-    
-    campos.forEach(campo => {
-      buscaFiltros.push({ [campo]: { $regex: termoBusca, $options: 'i' } });
-    });
-
-    const filtrosColunas = Object.entries(columnFilters || {}).filter(([, v]) => String(v || '').trim() !== '').map(([campo, val]) => ({ [campo]: { $regex: String(val).trim(), $options: 'i' } }));
-    const combinado = { ...filtroBase };
-    const and = [];
-    if (buscaFiltros.length) and.push({ $or: buscaFiltros });
-    if (filtrosColunas.length) and.push(...filtrosColunas);
-    if (and.length) combinado.$and = and;
-    return combinado;
-  }, [getFiltroContexto, buscaBackend, nomeEntidade, columnFilters]);
-
-  const ENTITY_CONTEXT_FIELD = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
-  const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
-
-  const filtroBase = buildFilterWithSearch();
-
-  // Validação de escopo para evitar falso "Nenhum registro" quando não há empresa/grupo selecionado
-  const schemaProps = (entitySchema && entitySchema.properties) || {};
-  const __hasGroupField = Object.prototype.hasOwnProperty.call(schemaProps, 'group_id');
-  const __hasCtxField = Object.prototype.hasOwnProperty.call(schemaProps, campoEmpresa);
-  const __fcScope = getFiltroContexto(campoEmpresa, true) || {};
-  const __canList = (!__hasGroupField && !__hasCtxField) || !!(__fcScope[campoEmpresa] || __fcScope.group_id);
-  const def = getDefaultSortForEntity();
-  const sf = (sortField || def.field);
-  const sd = (sortDirection || def.direction);
-
-  const { data: dados = [], isLoading, isFetching, refetch, error } = useEntityListSorted(
-    nomeEntidade,
-    filtroBase,
-    { sortField: sf, sortDirection: sd, limit: itemsPerPage, campo: campoEmpresa, page: currentPage, pageSize: itemsPerPage }
-  );
-
-  const iaCreditoEstouradoCount = useMemo(() => {
-    if (nomeEntidade !== 'Cliente') return 0;
-    return (dados || []).reduce((acc, c) => acc + (((c?.limite_credito_utilizado || 0) > (c?.limite_credito || 0)) ? 1 : 0), 0);
-  }, [dados, nomeEntidade]);
-
-  const estoqueCriticoCount = useMemo(() => {
-    if (nomeEntidade !== 'Produto') return 0;
-    return (dados || []).reduce((acc, p) => acc + (((p?.estoque_atual ?? 0) < (p?.estoque_minimo ?? 0)) ? 1 : 0), 0);
-  }, [dados, nomeEntidade]);
-
-  // Contagem robusta com dedupe/cooldown (corrige zeros intermitentes em 429)
-  const { data: totalItemsCount = 0 } = useQuery({
-   queryKey: [...queryKey, 'total-count', empresaAtual?.id, grupoAtual?.id, buscaBackend, JSON.stringify(columnFilters)],
-   queryFn: async () => {
-     const filtro = buildFilterWithSearch();
-     try {
-       const response = await base44.functions.invoke('countEntities', {
-         entityName: nomeEntidade,
-         filter: filtro,
-         withGroupTotal: !!grupoAtual?.id
-       });
-       return response.data?.count || 0;
-     } catch (err) {
-       return 0;
-     }
-   },
-   enabled: (() => { 
-     const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; 
-     const c=m[nomeEntidade]||'empresa_id'; 
-     const fc=getFiltroContexto(c, true)||{}; 
-     const props=(entitySchema&&entitySchema.properties)||{};
-     const hasGroupField=Object.prototype.hasOwnProperty.call(props,'group_id');
-     const hasCtxField=Object.prototype.hasOwnProperty.call(props,c);
-     if(!hasGroupField && !hasCtxField) return true; 
-     return !!(fc[c]||fc.group_id); 
-   })(),
-   keepPreviousData: true,
-   placeholderData: (prev) => prev ?? 0,
-   staleTime: 120000,
-   refetchOnWindowFocus: false,
-   refetchOnReconnect: false,
-   retry: 1
+  const { data: dados = [], isLoading, isFetching, refetch, error } = useEntityData({
+    nomeEntidade, filtro, sortField, sortDirection,
+    limit: itemsPerPage, skip, enabled: hasScope
   });
 
-  const { data: groupTotalCount = null } = useQuery({
-    queryKey: ['group-total', nomeEntidade, grupoAtual?.id],
-    queryFn: async () => {
-      if (!grupoAtual?.id) return null;
-      const res = await base44.functions.invoke('countEntities', { entityName: nomeEntidade, filter: { group_id: grupoAtual.id } });
-      return res.data?.count ?? 0;
-    },
-    enabled: !!grupoAtual?.id,
-    keepPreviousData: true,
-    staleTime: 60000,
+  const { data: totalCount = 0 } = useEntityCount({
+    nomeEntidade, filtro, enabled: hasScope
   });
 
-  const hasMore = (accDados.length < (totalItemsCount || 0));
-  const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
-  
-  const invalidateAllRelated = useCallback(async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey }),
-      queryClient.invalidateQueries({ queryKey: [...queryKey, 'total-count'] }),
-      ...aliasKeys.map((k) => queryClient.invalidateQueries({ queryKey: [k] }))
-    ]);
-  }, [queryClient, queryKey, aliasKeys, columnFilters]);
-
-  // Infinite scroll: acumular páginas
-  useEffect(() => {
-    if (!Array.isArray(dados)) return;
-    if (currentPage === 1) {
-      setAccDados(dados);
-    } else if (dados.length) {
-      setAccDados(prev => {
-        const seen = new Set(prev.map(i => i.id));
-        const merged = prev.slice();
-        dados.forEach(i => { if (!seen.has(i.id)) merged.push(i); });
-        return merged;
-      });
-    }
-  }, [dados, currentPage]);
-
-  // Reset ao mudar filtros/ordenacao/busca
-  useEffect(() => {
-    // Mantém os dados anteriores (keepPreviousData) para evitar "branco" durante transições
-    setCurrentPage(1);
-  }, [nomeEntidade, JSON.stringify(filtroBase), sortField, sortDirection, itemsPerPage, buscaBackend, JSON.stringify(columnFilters)]);
-
-  // Observer para carregar mais
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    if (!hasMore) return;
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          if (!isFetching && hasMore) setCurrentPage(p => p + 1);
-        }
-      });
-    }, { root: null, rootMargin: '200px', threshold: 0 });
-    obs.observe(el);
-    return () => { try { obs.unobserve(el); } catch {} };
-  }, [sentinelRef, isFetching, hasMore]);
-
-  const lastInvalidateAtRef = useRef(0);
-  React.useEffect(() => {
-    const unsubscribe = base44.entities[nomeEntidade].subscribe((evt) => {
-      if (!autoRefresh) return;
-      const now = Date.now();
-
-      // Atualização OTIMISTA e instantânea, sem "pulo" da UI
-      if (evt?.data && evt?.id) {
-        setAccDados((prev) => {
-          const list = Array.isArray(prev) ? [...prev] : [];
-          const idx = list.findIndex((i) => i.id === evt.id);
-          if (evt.type === 'create') {
-            // Insere no topo apenas se a paginação estiver na primeira página
-            if (currentPage === 1) {
-              // Evita duplicar
-              if (idx === -1) list.unshift(evt.data);
-            }
-          } else if (evt.type === 'update') {
-            if (idx !== -1) list[idx] = { ...list[idx], ...evt.data };
-          } else if (evt.type === 'delete') {
-            if (idx !== -1) list.splice(idx, 1);
-          }
-          return list;
-        });
-      }
-
-      // Debounce leve para invalidar dados de backend sem travar a IU
-      if (now - lastInvalidateAtRef.current < 800) return;
-      lastInvalidateAtRef.current = now;
-      // Invalidação assíncrona: mantém keepPreviousData ativo e evita "piscadas"
-      setTimeout(() => { invalidateAllRelated(); }, 50);
-    });
-    return unsubscribe;
-  }, [nomeEntidade, invalidateAllRelated, columnFilters, autoRefresh, currentPage]);
-
-  const dadosBuscadosEOrdenados = useMemo(() => {
-    const baseRows = (accDados && accDados.length) ? accDados : dados;
-    let resultado = [...baseRows];
-
-    // Ordenação passa a ser 100% server-side (entityListSorted)
-    // Mantemos apenas filtros adicionais/IA no cliente para não conflitar com o backend
-    
-    if (filtroAdicional && typeof filtroAdicional === 'function') {
-      resultado = resultado.filter(filtroAdicional);
-    }
-    // IA leve: clientes com limite de crédito estourado
-    if (iaFiltroAtivo && nomeEntidade === 'Cliente') {
-      resultado = resultado.filter(c => (c?.limite_credito_utilizado || 0) > (c?.limite_credito || 0));
-    }
-    if (iaFiltroAtivo && nomeEntidade === 'Produto') {
-      resultado = resultado.filter(p => (p?.estoque_atual ?? 0) < (p?.estoque_minimo ?? 0));
-    }
-    
-    return resultado;
+  // Filtros de IA (lado cliente, leve)
+  const dadosFiltrados = useMemo(() => {
+    let result = Array.isArray(dados) ? [...dados] : [];
+    if (filtroAdicional && typeof filtroAdicional === 'function') result = result.filter(filtroAdicional);
+    if (iaFiltroAtivo && nomeEntidade === 'Cliente') result = result.filter(c => (c?.condicao_comercial?.limite_credito_utilizado || 0) > (c?.condicao_comercial?.limite_credito || 0));
+    if (iaFiltroAtivo && nomeEntidade === 'Produto') result = result.filter(p => (p?.estoque_atual ?? 0) < (p?.estoque_minimo ?? 0));
+    return result;
   }, [dados, filtroAdicional, iaFiltroAtivo, nomeEntidade]);
 
-  const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
-  
+  const allSelected = dadosFiltrados.length > 0 && selectedIds.size === dadosFiltrados.length;
+
+  const iaCreditoCount = useMemo(() => nomeEntidade !== 'Cliente' ? 0 : dados.filter(c => (c?.condicao_comercial?.limite_credito_utilizado || 0) > (c?.condicao_comercial?.limite_credito || 0)).length, [dados, nomeEntidade]);
+  const estoqueCount = useMemo(() => nomeEntidade !== 'Produto' ? 0 : dados.filter(p => (p?.estoque_atual ?? 0) < (p?.estoque_minimo ?? 0)).length, [dados, nomeEntidade]);
+
+  // Invalidação de queries
+  const override = legacyQueryKey ?? queryKeyOverride;
+  const queryKey = Array.isArray(override) ? override : [override || nomeEntidade.toLowerCase()];
+
+  const invalidate = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ['vue', nomeEntidade] });
+    await queryClient.invalidateQueries({ queryKey: ['vue-count', nomeEntidade] });
+    await queryClient.invalidateQueries({ queryKey });
+  }, [queryClient, nomeEntidade, queryKey]);
+
+  // Realtime subscribe
+  useEffect(() => {
+    if (!base44.entities?.[nomeEntidade]?.subscribe) return;
+    const unsub = base44.entities[nomeEntidade].subscribe((evt) => {
+      if (!autoRefresh) return;
+      const now = Date.now();
+      if (now - lastInvalidateRef.current < 1000) return;
+      lastInvalidateRef.current = now;
+      setTimeout(() => invalidate(), 80);
+    });
+    return () => { if (typeof unsub === 'function') unsub(); };
+  }, [nomeEntidade, autoRefresh, invalidate]);
+
+  // Handlers ordenação
+  const aplicarOrdenacao = useCallback((val) => {
+    const m = ORDENACAO_MAP[val] || { f: 'updated_date', d: 'desc' };
+    setOrdenacao(val);
+    setSortField(m.f);
+    setSortDirection(m.d);
+    setCurrentPage(1);
+  }, []);
+
+  const handleSortChange = useCallback((field, direction) => {
+    setSortField(field);
+    setSortDirection(direction);
+    setOrdenacao('');
+    setCurrentPage(1);
+  }, []);
+
+  // Seleção
   const toggleSelectAll = useCallback(() => {
-    const ns = allSelected ? new Set() : new Set(dadosBuscadosEOrdenados.map(i => i.id));
+    const ns = allSelected ? new Set() : new Set(dadosFiltrados.map(i => i.id));
     setSelectedIds(ns);
     if (typeof onSelectionChange === 'function') onSelectionChange(ns);
-  }, [allSelected, dadosBuscadosEOrdenados, onSelectionChange, columnFilters]);
+  }, [allSelected, dadosFiltrados, onSelectionChange]);
 
   const toggleItem = useCallback((id) => {
     setSelectedIds(prev => {
       const ns = new Set(prev);
-      if (ns.has(id)) ns.delete(id); else ns.add(id);
+      ns.has(id) ? ns.delete(id) : ns.add(id);
       if (typeof onSelectionChange === 'function') onSelectionChange(ns);
       return ns;
     });
-  }, [onSelectionChange, columnFilters]);
-  
-  const excluirSelecionadosIds = async (ids) => {
-    if (!ids || ids.length === 0) return;
-    // Remoção otimista imediata (sem travar UI)
-    setAccDados(prev => Array.isArray(prev) ? prev.filter(i => !ids.includes(i.id)) : prev);
-    setSelectedIds(new Set());
-    try { toast({ title: `🗑️ Excluindo ${ids.length} registro(s)…` }); } catch {}
+  }, [onSelectionChange]);
+
+  const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
+
+  // CRUD
+  const excluirIds = async (ids) => {
+    if (!ids?.length) return;
     try {
-      await Promise.all(Array.from(ids).map(id => deleteInContext(nomeEntidade, id)));
-      try { await base44.entities.AuditLog.create({ acao: 'Exclusão', modulo: moduloPermissao, entidade: nomeEntidade, descricao: `Exclusão em massa: ${ids.length} registro(s)`, data_hora: new Date().toISOString() }); } catch {}
-    } finally {
-      await invalidateAllRelated();
+      await Promise.all(ids.map(id => deleteInContext(nomeEntidade, id)));
+      setSelectedIds(new Set());
+      toast({ title: `✅ ${ids.length} registro(s) excluído(s)!` });
+      await invalidate();
+    } catch (err) {
+      toast({ title: '❌ Erro ao excluir', description: err.message, variant: 'destructive' });
     }
   };
 
-  const excluirSelecionados = async () => {
-    if (selectedIds.size === 0) return;
-    await excluirSelecionadosIds(Array.from(selectedIds));
-  };
+  const abrirEdicao = useCallback((item) => {
+    if (!componenteEdicao) return;
+    let winId;
+    const closeSelf = () => closeWindow(winId);
+    const handleSubmit = async (formData) => {
+      try {
+        if (formData._action === 'delete') {
+          await deleteInContext(nomeEntidade, formData.id);
+          toast({ title: `✅ Excluído!` });
+        } else if (formData.id) {
+          await updateInContext(nomeEntidade, formData.id, formData, campoEmpresa);
+          toast({ title: `✅ Atualizado!` });
+        } else {
+          await createInContext(nomeEntidade, formData, campoEmpresa);
+          toast({ title: `✅ Criado!` });
+        }
+        await invalidate();
+        closeSelf();
+      } catch (err) {
+        toast({ title: '❌ Erro', description: err.message, variant: 'destructive' });
+      }
+    };
+    const props = {
+      [nomeEntidade.toLowerCase()]: item,
+      produto: item, cliente: item, fornecedor: item,
+      windowMode: true, closeWindow: closeSelf,
+      onSubmit: handleSubmit,
+      onSuccess: async () => { await invalidate(); closeSelf(); }
+    };
+    winId = openWindow(componenteEdicao, props, {
+      title: item ? `✏️ Editar ${tituloDisplay}` : `✨ Novo ${tituloDisplay}`,
+      width: 1000, height: 700,
+      onClose: invalidate,
+      uniqueKey: `edit-${nomeEntidade}-${item?.id || 'new'}`
+    });
+  }, [componenteEdicao, nomeEntidade, tituloDisplay, campoEmpresa, createInContext, updateInContext, deleteInContext, invalidate, openWindow, closeWindow, toast]);
 
-  const camposExibicao = camposPrincipais.length > 0 
-    ? camposPrincipais 
-    : Object.keys(dadosBuscadosEOrdenados[0] || {}).filter(k => 
-        !['id', 'created_date', 'updated_date', 'created_by'].includes(k)
-      ).slice(0, 6);
+  const abrirVisualizacao = useCallback((item) => {
+    if (!componenteVisualizacao) return;
+    let winId;
+    const closeSelf = () => closeWindow(winId);
+    winId = openWindow(componenteVisualizacao,
+      { [nomeEntidade.toLowerCase()]: item, id: item.id, closeWindow: closeSelf },
+      { title: `👁️ ${tituloDisplay}`, width: 900, height: 600, uniqueKey: `view-${nomeEntidade}-${item.id}` }
+    );
+  }, [componenteVisualizacao, nomeEntidade, tituloDisplay, openWindow, closeWindow]);
 
-  const exportarSelecionados = (ids) => {
-    const set = new Set(ids || []);
-    const somenteSelecionados = dadosBuscadosEOrdenados.filter(i => set.has(i.id));
-    const cols = camposExibicao;
-    const csv = [
-      cols.join(','),
-      ...somenteSelecionados.map(item => cols.map(campo => JSON.stringify(item[campo] || '')).join(','))
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
+  // Exportar CSV
+  const exportar = () => {
+    const cols = colunas.map(c => c.campo);
+    const rows = selectedIds.size > 0 ? dadosFiltrados.filter(i => selectedIds.has(i.id)) : dadosFiltrados;
+    const csv = [cols.join(','), ...rows.map(r => cols.map(c => JSON.stringify(r[c] ?? '')).join(','))].join('\n');
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `${nomeEntidade}_selecionados_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    try { base44.entities.AuditLog.create({ acao: 'Exportação', modulo: moduloPermissao, entidade: nomeEntidade, descricao: `Exportados ${somenteSelecionados.length} selecionado(s)`, data_hora: new Date().toISOString() }); } catch {}
-  };
-
-  const exportarDados = () => {
-    const csv = [
-      camposExibicao.join(','),
-      ...dadosBuscadosEOrdenados.map(item => 
-        camposExibicao.map(campo => 
-          JSON.stringify(item[campo] || '')
-        ).join(',')
-      )
-    ].join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     a.download = `${nomeEntidade}_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
-    URL.revokeObjectURL(url);
-    try { base44.entities.AuditLog.create({ acao: 'Exportação', modulo: moduloPermissao, entidade: nomeEntidade, descricao: `Exportados ${dadosBuscadosEOrdenados.length} registro(s)`, data_hora: new Date().toISOString() }); } catch {}
   };
 
-  const criarSugestoes = async () => {
-    const campos = (Array.isArray(camposPrincipais) && camposPrincipais.length > 0)
-      ? camposPrincipais
-      : ['nome', 'descricao'];
-    const baseNome = tituloDisplay || nomeEntidade;
-    const exemplos = [1,2,3].map((i) => {
-      const obj = {};
-      campos.forEach((c) => {
-        const lc = c.toLowerCase();
-        if (lc.includes('nome')) obj[c] = `${baseNome} ${i}`;
-        else if (lc.includes('descr')) obj[c] = `Sugestão automática (${i})`;
-        else if (lc.includes('ativo')) obj[c] = true;
-        else obj[c] = obj[c] ?? '';
-      });
-      return obj;
+  // Colunas para ERPDataTable
+  const tabelaColunas = useMemo(() => colunas.map(c => ({
+    key: c.campo,
+    label: c.label,
+    isNumeric: c.isNumeric,
+    render: c.campo === 'status' || c.campo.endsWith('_status')
+      ? (row) => {
+          const val = row[c.campo];
+          return val ? <Badge variant="outline" className={`text-xs ${getStatusClass(val)}`}>{val}</Badge> : null;
+        }
+      : undefined
+  })), [colunas]);
+
+  // Dados para tabela: mapeia campos virtuais (_nome, _descricao) para generics
+  const tabelaDados = useMemo(() => dadosFiltrados.map(item => {
+    const row = { id: item.id };
+    colunas.forEach(c => {
+      if (c.campo === '_nome') row[c.campo] = item.nome || item.nome_completo || item.razao_social || item.nome_fantasia || item.descricao || item.titulo || '';
+      else if (c.campo === '_descricao') row[c.campo] = item.descricao || item.observacoes || item.cargo || '';
+      else row[c.campo] = item[c.campo] ?? '';
     });
-    const ENTITY_CONTEXT_FIELD = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
-    const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
-    await Promise.all(exemplos.map((e) => createInContext(nomeEntidade, e, campoEmpresa)));
-    await invalidateAllRelated();
-  };
+    return row;
+  }), [dadosFiltrados, colunas]);
 
-  const handleAbrirNovo = async () => {
-    if (componenteEdicao) return abrirEdicao(null);
-    // Se n e3o houver componente de edi e7 e3o, cria 3 sugest f5es quando a lista est e1 vazia
-    if ((totalItemsCount || 0) === 0) {
-      const exemplos = [1,2,3].map((i) => ({
-        nome: `${tituloDisplay || nomeEntidade} ${i}`,
-        descricao: `Cadastro sugerido automaticamente (${i})`,
-        ativo: true
-      }));
-      await Promise.all(exemplos.map((e) => createInContext(nomeEntidade, e)));
-      await invalidateAllRelated();
-    }
-  };
+  const camposCard = colunas.slice(0, 4).map(c => c.campo);
 
-  const abrirEdicao = (item) => {
-    if (componenteEdicao) {
-      let winId;
-      const closeSelf = () => closeWindow(winId);
+  const Wrapper = ({ children }) => windowMode
+    ? <div className="w-full h-full flex flex-col overflow-hidden">{children}</div>
+    : <>{children}</>;
 
-      const handleSubmitForm = async (formData) => {
-        try {
-          if (formData._action === 'delete') {
-            await deleteInContext(nomeEntidade, formData.id);
-            toast({ title: `✅ ${nomeEntidade} excluído!` });
-          } else if (formData.id) {
-            const ENTITY_CONTEXT_FIELD = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
-            const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
-            await updateInContext(nomeEntidade, formData.id, formData, campoEmpresa);
-            toast({ title: `✅ ${nomeEntidade} atualizado!` });
-          } else {
-            const ENTITY_CONTEXT_FIELD = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
-            const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
-            await createInContext(nomeEntidade, formData, campoEmpresa);
-            toast({ title: `✅ ${nomeEntidade} criado!` });
-          }
-          await invalidateAllRelated();
-          closeSelf();
-        } catch(err) {
-          toast({ title: `❌ Erro`, description: err.message, variant: "destructive" });
-        }
-      };
-
-      const finalProps = {
-        [nomeEntidade.toLowerCase()]: item,
-        produto: item,
-        cliente: item,
-        fornecedor: item,
-        windowMode: true,
-        closeWindow: closeSelf,
-        onSubmit: handleSubmitForm,
-        onSuccess: async () => {
-          await invalidateAllRelated();
-          closeSelf();
-        }
-      };
-
-      winId = openWindow(
-        componenteEdicao,
-        finalProps,
-        {
-          title: item ? `✏️ Editar ${tituloDisplay}`: `✨ Novo ${tituloDisplay}`,
-          width: 1000,
-          height: 700,
-          onClose: invalidateAllRelated,
-          uniqueKey: `edit-${nomeEntidade}-${item?.id || 'new'}`
-        }
-      );
-    }
-  };
-
-  const abrirVisualizacao = (item) => {
-    if (componenteVisualizacao) {
-      let winId;
-      const closeSelf = () => closeWindow(winId);
-      winId = openWindow(
-        componenteVisualizacao,
-        { [nomeEntidade.toLowerCase()]: item, id: item.id, closeWindow: closeSelf },
-        {
-          title: `👁️ Detalhes de ${tituloDisplay}`,
-          width: 900,
-          height: 600,
-          onClose: invalidateAllRelated,
-          uniqueKey: `view-${nomeEntidade}-${item.id}`
-        }
-      );
-    }
-  };
-
-  const toggleExpandir = (id) => {
-    setExpandidos(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  const handleOrdenarPorColuna = (campo) => {
-    // aplica ordenação globalmente (UI + backend) sem travas
-    setCurrentPage(1);
-    const nextDir = (colunaOrdenacao === campo && direcaoOrdenacao === 'asc') ? 'desc' : 'asc';
-    setColunaOrdenacao(campo);
-    setDirecaoOrdenacao(nextDir);
-    setOrdenacao('');
-    setSortField(campo);
-    setSortDirection(nextDir);
-  }
-
-
-  const Wrapper = ({ children }) => windowMode ? (
-    <div className="w-full h-full flex flex-col overflow-hidden">{children}</div>
-  ) : <>{children}</>;
+  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
   return (
     <Wrapper>
-      <Card className={`${windowMode ? 'h-full flex flex-col' : ''} rounded-sm shadow-md hover:shadow-lg transition-transform`}>
-        <CardHeader className="sticky top-0 z-10 border-b bg-gradient-to-r from-blue-50 to-purple-50 backdrop-blur supports-[backdrop-filter]:bg-white/70">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {Icone && <Icone className="w-6 h-6 text-blue-600" />}
+      <Card className={`${windowMode ? 'h-full flex flex-col' : ''} rounded-sm shadow-md`}>
+        {/* ─── Header ─────────────────────────────────────────────────────── */}
+        <CardHeader className="sticky top-0 z-10 border-b bg-gradient-to-r from-blue-50 to-purple-50 backdrop-blur supports-[backdrop-filter]:bg-white/70 pb-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-3 min-w-0">
+              {Icone && <div className="p-2 rounded-sm bg-blue-100"><Icone className="w-5 h-5 text-blue-700" /></div>}
               <div>
-                <CardTitle className="text-xl flex items-center gap-2">
+                <CardTitle className="text-lg flex items-center gap-2 flex-wrap">
                   {tituloDisplay}
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                  ⚡ Real-Time
-                  </Badge>
-                  {groupTotalCount != null && (
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                    Grupo: {groupTotalCount}
-                  </Badge>
-                  )}
-                  {nomeEntidade === 'Cliente' && (
-                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                      Limite estourado: {iaCreditoEstouradoCount}
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">⚡ RT</Badge>
+                  {nomeEntidade === 'Cliente' && iaCreditoCount > 0 && (
+                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-xs cursor-pointer" onClick={() => setIaFiltroAtivo(v => !v)}>
+                      Limite estourado: {iaCreditoCount}
                     </Badge>
                   )}
-                  {nomeEntidade === 'Produto' && (
-                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                      Estoque crítico: {estoqueCriticoCount}
+                  {nomeEntidade === 'Produto' && estoqueCount > 0 && (
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs cursor-pointer" onClick={() => setIaFiltroAtivo(v => !v)}>
+                      Estoque crítico: {estoqueCount}
                     </Badge>
                   )}
                 </CardTitle>
-                <p className="text-sm text-slate-600 mt-1">
-                  {dadosBuscadosEOrdenados.length} de {totalItemsCount > 0 ? totalItemsCount : '…'} registros {groupTotalCount != null && (<span className="ml-2 text-slate-500">• Grupo: {groupTotalCount}</span>)}
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {isFetching && !isLoading ? 'Atualizando…' : `${dadosFiltrados.length} de ${totalCount} registros`}
+                  {totalPages > 1 && ` • Pág. ${currentPage}/${totalPages}`}
                 </p>
               </div>
             </div>
+
             <div className="flex items-center gap-2 flex-wrap">
-              {nomeEntidade === 'Cliente' && iaCreditoEstouradoCount > 0 && (
-                <Button
-                  variant={iaFiltroAtivo ? 'default' : 'outline'}
-                  size="sm"
-                  className={iaFiltroAtivo ? 'bg-red-600 hover:bg-red-700' : 'border-red-300 text-red-700'}
-                  onClick={() => { setIaFiltroAtivo(v => !v); setCurrentPage(1); }}
-                >
-                  {iaFiltroAtivo ? 'Remover filtro IA' : 'Filtrar limite estourado'}
-                </Button>
-              )}
-              {nomeEntidade === 'Produto' && estoqueCriticoCount > 0 && (
-                <Button
-                  variant={iaFiltroAtivo ? 'default' : 'outline'}
-                  size="sm"
-                  className={iaFiltroAtivo ? 'bg-amber-600 hover:bg-amber-700' : 'border-amber-300 text-amber-700'}
-                  onClick={() => { setIaFiltroAtivo(v => !v); setCurrentPage(1); }}
-                >
-                  {iaFiltroAtivo ? 'Remover filtro IA' : 'Filtrar estoque crítico'}
-                </Button>
-              )}
-              <div className="hidden sm:flex items-center gap-2 pl-2 border-l">
-                <span className="text-xs text-slate-600">Auto atualizar</span>
+              <div className="hidden sm:flex items-center gap-1.5">
+                <span className="text-xs text-slate-500">Auto</span>
                 <Switch checked={autoRefresh} onCheckedChange={setAutoRefresh} />
               </div>
               <ProtectedAction module={moduloPermissao} action="criar" mode="disable">
-                <Button variant="default" size="sm" onClick={handleAbrirNovo} data-permission={`${moduloPermissao}.Cadastro.criar`} data-sensitive>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo
+                <Button size="sm" onClick={() => abrirEdicao(null)} className="bg-blue-600 hover:bg-blue-700 rounded-sm">
+                  <Plus className="w-4 h-4 mr-1" /> Novo
                 </Button>
               </ProtectedAction>
-              <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-                Atualizar
+              <Button variant="outline" size="sm" className="rounded-sm" onClick={() => refetch()} disabled={isFetching}>
+                <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
               </Button>
               <ProtectedAction module={moduloPermissao} action="exportar" mode="disable">
-                <Button variant="outline" size="sm" onClick={exportarDados} disabled={isLoading || isFetching || (dadosBuscadosEOrdenados.length === 0)} data-permission={`${moduloPermissao}.Relatorios.exportar`} data-sensitive>
-                  <Download className="w-4 h-4 mr-2" />
-                  Exportar
+                <Button variant="outline" size="sm" className="rounded-sm" onClick={exportar} disabled={dadosFiltrados.length === 0}>
+                  <Download className="w-4 h-4" />
                 </Button>
               </ProtectedAction>
-              <Button variant="outline" size="sm" onClick={toggleSelectAll} disabled={isLoading || isFetching}>
-                {allSelected ? 'Limpar' : 'Selecionar Todos'}
-              </Button>
               <ProtectedAction module={moduloPermissao} action="excluir" mode="disable">
-                <Button variant="outline" size="sm" onClick={excluirSelecionados} disabled={isLoading || isFetching || selectedIds.size === 0 || !hasPermission(moduloPermissao, 'Cadastro', 'excluir')} className="border-red-300 text-red-700" data-permission={`${moduloPermissao}.Cadastro.excluir`} data-sensitive>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Excluir ({selectedIds.size})
+                <Button variant="outline" size="sm" className="rounded-sm border-red-300 text-red-600 hover:bg-red-50" onClick={() => excluirIds(Array.from(selectedIds))} disabled={selectedIds.size === 0}>
+                  <Trash2 className="w-4 h-4 mr-1" /> {selectedIds.size > 0 ? selectedIds.size : ''}
                 </Button>
               </ProtectedAction>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
+          {/* Barra de busca e controles */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3">
             <SearchInputIsolado
-              value={buscaLocal}
-              onChange={(val) => setBuscaLocal(val)}
-              placeholder="🔍 Busca universal em todos os campos..."
+              value={busca} onChange={setBusca}
+              placeholder="🔍 Busca universal rápida…"
               className="flex-1"
-              debounceMs={400}
+              debounceMs={350}
             />
-            
-            <Select value={ordenacao || 'recent'} onValueChange={(val) => {
-              setCurrentPage(1);
-              setOrdenacao(val);
-              setColunaOrdenacao(null);
-              applyOrdenacaoBackend(val);
-            }}>
-              <SelectTrigger className="w-full sm:w-64">
+            <Select value={ordenacao || 'recent'} onValueChange={aplicarOrdenacao}>
+              <SelectTrigger className="w-full sm:w-52 rounded-sm text-sm">
                 <div className="flex items-center gap-2">
-                  <ArrowUpDown className="w-4 h-4" />
-                  <SelectValue placeholder="Organizar por..." />
+                  <ArrowUpDown className="w-3.5 h-3.5" />
+                  <SelectValue placeholder="Ordenar…" />
                 </div>
               </SelectTrigger>
-              <SelectContent position="popper" sideOffset={5}>
-                {opcoesOrdenacao.map(opcao => (
-                  <SelectItem key={opcao.value} value={opcao.value}>
-                    {opcao.label}
-                  </SelectItem>
+              <SelectContent>
+                {opcoesOrdenacao.map(o => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-
-            <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
-              <Button
-                variant={visualizacao === 'table' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setVisualizacao('table')}
-                className="h-8"
-              >
-                <TableIcon className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={visualizacao === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setVisualizacao('grid')}
-                className="h-8"
-              >
-                <Grid3x3 className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={visualizacao === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setVisualizacao('list')}
-                className="h-8"
-              >
-                <List className="w-4 h-4" />
-              </Button>
+            <div className="flex items-center gap-1 border rounded-sm p-1 bg-white">
+              {[['table', TableIcon], ['grid', Grid3x3], ['list', List]].map(([v, Icon]) => (
+                <Button key={v} variant={visualizacao === v ? 'default' : 'ghost'} size="sm" className="h-7 w-7 p-0 rounded-sm" onClick={() => setVisualizacao(v)}>
+                  <Icon className="w-3.5 h-3.5" />
+                </Button>
+              ))}
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className={`p-6 ${windowMode ? 'flex-1 overflow-y-auto' : ''}`}>
-          {error ? (
-            <div className="text-center py-12">
-              <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-3" />
-              <p className="text-slate-900 font-semibold mb-2">Erro ao carregar</p>
-              <Button onClick={() => refetch()} variant="outline">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Tentar Novamente
+        {/* ─── Conteúdo ────────────────────────────────────────────────────── */}
+        <CardContent className={`p-4 ${windowMode ? 'flex-1 overflow-y-auto' : ''}`}>
+          {!hasScope && (
+            <div className="mb-3 rounded-sm border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
+              Selecione uma empresa ou grupo para carregar os registros.
+            </div>
+          )}
+
+          {error && (
+            <div className="text-center py-10">
+              <AlertCircle className="w-10 h-10 mx-auto text-red-400 mb-2" />
+              <p className="text-slate-600 mb-3">Erro ao carregar</p>
+              <Button size="sm" variant="outline" onClick={() => refetch()}>
+                <RefreshCw className="w-4 h-4 mr-2" /> Tentar novamente
               </Button>
             </div>
-          ) : (
+          )}
+
+          {!error && (
             <>
-              {!__canList && (
-                <div className="mb-3 rounded-sm border border-amber-300 bg-amber-50/80 backdrop-blur px-3 py-2 text-amber-800 text-sm">
-                  Selecione uma empresa ou ative o contexto de grupo para carregar os registros.
-                </div>
-              )}
-              {(isLoading || (isFetching && (dadosBuscadosEOrdenados?.length || 0) === 0)) && visualizacao !== 'table' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <Card key={`sk-card-${i}`} className="border rounded-sm">
-                      <CardContent className="p-4 space-y-3">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-4 w-1/2" />
-                        <div className="flex gap-2 pt-2">
-                          <Skeleton className="h-8 w-20" />
-                          <Skeleton className="h-8 w-20" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-               {visualizacao === 'table' && (
-                <div className="overflow-x-auto">
-                   <ERPDataTable
-                            columns={colunasOrdenacao.map(c => ({
-                              key: c.campo,
-                              label: c.label,
-                              isNumeric: c.isNumeric,
-                              render: c.campo === 'status'
-                                ? ((row) => {
-                                    const cls = getStatusBadgeClass(nomeEntidade, row.status);
-                                    return <Badge variant="outline" className={cls}>{row.status || '-'}</Badge>;
-                                  })
-                                : undefined
-                            }))}
-                            data={dadosBuscadosEOrdenados.map(item => {
-                              const row = { id: item.id };
-                              colunasOrdenacao.forEach(c => { row[c.campo] = c.getValue ? c.getValue(item) : item[c.campo]; });
-                              return row;
-                            })}
-                            entityName={nomeEntidade}
-                            sortField={sortField || (getDefaultSortForEntity().field)}
-                            sortDirection={sortDirection || (getDefaultSortForEntity().direction)}
-                            onSortChange={(field, direction) => {
-                              // Ordenação otimista local imediata
-                              setColunaOrdenacao(field);
-                              setDirecaoOrdenacao(direction);
-                              setOrdenacao('');
-                              setCurrentPage(1);
-                              // Aplicação imediata no backend (sem debounce pesado)
-                              setSortField(field);
-                              setSortDirection(direction);
-                              sortPendingRef.current = false;
-                            }}
-                            onToggleSelectAll={toggleSelectAll}
-                            onToggleItem={(id) => toggleItem(id)}
-                            allSelected={allSelected}
-                            selectedIds={selectedIds}
-                            enableColumnFilters
-                            columnFilters={columnFilters}
-                            onColumnFiltersChange={(next) => { setColumnFilters(next); setCurrentPage(1); }}
-                            hiddenColumns={hiddenCols}
-                            onHiddenColumnsChange={setHiddenCols}
-                            footerTotals
-                            page={currentPage}
-                            pageSize={itemsPerPage}
-                            totalItems={Math.max(totalItemsCount || 0, dadosBuscadosEOrdenados.length)}
-                            onPageChange={(p) => { setCurrentPage(p); setSelectedIds(new Set()); }}
-                            onPageSizeChange={(n) => { setItemsPerPage(n); setCurrentPage(1); setSelectedIds(new Set()); }}
-                            isLoading={isLoading || isFetching} // skeleton rows shown when loading/refetch
-                            rowActionsRender={(row) => (
-                              <div className="inline-flex items-center gap-1">
-                         {componenteVisualizacao && (
-                           <Button size="sm" variant="ghost" onClick={() => abrirVisualizacao(dadosBuscadosEOrdenados.find(i => i.id === row.id))}>
-                             <Eye className="w-4 h-4" />
-                           </Button>
-                         )}
-                         {componenteEdicao && (
-                           <ProtectedAction module={moduloPermissao} action="editar" mode="disable">
-                             <Button size="sm" variant="ghost" onClick={() => abrirEdicao(dadosBuscadosEOrdenados.find(i => i.id === row.id))}>
-                               <Edit2 className="w-4 h-4" />
-                             </Button>
-                           </ProtectedAction>
-                         )}
-                       </div>
-                     )}
-                     rowContextMenuItems={(row) => {
-                       const item = dadosBuscadosEOrdenados.find(i => i.id === row.id);
-                       const items = [];
-                       if (componenteVisualizacao) items.push({ key: 'ver', label: 'Ver', action: () => abrirVisualizacao(item) });
-                       if (componenteEdicao && hasPermission(moduloPermissao, 'Cadastro', 'editar')) {
-                         items.push({ key: 'editar', label: 'Editar', action: () => abrirEdicao(item) });
-                       }
-                       if (hasPermission(moduloPermissao, 'Cadastro', 'excluir')) {
-                         items.push({ key: 'excluir', label: 'Excluir', action: () => excluirSelecionadosIds([row.id]) });
-                       }
-                       return items;
-                     }}
-                     showBulkBar
-                     onBulkDeleteSelected={(ids) => excluirSelecionadosIds(ids)}
-                     onBulkExportSelected={(ids) => exportarSelecionados(ids)}
-                   />
-                 </div>
-
-              )}
-
-              {visualizacao === 'grid' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {dadosBuscadosEOrdenados.map((item) => (
-                    <Card key={item.id} className="border-2 hover:border-blue-400 rounded-sm shadow-md hover:shadow-lg transition">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <input type="checkbox" className="h-4 w-4" checked={selectedIds.has(item.id)} onChange={() => toggleItem(item.id)} />
-                        </div>
-                        <div className="space-y-2">
-                          {camposExibicao.slice(0, 3).map((campo) => {
-                            const valor = item[campo];
-                            if (!valor) return null;
-                            return (
-                              <div key={campo}>
-                                <p className="text-xs text-slate-500 uppercase">{campo.replace(/_/g, ' ')}</p>
-                                <p className="font-medium text-sm truncate">{String(valor)}</p>
-                              </div>
-                            );
-                          })}
-                          </div>
-                          {item.status && (
-                          <div className="mt-2">
-                            <Badge variant="outline" className={getStatusBadgeClass(nomeEntidade, item.status)}>{item.status}</Badge>
-                          </div>
-                          )}
-                          <div className="flex items-center gap-2 mt-4 pt-3 border-t">
-                          {componenteVisualizacao && (
-                            <Button size="sm" variant="outline" onClick={() => abrirVisualizacao(item)} className="flex-1">
-                              <Eye className="w-3 h-3 mr-1" />
-                              Ver
+              {/* ── Tabela ── */}
+              {visualizacao === 'table' && (
+                <div className="overflow-x-auto w-full">
+                  <ERPDataTable
+                    columns={tabelaColunas}
+                    data={tabelaDados}
+                    entityName={nomeEntidade}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSortChange={handleSortChange}
+                    onToggleSelectAll={toggleSelectAll}
+                    onToggleItem={toggleItem}
+                    allSelected={allSelected}
+                    selectedIds={selectedIds}
+                    enableColumnFilters
+                    columnFilters={columnFilters}
+                    onColumnFiltersChange={(next) => { setColumnFilters(next); setCurrentPage(1); }}
+                    hiddenColumns={hiddenCols}
+                    onHiddenColumnsChange={setHiddenCols}
+                    footerTotals
+                    page={currentPage}
+                    pageSize={itemsPerPage}
+                    totalItems={totalCount}
+                    onPageChange={(p) => { setCurrentPage(p); setSelectedIds(new Set()); }}
+                    onPageSizeChange={(n) => { setItemsPerPage(n); setCurrentPage(1); setSelectedIds(new Set()); }}
+                    isLoading={isLoading}
+                    autoPersistSort={false}
+                    showBulkBar
+                    onBulkDeleteSelected={(ids) => excluirIds(ids)}
+                    onBulkExportSelected={() => exportar()}
+                    rowActionsRender={(row) => (
+                      <div className="inline-flex items-center gap-1">
+                        {componenteVisualizacao && (
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-sm hover:bg-blue-50" onClick={() => abrirVisualizacao(dadosFiltrados.find(i => i.id === row.id))}>
+                            <Eye className="w-3.5 h-3.5 text-blue-600" />
+                          </Button>
+                        )}
+                        {componenteEdicao && (
+                          <ProtectedAction module={moduloPermissao} action="editar" mode="disable">
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-sm hover:bg-slate-100" onClick={() => abrirEdicao(dadosFiltrados.find(i => i.id === row.id))}>
+                              <Edit2 className="w-3.5 h-3.5 text-slate-600" />
                             </Button>
-                          )}
-                          {componenteEdicao && (
-                            <ProtectedAction module={moduloPermissao} action="editar" mode="disable">
-                              <Button size="sm" onClick={() => abrirEdicao(item)} className="flex-1">
-                                <Edit2 className="w-3 h-3 mr-1" />
-                                Editar
-                              </Button>
-                            </ProtectedAction>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          </ProtectedAction>
+                        )}
+                      </div>
+                    )}
+                    rowContextMenuItems={(row) => {
+                      const item = dadosFiltrados.find(i => i.id === row.id);
+                      const items = [];
+                      if (componenteVisualizacao) items.push({ key: 'ver', label: 'Ver detalhes', action: () => abrirVisualizacao(item) });
+                      if (componenteEdicao) items.push({ key: 'editar', label: 'Editar', action: () => abrirEdicao(item) });
+                      if (hasPermission(moduloPermissao, 'Cadastro', 'excluir')) items.push({ key: 'del', label: 'Excluir', action: () => excluirIds([row.id]) });
+                      return items;
+                    }}
+                  />
                 </div>
               )}
 
-              {visualizacao === 'list' && (
-                <div className="space-y-2">
-                  {dadosBuscadosEOrdenados.map((item) => (
-                    <Card key={item.id} className="border hover:border-blue-400 rounded-sm shadow-md hover:shadow-lg transition">
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <input type="checkbox" className="mr-3 h-4 w-4" checked={selectedIds.has(item.id)} onChange={() => toggleItem(item.id)} />
-                          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {camposExibicao.slice(0, 4).map((campo) => {
-                              const valor = item[campo];
-                              if (!valor) return null;
+              {/* ── Grid ── */}
+              {visualizacao === 'grid' && (
+                <div>
+                  {isLoading && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <Card key={i} className="rounded-sm"><CardContent className="p-4 space-y-2">
+                          <Skeleton className="h-4 w-24" /><Skeleton className="h-4 w-3/4" /><Skeleton className="h-4 w-1/2" />
+                        </CardContent></Card>
+                      ))}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {dadosFiltrados.map(item => (
+                      <Card key={item.id} className={`rounded-sm border transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${selectedIds.has(item.id) ? 'border-blue-400 ring-1 ring-blue-300' : 'hover:border-blue-300'}`}
+                        onClick={() => toggleItem(item.id)}>
+                        <CardContent className="p-3">
+                          <div className="flex items-start justify-between mb-2">
+                            <input type="checkbox" className="h-4 w-4 mt-0.5 rounded" checked={selectedIds.has(item.id)} onChange={() => toggleItem(item.id)} onClick={e => e.stopPropagation()} />
+                            {item.status && <Badge variant="outline" className={`text-xs ${getStatusClass(item.status)}`}>{item.status}</Badge>}
+                          </div>
+                          <div className="space-y-1.5">
+                            {camposCard.slice(0, 3).map(campo => {
+                              const val = item[campo];
+                              if (!val) return null;
                               return (
                                 <div key={campo}>
-                                  <p className="text-xs text-slate-500">{campo.replace(/_/g, ' ')}</p>
-                                  <p className="font-medium text-sm truncate">{String(valor)}</p>
+                                  <p className="text-xs text-slate-400 uppercase tracking-wide">{campo.replace(/_/g, ' ')}</p>
+                                  <p className="text-sm font-medium text-slate-800 truncate">{String(val)}</p>
                                 </div>
                               );
                             })}
                           </div>
-                          <div className="flex items-center gap-2 ml-4">
-                            <Button size="sm" variant="ghost" onClick={() => toggleExpandir(item.id)}>
-                              {expandidos[item.id] ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                            </Button>
+                          <div className="flex gap-2 mt-3 pt-2.5 border-t" onClick={e => e.stopPropagation()}>
                             {componenteVisualizacao && (
-                              <Button size="sm" variant="outline" onClick={() => abrirVisualizacao(item)}>
-                                <Eye className="w-4 h-4" />
+                              <Button size="sm" variant="outline" className="flex-1 rounded-sm text-xs h-7" onClick={() => abrirVisualizacao(item)}>
+                                <Eye className="w-3 h-3 mr-1" /> Ver
                               </Button>
                             )}
                             {componenteEdicao && (
-                              <ProtectedAction module={moduloPermissao} action="editar" mode="disable">
-                                <Button size="sm" onClick={() => abrirEdicao(item)}>
-                                  <Edit2 className="w-4 h-4" />
-                                </Button>
-                              </ProtectedAction>
+                              <Button size="sm" className="flex-1 rounded-sm text-xs h-7 bg-blue-600 hover:bg-blue-700" onClick={() => abrirEdicao(item)}>
+                                <Edit2 className="w-3 h-3 mr-1" /> Editar
+                              </Button>
                             )}
                           </div>
-                        </div>
-                        {expandidos[item.id] && (
-                          <div className="mt-3 pt-3 border-t grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {Object.entries(item)
-                              .filter(([key]) => !['id', 'created_date', 'updated_date', 'created_by'].includes(key))
-                              .map(([key, value]) => (
-                                <div key={key}>
-                                  <p className="text-xs text-slate-500">{key.replace(/_/g, ' ')}</p>
-                                  <p className="text-sm font-medium">{value ? String(value).substring(0, 100) : '-'}</p>
-                                </div>
-                              ))}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Paginação no grid */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 text-sm">
+                      <span className="text-slate-500">Pág. {currentPage}/{totalPages} • {totalCount} total</span>
+                      <div className="flex items-center gap-2">
+                        <select className="h-8 border rounded-sm px-2 text-sm" value={itemsPerPage} onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
+                          {[20, 50, 100].map(n => <option key={n} value={n}>{n}/pág</option>)}
+                        </select>
+                        <Button size="sm" variant="outline" className="rounded-sm" disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)}>Ant.</Button>
+                        <Button size="sm" variant="outline" className="rounded-sm" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)}>Próx.</Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {!isLoading && !isFetching && __canList && totalItemsCount === 0 && dadosBuscadosEOrdenados.length === 0 && (
+              {/* ── List ── */}
+              {visualizacao === 'list' && (
+                <div>
+                  {isLoading && (
+                    <div className="space-y-2 mb-4">
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <div key={i} className="h-12 border rounded-sm flex items-center px-4 gap-3">
+                          <Skeleton className="h-4 w-4 rounded" />
+                          <Skeleton className="h-4 w-48" />
+                          <Skeleton className="h-4 w-24 ml-auto" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="space-y-1.5">
+                    {dadosFiltrados.map(item => (
+                      <Card key={item.id} className={`rounded-sm border transition-all duration-150 hover:shadow-sm ${selectedIds.has(item.id) ? 'border-blue-400 bg-blue-50/30' : 'hover:border-slate-300'}`}>
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-3">
+                            <input type="checkbox" className="h-4 w-4 rounded flex-shrink-0" checked={selectedIds.has(item.id)} onChange={() => toggleItem(item.id)} />
+                            <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 min-w-0">
+                              {camposCard.slice(0, 4).map(campo => {
+                                const val = item[campo];
+                                if (!val) return null;
+                                return (
+                                  <div key={campo} className="min-w-0">
+                                    <p className="text-xs text-slate-400">{campo.replace(/_/g, ' ')}</p>
+                                    <p className="text-sm font-medium truncate">{String(val)}</p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {item.status && <Badge variant="outline" className={`text-xs flex-shrink-0 ${getStatusClass(item.status)}`}>{item.status}</Badge>}
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {componenteVisualizacao && (
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-sm" onClick={() => abrirVisualizacao(item)}>
+                                  <Eye className="w-3.5 h-3.5 text-slate-500" />
+                                </Button>
+                              )}
+                              {componenteEdicao && (
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-sm" onClick={() => abrirEdicao(item)}>
+                                  <Edit2 className="w-3.5 h-3.5 text-slate-500" />
+                                </Button>
+                              )}
+                              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 rounded-sm" onClick={() => setExpandidos(p => ({ ...p, [item.id]: !p[item.id] }))}>
+                                <Search className="w-3.5 h-3.5 text-slate-400" />
+                              </Button>
+                            </div>
+                          </div>
+                          {expandidos[item.id] && (
+                            <div className="mt-2 pt-2 border-t grid grid-cols-2 md:grid-cols-3 gap-2">
+                              {Object.entries(item).filter(([k]) => !['id', 'created_date', 'updated_date', 'created_by'].includes(k)).map(([k, v]) => (
+                                <div key={k}>
+                                  <p className="text-xs text-slate-400">{k.replace(/_/g, ' ')}</p>
+                                  <p className="text-xs font-medium">{v ? String(v).substring(0, 80) : '-'}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Paginação no list */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4 text-sm">
+                      <span className="text-slate-500">Pág. {currentPage}/{totalPages} • {totalCount} total</span>
+                      <div className="flex items-center gap-2">
+                        <select className="h-8 border rounded-sm px-2 text-sm" value={itemsPerPage} onChange={e => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
+                          {[20, 50, 100].map(n => <option key={n} value={n}>{n}/pág</option>)}
+                        </select>
+                        <Button size="sm" variant="outline" className="rounded-sm" disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)}>Ant.</Button>
+                        <Button size="sm" variant="outline" className="rounded-sm" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)}>Próx.</Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Empty state */}
+              {!isLoading && hasScope && dadosFiltrados.length === 0 && totalCount === 0 && (
                 <div className="text-center py-12 space-y-3">
-                  <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                  <p className="text-slate-600 font-medium">
-                    {buscaBackend ? 'Nenhum resultado' : 'Nenhum registro'}
+                  <Search className="w-12 h-12 mx-auto text-slate-200" />
+                  <p className="text-slate-500 font-medium">
+                    {buscaDebounced ? `Sem resultados para "${buscaDebounced}"` : 'Nenhum registro cadastrado'}
                   </p>
-                  {!buscaBackend && (
-                    <Button size="sm" onClick={criarSugestoes} className="bg-blue-600 hover:bg-blue-700 rounded-sm">
-                      <Plus className="w-4 h-4 mr-1" /> Criar 3 sugestões
+                  {!buscaDebounced && componenteEdicao && (
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm" onClick={() => abrirEdicao(null)}>
+                      <Plus className="w-4 h-4 mr-1" /> Criar primeiro registro
                     </Button>
                   )}
                 </div>
               )}
             </>
           )}
-
-          {isFetching && hasMore && (
-            <div className="py-3 text-center text-slate-500">Carregando…</div>
-          )}
-          <div ref={sentinelRef} className="h-8 w-full" />
-          {/* Paginação consolidada no ERPDataTable (padrão global) */}
         </CardContent>
       </Card>
     </Wrapper>
