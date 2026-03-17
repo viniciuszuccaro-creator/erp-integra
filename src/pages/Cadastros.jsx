@@ -222,6 +222,8 @@ export default function Cadastros() {
 
  
 
+  // Queries abaixo mantidas apenas para retrocompatibilidade de outros componentes
+  // O VisualizadorUniversalEntidade faz suas próprias queries otimizadas
   // QUERIES - BLOCO 1: PESSOAS & PARCEIROS
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes', empresaAtual?.id, grupoAtual?.id],
