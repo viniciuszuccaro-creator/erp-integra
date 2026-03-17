@@ -83,6 +83,9 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     (filtroContextOutside && (filtroContextOutside.group_id || filtroContextOutside[campo]))
   );
 
+  // Chave estável da query para SWR placeholderData
+  const cacheKey = stableStringify({ entityName, filtroFinal, finalSortField, finalSortDirection, limit, page, pageSize });
+
   return useQuery({
     queryKey: ["entityListSorted", entityName, stableStringify(filtroFinal || {}), finalSortField, finalSortDirection, limit, page, pageSize],
     queryFn: async () => {
@@ -97,7 +100,7 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
       }
 
       const exec = async () => {
-        // Serialize per-entity to prevent concurrent bursts across different keys
+        // Serializa por entidade para evitar bursts concorrentes
         if (__elsEntityBusy.get(entityName) === true) {
           const startWait = Date.now();
           while (__elsEntityBusy.get(entityName) === true && Date.now() - startWait < 1500) {
@@ -105,16 +108,18 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
           }
         }
         __elsEntityBusy.set(entityName, true);
-        // Throttle per-entity to prevent burst
+
+        // Throttle por entidade
         const now = Date.now();
         const last = __elsLastCallAt.get(entityName) || 0;
         const since = now - last;
-        const minGap = 600; // ms throttle between calls per entity
+        const minGap = 600; // ms
         const cooldown = __elsCooldownUntil.get(entityName) || 0;
         const waitMs = Math.max(0, cooldown - now, since < minGap ? (minGap - since) : 0);
         if (waitMs > 0) {
           await new Promise(r => setTimeout(r, waitMs));
         }
+
         let attempt = 0;
         while (true) {
           try {
@@ -129,6 +134,8 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
             const out = Array.isArray(res?.data) ? res.data : [];
             __elsCache.set(key, out);
             __elsLastCallAt.set(entityName, Date.now());
+            // Reset strike counter após sucesso
+            __elsStrikeCount.set(entityName, 0);
             return out;
           } catch (err) {
             const status = err?.response?.status || err?.status;
@@ -136,41 +143,48 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
               const strikes = (__elsStrikeCount.get(entityName) || 0) + 1;
               __elsStrikeCount.set(entityName, strikes);
               if (attempt < 5) {
-                const base = 800; // ms
-                const jitter = Math.floor(Math.random() * 300);
-                const sleep = base * (attempt + 1) + jitter;
+                const base = 800;
+                const jitter = Math.floor(Math.random() * 400);
+                const sleep = base * Math.pow(2, attempt) + jitter; // exponential backoff
                 __elsCooldownUntil.set(entityName, Date.now() + Math.max(1200, sleep));
                 await new Promise(r => setTimeout(r, sleep));
                 attempt++;
                 continue;
               }
-              // Circuit breaker: após várias tentativas em curto intervalo, serve cache e entra em cooldown
+              // Circuit breaker: serve cache em cooldown
               if (__elsCache.has(key)) {
-                __elsCooldownUntil.set(entityName, Date.now() + 3000);
+                __elsCooldownUntil.set(entityName, Date.now() + 5000);
                 return __elsCache.get(key);
               }
             }
-            // Fallback a cache se existir (evita travar UI)
+            // Fallback a cache (nunca deixa UI vazia)
             if (__elsCache.has(key)) {
               return __elsCache.get(key);
             }
-            // Removido fallback direto ao SDK para manter ordenação/escopo consistentes
             throw err;
           }
         }
       };
 
-      const p = exec().finally(() => { __elsInflight.delete(key); __elsEntityBusy.set(entityName, false); });
+      const p = exec().finally(() => {
+        __elsInflight.delete(key);
+        __elsEntityBusy.set(entityName, false);
+      });
       __elsInflight.set(key, p);
       return p;
     },
-    staleTime: 90_000,
-    keepPreviousData: true,
+    staleTime: 90_000,          // SWR: dados frescos por 90s
+    gcTime: 300_000,             // mantém cache por 5min após desmonte
+    keepPreviousData: true,      // nunca pisca "vazio" durante transições
+    placeholderData: (prev) => { // serve cache imediatamente enquanto revalida
+      if (prev !== undefined) return prev;
+      return __elsCache.get(cacheKey) ?? undefined;
+    },
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
     retry: 3,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
+    retryDelay: (attempt) => Math.min(800 * Math.pow(2, attempt), 6000),
     enabled: enabledFlag,
   });
 }
