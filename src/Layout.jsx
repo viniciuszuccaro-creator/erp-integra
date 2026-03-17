@@ -144,6 +144,7 @@ function LayoutContent({ children, currentPageName }) {
         const [modoEscuro, setModoEscuro] = useState(false);
         const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
         const auditThrottleRef = React.useRef({ click: 0, change: 0 });
+        const { prefetch: prefetchModule } = usePrefetchModuleData();
         const AUDIT_BUSINESS_ONLY = true;
         const queryClient = useQueryClient();
 
