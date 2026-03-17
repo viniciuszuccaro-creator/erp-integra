@@ -85,8 +85,9 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     (filtroContextOutside && (filtroContextOutside.group_id || filtroContextOutside[campo]))
   );
 
-  // Chave estável da query para SWR placeholderData
+  // Chave estável da query para SWR placeholderData + IDB
   const cacheKey = stableStringify({ entityName, filtroFinal, finalSortField, finalSortDirection, limit, page, pageSize });
+  const idbKey = `els_${entityName}_${cacheKey}`.slice(0, 200); // IDB key limitada
 
   return useQuery({
     queryKey: ["entityListSorted", entityName, stableStringify(filtroFinal || {}), finalSortField, finalSortDirection, limit, page, pageSize],
@@ -136,8 +137,9 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
             const out = Array.isArray(res?.data) ? res.data : [];
             __elsCache.set(key, out);
             __elsLastCallAt.set(entityName, Date.now());
-            // Reset strike counter após sucesso
             __elsStrikeCount.set(entityName, 0);
+            // Fase 3: persiste no IDB (TTL 10 min) para cache entre recarregamentos
+            idbSet(idbKey, out, 10 * 60 * 1000).catch(() => {});
             return out;
           } catch (err) {
             const status = err?.response?.status || err?.status;
@@ -147,22 +149,29 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
               if (attempt < 5) {
                 const base = 800;
                 const jitter = Math.floor(Math.random() * 400);
-                const sleep = base * Math.pow(2, attempt) + jitter; // exponential backoff
+                const sleep = base * Math.pow(2, attempt) + jitter;
                 __elsCooldownUntil.set(entityName, Date.now() + Math.max(1200, sleep));
                 await new Promise(r => setTimeout(r, sleep));
                 attempt++;
                 continue;
               }
-              // Circuit breaker: serve cache em cooldown
               if (__elsCache.has(key)) {
                 __elsCooldownUntil.set(entityName, Date.now() + 5000);
                 return __elsCache.get(key);
               }
+              // Fase 3: fallback IDB no 429 sem cache em memória
+              try {
+                const idbFallback = await idbGet(idbKey);
+                if (Array.isArray(idbFallback)) return idbFallback;
+              } catch (_) {}
             }
-            // Fallback a cache (nunca deixa UI vazia)
-            if (__elsCache.has(key)) {
-              return __elsCache.get(key);
-            }
+            // Fallback a cache em memória (nunca deixa UI vazia)
+            if (__elsCache.has(key)) return __elsCache.get(key);
+            // Fase 3: último recurso — tenta IDB
+            try {
+              const idbFallback = await idbGet(idbKey);
+              if (Array.isArray(idbFallback)) return idbFallback;
+            } catch (_) {}
             throw err;
           }
         }
@@ -175,12 +184,18 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
       __elsInflight.set(key, p);
       return p;
     },
-    staleTime: 90_000,          // SWR: dados frescos por 90s
-    gcTime: 300_000,             // mantém cache por 5min após desmonte
-    keepPreviousData: true,      // nunca pisca "vazio" durante transições
-    placeholderData: (prev) => { // serve cache imediatamente enquanto revalida
+    staleTime: 90_000,
+    gcTime: 300_000,
+    keepPreviousData: true,
+    placeholderData: async (prev) => {
       if (prev !== undefined) return prev;
-      return __elsCache.get(cacheKey) ?? undefined;
+      if (__elsCache.has(cacheKey)) return __elsCache.get(cacheKey);
+      // Fase 3: tenta IDB como placeholder imediato
+      try {
+        const cached = await idbGet(idbKey);
+        if (Array.isArray(cached)) return cached;
+      } catch (_) {}
+      return undefined;
     },
     refetchOnWindowFocus: false,
     refetchOnMount: false,
