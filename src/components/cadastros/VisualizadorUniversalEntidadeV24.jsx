@@ -364,6 +364,17 @@ export default function VisualizadorUniversalEntidadeV24({
             <Plus className="w-4 h-4" /> Novo
           </Button>
         )}
+
+        {selectedIds.size > 0 && (
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={handleDeleteSelected}
+            className="h-9 rounded-sm gap-1"
+          >
+            <Trash2 className="w-4 h-4" /> Apagar {selectedIds.size}
+          </Button>
+        )}
       </div>
 
       {/* Table */}
