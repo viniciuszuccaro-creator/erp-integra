@@ -171,6 +171,6 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     refetchOnReconnect: false,
     retry: 3,
     retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
-    enabled: enabledFlag,
+    enabled: true,
   });
 }
