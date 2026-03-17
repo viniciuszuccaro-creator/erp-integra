@@ -21,7 +21,7 @@ export default function Bloco6Tecnologia() {
 
   const openList = (entidade, titulo, Icon, campos, FormComp) => () => {
     openWindow(
-      VisualizadorUniversalEntidade,
+      VisualizadorUniversalEntidadeV24,
       { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true },
       { title: titulo, width: 1400, height: 800 }
     );
