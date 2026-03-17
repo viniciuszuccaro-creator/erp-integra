@@ -225,24 +225,21 @@ Deno.serve(async (req) => {
     // MODO LOTE: { queries: [{ entityName, filter, sortField, sortDirection, limit, skip, page, pageSize, search }...] }
     const queries = Array.isArray(body?.queries) ? body.queries : null;
     if (queries && queries.length > 0) {
-      const MAX_CONCURRENCY = 4;
       const results = new Array(queries.length);
-      let i = 0;
 
-      async function worker() {
-        while (i < queries.length) {
-          const idx = i++;
-          const q = queries[idx];
-          try {
-            results[idx] = await listOne(base44, user, q);
-          } catch (err) {
-            results[idx] = { entityName: q?.entityName, items: [], error: String(err?.message || err) };
-          }
+      // Sequencial com delay entre queries para evitar burst de 429
+      for (let i = 0; i < queries.length; i++) {
+        const q = queries[i];
+        try {
+          results[i] = await listOne(base44, user, q);
+        } catch (err) {
+          results[i] = { entityName: q?.entityName, items: [], error: String(err?.message || err) };
+        }
+        if (i < queries.length - 1) {
+          await new Promise(r => setTimeout(r, 200)); // 200ms entre queries
         }
       }
 
-      const ws = Array.from({ length: Math.min(MAX_CONCURRENCY, queries.length) }, () => worker());
-      await Promise.all(ws);
       return compressedJson({ results }, req);
     }
 
