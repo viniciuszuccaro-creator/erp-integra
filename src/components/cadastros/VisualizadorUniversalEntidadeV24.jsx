@@ -150,6 +150,22 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const hasContext = !!(empresaAtual?.id || grupoAtual?.id);
 
+  // Query para contar TODOS os registros
+  const { data: totalCount = 0 } = useQuery({
+    queryKey: [ENTITY, "total-count", empresaAtual?.id, grupoAtual?.id],
+    queryFn: async () => {
+      if (!ENTITY || !hasContext) return 0;
+      try {
+        const allItems = await filterInContext(ENTITY, {}, undefined, 10000);
+        return allItems.length;
+      } catch {
+        return 0;
+      }
+    },
+    staleTime: 30_000,
+    enabled: !!ENTITY && hasContext,
+  });
+
   // Query principal com placeholderData (elimina pulos)
   const { data: items = [], isLoading, isFetching } = useQuery({
     queryKey: [
