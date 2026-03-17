@@ -109,7 +109,7 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
         const now = Date.now();
         const last = __elsLastCallAt.get(entityName) || 0;
         const since = now - last;
-        const minGap = 700; // ms throttle between calls per entity
+        const minGap = 600; // ms throttle between calls per entity
         const cooldown = __elsCooldownUntil.get(entityName) || 0;
         const waitMs = Math.max(0, cooldown - now, since < minGap ? (minGap - since) : 0);
         if (waitMs > 0) {
