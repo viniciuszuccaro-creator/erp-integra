@@ -63,6 +63,7 @@ import GlobalContextStamp from "@/components/lib/GlobalContextStamp";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import { sanitizeOnWrite } from "@/components/lib/sanitizeOnWrite";
 import { usePrefetchModuleData } from "@/components/lib/usePrefetchModuleData";
+import { useInvalidationBus } from "@/components/lib/useInvalidationBus";
 
 
 const navigationItems = [
