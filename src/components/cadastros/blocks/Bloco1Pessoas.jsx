@@ -5,8 +5,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import { Users, Building2, Truck, User, Award, MessageCircle, TrendingUp, MapPin } from "lucide-react";
-import GroupCountBadge from "@/components/cadastros/GroupCountBadge.jsx";
-import EntityCountBadge from "@/components/cadastros/EntityCountBadge.jsx";
+import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
 import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompleto";
 import CadastroFornecedorCompleto from "@/components/cadastros/CadastroFornecedorCompleto";
