@@ -173,7 +173,6 @@ export function useCountEntities(entityName, filter = {}, options = {}) {
     retry: 2,
     retryDelay: (i) => Math.min(1000 * 2 ** i, 5000),
     enabled: options.enabled ?? true,
-    keepPreviousData: true,
     placeholderData: (prev) => {
       if (prev !== undefined) return prev;
       const cached = cache.get(reqKey);
