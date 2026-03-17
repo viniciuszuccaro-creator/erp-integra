@@ -83,26 +83,32 @@ export default function Bloco4Logistica() {
         <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
       </Card>
       {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
-        <Card key={k} className="hover:shadow-lg transition-all">
-          <CardHeader className="bg-slate-50 border-b">
+        <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
+          onClick={hasPermission('Expedição', null, 'visualizar') ? openList(k, t, Icon, c, FormComp) : undefined}>
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Icon className="w-5 h-5 text-slate-600"/> {t}
-                <span className="ml-2"><CountBadge entityName={k} /></span>
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
+                <div className="p-1.5 rounded-sm bg-sky-50 group-hover:bg-sky-100 transition-colors">
+                  <Icon className="w-4 h-4 text-sky-600" />
+                </div>
+                {t}
+                <span><CountBadge entityName={k} /></span>
               </CardTitle>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                 {k === 'Motorista' && (
-                  <Button variant="outline" size="sm" onClick={() => openWindow(AppEntregasMotorista, {}, { title: 'App Motorista', width: 420, height: 800 })}>
-                    App Motorista
+                  <Button variant="outline" size="sm" className="rounded-sm text-xs h-7" onClick={() => openWindow(AppEntregasMotorista, {}, { title: 'App Motorista', width: 420, height: 800 })}>
+                    App
                   </Button>
                 )}
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('Expedição', null, 'visualizar')}>
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
+                  onClick={() => openList(k, t, Icon, c, FormComp)()}
+                  disabled={!hasPermission('Expedição', null, 'visualizar')}>
                   Abrir
                 </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-4 text-sm text-slate-600">Gerencie {t} em janelas redimensionáveis.</CardContent>
+          <CardContent className="p-3 text-xs text-slate-500">Clique para listar, criar e editar.</CardContent>
         </Card>
       ))}
     </div>
