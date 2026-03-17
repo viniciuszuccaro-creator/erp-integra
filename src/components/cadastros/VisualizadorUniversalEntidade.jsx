@@ -1079,7 +1079,7 @@ export default function VisualizadorUniversalEntidade({
           ) : (
             <>
               {!__canList && (
-                <div className="mb-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
+                <div className="mb-3 rounded-sm border border-amber-300 bg-amber-50/80 backdrop-blur px-3 py-2 text-amber-800 text-sm">
                   Selecione uma empresa ou ative o contexto de grupo para carregar os registros.
                 </div>
               )}
