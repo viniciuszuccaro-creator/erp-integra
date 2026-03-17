@@ -985,7 +985,7 @@ export default function Cadastros() {
           {/* ACCORDIONS - 6 BLOCOS */}
           <Accordion type="multiple" value={acordeonAberto} onValueChange={setAcordeonAberto} className="space-y-4">
             {/* BLOCO 1: PESSOAS & PARCEIROS */}
-            <AccordionItem value="bloco1" className="border-2 border-blue-200 rounded-lg overflow-hidden shadow-md">
+            <AccordionItem value="bloco1" className="border-2 border-blue-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 hover:from-blue-100 hover:to-blue-200">
                 <div className="flex items-center gap-3 flex-1">
                   <Users className="w-6 h-6 text-blue-600" />
@@ -993,7 +993,7 @@ export default function Cadastros() {
                     <p className="font-bold text-lg text-blue-900">1️⃣ Pessoas & Parceiros</p>
                     <p className="text-xs text-blue-700">Clientes • Fornecedores • Transportadoras • Colaboradores • Representantes • Contatos B2B</p>
                   </div>
-                  <Badge className="ml-auto bg-blue-600 text-white">{totalBloco1}</Badge>
+                  <GroupCountBadge entities={["Cliente","Fornecedor","Transportadora","Colaborador","Representante","ContatoB2B","SegmentoCliente","RegiaoAtendimento"]} badgeClassName="ml-auto bg-blue-600 text-white border-blue-600 text-xs" />
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
@@ -1002,31 +1002,32 @@ export default function Cadastros() {
             </AccordionItem>
 
             {/* BLOCO 2: PRODUTOS & SERVIÇOS */}
-            <AccordionItem value="bloco2" className="border-2 border-purple-200 rounded-lg overflow-hidden shadow-md">
+            <AccordionItem value="bloco2" className="border-2 border-purple-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-purple-50 to-purple-100 px-6 py-4 hover:from-purple-100 hover:to-purple-200">
                 <div className="flex items-center gap-3 flex-1">
                   <Package className="w-6 h-6 text-purple-600" />
                   <div className="text-left">
                     <p className="font-bold text-lg text-purple-900">2️⃣ Produtos & Serviços</p>
-                    <p className="text-xs text-purple-700">Produtos • Serviços • Setores • Grupos • Marcas • Tabelas de Preço • Dupla Classificação</p>
+                    <p className="text-xs text-purple-700">Produtos • Serviços • Setores • Grupos • Marcas • Tabelas de Preço</p>
                   </div>
-                  <Badge className="ml-auto bg-purple-600 text-white">{totalBloco2}</Badge>
+                  <GroupCountBadge entities={["Produto","Servico","SetorAtividade","GrupoProduto","Marca","TabelaPreco","CatalogoWeb","KitProduto","UnidadeMedida"]} badgeClassName="ml-auto bg-purple-600 text-white border-purple-600 text-xs" />
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
                 <Bloco2Produtos />
               </AccordionContent>
-                </AccordionItem>
+            </AccordionItem>
 
             {/* BLOCO 3: FINANCEIRO */}
-            <AccordionItem value="bloco3" className="border-2 border-green-200 rounded-lg overflow-hidden shadow-md">
+            <AccordionItem value="bloco3" className="border-2 border-green-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 hover:from-green-100 hover:to-green-200">
                 <div className="flex items-center gap-3 flex-1">
                   <DollarSign className="w-6 h-6 text-green-600" />
                   <div className="text-left">
                     <p className="font-bold text-lg text-green-900">3️⃣ Financeiro & Fiscal</p>
+                    <p className="text-xs text-green-700">Bancos • Contas • Formas Pagamento • Plano Contas • Centros Custo</p>
                   </div>
-                  <Badge className="ml-auto bg-green-600 text-white">{totalBloco3}</Badge>
+                  <GroupCountBadge entities={["Banco","FormaPagamento","PlanoDeContas","CentroCusto","CentroResultado","TipoDespesa","MoedaIndice","CondicaoComercial","TabelaFiscal","OperadorCaixa","ConfiguracaoDespesaRecorrente"]} badgeClassName="ml-auto bg-green-600 text-white border-green-600 text-xs" />
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
@@ -1035,14 +1036,15 @@ export default function Cadastros() {
             </AccordionItem>
 
             {/* BLOCO 4: LOGÍSTICA, FROTA & ALMOXARIFADO */}
-            <AccordionItem value="bloco4" className="border-2 border-orange-200 rounded-lg overflow-hidden shadow-md">
+            <AccordionItem value="bloco4" className="border-2 border-orange-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-4 hover:from-orange-100 hover:to-orange-200">
                 <div className="flex items-center gap-3 flex-1">
                   <Truck className="w-6 h-6 text-orange-600" />
                   <div className="text-left">
                     <p className="font-bold text-lg text-orange-900">4️⃣ Logística, Frota & Almoxarifado</p>
+                    <p className="text-xs text-orange-700">Veículos • Motoristas • Tipos Frete • Locais Estoque • Rotas</p>
                   </div>
-                  <Badge className="ml-auto bg-orange-600 text-white">{totalBloco4}</Badge>
+                  <GroupCountBadge entities={["Veiculo","Motorista","TipoFrete","LocalEstoque","RotaPadrao","ModeloDocumento"]} badgeClassName="ml-auto bg-orange-600 text-white border-orange-600 text-xs" />
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
@@ -1051,14 +1053,15 @@ export default function Cadastros() {
             </AccordionItem>
 
             {/* BLOCO 5: ESTRUTURA ORGANIZACIONAL */}
-            <AccordionItem value="bloco5" className="border-2 border-indigo-200 rounded-lg overflow-hidden shadow-md">
+            <AccordionItem value="bloco5" className="border-2 border-indigo-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-indigo-50 to-indigo-100 px-6 py-4 hover:from-indigo-100 hover:to-indigo-200">
                 <div className="flex items-center gap-3 flex-1">
                   <Building2 className="w-6 h-6 text-indigo-600" />
                   <div className="text-left">
                     <p className="font-bold text-lg text-indigo-900">5️⃣ Estrutura Organizacional</p>
+                    <p className="text-xs text-indigo-700">Grupos • Empresas • Departamentos • Cargos • Turnos</p>
                   </div>
-                  <Badge className="ml-auto bg-indigo-600 text-white">{totalBloco5}</Badge>
+                  <GroupCountBadge entities={["Empresa","GrupoEmpresarial","Departamento","Cargo","Turno"]} badgeClassName="ml-auto bg-indigo-600 text-white border-indigo-600 text-xs" />
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
@@ -1067,14 +1070,15 @@ export default function Cadastros() {
             </AccordionItem>
 
             {/* BLOCO 6: TECNOLOGIA, IA & PARÂMETROS */}
-            <AccordionItem value="bloco6" className="border-2 border-cyan-200 rounded-lg overflow-hidden shadow-md">
+            <AccordionItem value="bloco6" className="border-2 border-cyan-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-cyan-50 to-cyan-100 px-6 py-4 hover:from-cyan-100 hover:to-cyan-200">
                 <div className="flex items-center gap-3 flex-1">
                   <Cpu className="w-6 h-6 text-cyan-600" />
                   <div className="text-left">
                     <p className="font-bold text-lg text-cyan-900">6️⃣ Tecnologia, IA & Parâmetros</p>
+                    <p className="text-xs text-cyan-700">APIs • Webhooks • Chatbot • Jobs • Gateways • Parâmetros Operacionais</p>
                   </div>
-                  <Badge className="ml-auto bg-cyan-600 text-white">{totalBloco6}</Badge>
+                  <GroupCountBadge entities={["ApiExterna","ChatbotCanal","ChatbotIntent","GatewayPagamento","JobAgendado","Webhook","ConfiguracaoNFe","ConfiguracaoBoletos","ConfiguracaoWhatsApp","ParametroPortalCliente","ParametroOrigemPedido","ParametroRecebimentoNFe","ParametroRoteirizacao","ParametroConciliacaoBancaria","ParametroCaixaDiario","EventoNotificacao"]} badgeClassName="ml-auto bg-cyan-600 text-white border-cyan-600 text-xs" />
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
