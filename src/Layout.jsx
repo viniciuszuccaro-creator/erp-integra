@@ -149,6 +149,14 @@ function LayoutContent({ children, currentPageName }) {
         const AUDIT_BUSINESS_ONLY = true;
         const queryClient = useQueryClient();
 
+        // Fase 2: Barramento de invalidação seletiva — substitui broadcast global por keys específicas
+        useInvalidationBus([
+          'Cliente', 'Fornecedor', 'Transportadora', 'Colaborador', 'Produto',
+          'Pedido', 'ContaReceber', 'ContaPagar', 'Entrega', 'NotaFiscal',
+          'OrdemCompra', 'MovimentacaoEstoque', 'Oportunidade', 'Representante',
+          'ContatoB2B', 'SegmentoCliente', 'RegiaoAtendimento',
+        ], { enabled: true });
+
         const [integracoesOk, setIntegracoesOk] = useState(true);
 
   // pageToModule/moduleName movidos para antes dos efeitos para evitar TDZ
