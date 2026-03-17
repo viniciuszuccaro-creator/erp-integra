@@ -104,6 +104,7 @@ export default function VisualizadorUniversalEntidadeV24({
   const [pageSize, setPageSize] = useState(pageSizeProp || 20);
   const [editItem, setEditItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const debounceRef = useRef(null);
 
   // Debounced search (350ms)
