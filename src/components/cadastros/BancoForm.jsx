@@ -30,8 +30,12 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
     ativo: true
   });
 
+  const prevIdRef = React.useRef(dadosIniciais?.id);
   useEffect(() => {
-    if (dadosIniciais?.id) setFormData({ ...dadosIniciais });
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...dadosIniciais });
+    }
   }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
