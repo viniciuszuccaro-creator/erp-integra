@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,9 @@ import { Receipt, Trash2, Power, PowerOff } from "lucide-react";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function CentroCustoForm({ centroCusto, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(centroCusto || {
+export default function CentroCustoForm({ centroCusto, item, data, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
+  const dadosCentroCusto = centroCusto || item || data;
+  const [formData, setFormData] = useState(dadosCentroCusto || {
     codigo: "",
     descricao: "",
     tipo: "Despesa",
@@ -21,13 +22,19 @@ export default function CentroCustoForm({ centroCusto, onSubmit, isSubmitting, w
     observacoes: ""
   });
 
+  useEffect(() => {
+    if (dadosCentroCusto?.id) setFormData({ ...dadosCentroCusto });
+  }, [dadosCentroCusto?.id]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const dataToSubmit = {
       ...formData,
       orcamento_mensal: formData.orcamento_mensal ? parseFloat(formData.orcamento_mensal) : null
     };
-    onSubmit(dataToSubmit);
+    if (onSubmit) onSubmit(dataToSubmit);
+    if (onSave) onSave();
+    if (onClose) onClose();
   };
 
   const handleExcluir = () => {

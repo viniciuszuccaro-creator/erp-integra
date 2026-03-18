@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,8 @@ import { Loader2, Landmark } from "lucide-react";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function BancoForm({ banco, onSubmit, isSubmitting, windowMode = false }) {
-  const dadosIniciais = banco;
+export default function BancoForm({ banco, item, data, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
+  const dadosIniciais = banco || item || data;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_banco: '',
     codigo_banco: '',
@@ -30,13 +30,19 @@ export default function BancoForm({ banco, onSubmit, isSubmitting, windowMode = 
     ativo: true
   });
 
+  useEffect(() => {
+    if (dadosIniciais?.id) setFormData({ ...dadosIniciais });
+  }, [dadosIniciais?.id]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.nome_banco || !formData.agencia || !formData.conta) {
       alert('Preencha os campos obrigatórios');
       return;
     }
-    onSubmit(formData);
+    if (onSubmit) onSubmit(formData);
+    if (onSave) onSave();
+    if (onClose) onClose();
   };
 
   const formContent = (

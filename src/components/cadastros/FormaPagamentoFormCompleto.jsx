@@ -16,7 +16,8 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import FormWrapper from "@/components/common/FormWrapper";
 import { toast } from 'sonner';
 
-export default function FormaPagamentoFormCompleto({ formaPagamento, onSubmit, windowMode = false }) {
+export default function FormaPagamentoFormCompleto({ formaPagamento, item, data, onSubmit, onSave, onClose, windowMode = false }) {
+  const formaPagamentoNorm = formaPagamento || item || data;
   const [abaAtiva, setAbaAtiva] = useState('geral');
   const { empresaAtual, contextoAtual } = useContextoVisual();
   
@@ -30,7 +31,7 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, onSubmit, w
     queryFn: () => base44.entities.GatewayPagamento.filter({ ativo: true }),
   });
 
-  const [formData, setFormData] = useState(() => formaPagamento || {
+  const [formData, setFormData] = useState(() => formaPagamentoNorm || {
     group_id: contextoAtual === 'grupo' ? empresaAtual?.group_id : undefined,
     empresa_id: contextoAtual === 'empresa' ? empresaAtual?.id : undefined,
     codigo: '',
@@ -94,13 +95,18 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, onSubmit, w
     setFormData({...formData, configuracao_parcelas_cartao: novaConfig});
   };
 
+  useEffect(() => {
+    if (formaPagamentoNorm?.id) setFormData({ ...formaPagamentoNorm });
+  }, [formaPagamentoNorm?.id]);
+
   const handleSubmit = async () => {
     if (!formData.codigo || !formData.descricao) {
       toast.error('Preencha código e descrição');
       return;
     }
-
-    onSubmit(formData);
+    if (onSubmit) onSubmit(formData);
+    if (onSave) onSave();
+    if (onClose) onClose();
   };
 
   const tiposPagamento = [
