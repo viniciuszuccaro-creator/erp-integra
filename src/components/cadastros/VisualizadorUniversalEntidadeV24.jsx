@@ -500,16 +500,18 @@ export default function VisualizadorUniversalEntidadeV24({
     try {
       let idsToDelete;
       if (crossPageAll) {
-        // Busca TODOS os IDs sem paginação
+        // Busca TODOS os IDs sem paginação (máximo 500 por chamada, loop se necessário)
         const res = await base44.functions.invoke("entityListSorted", {
           entityName: ENTITY,
           filter: contextFilter,
           sortField: "updated_date",
           sortDirection: "desc",
-          limit: 5000,
+          limit: 500,
           skip: 0,
         });
-        idsToDelete = (Array.isArray(res?.data) ? res.data : []).map((i) => i.id).filter(Boolean);
+        const raw = res?.data;
+        const arr = Array.isArray(raw) ? raw : (Array.isArray(raw?.items) ? raw.items : []);
+        idsToDelete = arr.map((i) => i.id).filter(Boolean);
       } else {
         idsToDelete = Array.from(selectedIds);
       }
