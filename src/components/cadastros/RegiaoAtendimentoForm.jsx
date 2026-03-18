@@ -64,7 +64,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
   });
 
   useEffect(() => {
-    if (dadosIniciaisProps && open) {
+    if (dadosIniciaisProps && (open || windowMode)) {
       setFormData(dadosIniciaisProps);
     } else if (regiaoId && open && !dadosIniciaisProps) {
       base44.entities.RegiaoAtendimento.list().then(regioes => {
