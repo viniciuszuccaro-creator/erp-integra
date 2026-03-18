@@ -8,64 +8,77 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useRef } from "react";
 
-// Cache singleton para evitar chamadas duplicadas
+const CACHE_TTL = 60_000;
 const COUNT_CACHE = new Map();
-const CACHE_TTL = 45_000;
 
-// Fila de batching global
+// Fila global para batching — cada item tem resolve/reject próprio
 let _batchQueue = [];
 let _batchTimer = null;
 
-function flushBatch() {
-  return new Promise((resolve) => {
-    if (_batchTimer) clearTimeout(_batchTimer);
-    _batchTimer = setTimeout(async () => {
-      const current = [..._batchQueue];
-      _batchQueue = [];
-      _batchTimer = null;
+async function runBatch() {
+  const current = [..._batchQueue];
+  _batchQueue = [];
+  _batchTimer = null;
 
-      if (!current.length) { resolve({}); return; }
+  if (!current.length) return;
 
-      // Dedup entities únicas mantendo groupId/empresaId do primeiro item
-      const entitiesMap = new Map();
-      current.forEach(({ entityName, groupId, empresaId }) => {
-        if (!entitiesMap.has(entityName)) {
-          entitiesMap.set(entityName, { groupId, empresaId });
-        }
-      });
+  // Agrupar por (groupId, empresaId) e dedup entityName
+  const byKey = new Map(); // key = "groupId|empresaId"
+  current.forEach((item) => {
+    const key = `${item.groupId || ""}|${item.empresaId || ""}`;
+    if (!byKey.has(key)) byKey.set(key, { groupId: item.groupId, empresaId: item.empresaId, entities: new Set(), resolvers: [] });
+    byKey.get(key).entities.add(item.entityName);
+    byKey.get(key).resolvers.push({ entityName: item.entityName, resolve: item.resolve, reject: item.reject });
+  });
 
-      const entities = [];
-      entitiesMap.forEach(({ groupId, empresaId }, entityName) => {
-        const filter = {};
-        if (groupId) filter.group_id = groupId;
-        else if (empresaId) filter.empresa_id = empresaId;
-        entities.push({ entityName, filter });
-      });
+  for (const [, ctx] of byKey) {
+    const { groupId, empresaId, entities, resolvers } = ctx;
+    const entityList = Array.from(entities).map((entityName) => {
+      const filter = {};
+      if (groupId) filter.group_id = groupId;
+      else if (empresaId) filter.empresa_id = empresaId;
+      return { entityName, filter };
+    });
 
-      let result = {};
-      try {
-        const res = await base44.functions.invoke("countEntities", { entities });
-        const data = res?.data?.counts || {};
-        entitiesMap.forEach((_, entityName) => {
-          result[entityName] = data[entityName] ?? 0;
-        });
-      } catch (_e) {
-        // Retorna zeros em caso de erro
-        entitiesMap.forEach((_, entityName) => { result[entityName] = 0; });
-      }
-
-      // Cachear resultado
-      entitiesMap.forEach(({ groupId, empresaId }, entityName) => {
+    let resultMap = {};
+    try {
+      const res = await base44.functions.invoke("countEntities", { entities: entityList });
+      resultMap = res?.data?.counts || {};
+      // Cachear
+      entityList.forEach(({ entityName }) => {
         const ck = `${entityName}|${groupId}|${empresaId}`;
-        COUNT_CACHE.set(ck, { count: result[entityName] ?? 0, ts: Date.now() });
+        COUNT_CACHE.set(ck, { count: resultMap[entityName] ?? 0, ts: Date.now() });
       });
+    } catch (_e) {
+      // fallback zeros
+      entityList.forEach(({ entityName }) => { resultMap[entityName] = 0; });
+    }
 
-      // Resolve todas as promises pendentes da fila com o resultado
-      current.forEach(({ resolve: res }) => res(result));
-      resolve(result);
-    }, 20);
+    // Resolver cada promise
+    resolvers.forEach(({ entityName, resolve }) => {
+      resolve({ [entityName]: resultMap[entityName] ?? 0 });
+    });
+  }
+}
+
+function scheduleBatch() {
+  if (_batchTimer) return;
+  _batchTimer = setTimeout(runBatch, 30);
+}
+
+function enqueue(entityName, groupId, empresaId) {
+  // Verificar cache primeiro
+  const ck = `${entityName}|${groupId}|${empresaId}`;
+  const cached = COUNT_CACHE.get(ck);
+  if (cached && Date.now() - cached.ts < CACHE_TTL) {
+    return Promise.resolve({ [entityName]: cached.count });
+  }
+
+  return new Promise((resolve, reject) => {
+    _batchQueue.push({ entityName, groupId, empresaId, resolve, reject });
+    scheduleBatch();
   });
 }
 
@@ -76,15 +89,20 @@ export function useEntityCounts(entities = []) {
   const groupId = grupoAtual?.id || null;
   const empresaId = empresaAtual?.id || null;
 
-  const normalized = useMemo(() =>
-    (Array.isArray(entities) ? entities : [entities]).filter(Boolean),
+  const entitiesKey = useMemo(
+    () => (Array.isArray(entities) ? entities : [entities]).filter(Boolean).sort().join(","),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [entities.join(",")]
+    [JSON.stringify(entities)]
+  );
+
+  const normalized = useMemo(
+    () => entitiesKey ? entitiesKey.split(",") : [],
+    [entitiesKey]
   );
 
   const queryKey = useMemo(
-    () => ["entityCounts_v2", normalized.sort().join(","), groupId, empresaId],
-    [normalized, groupId, empresaId]
+    () => ["entityCounts_v3", entitiesKey, groupId, empresaId],
+    [entitiesKey, groupId, empresaId]
   );
 
   const { data: counts = {}, isLoading } = useQuery({
@@ -93,31 +111,17 @@ export function useEntityCounts(entities = []) {
       if (!normalized.length) return {};
       if (!groupId && !empresaId) return {};
 
-      // Verificar cache
-      const allCached = normalized.every(entityName => {
-        const ck = `${entityName}|${groupId}|${empresaId}`;
-        const cached = COUNT_CACHE.get(ck);
-        return cached && (Date.now() - cached.ts < CACHE_TTL);
-      });
-      if (allCached) {
-        const result = {};
-        normalized.forEach(entityName => {
-          const ck = `${entityName}|${groupId}|${empresaId}`;
-          result[entityName] = COUNT_CACHE.get(ck)?.count ?? 0;
-        });
-        return result;
-      }
+      // Enfileirar todas as entidades e aguardar todas as respostas
+      const promises = normalized.map((entityName) => enqueue(entityName, groupId, empresaId));
+      const results = await Promise.all(promises);
 
-      // Enfileirar no batch
-      return new Promise((resolve) => {
-        normalized.forEach(entityName => {
-          _batchQueue.push({ entityName, groupId, empresaId, resolve });
-        });
-        flushBatch();
-      });
+      // Merge todos os resultados em um único objeto
+      const merged = {};
+      results.forEach((r) => { Object.assign(merged, r); });
+      return merged;
     },
     staleTime: CACHE_TTL,
-    gcTime: 180_000,
+    gcTime: 300_000,
     placeholderData: (prev) => prev,
     refetchOnWindowFocus: false,
     enabled: !!(groupId || empresaId) && normalized.length > 0,
@@ -130,8 +134,8 @@ export function useEntityCounts(entities = []) {
       const api = base44.entities?.[entity];
       if (!api?.subscribe) return null;
       return api.subscribe(() => {
-        // Invalida cache em memória
-        normalized.forEach(e => {
+        // Invalida cache em memória para estas entidades
+        normalized.forEach((e) => {
           const ck = `${e}|${groupId}|${empresaId}`;
           COUNT_CACHE.delete(ck);
         });
@@ -140,11 +144,11 @@ export function useEntityCounts(entities = []) {
     }).filter(Boolean);
     return () => { unsubs.forEach((u) => { if (typeof u === "function") u(); }); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [normalized.join(","), groupId, empresaId, queryClient]);
+  }, [entitiesKey, groupId, empresaId]);
 
   const total = useMemo(
-    () => Object.values(counts || {}).reduce((a, b) => (a || 0) + (b || 0), 0),
-    [counts]
+    () => normalized.reduce((acc, e) => acc + (counts[e] || 0), 0),
+    [counts, normalized]
   );
 
   return { counts: counts || {}, total, isLoading };
