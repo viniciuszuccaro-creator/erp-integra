@@ -728,8 +728,8 @@ export default function VisualizadorUniversalEntidadeV24({
                 </div>
               </div>
               <div className="p-6 flex-1 overflow-auto">
-                {/* key={editItem?.id || "new"} força recriação do componente com os dados corretos */}
-                <FormComponent key={editItem?.id || "new"} {...formProps} />
+                {/* key força desmontagem e remontagem completa ao trocar de item, garantindo que o useState re-inicializa */}
+                <FormComponent key={editItem ? `edit-${editItem.id}` : "new-form"} {...formProps} />
               </div>
             </div>
           </div>
