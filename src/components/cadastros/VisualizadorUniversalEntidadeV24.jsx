@@ -418,7 +418,7 @@ export default function VisualizadorUniversalEntidadeV24({
       setShowForm(false);
       setEditItem(null);
       queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
-      queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
+      queryClient.invalidateQueries({ queryKey: ["entityCounts_v4"] });
       return;
     }
     setIsSavingForm(true);
@@ -436,7 +436,8 @@ export default function VisualizadorUniversalEntidadeV24({
       setShowForm(false);
       setEditItem(null);
       queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
-      queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
+      queryClient.invalidateQueries({ queryKey: ["entityCounts_v4"] });
+      queryClient.invalidateQueries({ queryKey: ["GroupCountBadge3"] });
     } catch (e) {
       alert("Erro ao salvar: " + (e?.message || e));
     } finally {
@@ -449,7 +450,8 @@ export default function VisualizadorUniversalEntidadeV24({
     setShowForm(false);
     setEditItem(null);
     queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
-    queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
+    queryClient.invalidateQueries({ queryKey: ["entityCounts_v4"] });
+    queryClient.invalidateQueries({ queryKey: ["GroupCountBadge3"] });
   }, [ENTITY, queryClient]);
 
   // ─── Abrir edição — busca registro completo ───────────────────────────────────
