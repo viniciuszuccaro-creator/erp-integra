@@ -1301,7 +1301,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onCloseNorm}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full flex flex-col p-0 overflow-hidden">
         {content}
       </DialogContent>
