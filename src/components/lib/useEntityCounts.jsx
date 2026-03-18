@@ -120,11 +120,17 @@ export function useEntityCounts(entities = []) {
     [entitiesKey, groupId, empresaId]
   );
 
+  // Uma entidade "precisa de contexto" somente se NÃO for simples
+  const hasAnyContext = !!(groupId || empresaId);
+  const allSimple = normalized.length > 0 && normalized.every(e => SIMPLE_CATALOG_ENTITIES.has(e));
+  const canFetch = normalized.length > 0 && (hasAnyContext || allSimple);
+
   const { data: counts = {}, isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
       if (!normalized.length) return {};
-      if (!groupId && !empresaId) return {};
+      // Permitir busca para entidades simples mesmo sem contexto
+      if (!hasAnyContext && !allSimple) return {};
 
       // Enfileirar todas as entidades e aguardar todas as respostas
       const promises = normalized.map((entityName) => enqueue(entityName, groupId, empresaId));
@@ -139,7 +145,7 @@ export function useEntityCounts(entities = []) {
     gcTime: 300_000,
     placeholderData: (prev) => prev,
     refetchOnWindowFocus: false,
-    enabled: !!(groupId || empresaId) && normalized.length > 0,
+    enabled: canFetch,
   });
 
   // Real-time subscribe
