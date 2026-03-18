@@ -29,6 +29,14 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
     proprio: true
   });
 
+  const prevIdRef = React.useRef(dadosIniciais?.id);
+  React.useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
+
   const schema = z.object({
     placa: z.string().min(3, 'Placa é obrigatória'),
     tipo_veiculo: z.string().min(1, 'Tipo é obrigatório')
