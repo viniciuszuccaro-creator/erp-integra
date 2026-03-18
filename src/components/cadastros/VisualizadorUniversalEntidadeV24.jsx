@@ -330,8 +330,13 @@ export default function VisualizadorUniversalEntidadeV24({
           skip,
           search: debouncedSearch || undefined,
         });
-        return Array.isArray(res?.data) ? res.data : [];
-      } catch {
+        // Suporta tanto resposta direta (array) quanto objeto com .items
+        const data = res?.data;
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data?.items)) return data.items;
+        return [];
+      } catch (err) {
+        console.error(`[VisualizadorV24] Erro ao listar ${ENTITY}:`, err);
         return [];
       }
     },
