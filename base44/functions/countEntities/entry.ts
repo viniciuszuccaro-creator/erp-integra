@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 
-const EXPAND_SET = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
+const EXPAND_SET = new Set(['Cliente', 'Fornecedor', 'Transportadora', 'Colaborador']);
 
 const SIMPLE_CATALOG = new Set([
   'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
@@ -39,14 +39,14 @@ async function expandGroupFilter(base44, entityName, f) {
 
   if (EXPAND_SET.has(entityName) && f?.empresa_id && !f?.$or) {
     const { empresa_id, ...rest } = f;
-    return {
-      ...rest,
-      $or: [
-        { empresa_id },
-        { empresa_dona_id: empresa_id },
-        { empresas_compartilhadas_ids: { $in: [empresa_id] } }
-      ]
-    };
+    const orConds = [
+      { [ctxCampo]: empresa_id },
+      { empresas_compartilhadas_ids: { $in: [empresa_id] } }
+    ];
+    if (ctxCampo !== 'empresa_id') {
+      orConds.push({ empresa_id });
+    }
+    return { ...rest, $or: orConds };
   }
 
   if (f?.$or && f?.group_id) {
