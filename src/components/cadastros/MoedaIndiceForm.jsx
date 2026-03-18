@@ -6,8 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { TrendingUp } from 'lucide-react';
 
-export default function MoedaIndiceForm({ moeda, moedaIndice, onSubmit, windowMode = false }) {
-  const dadosIniciais = moedaIndice || moeda;
+export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubmit, onSave, onClose, windowMode = false }) {
+  const dadosIniciais = item || data || moedaIndice || moeda;
   const [formData, setFormData] = useState(dadosIniciais || {
     codigo: '',
     nome: '',
