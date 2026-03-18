@@ -1,4 +1,5 @@
 import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -1222,7 +1223,9 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                   <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}>
                     <ResumoHistorico clienteId={cliente.id} />
                   </Suspense>
-                  <HistoricoOrigemCliente clienteId={cliente.id} compact={false} />
+                  <Suspense fallback={<div className="h-16 animate-pulse bg-slate-100 rounded" />}>
+                    <HistoricoOrigemCliente clienteId={cliente.id} compact={false} />
+                  </Suspense>
                   <Suspense fallback={<div className="h-24 rounded-xl bg-white/40 backdrop-blur animate-pulse" />}>
                     <TimelineCliente clienteId={cliente.id} showFilters={true} />
                   </Suspense>
