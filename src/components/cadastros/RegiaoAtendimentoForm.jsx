@@ -112,10 +112,14 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ite
       toast.error("Nome da região é obrigatório");
       return;
     }
-    if (onSubmit) onSubmit(formData);
-    if (onOpenChange) onOpenChange(false);
-    if (onSave) onSave();
-    if (onClose) onClose();
+    if (onSubmit) {
+      onSubmit(formData);
+      if (onOpenChange) onOpenChange(false);
+    } else {
+      if (onOpenChange) onOpenChange(false);
+      if (onSave) onSave();
+      if (onClose) onClose();
+    }
   };
 
   const handleExcluir = () => {
