@@ -30,8 +30,8 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
     rastreador_instalado: false
   });
 
-  const prevIdRef = React.useRef(dadosIniciais?.id);
-  React.useEffect(() => {
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
     if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
       prevIdRef.current = dadosIniciais.id;
       setFormData({ ...dadosIniciais });
