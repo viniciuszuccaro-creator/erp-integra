@@ -117,7 +117,7 @@ export default function GroupCountBadge({ entities = [], badgeClassName }) {
     placeholderData: (prev) => prev ?? 0,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    enabled: canFetch,
+    enabled: shouldFetch,
   });
 
   return (
