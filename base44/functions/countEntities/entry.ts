@@ -112,13 +112,26 @@ async function fastCount(base44, entityName, finalFilter) {
   return total; // retorna total acumulado (pode ser exato ou parcial se atingiu MAX_PAGES)
 }
 
+const SIMPLE_CATALOG_ENTITIES = new Set([
+  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
+  'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
+  'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
+  'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
+  'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
+  'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
+  'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'JobAgendado',
+  'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento', 'ContatoB2B',
+]);
+
 async function countOne(base44, user, payload) {
   const { entityName, filter = {}, withGroupTotal = false } = payload || {};
   if (!entityName) return { entityName, count: 0, isEstimate: true };
 
+  const isSimple = SIMPLE_CATALOG_ENTITIES.has(entityName);
   const scopeProvided = !!filter?.empresa_id || !!filter?.group_id
     || (!!filter?.$or && Array.isArray(filter.$or) && filter.$or.some(c => c?.empresa_id || c?.empresa_dona_id || c?.empresa_alocada_id || c?.group_id));
-  if (user.role !== 'admin' && !scopeProvided) {
+  // Entidades simples de catálogo dispensam escopo multiempresa
+  if (user.role !== 'admin' && !scopeProvided && !isSimple) {
     return { entityName, error: 'escopo_multiempresa_obrigatorio', count: 0, isEstimate: true };
   }
 
