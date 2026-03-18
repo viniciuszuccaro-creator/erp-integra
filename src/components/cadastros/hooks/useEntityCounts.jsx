@@ -192,7 +192,10 @@ export function useEntityCounts(entityNames = []) {
           const filters = {};
           batch.forEach(ent => {
             filters[ent] = buildEntityFilter(ent, empresaId, groupId, empresasDoGrupo);
+            console.log(`[useEntityCounts] ${ent} filter:`, JSON.stringify(filters[ent]));
           });
+
+          console.log(`[useEntityCounts] Batch entities: ${batch.join(', ')} | Empresa: ${empresaId} | Grupo: ${groupId} | EmpGrupo: ${grupoEmpIds}`);
 
           const result = await executeCountBatch(batch, filters);
           resolve(result);
