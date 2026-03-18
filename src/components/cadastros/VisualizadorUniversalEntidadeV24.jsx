@@ -192,8 +192,16 @@ function buildFormProps(editItem, handleSave, handlePersistSubmit) {
 async function fetchFullRecord(entityName, item) {
   if (!item?.id || !entityName) return { ...(item || {}) };
 
-  // Usa função backend dedicada para evitar que o wrapper do layout
-  // injete filtros de empresa e retorne vazio
+  // Tenta via SDK direto primeiro (mais rápido e sem overhead de função)
+  try {
+    const api = base44.entities?.[entityName];
+    if (api?.get) {
+      const record = await api.get(item.id);
+      if (record && record.id) return { ...record };
+    }
+  } catch (_) { /* silencioso - tenta via backend */ }
+
+  // Fallback: função backend dedicada que usa service role (sem filtros de contexto)
   try {
     const res = await base44.functions.invoke("getEntityRecord", {
       entityName,
@@ -203,7 +211,16 @@ async function fetchFullRecord(entityName, item) {
     if (record && record.id) return { ...record };
   } catch (_) { /* silencioso */ }
 
-  // Fallback: item que já temos da listagem
+  // Último fallback: filter direto sem contexto
+  try {
+    const api = base44.entities?.[entityName];
+    if (api?.filter) {
+      const rows = await api.filter({ id: item.id }, undefined, 1);
+      if (Array.isArray(rows) && rows.length > 0 && rows[0]?.id) return { ...rows[0] };
+    }
+  } catch (_) { /* silencioso */ }
+
+  // Retorna o item da listagem como último recurso
   return { ...(item || {}) };
 }
 
