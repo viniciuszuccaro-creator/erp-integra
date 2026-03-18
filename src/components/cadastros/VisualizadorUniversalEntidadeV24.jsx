@@ -188,29 +188,22 @@ function buildFormProps(editItem, handleSave, handlePersistSubmit) {
   };
 }
 
-// ─── Busca registro completo com fallbacks robustos ───────────────────────────
+// ─── Busca registro completo via backend (sem filtros de contexto) ────────────
 async function fetchFullRecord(entityName, item) {
   if (!item?.id || !entityName) return { ...(item || {}) };
-  const api = base44.entities?.[entityName];
-  if (!api) return { ...(item || {}) };
 
-  // 1. Tenta .get()
-  if (typeof api.get === "function") {
-    try {
-      const fetched = await api.get(item.id);
-      if (fetched && typeof fetched === "object" && fetched.id) return { ...fetched };
-    } catch (_) { /* silencioso */ }
-  }
+  // Usa função backend dedicada para evitar que o wrapper do layout
+  // injete filtros de empresa e retorne vazio
+  try {
+    const res = await base44.functions.invoke("getEntityRecord", {
+      entityName,
+      id: item.id,
+    });
+    const record = res?.data?.record;
+    if (record && record.id) return { ...record };
+  } catch (_) { /* silencioso */ }
 
-  // 2. Fallback: .filter({ id })
-  if (typeof api.filter === "function") {
-    try {
-      const res = await api.filter({ id: item.id }, undefined, 1);
-      if (Array.isArray(res) && res.length > 0 && res[0].id) return { ...res[0] };
-    } catch (_) { /* silencioso */ }
-  }
-
-  // 3. Fallback final: item da listagem (já temos ao menos os campos visíveis)
+  // Fallback: item que já temos da listagem
   return { ...(item || {}) };
 }
 
