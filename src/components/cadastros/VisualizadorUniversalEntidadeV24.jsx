@@ -480,7 +480,8 @@ export default function VisualizadorUniversalEntidadeV24({
     try {
       await base44.entities[ENTITY].delete(item.id);
       queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
-      queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
+      queryClient.invalidateQueries({ queryKey: ["entityCounts_v4"] });
+      queryClient.invalidateQueries({ queryKey: ["GroupCountBadge3"] });
       setSelectedIds((prev) => { const n = new Set(prev); n.delete(item.id); return n; });
     } catch (e) {
       alert("Erro ao excluir: " + (e?.message || e));
