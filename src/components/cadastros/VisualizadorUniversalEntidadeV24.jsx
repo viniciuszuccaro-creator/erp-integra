@@ -337,12 +337,15 @@ export default function VisualizadorUniversalEntidadeV24({
     return () => { if (typeof unsub === "function") unsub(); };
   }, [ENTITY, queryClient]);
 
-  // ─── Sort handler — sem stale closure ────────────────────────────────────────
+  // ─── Sort handler — sem stale closure via ref ────────────────────────────────
+  const sortFieldRef = useRef(sortField);
+  useEffect(() => { sortFieldRef.current = sortField; }, [sortField]);
+
   const handleSort = useCallback((field) => {
-    setSortDir((prev) => (sortField === field ? (prev === "desc" ? "asc" : "desc") : "desc"));
+    setSortDir((prev) => (sortFieldRef.current === field ? (prev === "desc" ? "asc" : "desc") : "desc"));
     setSortField(field);
     setCurrentPage(1);
-  }, [sortField]);
+  }, []);
 
   const handleSortDropdown = useCallback((value) => {
     const [f, d] = value.split("|");
