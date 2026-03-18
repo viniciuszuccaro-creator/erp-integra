@@ -9,8 +9,8 @@ import { Receipt, Trash2, Power, PowerOff } from "lucide-react";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function CentroCustoForm({ centroCusto, item, data, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
-  const dadosCentroCusto = centroCusto || item || data;
+export default function CentroCustoForm({ centroCusto, item, data, initialData, defaultValues, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
+  const dadosCentroCusto = item || data || initialData || defaultValues || centroCusto;
   const [formData, setFormData] = useState(dadosCentroCusto || {
     codigo: "",
     descricao: "",
