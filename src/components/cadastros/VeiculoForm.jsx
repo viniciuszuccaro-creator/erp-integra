@@ -11,9 +11,9 @@ import FormWrapper from "@/components/common/FormWrapper";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function VeiculoForm({ veiculo, onSubmit, isSubmitting, windowMode = false }) {
-  const dadosIniciais = veiculo;
-  const [formData, setFormData] = useState(dadosIniciais || {
+export default function VeiculoForm({ veiculo, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
+  const dadosIniciais = item || data || initialData || defaultValues || veiculo;
+  const [formData, setFormData] = React.useState(dadosIniciais || {
     placa: '',
     modelo: '',
     tipo_veiculo: 'Caminhão Toco',

@@ -14,8 +14,8 @@ import FormWrapper from "@/components/common/FormWrapper";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function MotoristaForm({ motorista, onSubmit, isSubmitting, windowMode = false }) {
-  const dadosIniciais = motorista;
+export default function MotoristaForm({ motorista, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
+  const dadosIniciais = item || data || initialData || defaultValues || motorista;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_completo: '',
     cpf: '',
