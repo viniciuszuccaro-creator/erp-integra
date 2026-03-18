@@ -246,11 +246,12 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // ─── Construir filtro de contexto ────────────────────────────────────────────
   const contextFilter = useMemo(() => {
+    if (isSimpleEntity) return {}; // Entidades simples não precisam de filtro de contexto
     const f = {};
     if (grupoAtual?.id) f.group_id = grupoAtual.id;
     else if (empresaAtual?.id) f.empresa_id = empresaAtual.id;
     return f;
-  }, [grupoAtual?.id, empresaAtual?.id]);
+  }, [grupoAtual?.id, empresaAtual?.id, isSimpleEntity]);
 
   // ─── Query principal via entityListSorted ────────────────────────────────────
   const skip = (currentPage - 1) * pageSize;
