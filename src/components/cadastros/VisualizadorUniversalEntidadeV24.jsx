@@ -555,6 +555,15 @@ export default function VisualizadorUniversalEntidadeV24({
       </div>
 
       {/* ── Banner cross-page ── */}
+      {!selectAllCrossPage && selectedIds.size > 0 && selectedIds.size === items.length && totalCount > items.length && (
+        <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 text-sm text-amber-700 flex items-center gap-2 shrink-0">
+          <span>Selecionados {selectedIds.size} registros desta página.</span>
+          <button onClick={() => setSelectAllCrossPage(true)} className="ml-1 text-blue-600 hover:text-blue-800 underline text-xs font-semibold">
+            Selecionar todos os {totalCount} registros
+          </button>
+          <button onClick={() => { setSelectedIds(new Set()); }} className="ml-auto text-slate-500 hover:text-slate-700 underline text-xs">Cancelar</button>
+        </div>
+      )}
       {selectAllCrossPage && (
         <div className="bg-blue-50 border border-blue-200 rounded-sm px-3 py-2 text-sm text-blue-700 flex items-center gap-2 shrink-0">
           <span>✓ Todos os <strong>{totalCount}</strong> registros de {TITULO} estão selecionados.</span>
