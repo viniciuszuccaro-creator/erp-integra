@@ -43,29 +43,41 @@ const SEARCH_FIELDS = {
 
 function normalizeSortField(entityName, requested) {
   if (!requested || typeof requested !== 'string') return (DEFAULT_SORTS[entityName]?.field) || 'updated_date';
-  const allowed = (SORT_FIELD_MAP[entityName] || SORT_FIELD_MAP.default);
   const r = String(requested).toLowerCase();
   let canonical = requested;
+
+  // Aliases globais sempre aceitos
+  if (['recentes', 'atualizados', 'updated', 'updated_date'].includes(r)) return 'updated_date';
+  if (['criacao', 'criação', 'created_date'].includes(r)) return 'created_date';
+
   if (entityName === 'Produto') {
     if (['cod', 'código', 'codigo'].includes(r)) canonical = 'codigo';
     else if (['descrição', 'descricao', 'descr'].includes(r)) canonical = 'descricao';
     else if (['tipo', 'tipoitem', 'tipo_item'].includes(r)) canonical = 'tipo_item';
     else if (['setor', 'setor_atividade', 'setor_atividade_nome'].includes(r)) canonical = 'setor_atividade_nome';
-    else if (['grupo', 'grupo_produto', 'grupo_produto_nome', 'grupo produto', 'grupo produto nome'].includes(r)) canonical = 'grupo_produto_nome';
-    else if (['marca', 'marca_nome', 'marca nome'].includes(r)) canonical = 'marca_nome';
+    else if (['grupo', 'grupo_produto', 'grupo_produto_nome'].includes(r)) canonical = 'grupo_produto_nome';
+    else if (['marca', 'marca_nome'].includes(r)) canonical = 'marca_nome';
     else if (['estoque', 'estoque_atual', 'saldo'].includes(r)) canonical = 'estoque_atual';
     else if (['preco', 'preço', 'preco_venda', 'preço_venda', 'valor'].includes(r)) canonical = 'preco_venda';
-    else if (['codigo_barras', 'código_barras', 'barcode', 'ean', 'gtin'].includes(r)) canonical = 'codigo_barras';
-    else if (['recentes', 'atualizados', 'updated', 'updated_date'].includes(r)) canonical = 'updated_date';
+    else if (['codigo_barras', 'barcode', 'ean', 'gtin'].includes(r)) canonical = 'codigo_barras';
   }
   if (entityName === 'Cliente') {
-    if (['cidade', 'município', 'municipio'].includes(r)) canonical = 'endereco_principal.cidade';
-    else if (['mais_compras', 'maiscompras', 'top_compras', 'topcompras', 'maior_compra', 'maiorcompra', 'compras'].includes(r)) canonical = 'valor_compras_12meses';
-    else if (['limite_credito', 'limite', 'credito'].includes(r)) canonical = 'condicao_comercial.limite_credito';
+    if (['cidade', 'municipio'].includes(r)) canonical = 'endereco_principal.cidade';
+    else if (['compras', 'mais_compras', 'valor_compras'].includes(r)) canonical = 'valor_compras_12meses';
+    else if (['limite', 'credito', 'limite_credito'].includes(r)) canonical = 'condicao_comercial.limite_credito';
   }
-  if (!allowed.has(canonical)) {
-    if (allowed.has('updated_date')) return 'updated_date';
-    return (DEFAULT_SORTS[entityName]?.field) || 'updated_date';
+
+  // Para entidades com whitelist definida, validar; para entidades genéricas de cadastro, aceitar qualquer campo simples (sem $, sem .)
+  const allowed = SORT_FIELD_MAP[entityName];
+  if (allowed) {
+    if (!allowed.has(canonical)) {
+      return (DEFAULT_SORTS[entityName]?.field) || 'updated_date';
+    }
+  } else {
+    // Entidade genérica: aceitar qualquer campo que seja um identificador simples válido
+    if (!/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(canonical)) {
+      return 'updated_date';
+    }
   }
   return canonical;
 }
