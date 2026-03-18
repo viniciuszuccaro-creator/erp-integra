@@ -149,7 +149,6 @@ import DashboardCliente from "@/components/portal/DashboardCliente";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ModuleLayout from "@/components/layout/ModuleLayout";
 import ModuleContent from "@/components/layout/ModuleContent";
-import { useCountEntities } from "@/components/lib/useCountEntities";
 
 
 /**
