@@ -1,17 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
-// Entidades "simples" de cadastro — não exigem escopo multiempresa
-const SIMPLE_CATALOG_ENTITIES = new Set([
-  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
-  'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
-  'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
-  'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
-  'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
-  'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
-  'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'JobAgendado',
-  'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento', 'ContatoB2B',
-]);
-
 const MODULE_BY_ENTITY = {
   Cliente: 'CRM', Oportunidade: 'CRM', Interacao: 'CRM', Pedido: 'Comercial',
   NotaFiscal: 'Fiscal', Entrega: 'Expedição', Fornecedor: 'Compras',
@@ -31,14 +19,15 @@ const DEFAULT_SORTS = {
   User: { field: 'full_name', direction: 'asc' },
 };
 
-// Whitelist apenas para entidades com campos especiais; entidades genéricas de cadastro aceitam qualquer campo simples
 const SORT_FIELD_MAP = {
-  Produto: new Set(['codigo', 'codigo_barras', 'descricao', 'tipo_item', 'unidade_medida', 'setor_atividade_nome', 'grupo_produto_nome', 'marca_nome', 'status', 'estoque_atual', 'preco_venda', 'updated_date', 'created_date']),
-  Cliente: new Set(['nome', 'razao_social', 'nome_fantasia', 'cpf', 'cnpj', 'status', 'updated_date', 'created_date', 'endereco_principal.cidade', 'valor_compras_12meses', 'quantidade_pedidos', 'condicao_comercial.limite_credito']),
-  Fornecedor: new Set(['nome', 'razao_social', 'cnpj', 'categoria', 'status', 'updated_date', 'created_date']),
-  Transportadora: new Set(['razao_social', 'nome_fantasia', 'cnpj', 'status', 'updated_date', 'created_date']),
-  Colaborador: new Set(['nome_completo', 'cargo', 'departamento', 'status', 'updated_date', 'created_date', 'cpf', 'data_admissao']),
-  // Todas as demais entidades de cadastro usam modo genérico (sem whitelist) — aceita qualquer campo simples válido
+  Produto: new Set(['codigo', 'codigo_barras', 'descricao', 'tipo_item', 'unidade_medida', 'setor_atividade_nome', 'grupo_produto_nome', 'marca_nome', 'status', 'estoque_atual', 'preco_venda', 'updated_date']),
+  Cliente: new Set(['nome', 'razao_social', 'nome_fantasia', 'cpf', 'cnpj', 'status', 'updated_date', 'endereco_principal.cidade', 'valor_compras_12meses', 'quantidade_pedidos', 'condicao_comercial.limite_credito']),
+  Fornecedor: new Set(['nome', 'razao_social', 'cnpj', 'categoria', 'status', 'updated_date']),
+  Transportadora: new Set(['razao_social', 'nome_fantasia', 'cnpj', 'status', 'updated_date']),
+  Colaborador: new Set(['nome_completo', 'cargo', 'departamento', 'status', 'updated_date']),
+  Banco: new Set(['codigo', 'descricao', 'status', 'updated_date']),
+  FormaPagamento: new Set(['descricao', 'codigo', 'status', 'updated_date']),
+  default: new Set(['updated_date', 'nome', 'codigo', 'status'])
 };
 
 const SEARCH_FIELDS = {
@@ -78,16 +67,16 @@ function normalizeSortField(entityName, requested) {
     else if (['limite', 'credito', 'limite_credito'].includes(r)) canonical = 'condicao_comercial.limite_credito';
   }
 
-  // Para entidades com whitelist definida: validar; para entidades genéricas de cadastro: aceitar qualquer campo simples válido
+  // Para entidades com whitelist definida, validar; para entidades genéricas de cadastro, aceitar qualquer campo simples (sem $, sem .)
   const allowed = SORT_FIELD_MAP[entityName];
   if (allowed) {
     if (!allowed.has(canonical)) {
       return (DEFAULT_SORTS[entityName]?.field) || 'updated_date';
     }
   } else {
-    // Entidade genérica de cadastro: aceitar qualquer campo que seja identificador válido (sem $, sem espaço)
-    if (!/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(canonical) || canonical.includes('$')) {
-      return (DEFAULT_SORTS[entityName]?.field) || 'updated_date';
+    // Entidade genérica: aceitar qualquer campo que seja um identificador simples válido
+    if (!/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(canonical)) {
+      return 'updated_date';
     }
   }
   return canonical;
@@ -170,10 +159,9 @@ async function listOne(base44, user, q) {
   if (!entityName) return { entityName, items: [] };
   const filtros = q?.filter || {};
 
-  const isSimple = SIMPLE_CATALOG_ENTITIES.has(entityName);
   const scopeProvided = !!filtros?.empresa_id || !!filtros?.group_id
     || (!!filtros?.$or && Array.isArray(filtros.$or) && filtros.$or.length > 0);
-  if (user.role !== 'admin' && !scopeProvided && !isSimple) {
+  if (user.role !== 'admin' && !scopeProvided) {
     return { entityName, items: [], error: 'escopo_multiempresa_obrigatorio' };
   }
 
@@ -192,10 +180,7 @@ async function listOne(base44, user, q) {
     Object.entries(filtros).map(([k, v]) => [k, Array.isArray(v) ? v.map(sanitizeVal) : (v && typeof v === 'object' ? v : sanitizeVal(v))])
   );
   let top = normalizeFilterShared(safeFilter);
-  // Entidades simples sem escopo: não expandir por grupo (não têm empresa_id/group_id)
-  if (!isSimple || scopeProvided) {
-    top = await expandByGroupIfNeeded(base44, entityName, top);
-  }
+  top = await expandByGroupIfNeeded(base44, entityName, top);
 
   const term = q?.search || q?.busca || filtros?.__search || filtros?.search || filtros?.busca || null;
   let finalWithSearch = top;
