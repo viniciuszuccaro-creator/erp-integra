@@ -103,7 +103,7 @@ export default function RepresentanteFormCompleto({ representante: representante
         regioes_atendimento: representante.regioes_atendimento || []
       });
     }
-  }, [representante]);
+  }, [representante?.id]);
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
@@ -116,7 +116,7 @@ export default function RepresentanteFormCompleto({ representante: representante
       queryClient.invalidateQueries({ queryKey: ['representantes'] });
       toast({ title: `✅ Representante ${representante?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
-      onClose();
+      if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
       toast({ title: "❌ Erro ao salvar", description: error.message, variant: "destructive" });
@@ -129,7 +129,7 @@ export default function RepresentanteFormCompleto({ representante: representante
       queryClient.invalidateQueries({ queryKey: ['representantes'] });
       toast({ title: "✅ Representante excluído!" });
       if (onSuccess) onSuccess();
-      onClose();
+      if (onCloseNorm) onCloseNorm();
     }
   });
 
@@ -694,7 +694,7 @@ export default function RepresentanteFormCompleto({ representante: representante
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onCloseNorm}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] flex flex-col p-0 overflow-hidden">
         {content}
       </DialogContent>

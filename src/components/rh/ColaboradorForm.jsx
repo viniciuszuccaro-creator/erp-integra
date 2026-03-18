@@ -46,6 +46,12 @@ function ColaboradorForm({ colaborador: colaboradorProp, item, data, onSubmit, o
     aso_validade: ''
   });
 
+  useEffect(() => {
+    if (colaborador?.id) {
+      setFormData({ ...colaborador });
+    }
+  }, [colaborador?.id]);
+
   const schema = z.object({
     nome_completo: z.string().min(3, 'Nome é obrigatório'),
     cpf: z.string().min(11, 'CPF é obrigatório'),
