@@ -397,14 +397,26 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [selectAllCrossPage, totalCount, selectedIds, ENTITY, TITULO, queryClient, contextFilter]);
 
   // ─── Seleção individual — NÃO cancela selectAllCrossPage ────────────────────
+  // Quando selectAllCrossPage está ativo e usuário desmarca um item:
+  // → migra para seleção explícita (todos exceto esse)
   const handleItemCheck = useCallback((id, checked) => {
+    if (selectAllCrossPage && !checked) {
+      // Migra: seleciona todos da página atual exceto o desmarcado
+      setSelectAllCrossPage(false);
+      setSelectedIds(() => {
+        const next = new Set(items.map((i) => i.id));
+        next.delete(id);
+        return next;
+      });
+      return;
+    }
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (checked) next.add(id);
       else next.delete(id);
       return next;
     });
-  }, []);
+  }, [selectAllCrossPage, items]);
 
   // ─── Toggle select all ────────────────────────────────────────────────────────
   const toggleSelectAll = useCallback(() => {
