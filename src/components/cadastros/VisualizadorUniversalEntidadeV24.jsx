@@ -1,6 +1,7 @@
 /**
  * VisualizadorUniversalEntidadeV24 — Motor universal de listagem
  * ✅ Edição funcional: formulário sempre pré-preenchido (props universais + específicos)
+ * ✅ Persistência automática para formulários simples (onSubmit → create/update backend)
  * ✅ Ordenação correta via entityListSorted (campo + direção separados)
  * ✅ Badge de total real de registros via countEntities
  * ✅ Delete ALL (cross-page) — seleção preservada ao desmarcar individual
@@ -56,27 +57,43 @@ const MONEY_FIELDS = new Set([
 
 const PAGE_SIZES = [10, 20, 50, 100];
 
+// ─── Formulários "self-managed" (têm persistência própria internamente) ────────
+// Esses NÃO precisam que o Visualizador gerencie o onSubmit → já fazem create/update internos
+const SELF_MANAGED_FORMS = new Set([
+  "CadastroClienteCompleto",
+  "CadastroFornecedorCompleto",
+  "TransportadoraForm",
+  "ColaboradorForm",
+  "RepresentanteFormCompleto",
+  "RepresentanteForm",
+  "ProdutoFormV22_Completo",
+  "ProdutoFormCompleto",
+  "ProdutoForm",
+]);
+
 // ─── Mapeamento de props canônicos por entidade ───────────────────────────────
-// Cobre TODOS os formulários do sistema, incluindo os que têm Dialog próprio
-function buildFormProps(editItem, handleSave) {
+function buildFormProps(editItem, handleSave, handlePersistSubmit) {
+  const isPersist = typeof handlePersistSubmit === "function";
+
   const callbacks = {
     onClose: handleSave,
     onSave: handleSave,
-    onSubmit: handleSave,
     onSuccess: handleSave,
     onOpenChange: (v) => { if (!v) handleSave(); },
     isOpen: true,
     open: true,
     windowMode: true,
+    // Para formulários simples: onSubmit → persistência automática
+    onSubmit: isPersist ? handlePersistSubmit : handleSave,
   };
 
   if (!editItem) return callbacks;
 
   return {
-    // Universais (maioria dos formulários simples)
+    // Universais
     item: editItem,
     data: editItem,
-    // Props específicos por nome de formulário — cobre TODOS os cadastros
+    // Props específicos por entidade — cobre TODOS os cadastros
     cliente: editItem,
     fornecedor: editItem,
     colaborador: editItem,
@@ -123,7 +140,6 @@ function buildFormProps(editItem, handleSave) {
     configuracaoCobranca: editItem,
     configuracaoDespesaRecorrente: editItem,
     perfilAcesso: editItem,
-    // regiaoId para formulários que usam esse prop
     regiaoId: editItem?.id,
     ...callbacks,
   };
@@ -143,6 +159,11 @@ export default function VisualizadorUniversalEntidadeV24({
 }) {
   const ENTITY = nomeEntidade || entityName || "";
   const TITULO = tituloDisplay || ENTITY;
+
+  // Detecta se o formulário gerencia sua própria persistência
+  const isSelfManaged = FormComponent
+    ? SELF_MANAGED_FORMS.has(FormComponent.displayName || FormComponent.name || "")
+    : false;
 
   const COLUMNS = useMemo(() => {
     if (columns?.length > 0) return columns;
@@ -172,6 +193,7 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const [editItem, setEditItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [isSavingForm, setIsSavingForm] = useState(false);
 
   // Seleção cross-page
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -248,11 +270,9 @@ export default function VisualizadorUniversalEntidadeV24({
     startTransition(() => {
       setSortField((prevField) => {
         if (prevField === field) {
-          // Mesmo campo: inverte direção
           setSortDir((prevDir) => prevDir === "desc" ? "asc" : "desc");
           return prevField;
         }
-        // Novo campo: reseta para desc
         setSortDir("desc");
         return field;
       });
@@ -291,9 +311,44 @@ export default function VisualizadorUniversalEntidadeV24({
     return String(value).substring(0, 80);
   }, [statusColors]);
 
+  // ─── Persistência automática para formulários simples ─────────────────────────
+  // Chamado pelo onSubmit do formulário: recebe os dados e faz create/update
+  const handlePersistSubmit = useCallback(async (formData) => {
+    if (!formData || !ENTITY) return;
+    // Se o formulário enviou _action: 'delete', ignora persistência
+    if (formData._action === "delete") {
+      setShowForm(false);
+      setEditItem(null);
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
+      queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
+      return;
+    }
+    setIsSavingForm(true);
+    try {
+      const payload = { ...formData };
+      // Injeta contexto multiempresa se não existir
+      if (!payload.empresa_id && empresaAtual?.id) payload.empresa_id = empresaAtual.id;
+      if (!payload.group_id && grupoAtual?.id) payload.group_id = grupoAtual.id;
+
+      if (editItem?.id) {
+        await base44.entities[ENTITY].update(editItem.id, payload);
+      } else {
+        await base44.entities[ENTITY].create(payload);
+      }
+      setShowForm(false);
+      setEditItem(null);
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
+      queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
+    } catch (e) {
+      alert("Erro ao salvar: " + (e?.message || e));
+    } finally {
+      setIsSavingForm(false);
+    }
+  }, [ENTITY, editItem, empresaAtual?.id, grupoAtual?.id, queryClient]);
+
   // ─── Delete individual ────────────────────────────────────────────────────────
   const handleDelete = useCallback(async (item) => {
-    const label = item.nome || item.descricao || item.razao_social || item.nome_completo || item.id;
+    const label = item.nome || item.descricao || item.razao_social || item.nome_completo || item.nome_banco || item.id;
     if (!window.confirm(`Confirma exclusão de "${label}"?`)) return;
     try {
       await base44.entities[ENTITY].delete(item.id);
@@ -316,7 +371,6 @@ export default function VisualizadorUniversalEntidadeV24({
     try {
       let idsToDelete;
       if (selectAllCrossPage) {
-        // Busca TODOS os IDs (sem paginação)
         const res = await base44.functions.invoke("entityListSorted", {
           entityName: ENTITY,
           filter: contextFilter,
@@ -371,7 +425,7 @@ export default function VisualizadorUniversalEntidadeV24({
     });
   }, []);
 
-  // ─── Fechar/salvar ────────────────────────────────────────────────────────────
+  // ─── Fechar/salvar (formulários self-managed chamam isso após persistir) ───────
   const handleSave = useCallback(() => {
     startTransition(() => {
       setShowForm(false);
@@ -389,7 +443,14 @@ export default function VisualizadorUniversalEntidadeV24({
   };
 
   const deleteCount = selectAllCrossPage ? totalCount : selectedIds.size;
-  const formProps = buildFormProps(editItem, handleSave);
+
+  // Para formulários self-managed: não passa handlePersistSubmit (eles já têm persistência)
+  // Para formulários simples: passa handlePersistSubmit para o onSubmit
+  const formProps = buildFormProps(
+    editItem,
+    handleSave,
+    isSelfManaged ? null : handlePersistSubmit
+  );
 
   const content = (
     <div className="flex flex-col h-full gap-3 min-h-0">
@@ -434,7 +495,9 @@ export default function VisualizadorUniversalEntidadeV24({
         >
           <option value="updated_date|desc">Mais Recentes</option>
           <option value="updated_date|asc">Mais Antigos</option>
-          {COLUMNS.filter((c) => c.sortable !== false && c.field !== "updated_date").map((c) => (
+          <option value="created_date|desc">Criação ↓</option>
+          <option value="created_date|asc">Criação ↑</option>
+          {COLUMNS.filter((c) => c.sortable !== false && c.field !== "updated_date" && c.field !== "created_date").map((c) => (
             <React.Fragment key={c.field}>
               <option value={`${c.field}|asc`}>{c.label} ↑</option>
               <option value={`${c.field}|desc`}>{c.label} ↓</option>
@@ -609,23 +672,28 @@ export default function VisualizadorUniversalEntidadeV24({
       {/* ── Modal de Edição ── */}
       {FormComponent && showForm && (
         <>
-          <div className="fixed inset-0 z-[999] bg-black/50" onClick={handleSave} />
+          <div className="fixed inset-0 z-[999] bg-black/50" onClick={isSelfManaged ? handleSave : undefined} />
           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 pointer-events-none">
             <div
-              className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-auto shadow-2xl pointer-events-auto flex flex-col"
+              className="bg-white rounded-xl w-full max-w-4xl max-h-[92vh] overflow-auto shadow-2xl pointer-events-auto flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10 rounded-t-xl">
                 <h2 className="text-lg font-semibold text-slate-800">
                   {editItem ? `Editar ${TITULO}` : `Novo ${TITULO}`}
                 </h2>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  {isSavingForm && (
+                    <span className="text-xs text-blue-600 animate-pulse">Salvando...</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
               <div className="p-6 flex-1 overflow-auto">
                 {/* key={editItem?.id || "new"} força recriação do componente com os dados corretos */}
