@@ -9,8 +9,8 @@ import { Loader2, Landmark } from "lucide-react";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function BancoForm({ banco, item, data, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
-  const dadosIniciais = banco || item || data;
+export default function BancoForm({ banco, item, data, initialData, defaultValues, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
+  const dadosIniciais = item || data || initialData || defaultValues || banco;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_banco: '',
     codigo_banco: '',
