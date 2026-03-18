@@ -22,8 +22,12 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
     observacoes: ""
   });
 
+  const prevIdRef = React.useRef(dadosCentroCusto?.id);
   useEffect(() => {
-    if (dadosCentroCusto?.id) setFormData({ ...dadosCentroCusto });
+    if (dadosCentroCusto?.id && dadosCentroCusto.id !== prevIdRef.current) {
+      prevIdRef.current = dadosCentroCusto.id;
+      setFormData({ ...dadosCentroCusto });
+    }
   }, [dadosCentroCusto?.id]);
 
   const handleSubmit = (e) => {
