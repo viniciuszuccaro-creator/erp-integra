@@ -354,7 +354,8 @@ export default function VisualizadorUniversalEntidadeV24({
     if (!api?.subscribe) return;
     const unsub = api.subscribe(() => {
       queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
-      queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
+      queryClient.invalidateQueries({ queryKey: ["entityCounts_v4"] });
+      queryClient.invalidateQueries({ queryKey: ["GroupCountBadge3"] });
     });
     return () => { if (typeof unsub === "function") unsub(); };
   }, [ENTITY, queryClient]);
