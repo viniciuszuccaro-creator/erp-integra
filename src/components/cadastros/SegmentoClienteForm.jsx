@@ -17,9 +17,12 @@ export default function SegmentoClienteForm({ segmento, segmentoCliente, item, d
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (onSubmit) onSubmit(formData);
-    if (onSave) onSave();
-    if (onClose) onClose();
+    if (onSubmit) {
+      onSubmit(formData);
+    } else {
+      if (onSave) onSave();
+      if (onClose) onClose();
+    }
   };
 
   const content = (
