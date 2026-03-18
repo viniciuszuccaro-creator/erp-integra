@@ -214,7 +214,20 @@ export default function VisualizadorUniversalEntidadeV24({
   const [selectAllCrossPage, setSelectAllCrossPage] = useState(false);
 
   const debounceRef = useRef(null);
-  const hasContext = !!(empresaAtual?.id || grupoAtual?.id);
+
+  // Entidades simples não precisam de contexto multiempresa
+  const SIMPLE_ENTITIES = new Set([
+    'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
+    'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
+    'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
+    'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
+    'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
+    'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
+    'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'JobAgendado',
+    'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento', 'ContatoB2B',
+  ]);
+  const isSimpleEntity = SIMPLE_ENTITIES.has(ENTITY);
+  const hasContext = !!(empresaAtual?.id || grupoAtual?.id) || isSimpleEntity;
 
   // ─── Contagem real ────────────────────────────────────────────────────────────
   const { total: totalCount } = useEntityCounts(ENTITY ? [ENTITY] : []);
