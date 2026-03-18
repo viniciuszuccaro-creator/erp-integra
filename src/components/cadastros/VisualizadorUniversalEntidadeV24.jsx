@@ -454,13 +454,21 @@ export default function VisualizadorUniversalEntidadeV24({
     }
   }, [selectAllCrossPage, items, selectedIds, totalCount]);
 
-  // ─── Abrir edição ─────────────────────────────────────────────────────────────
-  const handleEditItem = useCallback((item) => {
+  // ─── Abrir edição — busca o registro completo antes de abrir o form ──────────
+  const handleEditItem = useCallback(async (item) => {
+    // Tenta buscar o registro completo direto da entidade para garantir todos os campos
+    let fullItem = { ...item };
+    try {
+      if (ENTITY && item?.id) {
+        const fetched = await base44.entities[ENTITY].get(item.id);
+        if (fetched && fetched.id) fullItem = { ...fetched };
+      }
+    } catch (_) { /* usa o item da listagem como fallback */ }
     startTransition(() => {
-      setEditItem({ ...item });
+      setEditItem(fullItem);
       setShowForm(true);
     });
-  }, []);
+  }, [ENTITY]);
 
   // ─── Fechar/salvar (formulários self-managed chamam isso após persistir) ───────
   const handleSave = useCallback(() => {
