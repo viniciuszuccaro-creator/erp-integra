@@ -119,8 +119,10 @@ const SIMPLE_CATALOG_ENTITIES = new Set([
   'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
   'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
   'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
-  'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'JobAgendado',
-  'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento', 'ContatoB2B',
+  'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'ChatbotCanal',
+  'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento',
+  'ContatoB2B', 'CentroCusto', 'PlanoDeContas', 'PlanoContas',
+  'Veiculo', 'Motorista', 'Representante', 'GrupoEmpresarial', 'Empresa',
 ]);
 
 async function countOne(base44, user, payload) {
