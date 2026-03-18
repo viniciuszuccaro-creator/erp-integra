@@ -170,9 +170,10 @@ async function listOne(base44, user, q) {
   if (!entityName) return { entityName, items: [] };
   const filtros = q?.filter || {};
 
+  const isSimple = SIMPLE_CATALOG_ENTITIES.has(entityName);
   const scopeProvided = !!filtros?.empresa_id || !!filtros?.group_id
     || (!!filtros?.$or && Array.isArray(filtros.$or) && filtros.$or.length > 0);
-  if (user.role !== 'admin' && !scopeProvided) {
+  if (user.role !== 'admin' && !scopeProvided && !isSimple) {
     return { entityName, items: [], error: 'escopo_multiempresa_obrigatorio' };
   }
 
