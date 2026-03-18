@@ -79,7 +79,10 @@ export default function GroupCountBadge({ entities = [], badgeClassName }) {
   const grupoEmpIds = (empresasDoGrupo || []).map(e => e.id).filter(Boolean).sort().join(',');
 
   const hasAnyNonSimple = entities.some(e => !SIMPLE_CATALOG.has(e));
+  // Permitir fetch se houver entidades E (nenhuma é não-simples OU houver empresa/grupo)
   const canFetch = entities.length > 0 && (!hasAnyNonSimple || !!(empresaId || groupId));
+  // Se está em contexto de grupo, sempre fetch (group_id é válido)
+  const shouldFetch = canFetch || (entities.length > 0 && groupId && hasAnyNonSimple);
 
   const { data: total = 0, isLoading } = useQuery({
     queryKey: ['GroupCountBadge3', entities.join(','), empresaId || null, groupId || null, grupoEmpIds],
