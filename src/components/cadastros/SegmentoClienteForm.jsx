@@ -7,8 +7,8 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Users } from 'lucide-react';
 
-export default function SegmentoClienteForm({ segmento, segmentoCliente, onSubmit, windowMode = false }) {
-  const dadosIniciais = segmentoCliente || segmento;
+export default function SegmentoClienteForm({ segmento, segmentoCliente, item, data, onSubmit, onSave, onClose, windowMode = false }) {
+  const dadosIniciais = segmentoCliente || segmento || item || data;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_segmento: '',
     tipo_segmento: 'Comercial',
@@ -17,7 +17,9 @@ export default function SegmentoClienteForm({ segmento, segmentoCliente, onSubmi
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (onSubmit) onSubmit(formData);
+    if (onSave) onSave();
+    if (onClose) onClose();
   };
 
   const content = (

@@ -19,8 +19,8 @@ const ESTADOS_BRASIL = [
   "RS", "RO", "RR", "SC", "SP", "SE", "TO"
 ];
 
-export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, open, onOpenChange, onSubmit, windowMode = false }) {
-  const dadosIniciaisProps = regiaoAtendimento;
+export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, item, data, open, onOpenChange, onSubmit, onSave, onClose, windowMode = false }) {
+  const dadosIniciaisProps = regiaoAtendimento || item || data;
   const [formData, setFormData] = useState(dadosIniciaisProps || {
     nome_regiao: "",
     codigo_regiao: "",
@@ -112,8 +112,10 @@ export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, ope
       toast.error("Nome da região é obrigatório");
       return;
     }
-    onSubmit(formData);
-    onOpenChange(false);
+    if (onSubmit) onSubmit(formData);
+    if (onOpenChange) onOpenChange(false);
+    if (onSave) onSave();
+    if (onClose) onClose();
   };
 
   const handleExcluir = () => {

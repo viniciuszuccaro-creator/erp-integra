@@ -11,8 +11,8 @@ import { base44 } from "@/api/base44Client";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function ContatoB2BForm({ contato, contatoB2B, onSubmit, isSubmitting, windowMode = false }) {
-  const dadosIniciais = contatoB2B || contato;
+export default function ContatoB2BForm({ contato, contatoB2B, item, data, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
+  const dadosIniciais = contatoB2B || contato || item || data;
   const [formData, setFormData] = useState(dadosIniciais || {
     cliente_id: '',
     nome_contato: '',
@@ -41,7 +41,9 @@ export default function ContatoB2BForm({ contato, contatoB2B, onSubmit, isSubmit
       alert('Preencha os campos obrigatórios');
       return;
     }
-    onSubmit(formData);
+    if (onSubmit) onSubmit(formData);
+    if (onSave) onSave();
+    if (onClose) onClose();
   };
 
   const formContent = (
