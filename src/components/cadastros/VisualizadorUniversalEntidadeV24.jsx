@@ -1,11 +1,13 @@
 /**
- * VisualizadorUniversalEntidadeV24 — Motor universal de listagem
- * ✅ Edição funcional: formulário sempre pré-preenchido (props universais + específicos)
- * ✅ Persistência automática para formulários simples (onSubmit → create/update backend)
- * ✅ Ordenação correta via entityListSorted (campo + direção separados)
- * ✅ Badge de total real de registros via countEntities
- * ✅ Delete ALL (cross-page) — seleção preservada ao desmarcar individual
- * ✅ Paginação server-side com skip/limit real
+ * VisualizadorUniversalEntidadeV24 — Motor universal de listagem V24.1
+ * ✅ Edição: busca registro completo via get + fallback robusto
+ * ✅ Formulário sempre pré-preenchido (props universais + específicos)
+ * ✅ Persistência automática para formulários simples
+ * ✅ Ordenação correta (sem stale closure)
+ * ✅ Contagem real via useEntityCounts
+ * ✅ Delete ALL cross-page corrigido
+ * ✅ Seleção preservada ao desmarcar individual
+ * ✅ Paginação server-side real
  * ✅ Multiempresa + Real-time
  */
 import React, { useState, useEffect, useMemo, useCallback, useRef, startTransition } from "react";
@@ -22,6 +24,7 @@ import {
   Search, Edit, Trash2, Plus, RefreshCw, AlertCircle, X
 } from "lucide-react";
 
+// ─── Constantes de formatação ──────────────────────────────────────────────────
 const DEFAULT_STATUS_COLORS = {
   Ativo:         "bg-green-100 text-green-700",
   Ativa:         "bg-green-100 text-green-700",
@@ -57,8 +60,20 @@ const MONEY_FIELDS = new Set([
 
 const PAGE_SIZES = [10, 20, 50, 100];
 
-// ─── Formulários "self-managed" (têm persistência própria internamente) ────────
-// Esses NÃO precisam que o Visualizador gerencie o onSubmit → já fazem create/update internos
+// ─── Entidades simples (sem contexto empresa/grupo) ───────────────────────────
+const SIMPLE_ENTITIES = new Set([
+  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
+  'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
+  'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
+  'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
+  'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
+  'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
+  'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'ChatbotCanal', 'JobAgendado',
+  'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento', 'ContatoB2B',
+  'Representante', 'CentroCusto', 'PlanoDeContas', 'PlanoContas',
+]);
+
+// ─── Formulários self-managed (têm persistência própria) ──────────────────────
 const SELF_MANAGED_FORMS = new Set([
   "CadastroClienteCompleto",
   "CadastroFornecedorCompleto",
@@ -69,9 +84,11 @@ const SELF_MANAGED_FORMS = new Set([
   "ProdutoFormV22_Completo",
   "ProdutoFormCompleto",
   "ProdutoForm",
+  "RegiaoAtendimentoForm",
 ]);
 
-// ─── Mapeamento de props canônicos por entidade ───────────────────────────────
+// ─── Builder de props para formulários ────────────────────────────────────────
+// Garante que TODOS os nomes de prop possíveis são populados com o item de edição
 function buildFormProps(editItem, handleSave, handlePersistSubmit) {
   const isPersist = typeof handlePersistSubmit === "function";
 
@@ -83,19 +100,21 @@ function buildFormProps(editItem, handleSave, handlePersistSubmit) {
     isOpen: true,
     open: true,
     windowMode: true,
-    // Para formulários simples: onSubmit → persistência automática
     onSubmit: isPersist ? handlePersistSubmit : handleSave,
   };
 
-  if (!editItem) return callbacks;
+  if (!editItem) return { ...callbacks };
 
+  // Todos os aliases possíveis populados com o item completo
   return {
-    // Universais — SEMPRE presentes para garantir preenchimento em qualquer formulário
     item: editItem,
     data: editItem,
     initialData: editItem,
     defaultValues: editItem,
-    // Props específicos por entidade — cobre TODOS os cadastros
+    record: editItem,
+    entity: editItem,
+    value: editItem,
+    // Aliases por entidade
     cliente: editItem,
     fornecedor: editItem,
     colaborador: editItem,
@@ -152,13 +171,50 @@ function buildFormProps(editItem, handleSave, handlePersistSubmit) {
     configuracao: editItem,
     perfilAcesso: editItem,
     perfil: editItem,
-    veiculo: editItem,
-    motorista: editItem,
+    modeloDocumento: editItem,
+    apiExterna: editItem,
+    webhook: editItem,
+    chatbotIntent: editItem,
+    chatbotCanal: editItem,
+    jobAgendado: editItem,
+    eventoNotificacao: editItem,
     regiaoId: editItem?.id,
+    id: editItem?.id,
     ...callbacks,
   };
 }
 
+// ─── Busca registro completo (com fallback robusto) ───────────────────────────
+async function fetchFullRecord(entityName, item) {
+  if (!item?.id || !entityName) return { ...item };
+  const api = base44.entities?.[entityName];
+  if (!api) return { ...item };
+
+  // Tenta .get() primeiro
+  if (typeof api.get === "function") {
+    try {
+      const fetched = await api.get(item.id);
+      if (fetched && typeof fetched === "object" && fetched.id) {
+        return { ...fetched };
+      }
+    } catch (_) { /* silencioso */ }
+  }
+
+  // Fallback: filter por id
+  if (typeof api.filter === "function") {
+    try {
+      const res = await api.filter({ id: item.id }, undefined, 1);
+      if (Array.isArray(res) && res.length > 0 && res[0].id) {
+        return { ...res[0] };
+      }
+    } catch (_) { /* silencioso */ }
+  }
+
+  // Fallback final: item da listagem
+  return { ...item };
+}
+
+// ─── Componente principal ──────────────────────────────────────────────────────
 export default function VisualizadorUniversalEntidadeV24({
   nomeEntidade,
   tituloDisplay,
@@ -173,6 +229,8 @@ export default function VisualizadorUniversalEntidadeV24({
 }) {
   const ENTITY = nomeEntidade || entityName || "";
   const TITULO = tituloDisplay || ENTITY;
+
+  const isSimpleEntity = SIMPLE_ENTITIES.has(ENTITY);
 
   // Detecta se o formulário gerencia sua própria persistência
   const isSelfManaged = FormComponent
@@ -198,16 +256,21 @@ export default function VisualizadorUniversalEntidadeV24({
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
+  // ── Estado local ──────────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // Ordenação: estado separado para campo e direção (sem stale closure)
   const [sortField, setSortField] = useState("updated_date");
   const [sortDir, setSortDir] = useState("desc");
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(pageSizeProp || 20);
 
   const [editItem, setEditItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [isSavingForm, setIsSavingForm] = useState(false);
+  const [isLoadingEdit, setIsLoadingEdit] = useState(false);
 
   // Seleção cross-page
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -215,45 +278,31 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const debounceRef = useRef(null);
 
-  // Entidades simples não precisam de contexto multiempresa
-  const SIMPLE_ENTITIES = new Set([
-    'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
-    'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
-    'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
-    'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
-    'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
-    'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
-    'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'JobAgendado',
-    'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento', 'ContatoB2B',
-  ]);
-  const isSimpleEntity = SIMPLE_ENTITIES.has(ENTITY);
-  const hasContext = !!(empresaAtual?.id || grupoAtual?.id) || isSimpleEntity;
+  const hasContext = isSimpleEntity || !!(empresaAtual?.id || grupoAtual?.id);
 
   // ─── Contagem real ────────────────────────────────────────────────────────────
   const { total: totalCount } = useEntityCounts(ENTITY ? [ENTITY] : []);
 
-  // ─── Debounced search ────────────────────────────────────────────────────────
+  // ─── Debounced search ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      startTransition(() => {
-        setDebouncedSearch(search);
-        setCurrentPage(1);
-      });
+      setDebouncedSearch(search);
+      setCurrentPage(1);
     }, 350);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [search]);
 
-  // ─── Construir filtro de contexto ────────────────────────────────────────────
+  // ─── Filtro de contexto ───────────────────────────────────────────────────────
   const contextFilter = useMemo(() => {
-    if (isSimpleEntity) return {}; // Entidades simples não precisam de filtro de contexto
+    if (isSimpleEntity) return {};
     const f = {};
     if (grupoAtual?.id) f.group_id = grupoAtual.id;
     else if (empresaAtual?.id) f.empresa_id = empresaAtual.id;
     return f;
   }, [grupoAtual?.id, empresaAtual?.id, isSimpleEntity]);
 
-  // ─── Query principal via entityListSorted ────────────────────────────────────
+  // ─── Query principal ──────────────────────────────────────────────────────────
   const skip = (currentPage - 1) * pageSize;
   const { data: items = [], isLoading, isFetching } = useQuery({
     queryKey: [ENTITY, "viz-v24", sortField, sortDir, currentPage, pageSize, debouncedSearch, empresaAtual?.id, grupoAtual?.id],
@@ -281,7 +330,7 @@ export default function VisualizadorUniversalEntidadeV24({
     enabled: !!ENTITY && hasContext,
   });
 
-  // ─── Real-time ────────────────────────────────────────────────────────────────
+  // ─── Real-time subscribe ──────────────────────────────────────────────────────
   useEffect(() => {
     if (!ENTITY) return;
     const api = base44.entities?.[ENTITY];
@@ -293,22 +342,25 @@ export default function VisualizadorUniversalEntidadeV24({
     return () => { if (typeof unsub === "function") unsub(); };
   }, [ENTITY, queryClient]);
 
-  // ─── Sort handler ─────────────────────────────────────────────────────────────
+  // ─── Sort handler (sem stale closure) ────────────────────────────────────────
   const handleSort = useCallback((field) => {
-    startTransition(() => {
-      setSortField((prevField) => {
-        if (prevField === field) {
-          setSortDir((prevDir) => prevDir === "desc" ? "asc" : "desc");
-          return prevField;
-        }
-        setSortDir("desc");
-        return field;
-      });
-      setCurrentPage(1);
+    setSortDir(prev => {
+      // Se mesmo campo → inverte; se campo novo → desc
+      return sortField === field ? (prev === "desc" ? "asc" : "desc") : "desc";
     });
+    setSortField(field);
+    setCurrentPage(1);
+  }, [sortField]);
+
+  // Handler do dropdown de sort
+  const handleSortDropdown = useCallback((value) => {
+    const [f, d] = value.split("|");
+    setSortField(f);
+    setSortDir(d);
+    setCurrentPage(1);
   }, []);
 
-  // ─── Formatter ───────────────────────────────────────────────────────────────
+  // ─── Formatter ────────────────────────────────────────────────────────────────
   const formatValue = useCallback((value, col) => {
     if (value === null || value === undefined || value === "") return "—";
     if (BOOL_FIELDS.has(col.field)) {
@@ -339,11 +391,9 @@ export default function VisualizadorUniversalEntidadeV24({
     return String(value).substring(0, 80);
   }, [statusColors]);
 
-  // ─── Persistência automática para formulários simples ─────────────────────────
-  // Chamado pelo onSubmit do formulário: recebe os dados e faz create/update
+  // ─── Persistência automática (formulários simples) ───────────────────────────
   const handlePersistSubmit = useCallback(async (formData) => {
     if (!formData || !ENTITY) return;
-    // Se o formulário enviou _action: 'delete', ignora persistência
     if (formData._action === "delete") {
       setShowForm(false);
       setEditItem(null);
@@ -354,12 +404,10 @@ export default function VisualizadorUniversalEntidadeV24({
     setIsSavingForm(true);
     try {
       const payload = { ...formData };
-      // Injeta contexto multiempresa se não existir (apenas para entidades não-simples)
       if (!isSimpleEntity) {
         if (!payload.empresa_id && empresaAtual?.id) payload.empresa_id = empresaAtual.id;
         if (!payload.group_id && grupoAtual?.id) payload.group_id = grupoAtual.id;
       }
-
       if (editItem?.id) {
         await base44.entities[ENTITY].update(editItem.id, payload);
       } else {
@@ -374,7 +422,7 @@ export default function VisualizadorUniversalEntidadeV24({
     } finally {
       setIsSavingForm(false);
     }
-  }, [ENTITY, editItem, empresaAtual?.id, grupoAtual?.id, queryClient]);
+  }, [ENTITY, editItem, empresaAtual?.id, grupoAtual?.id, queryClient, isSimpleEntity]);
 
   // ─── Delete individual ────────────────────────────────────────────────────────
   const handleDelete = useCallback(async (item) => {
@@ -390,7 +438,7 @@ export default function VisualizadorUniversalEntidadeV24({
     }
   }, [ENTITY, queryClient]);
 
-  // ─── Delete em massa (cross-page) ─────────────────────────────────────────────
+  // ─── Delete em massa (cross-page) ────────────────────────────────────────────
   const handleDeleteSelected = useCallback(async () => {
     const count = selectAllCrossPage ? totalCount : selectedIds.size;
     if (count === 0) return;
@@ -401,6 +449,7 @@ export default function VisualizadorUniversalEntidadeV24({
     try {
       let idsToDelete;
       if (selectAllCrossPage) {
+        // Busca TODOS os IDs sem paginação
         const res = await base44.functions.invoke("entityListSorted", {
           entityName: ENTITY,
           filter: contextFilter,
@@ -413,6 +462,7 @@ export default function VisualizadorUniversalEntidadeV24({
       } else {
         idsToDelete = Array.from(selectedIds);
       }
+      // Delete em lotes para não sobrecarregar
       for (const id of idsToDelete) {
         await base44.entities[ENTITY].delete(id);
       }
@@ -426,18 +476,13 @@ export default function VisualizadorUniversalEntidadeV24({
     }
   }, [selectAllCrossPage, totalCount, selectedIds, ENTITY, TITULO, queryClient, contextFilter]);
 
-  // ─── Seleção individual — NÃO cancela selectAllCrossPage ────────────────────
-  // Quando selectAllCrossPage está ativo e usuário desmarca um item:
-  // → migra para seleção explícita (todos exceto esse)
+  // ─── Seleção individual ───────────────────────────────────────────────────────
+  // Quando cross-page ativo e desmarca → migra para seleção explícita preservando os outros
   const handleItemCheck = useCallback((id, checked) => {
     if (selectAllCrossPage && !checked) {
-      // Migra: seleciona todos da página atual exceto o desmarcado
+      // Migra: todos da página atual exceto o desmarcado
       setSelectAllCrossPage(false);
-      setSelectedIds(() => {
-        const next = new Set(items.map((i) => i.id));
-        next.delete(id);
-        return next;
-      });
+      setSelectedIds(new Set(items.map((i) => i.id).filter((iid) => iid !== id)));
       return;
     }
     setSelectedIds((prev) => {
@@ -449,52 +494,50 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [selectAllCrossPage, items]);
 
   // ─── Toggle select all ────────────────────────────────────────────────────────
-  // 1º clique: seleciona todos da página atual
-  // 2º clique (com todos da página selecionados): ativa cross-page (todos registros)
-  // 3º clique (cross-page ativo): cancela tudo
+  const allPageSelected = items.length > 0 && items.every((i) => selectedIds.has(i.id));
+
   const toggleSelectAll = useCallback(() => {
-    const allPageSelected = items.length > 0 && items.every((i) => selectedIds.has(i.id));
     if (selectAllCrossPage) {
       // Cancela tudo
       setSelectAllCrossPage(false);
       setSelectedIds(new Set());
     } else if (allPageSelected && totalCount > items.length) {
-      // Ativa cross-page
+      // Já todos da página → ativa cross-page
       setSelectAllCrossPage(true);
     } else if (allPageSelected) {
-      // Já todos selecionados (única página) → desseleciona
+      // Desseleciona todos (página única)
       setSelectedIds(new Set());
     } else {
-      // Seleciona todos da página
+      // Seleciona todos da página atual
       setSelectedIds(new Set(items.map((i) => i.id)));
     }
-  }, [selectAllCrossPage, items, selectedIds, totalCount]);
+  }, [selectAllCrossPage, allPageSelected, items, totalCount]);
 
-  // ─── Abrir edição — busca registro completo via get direto ───────────────────
+  // ─── Abrir edição — busca registro completo ───────────────────────────────────
   const handleEditItem = useCallback(async (item) => {
-    let fullItem = { ...item };
+    setIsLoadingEdit(true);
     try {
-      if (ENTITY && item?.id && base44.entities[ENTITY]?.get) {
-        const fetched = await base44.entities[ENTITY].get(item.id);
-        if (fetched && fetched.id) fullItem = { ...fetched };
-      }
-    } catch (_) { /* usa item da listagem como fallback */ }
-    startTransition(() => {
+      const fullItem = await fetchFullRecord(ENTITY, item);
       setEditItem(fullItem);
       setShowForm(true);
-    });
+    } catch (_) {
+      // fallback: usa item da listagem
+      setEditItem({ ...item });
+      setShowForm(true);
+    } finally {
+      setIsLoadingEdit(false);
+    }
   }, [ENTITY]);
 
-  // ─── Fechar/salvar (formulários self-managed chamam isso após persistir) ───────
+  // ─── Fechar/salvar ────────────────────────────────────────────────────────────
   const handleSave = useCallback(() => {
-    startTransition(() => {
-      setShowForm(false);
-      setEditItem(null);
-    });
+    setShowForm(false);
+    setEditItem(null);
     queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
     queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
   }, [ENTITY, queryClient]);
 
+  // ─── Ícone de sort ────────────────────────────────────────────────────────────
   const getSortIcon = (field) => {
     if (sortField !== field) return <ChevronsUpDown className="w-3 h-3 text-slate-300 opacity-0 group-hover/th:opacity-100 transition-opacity" />;
     return sortDir === "desc"
@@ -504,18 +547,20 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const deleteCount = selectAllCrossPage ? totalCount : selectedIds.size;
 
-  // Para formulários self-managed: não passa handlePersistSubmit (eles já têm persistência)
-  // Para formulários simples: passa handlePersistSubmit para o onSubmit
-  const formProps = buildFormProps(
+  // Props para o formulário (re-gerado quando editItem muda)
+  const formProps = useMemo(() => buildFormProps(
     editItem,
     handleSave,
     isSelfManaged ? null : handlePersistSubmit
-  );
+  ), [editItem, handleSave, handlePersistSubmit, isSelfManaged]);
 
+  // ─── Render ───────────────────────────────────────────────────────────────────
   const content = (
     <div className="flex flex-col h-full gap-3 min-h-0">
+
       {/* ── Toolbar ── */}
       <div className="flex items-center gap-2 flex-wrap shrink-0">
+        {/* Total badge */}
         <div className="flex items-center gap-1 shrink-0">
           <span className="text-sm font-semibold text-slate-700">{TITULO}:</span>
           <Badge variant="outline" className="rounded-sm bg-blue-50 text-blue-700 border-blue-200 font-bold">
@@ -523,6 +568,7 @@ export default function VisualizadorUniversalEntidadeV24({
           </Badge>
         </div>
 
+        {/* Busca */}
         <div className="relative flex-1 min-w-[160px]">
           <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
           <Input
@@ -533,9 +579,10 @@ export default function VisualizadorUniversalEntidadeV24({
           />
         </div>
 
+        {/* Itens por página */}
         <select
           value={pageSize}
-          onChange={(e) => startTransition(() => { setPageSize(Number(e.target.value)); setCurrentPage(1); })}
+          onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer"
         >
           {PAGE_SIZES.map((ps) => (
@@ -543,13 +590,10 @@ export default function VisualizadorUniversalEntidadeV24({
           ))}
         </select>
 
-        {/* Sort dropdown */}
+        {/* Ordenação */}
         <select
           value={`${sortField}|${sortDir}`}
-          onChange={(e) => {
-            const [f, d] = e.target.value.split("|");
-            startTransition(() => { setSortField(f); setSortDir(d); setCurrentPage(1); });
-          }}
+          onChange={(e) => handleSortDropdown(e.target.value)}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer"
           title="Ordenação"
         >
@@ -565,6 +609,7 @@ export default function VisualizadorUniversalEntidadeV24({
           ))}
         </select>
 
+        {/* Refresh */}
         <Button size="sm" variant="outline"
           onClick={() => {
             queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
@@ -575,14 +620,18 @@ export default function VisualizadorUniversalEntidadeV24({
           <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-blue-500" : ""}`} />
         </Button>
 
+        {/* Novo */}
         {FormComponent && (
           <Button size="sm"
-            onClick={() => startTransition(() => { setEditItem(null); setShowForm(true); })}
-            className="h-9 rounded-sm gap-1">
+            onClick={() => { setEditItem(null); setShowForm(true); }}
+            className="h-9 rounded-sm gap-1"
+            disabled={isLoadingEdit}
+          >
             <Plus className="w-4 h-4" /> Novo
           </Button>
         )}
 
+        {/* Apagar selecionados */}
         {deleteCount > 0 && (
           <Button size="sm" variant="destructive" onClick={handleDeleteSelected} className="h-9 rounded-sm gap-1">
             <Trash2 className="w-4 h-4" />
@@ -591,21 +640,31 @@ export default function VisualizadorUniversalEntidadeV24({
         )}
       </div>
 
-      {/* ── Banner cross-page ── */}
+      {/* ── Banner seleção cross-page ── */}
       {!selectAllCrossPage && selectedIds.size > 0 && selectedIds.size === items.length && totalCount > items.length && (
         <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 text-sm text-amber-700 flex items-center gap-2 shrink-0">
           <span>Selecionados {selectedIds.size} registros desta página.</span>
-          <button onClick={() => setSelectAllCrossPage(true)} className="ml-1 text-blue-600 hover:text-blue-800 underline text-xs font-semibold">
+          <button
+            onClick={() => setSelectAllCrossPage(true)}
+            className="ml-1 text-blue-600 hover:text-blue-800 underline text-xs font-semibold"
+          >
             Selecionar todos os {totalCount} registros
           </button>
-          <button onClick={() => { setSelectedIds(new Set()); }} className="ml-auto text-slate-500 hover:text-slate-700 underline text-xs">Cancelar</button>
+          <button
+            onClick={() => setSelectedIds(new Set())}
+            className="ml-auto text-slate-500 hover:text-slate-700 underline text-xs"
+          >
+            Cancelar
+          </button>
         </div>
       )}
       {selectAllCrossPage && (
         <div className="bg-blue-50 border border-blue-200 rounded-sm px-3 py-2 text-sm text-blue-700 flex items-center gap-2 shrink-0">
           <span>✓ Todos os <strong>{totalCount}</strong> registros de {TITULO} estão selecionados.</span>
-          <button onClick={() => { setSelectAllCrossPage(false); setSelectedIds(new Set()); }}
-            className="ml-auto text-blue-500 hover:text-blue-700 underline text-xs">
+          <button
+            onClick={() => { setSelectAllCrossPage(false); setSelectedIds(new Set()); }}
+            className="ml-auto text-blue-500 hover:text-blue-700 underline text-xs"
+          >
             Cancelar seleção
           </button>
         </div>
@@ -623,7 +682,9 @@ export default function VisualizadorUniversalEntidadeV24({
           <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-2">
             <Search className="w-8 h-8 opacity-30" />
             <span className="text-sm">
-              {debouncedSearch ? `Nenhum resultado para "${debouncedSearch}"` : `Nenhum ${TITULO} encontrado`}
+              {debouncedSearch
+                ? `Nenhum resultado para "${debouncedSearch}"`
+                : `Nenhum ${TITULO} encontrado`}
             </span>
             {!hasContext && !isSimpleEntity && (
               <span className="text-xs text-amber-600 flex items-center gap-1">
@@ -639,9 +700,11 @@ export default function VisualizadorUniversalEntidadeV24({
                   <input
                     type="checkbox"
                     ref={(el) => {
-                      if (el) el.indeterminate = selectedIds.size > 0 && !selectAllCrossPage && selectedIds.size < items.length;
+                      if (el) {
+                        el.indeterminate = !selectAllCrossPage && selectedIds.size > 0 && !allPageSelected;
+                      }
                     }}
-                    checked={selectAllCrossPage || (items.length > 0 && items.every((i) => selectedIds.has(i.id)))}
+                    checked={selectAllCrossPage || allPageSelected}
                     onChange={toggleSelectAll}
                     className="w-4 h-4 cursor-pointer"
                     title={selectAllCrossPage ? "Desselecionar todos" : `Selecionar todos (${totalCount})`}
@@ -650,7 +713,9 @@ export default function VisualizadorUniversalEntidadeV24({
                 {COLUMNS.map((col) => (
                   <th
                     key={col.field}
-                    className={`group/th px-4 py-2.5 text-left font-semibold text-slate-600 select-none whitespace-nowrap ${col.sortable !== false ? "cursor-pointer hover:bg-slate-100 transition-colors" : ""}`}
+                    className={`group/th px-4 py-2.5 text-left font-semibold text-slate-600 select-none whitespace-nowrap ${
+                      col.sortable !== false ? "cursor-pointer hover:bg-slate-100 transition-colors" : ""
+                    }`}
                     onClick={() => col.sortable !== false && handleSort(col.field)}
                   >
                     <div className="flex items-center gap-1">
@@ -659,13 +724,19 @@ export default function VisualizadorUniversalEntidadeV24({
                     </div>
                   </th>
                 ))}
-                <th className="px-4 py-2.5 text-center font-semibold text-slate-600 w-20 whitespace-nowrap">Ações</th>
+                <th className="px-4 py-2.5 text-center font-semibold text-slate-600 w-20 whitespace-nowrap">
+                  Ações
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.map((item) => (
-                <tr key={item.id}
-                  className={`hover:bg-blue-50/30 transition-colors group/row ${(selectedIds.has(item.id) || selectAllCrossPage) ? "bg-blue-50/40" : ""}`}>
+                <tr
+                  key={item.id}
+                  className={`hover:bg-blue-50/30 transition-colors group/row ${
+                    (selectedIds.has(item.id) || selectAllCrossPage) ? "bg-blue-50/40" : ""
+                  }`}
+                >
                   <td className="px-4 py-2 text-center">
                     <input
                       type="checkbox"
@@ -686,12 +757,16 @@ export default function VisualizadorUniversalEntidadeV24({
                           type="button"
                           onClick={(e) => { e.stopPropagation(); handleEditItem(item); }}
                           title="Editar"
-                          className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                          disabled={isLoadingEdit}
+                          className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
                         >
-                          <Edit className="w-3.5 h-3.5" />
+                          {isLoadingEdit
+                            ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            : <Edit className="w-3.5 h-3.5" />}
                         </button>
                       )}
                       <button
+                        type="button"
                         onClick={() => handleDelete(item)}
                         title="Excluir"
                         className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
@@ -719,7 +794,7 @@ export default function VisualizadorUniversalEntidadeV24({
         </span>
         <div className="flex gap-1.5">
           <Button size="sm" variant="outline"
-            onClick={() => startTransition(() => setCurrentPage((p) => Math.max(1, p - 1)))}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1 || isLoading}
             className="h-7 text-xs rounded-sm px-2"
           >
@@ -729,7 +804,7 @@ export default function VisualizadorUniversalEntidadeV24({
             {currentPage}
           </span>
           <Button size="sm" variant="outline"
-            onClick={() => startTransition(() => setCurrentPage((p) => p + 1))}
+            onClick={() => setCurrentPage((p) => p + 1)}
             disabled={items.length < pageSize || isLoading}
             className="h-7 text-xs rounded-sm px-2"
           >
@@ -741,12 +816,16 @@ export default function VisualizadorUniversalEntidadeV24({
       {/* ── Modal de Edição ── */}
       {FormComponent && showForm && (
         <>
-          <div className="fixed inset-0 z-[999] bg-black/50" onClick={isSelfManaged ? handleSave : undefined} />
+          <div
+            className="fixed inset-0 z-[999] bg-black/50"
+            onClick={handleSave}
+          />
           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 pointer-events-none">
             <div
               className="bg-white rounded-xl w-full max-w-4xl max-h-[92vh] overflow-auto shadow-2xl pointer-events-auto flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Header do modal */}
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10 rounded-t-xl">
                 <h2 className="text-lg font-semibold text-slate-800">
                   {editItem ? `Editar ${TITULO}` : `Novo ${TITULO}`}
@@ -764,9 +843,12 @@ export default function VisualizadorUniversalEntidadeV24({
                   </button>
                 </div>
               </div>
+              {/* Corpo do formulário — key força remontagem ao trocar item */}
               <div className="p-6 flex-1 overflow-auto">
-                {/* key força desmontagem e remontagem completa ao trocar de item, garantindo que o useState re-inicializa */}
-                <FormComponent key={editItem ? `edit-${editItem.id}` : "new-form"} {...formProps} />
+                <FormComponent
+                  key={editItem ? `edit-${editItem.id}-${ENTITY}` : `new-${ENTITY}`}
+                  {...formProps}
+                />
               </div>
             </div>
           </div>
