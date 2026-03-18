@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,8 +7,9 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { FileText } from 'lucide-react';
 
-export default function PlanoContasForm({ conta, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(conta || {
+export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, onClose, windowMode = false }) {
+  const dadosIniciais = item || data || conta;
+  const [formData, setFormData] = useState(dadosIniciais || {
     codigo_conta: '',
     nome_conta: '',
     tipo_conta: 'Despesa',
@@ -22,9 +23,18 @@ export default function PlanoContasForm({ conta, onSubmit, windowMode = false })
     ativo: true
   });
 
+  useEffect(() => {
+    if (dadosIniciais?.id) setFormData({ ...dadosIniciais });
+  }, [dadosIniciais?.id]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (onSubmit) {
+      onSubmit(formData);
+    } else {
+      if (onSave) onSave();
+      if (onClose) onClose();
+    }
   };
 
   const content = (
@@ -54,9 +64,7 @@ export default function PlanoContasForm({ conta, onSubmit, windowMode = false })
         <div>
           <Label>Tipo de Conta *</Label>
           <Select value={formData.tipo_conta} onValueChange={(v) => setFormData({ ...formData, tipo_conta: v })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="Receita">Receita</SelectItem>
               <SelectItem value="Despesa">Despesa</SelectItem>
@@ -66,91 +74,61 @@ export default function PlanoContasForm({ conta, onSubmit, windowMode = false })
             </SelectContent>
           </Select>
         </div>
-
         <div>
           <Label>Natureza</Label>
           <Select value={formData.natureza} onValueChange={(v) => setFormData({ ...formData, natureza: v })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="Devedora">Devedora</SelectItem>
               <SelectItem value="Credora">Credora</SelectItem>
             </SelectContent>
           </Select>
         </div>
-
         <div>
           <Label>Nível Hierárquico</Label>
-          <Input
-            type="number"
-            value={formData.nivel_hierarquico}
-            onChange={(e) => setFormData({ ...formData, nivel_hierarquico: parseInt(e.target.value) })}
-            min="1"
-          />
+          <Input type="number" value={formData.nivel_hierarquico}
+            onChange={(e) => setFormData({ ...formData, nivel_hierarquico: parseInt(e.target.value) || 1 })} min="1" />
         </div>
       </div>
 
       <div>
         <Label>Descrição</Label>
-        <Textarea
-          value={formData.descricao || ''}
-          onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-          rows={2}
-        />
+        <Textarea value={formData.descricao || ''} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} rows={2} />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="flex items-center justify-between p-3 border rounded">
-          <Label>Conta Analítica (aceita lançamentos)</Label>
-          <Switch
-            checked={formData.eh_analitica}
-            onCheckedChange={(v) => setFormData({ ...formData, eh_analitica: v })}
-          />
+          <Label>Conta Analítica</Label>
+          <Switch checked={!!formData.eh_analitica} onCheckedChange={(v) => setFormData({ ...formData, eh_analitica: v })} />
         </div>
         <div className="flex items-center justify-between p-3 border rounded">
-          <Label>Conta Sintética (totalizadora)</Label>
-          <Switch
-            checked={formData.eh_sintetica}
-            onCheckedChange={(v) => setFormData({ ...formData, eh_sintetica: v })}
-          />
+          <Label>Conta Sintética</Label>
+          <Switch checked={!!formData.eh_sintetica} onCheckedChange={(v) => setFormData({ ...formData, eh_sintetica: v })} />
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         <div className="flex items-center justify-between p-3 border rounded">
           <Label>Lançamento Manual</Label>
-          <Switch
-            checked={formData.aceita_lancamento_manual}
-            onCheckedChange={(v) => setFormData({ ...formData, aceita_lancamento_manual: v })}
-          />
+          <Switch checked={!!formData.aceita_lancamento_manual} onCheckedChange={(v) => setFormData({ ...formData, aceita_lancamento_manual: v })} />
         </div>
         <div className="flex items-center justify-between p-3 border rounded">
           <Label>Usa em SPED</Label>
-          <Switch
-            checked={formData.usa_em_sped}
-            onCheckedChange={(v) => setFormData({ ...formData, usa_em_sped: v })}
-          />
+          <Switch checked={!!formData.usa_em_sped} onCheckedChange={(v) => setFormData({ ...formData, usa_em_sped: v })} />
         </div>
         <div className="flex items-center justify-between p-3 border rounded">
           <Label>Apenas Gerencial</Label>
-          <Switch
-            checked={formData.usa_apenas_gerencial}
-            onCheckedChange={(v) => setFormData({ ...formData, usa_apenas_gerencial: v })}
-          />
+          <Switch checked={!!formData.usa_apenas_gerencial} onCheckedChange={(v) => setFormData({ ...formData, usa_apenas_gerencial: v })} />
         </div>
       </div>
 
       <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
         <Label className="font-semibold">Conta Ativa</Label>
-        <Switch
-          checked={formData.ativo}
-          onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
-        />
+        <Switch checked={!!formData.ativo} onCheckedChange={(v) => setFormData({ ...formData, ativo: v })} />
       </div>
 
       <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
-        {conta ? 'Atualizar Conta' : 'Criar Conta'}
+        {dadosIniciais ? 'Atualizar Conta' : 'Criar Conta'}
       </Button>
     </form>
   );
@@ -160,14 +138,11 @@ export default function PlanoContasForm({ conta, onSubmit, windowMode = false })
       <div className="w-full h-full flex flex-col">
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-green-50 to-green-100">
           <FileText className="w-6 h-6 text-green-600" />
-          <h2 className="text-lg font-bold text-slate-900">
-            {conta ? 'Editar Conta Contábil' : 'Nova Conta Contábil'}
-          </h2>
+          <h2 className="text-lg font-bold text-slate-900">{dadosIniciais ? 'Editar Conta Contábil' : 'Nova Conta Contábil'}</h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>
       </div>
     );
   }
-
   return content;
 }
