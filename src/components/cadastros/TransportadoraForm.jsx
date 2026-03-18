@@ -14,7 +14,9 @@ import { useToast } from "@/components/ui/use-toast";
 /**
  * V21.1.2: Transportadora Form - Adaptado para Window Mode
  */
-export default function TransportadoraForm({ transportadora, onSubmit, windowMode = false }) {
+export default function TransportadoraForm({ transportadora: transportadoraProp, item, data, onSubmit, onSave, onClose, windowMode = false }) {
+  const transportadora = transportadoraProp || item || data || null;
+  const onCloseNorm = onClose || onSave;
   const { toast } = useToast();
   
   const [formData, setFormData] = useState(transportadora || {
@@ -42,8 +44,15 @@ export default function TransportadoraForm({ transportadora, onSubmit, windowMod
     cnpj: z.string().min(11, 'CNPJ é obrigatório')
   });
 
+  useEffect(() => {
+    if (transportadora?.id) {
+      setFormData({ ...transportadora });
+    }
+  }, [transportadora?.id]);
+
   const handleSubmit = async () => {
-    onSubmit(formData);
+    if (onSubmit) onSubmit(formData);
+    if (onCloseNorm) onCloseNorm();
   };
 
   const handleExcluir = () => {
