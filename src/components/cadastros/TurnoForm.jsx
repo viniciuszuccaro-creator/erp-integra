@@ -9,8 +9,8 @@ import { Badge } from "@/components/ui/badge";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function TurnoForm({ turno, onSubmit, isSubmitting, windowMode = false }) {
-  const dadosIniciais = turno;
+export default function TurnoForm({ turno, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
+  const dadosIniciais = item || data || initialData || defaultValues || turno;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_turno: '',
     horario_inicio: '08:00',
@@ -20,6 +20,14 @@ export default function TurnoForm({ turno, onSubmit, isSubmitting, windowMode = 
     dias_semana: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'],
     ativo: true
   });
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
 
   const diasDisponiveis = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
