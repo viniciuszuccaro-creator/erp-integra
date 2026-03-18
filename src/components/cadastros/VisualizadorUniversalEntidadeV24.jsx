@@ -1,10 +1,10 @@
 /**
  * VisualizadorUniversalEntidadeV24 — Motor universal de listagem
- * ✅ Edição funcional: formulário sempre pré-preenchido
- * ✅ Ordenação correta (campo + direção desacoplados)
+ * ✅ Edição funcional: formulário sempre pré-preenchido (props universais + específicos)
+ * ✅ Ordenação correta via entityListSorted (campo + direção separados)
  * ✅ Badge de total real de registros via countEntities
- * ✅ Delete ALL (cross-page) com seleção preservada ao desmarcar
- * ✅ Paginação client-side (busca N*page e fatia)
+ * ✅ Delete ALL (cross-page) — seleção preservada ao desmarcar individual
+ * ✅ Paginação server-side com skip/limit real
  * ✅ Multiempresa + Real-time
  */
 import React, { useState, useEffect, useMemo, useCallback, useRef, startTransition } from "react";
@@ -56,6 +56,79 @@ const MONEY_FIELDS = new Set([
 
 const PAGE_SIZES = [10, 20, 50, 100];
 
+// ─── Mapeamento de props canônicos por entidade ───────────────────────────────
+// Cobre TODOS os formulários do sistema, incluindo os que têm Dialog próprio
+function buildFormProps(editItem, handleSave) {
+  const callbacks = {
+    onClose: handleSave,
+    onSave: handleSave,
+    onSubmit: handleSave,
+    onSuccess: handleSave,
+    onOpenChange: (v) => { if (!v) handleSave(); },
+    isOpen: true,
+    open: true,
+    windowMode: true,
+  };
+
+  if (!editItem) return callbacks;
+
+  return {
+    // Universais (maioria dos formulários simples)
+    item: editItem,
+    data: editItem,
+    // Props específicos por nome de formulário — cobre TODOS os cadastros
+    cliente: editItem,
+    fornecedor: editItem,
+    colaborador: editItem,
+    transportadora: editItem,
+    representante: editItem,
+    contato: editItem,
+    contatoB2B: editItem,
+    segmento: editItem,
+    segmentoCliente: editItem,
+    regiao: editItem,
+    regiaoAtendimento: editItem,
+    produto: editItem,
+    servico: editItem,
+    banco: editItem,
+    formaPagamento: editItem,
+    centroCusto: editItem,
+    planoContas: editItem,
+    planoDeContas: editItem,
+    veiculo: editItem,
+    motorista: editItem,
+    departamento: editItem,
+    cargo: editItem,
+    turno: editItem,
+    empresa: editItem,
+    grupo: editItem,
+    grupoProduto: editItem,
+    marca: editItem,
+    kitProduto: editItem,
+    catalogoWeb: editItem,
+    unidadeMedida: editItem,
+    setorAtividade: editItem,
+    tabelaPreco: editItem,
+    tipoDespesa: editItem,
+    moedaIndice: editItem,
+    operadorCaixa: editItem,
+    tabelaFiscal: editItem,
+    condicaoComercial: editItem,
+    centroResultado: editItem,
+    localEstoque: editItem,
+    tipoFrete: editItem,
+    rotaPadrao: editItem,
+    gateway: editItem,
+    gatewayPagamento: editItem,
+    configuracaoCobranca: editItem,
+    configuracaoDespesaRecorrente: editItem,
+    perfilAcesso: editItem,
+    // regiaoId para formulários que usam esse prop
+    regiaoId: editItem?.id,
+    ...callbacks,
+  };
+}
+
 export default function VisualizadorUniversalEntidadeV24({
   nomeEntidade,
   tituloDisplay,
@@ -88,7 +161,7 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [columns, camposPrincipais]);
 
   const queryClient = useQueryClient();
-  const { filterInContext, empresaAtual, grupoAtual, deleteInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -97,18 +170,17 @@ export default function VisualizadorUniversalEntidadeV24({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(pageSizeProp || 20);
 
-  // editItem: objeto COMPLETO do registro — nunca null quando showForm=true para edição
   const [editItem, setEditItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  // Seleção: Set de IDs na página + flag cross-page
+  // Seleção cross-page
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [selectAllCrossPage, setSelectAllCrossPage] = useState(false);
 
   const debounceRef = useRef(null);
   const hasContext = !!(empresaAtual?.id || grupoAtual?.id);
 
-  // ─── Contagem real via countEntities ────────────────────────────────────────
+  // ─── Contagem real ────────────────────────────────────────────────────────────
   const { total: totalCount } = useEntityCounts(ENTITY ? [ENTITY] : []);
 
   // ─── Debounced search ────────────────────────────────────────────────────────
@@ -123,29 +195,34 @@ export default function VisualizadorUniversalEntidadeV24({
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [search]);
 
-  // ─── Filtro de busca ─────────────────────────────────────────────────────────
-  const searchFilter = useMemo(() => {
-    if (!debouncedSearch.trim()) return {};
-    const cols = COLUMNS.filter((c) => c.searchable !== false).map((c) => c.field);
-    if (!cols.length) return {};
-    const escaped = debouncedSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    return { $or: cols.map((f) => ({ [f]: { $regex: escaped, $options: "i" } })) };
-  }, [debouncedSearch, COLUMNS]);
+  // ─── Construir filtro de contexto ────────────────────────────────────────────
+  const contextFilter = useMemo(() => {
+    const f = {};
+    if (grupoAtual?.id) f.group_id = grupoAtual.id;
+    else if (empresaAtual?.id) f.empresa_id = empresaAtual.id;
+    return f;
+  }, [grupoAtual?.id, empresaAtual?.id]);
 
-  // ─── Sort string ─────────────────────────────────────────────────────────────
-  const sortString = sortDir === "desc" ? `-${sortField}` : sortField;
-
-  // ─── Query principal paginada ─────────────────────────────────────────────────
+  // ─── Query principal via entityListSorted ────────────────────────────────────
+  const skip = (currentPage - 1) * pageSize;
   const { data: items = [], isLoading, isFetching } = useQuery({
-    queryKey: [ENTITY, "viz-list", sortString, currentPage, pageSize, debouncedSearch, empresaAtual?.id, grupoAtual?.id],
+    queryKey: [ENTITY, "viz-v24", sortField, sortDir, currentPage, pageSize, debouncedSearch, empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       if (!ENTITY || !hasContext) return [];
       try {
-        const limit = pageSize * currentPage;
-        const all = await filterInContext(ENTITY, searchFilter, sortString, limit);
-        const start = (currentPage - 1) * pageSize;
-        return (all || []).slice(start, start + pageSize);
-      } catch { return []; }
+        const res = await base44.functions.invoke("entityListSorted", {
+          entityName: ENTITY,
+          filter: contextFilter,
+          sortField,
+          sortDirection: sortDir,
+          limit: pageSize,
+          skip,
+          search: debouncedSearch || undefined,
+        });
+        return Array.isArray(res?.data) ? res.data : [];
+      } catch {
+        return [];
+      }
     },
     staleTime: 30_000,
     gcTime: 120_000,
@@ -154,14 +231,14 @@ export default function VisualizadorUniversalEntidadeV24({
     enabled: !!ENTITY && hasContext,
   });
 
-  // ─── Real-time subscription ───────────────────────────────────────────────────
+  // ─── Real-time ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!ENTITY) return;
     const api = base44.entities?.[ENTITY];
     if (!api?.subscribe) return;
     const unsub = api.subscribe(() => {
-      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
-      queryClient.invalidateQueries({ queryKey: ["entityCounts_v2"] });
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
+      queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
     });
     return () => { if (typeof unsub === "function") unsub(); };
   }, [ENTITY, queryClient]);
@@ -169,12 +246,14 @@ export default function VisualizadorUniversalEntidadeV24({
   // ─── Sort handler ─────────────────────────────────────────────────────────────
   const handleSort = useCallback((field) => {
     startTransition(() => {
-      if (sortField === field) {
-        setSortDir((d) => d === "desc" ? "asc" : "desc");
-      } else {
-        setSortField(field);
-        setSortDir("desc");
-      }
+      setSortField((prev) => {
+        if (prev === field) return prev;
+        return field;
+      });
+      setSortDir((prev) => {
+        if (sortField === field) return prev === "desc" ? "asc" : "desc";
+        return "desc";
+      });
       setCurrentPage(1);
     });
   }, [sortField]);
@@ -215,45 +294,53 @@ export default function VisualizadorUniversalEntidadeV24({
     const label = item.nome || item.descricao || item.razao_social || item.nome_completo || item.id;
     if (!window.confirm(`Confirma exclusão de "${label}"?`)) return;
     try {
-      await deleteInContext(ENTITY, item.id);
-      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
-      queryClient.invalidateQueries({ queryKey: ["entityCounts_v2"] });
+      await base44.entities[ENTITY].delete(item.id);
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
+      queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
       setSelectedIds((prev) => { const n = new Set(prev); n.delete(item.id); return n; });
     } catch (e) {
       alert("Erro ao excluir: " + (e?.message || e));
     }
-  }, [ENTITY, deleteInContext, queryClient]);
+  }, [ENTITY, queryClient]);
 
-  // ─── Delete selecionados (preserva selectAll ao desmarcar) ───────────────────
+  // ─── Delete em massa (cross-page) ─────────────────────────────────────────────
   const handleDeleteSelected = useCallback(async () => {
     const count = selectAllCrossPage ? totalCount : selectedIds.size;
     if (count === 0) return;
     const msg = selectAllCrossPage
-      ? `⚠️ Confirma exclusão de TODOS os ${totalCount} registros de ${TITULO}? Esta ação não pode ser desfeita!`
+      ? `⚠️ Confirma exclusão de TODOS os ${totalCount} registros de "${TITULO}"? Esta ação não pode ser desfeita!`
       : `Confirma exclusão de ${selectedIds.size} registro(s) selecionado(s)?`;
     if (!window.confirm(msg)) return;
     try {
       let idsToDelete;
       if (selectAllCrossPage) {
-        const allItems = await filterInContext(ENTITY, searchFilter, undefined, 10000);
-        idsToDelete = (allItems || []).map(i => i.id).filter(Boolean);
+        // Busca TODOS os IDs (sem paginação)
+        const res = await base44.functions.invoke("entityListSorted", {
+          entityName: ENTITY,
+          filter: contextFilter,
+          sortField: "updated_date",
+          sortDirection: "desc",
+          limit: 5000,
+          skip: 0,
+        });
+        idsToDelete = (Array.isArray(res?.data) ? res.data : []).map((i) => i.id).filter(Boolean);
       } else {
         idsToDelete = Array.from(selectedIds);
       }
       for (const id of idsToDelete) {
-        await deleteInContext(ENTITY, id);
+        await base44.entities[ENTITY].delete(id);
       }
-      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
-      queryClient.invalidateQueries({ queryKey: ["entityCounts_v2"] });
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
+      queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
       setSelectedIds(new Set());
       setSelectAllCrossPage(false);
       setCurrentPage(1);
     } catch (e) {
       alert("Erro ao excluir: " + (e?.message || e));
     }
-  }, [selectAllCrossPage, totalCount, selectedIds, ENTITY, TITULO, deleteInContext, queryClient, filterInContext, searchFilter]);
+  }, [selectAllCrossPage, totalCount, selectedIds, ENTITY, TITULO, queryClient, contextFilter]);
 
-  // ─── Seleção individual (preserva selectAllCrossPage) ────────────────────────
+  // ─── Seleção individual — NÃO cancela selectAllCrossPage ────────────────────
   const handleItemCheck = useCallback((id, checked) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -261,39 +348,36 @@ export default function VisualizadorUniversalEntidadeV24({
       else next.delete(id);
       return next;
     });
-    // NÃO cancela selectAllCrossPage ao desmarcar — o usuário pode querer excluir tudo menos alguns
-    // A seleção cross-page permanece ativa até o usuário clicar em "Cancelar seleção"
   }, []);
 
-  // ─── Toggle select all (cross-page) ─────────────────────────────────────────
+  // ─── Toggle select all ────────────────────────────────────────────────────────
   const toggleSelectAll = useCallback(() => {
     if (selectAllCrossPage) {
       setSelectAllCrossPage(false);
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(items.map(i => i.id)));
+      setSelectedIds(new Set(items.map((i) => i.id)));
       setSelectAllCrossPage(true);
     }
   }, [selectAllCrossPage, items]);
 
-  // ─── Fechar modal + invalidar ─────────────────────────────────────────────────
+  // ─── Abrir edição ─────────────────────────────────────────────────────────────
+  const handleEditItem = useCallback((item) => {
+    startTransition(() => {
+      setEditItem({ ...item });
+      setShowForm(true);
+    });
+  }, []);
+
+  // ─── Fechar/salvar ────────────────────────────────────────────────────────────
   const handleSave = useCallback(() => {
     startTransition(() => {
       setShowForm(false);
       setEditItem(null);
     });
-    queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
-    queryClient.invalidateQueries({ queryKey: ["entityCounts_v2"] });
+    queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
+    queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
   }, [ENTITY, queryClient]);
-
-  // ─── Abrir edição com item completo ──────────────────────────────────────────
-  const handleEditItem = useCallback((item) => {
-    // Garante que o item completo é passado ao formulário
-    startTransition(() => {
-      setEditItem({ ...item }); // cópia para evitar mutação
-      setShowForm(true);
-    });
-  }, []);
 
   const getSortIcon = (field) => {
     if (sortField !== field) return <ChevronsUpDown className="w-3 h-3 text-slate-300 opacity-0 group-hover/th:opacity-100 transition-opacity" />;
@@ -303,80 +387,7 @@ export default function VisualizadorUniversalEntidadeV24({
   };
 
   const deleteCount = selectAllCrossPage ? totalCount : selectedIds.size;
-
-  // ─── Nomes de prop canônicos para cada formulário ─────────────────────────────
-  const formProps = editItem ? {
-    // Props universais
-    item: editItem,
-    data: editItem,
-    // Props específicas por nome de entidade (cobre todos os formulários do sistema)
-    cliente: editItem,
-    fornecedor: editItem,
-    colaborador: editItem,
-    transportadora: editItem,
-    representante: editItem,
-    contato: editItem,
-    contatoB2B: editItem,
-    segmento: editItem,
-    segmentoCliente: editItem,
-    regiao: editItem,
-    regiaoAtendimento: editItem,
-    produto: editItem,
-    servico: editItem,
-    banco: editItem,
-    formaPagamento: editItem,
-    centroCusto: editItem,
-    planoContas: editItem,
-    veiculo: editItem,
-    motorista: editItem,
-    departamento: editItem,
-    cargo: editItem,
-    turno: editItem,
-    empresa: editItem,
-    grupo: editItem,
-    grupoProduto: editItem,
-    marca: editItem,
-    kitProduto: editItem,
-    catalogoWeb: editItem,
-    unidadeMedida: editItem,
-    setorAtividade: editItem,
-    tabelaPreco: editItem,
-    tipoDespesa: editItem,
-    moedaIndice: editItem,
-    operadorCaixa: editItem,
-    tabelaFiscal: editItem,
-    condicaoComercial: editItem,
-    centroResultado: editItem,
-    localEstoque: editItem,
-    veiculo: editItem,
-    motorista: editItem,
-    tipoFrete: editItem,
-    rotaPadrao: editItem,
-    departamento: editItem,
-    cargo: editItem,
-    turno: editItem,
-    // regiaoId para formulários que usam esse prop
-    regiaoId: editItem?.id,
-    // Callbacks
-    onClose: handleSave,
-    onSave: handleSave,
-    onSubmit: handleSave,
-    onSuccess: handleSave,
-    isOpen: true,
-    open: true,
-    onOpenChange: (v) => { if (!v) handleSave(); },
-    windowMode: true,
-  } : {
-    // Novo registro
-    onClose: handleSave,
-    onSave: handleSave,
-    onSubmit: handleSave,
-    onSuccess: handleSave,
-    isOpen: true,
-    open: true,
-    onOpenChange: (v) => { if (!v) handleSave(); },
-    windowMode: true,
-  };
+  const formProps = buildFormProps(editItem, handleSave);
 
   const content = (
     <div className="flex flex-col h-full gap-3 min-h-0">
@@ -409,10 +420,30 @@ export default function VisualizadorUniversalEntidadeV24({
           ))}
         </select>
 
+        {/* Sort dropdown */}
+        <select
+          value={`${sortField}|${sortDir}`}
+          onChange={(e) => {
+            const [f, d] = e.target.value.split("|");
+            startTransition(() => { setSortField(f); setSortDir(d); setCurrentPage(1); });
+          }}
+          className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer"
+          title="Ordenação"
+        >
+          <option value="updated_date|desc">Mais Recentes</option>
+          <option value="updated_date|asc">Mais Antigos</option>
+          {COLUMNS.filter((c) => c.sortable !== false && c.field !== "updated_date").map((c) => (
+            <React.Fragment key={c.field}>
+              <option value={`${c.field}|asc`}>{c.label} ↑</option>
+              <option value={`${c.field}|desc`}>{c.label} ↓</option>
+            </React.Fragment>
+          ))}
+        </select>
+
         <Button size="sm" variant="outline"
           onClick={() => {
-            queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
-            queryClient.invalidateQueries({ queryKey: ["entityCounts_v2"] });
+            queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
+            queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
           }}
           className="h-9 w-9 p-0 rounded-sm" title="Recarregar"
         >
@@ -473,10 +504,10 @@ export default function VisualizadorUniversalEntidadeV24({
                 <th className="px-4 py-2.5 text-center w-10">
                   <input
                     type="checkbox"
-                    ref={el => {
+                    ref={(el) => {
                       if (el) el.indeterminate = selectedIds.size > 0 && !selectAllCrossPage && selectedIds.size < items.length;
                     }}
-                    checked={selectAllCrossPage || (items.length > 0 && items.every(i => selectedIds.has(i.id)))}
+                    checked={selectAllCrossPage || (items.length > 0 && items.every((i) => selectedIds.has(i.id)))}
                     onChange={toggleSelectAll}
                     className="w-4 h-4 cursor-pointer"
                     title={selectAllCrossPage ? "Desselecionar todos" : `Selecionar todos (${totalCount})`}
@@ -595,6 +626,7 @@ export default function VisualizadorUniversalEntidadeV24({
                 </button>
               </div>
               <div className="p-6 flex-1 overflow-auto">
+                {/* key={editItem?.id || "new"} força recriação do componente com os dados corretos */}
                 <FormComponent key={editItem?.id || "new"} {...formProps} />
               </div>
             </div>
