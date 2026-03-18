@@ -35,7 +35,7 @@ const executeCountBatch = async (entities, filters = {}) => {
       })),
     };
     const res = await base44.functions.invoke("countEntities", payload);
-    const data = res?.data?.counts || {};
+    const data = res?.data || {};
 
     // Cache em memória
     uniqEntities.forEach((ent) => {
