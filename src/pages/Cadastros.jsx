@@ -214,37 +214,12 @@ export default function Cadastros() {
 
  
 
-  const statusColors = {
-    'Ativo': 'bg-green-100 text-green-700 border-green-300',
-    'Inativo': 'bg-gray-100 text-gray-700 border-gray-300',
-    'Prospect': 'bg-blue-100 text-blue-700 border-blue-300',
-    'Bloqueado': 'bg-red-100 text-red-700 border-red-300',
-    'Ativa': 'bg-green-100 text-green-700 border-green-300'
-  };
-
   // Handler para clicar nos cards do dashboard
   const handleCardClick = (blocoId) => {
     if (acordeonAberto.includes(blocoId)) {
       setAcordeonAberto(acordeonAberto.filter(id => id !== blocoId));
     } else {
       setAcordeonAberto([...acordeonAberto, blocoId]);
-    }
-  };
-
-  // Generic handlers
-  const handleSubmitGenerico = (entityName, queryKey) => async (data) => {
-    if (data?._salvamentoCompleto) return;
-    try {
-      if (data.id) {
-        await updateInContext(entityName, data.id, data);
-        toast({ title: `✅ ${entityName} atualizado com sucesso!` });
-      } else {
-        await createInContext(entityName, data);
-        toast({ title: `✅ ${entityName} criado com sucesso!` });
-      }
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
-    } catch (error) {
-      toast({ title: `❌ Erro ao salvar ${entityName}`, description: error.message, variant: "destructive" });
     }
   };
 
