@@ -19,8 +19,13 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
     pode_ser_recorrente: false, ativo: true
   });
 
+  // Garante sincronização quando o mesmo componente é reutilizado (ex: abrir outro registro sem desmontar)
+  const prevIdRef = React.useRef(dadosIniciais?.id);
   useEffect(() => {
-    if (dadosIniciais?.id) setFormData({ ...dadosIniciais });
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...dadosIniciais });
+    }
   }, [dadosIniciais?.id]);
 
   const { data: contasContabeis = [] } = useQuery({
