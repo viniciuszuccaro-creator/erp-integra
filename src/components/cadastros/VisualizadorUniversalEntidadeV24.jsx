@@ -246,17 +246,19 @@ export default function VisualizadorUniversalEntidadeV24({
   // ─── Sort handler ─────────────────────────────────────────────────────────────
   const handleSort = useCallback((field) => {
     startTransition(() => {
-      setSortField((prev) => {
-        if (prev === field) return prev;
+      setSortField((prevField) => {
+        if (prevField === field) {
+          // Mesmo campo: inverte direção
+          setSortDir((prevDir) => prevDir === "desc" ? "asc" : "desc");
+          return prevField;
+        }
+        // Novo campo: reseta para desc
+        setSortDir("desc");
         return field;
-      });
-      setSortDir((prev) => {
-        if (sortField === field) return prev === "desc" ? "asc" : "desc";
-        return "desc";
       });
       setCurrentPage(1);
     });
-  }, [sortField]);
+  }, []);
 
   // ─── Formatter ───────────────────────────────────────────────────────────────
   const formatValue = useCallback((value, col) => {
