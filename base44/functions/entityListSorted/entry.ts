@@ -1,5 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
+// Entidades "simples" de cadastro — não exigem escopo multiempresa
+const SIMPLE_CATALOG_ENTITIES = new Set([
+  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
+  'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
+  'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
+  'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
+  'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
+  'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
+  'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'JobAgendado',
+  'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento', 'ContatoB2B',
+]);
+
 const MODULE_BY_ENTITY = {
   Cliente: 'CRM', Oportunidade: 'CRM', Interacao: 'CRM', Pedido: 'Comercial',
   NotaFiscal: 'Fiscal', Entrega: 'Expedição', Fornecedor: 'Compras',
