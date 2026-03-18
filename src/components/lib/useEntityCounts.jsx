@@ -37,7 +37,7 @@ function flushBatch() {
       });
 
       const entities = [];
-      entitiesMap.forEach(({ groupId, empresaId }, entityName => {
+      entitiesMap.forEach(({ groupId, empresaId }, entityName) => {
         const filter = {};
         if (groupId) filter.group_id = groupId;
         else if (empresaId) filter.empresa_id = empresaId;
