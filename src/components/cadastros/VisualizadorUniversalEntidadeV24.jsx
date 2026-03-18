@@ -174,15 +174,17 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // Sort handler
   const handleSort = useCallback((field) => {
-    setSortField((prev) => {
-      if (prev === field) {
-        setSortDir((d) => d === "desc" ? "asc" : "desc");
+    startTransition(() => {
+      setSortField((prev) => {
+        if (prev === field) {
+          setSortDir((d) => d === "desc" ? "asc" : "desc");
+          return field;
+        }
+        setSortDir("desc");
         return field;
-      }
-      setSortDir("desc");
-      return field;
+      });
+      setCurrentPage(1);
     });
-    setCurrentPage(1);
   }, []);
 
   // Formatter de valores
@@ -310,7 +312,7 @@ export default function VisualizadorUniversalEntidadeV24({
 
         <select
           value={pageSize}
-          onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+          onChange={(e) => { startTransition(() => { setPageSize(Number(e.target.value)); setCurrentPage(1); }); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer"
         >
           {PAGE_SIZES.map((ps) => (
@@ -329,7 +331,7 @@ export default function VisualizadorUniversalEntidadeV24({
         </Button>
 
         {FormComponent && (
-          <Button size="sm" onClick={() => { setEditItem(null); setShowForm(true); }} className="h-9 rounded-sm gap-1">
+          <Button size="sm" onClick={() => { startTransition(() => { setEditItem(null); setShowForm(true); }); }} className="h-9 rounded-sm gap-1">
             <Plus className="w-4 h-4" /> Novo
           </Button>
         )}
@@ -430,8 +432,10 @@ export default function VisualizadorUniversalEntidadeV24({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setEditItem(item);
-                            setShowForm(true);
+                            startTransition(() => {
+                              setEditItem(item);
+                              setShowForm(true);
+                            });
                           }}
                           title="Editar"
                           className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
@@ -467,7 +471,7 @@ export default function VisualizadorUniversalEntidadeV24({
         </span>
         <div className="flex gap-1.5">
           <Button size="sm" variant="outline"
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            onClick={() => startTransition(() => setCurrentPage((p) => Math.max(1, p - 1)))}
             disabled={currentPage === 1 || isLoading}
             className="h-7 text-xs rounded-sm px-2"
           >
@@ -477,7 +481,7 @@ export default function VisualizadorUniversalEntidadeV24({
             {currentPage}
           </span>
           <Button size="sm" variant="outline"
-            onClick={() => setCurrentPage((p) => p + 1)}
+            onClick={() => startTransition(() => setCurrentPage((p) => p + 1))}
             disabled={items.length < pageSize || isLoading}
             className="h-7 text-xs rounded-sm px-2"
           >
