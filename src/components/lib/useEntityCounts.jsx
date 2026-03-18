@@ -13,6 +13,18 @@ import { useMemo, useEffect, useRef } from "react";
 const CACHE_TTL = 60_000;
 const COUNT_CACHE = new Map();
 
+// Entidades que não precisam de filtro empresa/grupo
+const SIMPLE_CATALOG_ENTITIES = new Set([
+  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
+  'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
+  'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
+  'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
+  'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
+  'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
+  'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'JobAgendado',
+  'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento', 'ContatoB2B',
+]);
+
 // Fila global para batching — cada item tem resolve/reject próprio
 let _batchQueue = [];
 let _batchTimer = null;
@@ -37,8 +49,11 @@ async function runBatch() {
     const { groupId, empresaId, entities, resolvers } = ctx;
     const entityList = Array.from(entities).map((entityName) => {
       const filter = {};
-      if (groupId) filter.group_id = groupId;
-      else if (empresaId) filter.empresa_id = empresaId;
+      // Entidades simples: sem filtro de contexto (sem empresa_id/group_id)
+      if (!SIMPLE_CATALOG_ENTITIES.has(entityName)) {
+        if (groupId) filter.group_id = groupId;
+        else if (empresaId) filter.empresa_id = empresaId;
+      }
       return { entityName, filter };
     });
 
