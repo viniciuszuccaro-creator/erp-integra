@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -71,7 +71,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
       toast({ title: `✅ Fornecedor ${fornecedor?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(formData);
-      if (onClose) onClose();
+      if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
       toast({ 
@@ -90,7 +90,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
       queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
       toast({ title: "✅ Fornecedor excluído com sucesso!" });
       if (onSuccess) onSuccess();
-      onClose();
+      if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
       toast({
@@ -169,14 +169,14 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (fornecedor) {
       setFormData({
         ...fornecedor,
         avaliacoes: fornecedor.avaliacoes || []
       });
     }
-  }, [fornecedor]);
+  }, [fornecedor?.id]);
 
   const content = (
     <>
@@ -644,7 +644,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onCloseNorm}>
       <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full overflow-hidden flex flex-col p-0">
         {content}
       </DialogContent>
