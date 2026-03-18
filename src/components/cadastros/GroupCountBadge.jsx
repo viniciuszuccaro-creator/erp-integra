@@ -36,31 +36,48 @@ function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
   const campo = CAMPO_MAP[entityName] || 'empresa_id';
   const orConds = [];
 
-  const allEmpresaIds = new Set();
-  if (empresaId) allEmpresaIds.add(empresaId);
-  if (Array.isArray(empresasDoGrupo)) {
-    empresasDoGrupo.forEach(e => { if (e?.id) allEmpresaIds.add(e.id); });
-  }
-  const ids = Array.from(allEmpresaIds);
-
-  if (ids.length === 1) {
-    const id = ids[0];
-    if (entityName === 'Cliente') {
-      orConds.push({ empresa_id: id }, { empresa_dona_id: id });
-    } else {
-      orConds.push({ [campo]: id });
+  // Se há groupId mas sem empresa, expandir para TODAS as empresas do grupo
+  if (groupId && !empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length > 0) {
+    const ids = empresasDoGrupo.map(e => e.id).filter(Boolean);
+    if (ids.length > 0) {
+      if (entityName === 'Cliente') {
+        orConds.push({ empresa_id: { $in: ids } }, { empresa_dona_id: { $in: ids } });
+      } else {
+        orConds.push({ [campo]: { $in: ids } });
+      }
+      if (SHARED.has(entityName)) orConds.push({ empresas_compartilhadas_ids: { $in: ids } });
     }
-    if (SHARED.has(entityName)) orConds.push({ empresas_compartilhadas_ids: { $in: [id] } });
-  } else if (ids.length > 1) {
-    if (entityName === 'Cliente') {
-      orConds.push({ empresa_id: { $in: ids } }, { empresa_dona_id: { $in: ids } });
-    } else {
-      orConds.push({ [campo]: { $in: ids } });
+  } else {
+    // Caso padrão: quando há empresa selecionada
+    const allEmpresaIds = new Set();
+    if (empresaId) allEmpresaIds.add(empresaId);
+    if (Array.isArray(empresasDoGrupo)) {
+      empresasDoGrupo.forEach(e => { if (e?.id) allEmpresaIds.add(e.id); });
     }
-    if (SHARED.has(entityName)) orConds.push({ empresas_compartilhadas_ids: { $in: ids } });
+    const ids = Array.from(allEmpresaIds);
+
+    if (ids.length === 1) {
+      const id = ids[0];
+      if (entityName === 'Cliente') {
+        orConds.push({ empresa_id: id }, { empresa_dona_id: id });
+      } else {
+        orConds.push({ [campo]: id });
+      }
+      if (SHARED.has(entityName)) orConds.push({ empresas_compartilhadas_ids: { $in: [id] } });
+    } else if (ids.length > 1) {
+      if (entityName === 'Cliente') {
+        orConds.push({ empresa_id: { $in: ids } }, { empresa_dona_id: { $in: ids } });
+      } else {
+        orConds.push({ [campo]: { $in: ids } });
+      }
+      if (SHARED.has(entityName)) orConds.push({ empresas_compartilhadas_ids: { $in: ids } });
+    }
   }
 
-  if (groupId) orConds.push({ group_id: groupId });
+  // Sempre adicionar group_id se existir
+  if (groupId && !orConds.some(c => c.group_id)) {
+    orConds.push({ group_id: groupId });
+  }
 
   return orConds.length ? { $or: orConds } : {};
 }
