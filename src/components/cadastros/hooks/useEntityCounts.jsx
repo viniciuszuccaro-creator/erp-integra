@@ -70,6 +70,82 @@ const executeCountBatch = async (entities, filters = {}) => {
   return result;
 };
 
+// Simples catalog — sem filtro multiempresa
+const SIMPLE_CATALOG = new Set([
+  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
+  'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
+  'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
+  'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
+  'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
+  'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
+  'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'ChatbotCanal',
+  'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento',
+  'ContatoB2B', 'CentroCusto', 'PlanoDeContas', 'PlanoContas',
+  'Veiculo', 'Motorista', 'Representante', 'GrupoEmpresarial', 'Empresa',
+  'TabelaPrecoItem', 'CentroOperacao',
+]);
+
+const CAMPO_MAP = {
+  Fornecedor: 'empresa_dona_id',
+  Transportadora: 'empresa_dona_id',
+  Colaborador: 'empresa_alocada_id',
+};
+
+const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
+
+// Construir filtro específico por entidade (mesmo que GroupCountBadge)
+function buildEntityFilter(entityName, empresaId, groupId, empresasDoGrupo) {
+  if (SIMPLE_CATALOG.has(entityName)) return {};
+
+  const campo = CAMPO_MAP[entityName] || 'empresa_id';
+  const orConds = [];
+
+  // Se há groupId mas sem empresa, expandir para TODAS as empresas do grupo
+  if (groupId && !empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length > 0) {
+    const ids = empresasDoGrupo.map(e => e.id).filter(Boolean);
+    if (ids.length > 0) {
+      if (entityName === 'Cliente') {
+        orConds.push({ empresa_id: { $in: ids } }, { empresa_dona_id: { $in: ids } });
+      } else {
+        orConds.push({ [campo]: { $in: ids } });
+      }
+      if (SHARED.has(entityName)) orConds.push({ empresas_compartilhadas_ids: { $in: ids } });
+    }
+  } else {
+    // Caso padrão: quando há empresa selecionada
+    const allEmpresaIds = new Set();
+    if (empresaId) allEmpresaIds.add(empresaId);
+    if (Array.isArray(empresasDoGrupo)) {
+      empresasDoGrupo.forEach(e => { if (e?.id) allEmpresaIds.add(e.id); });
+    }
+    const ids = Array.from(allEmpresaIds);
+
+    if (ids.length === 1) {
+      const id = ids[0];
+      if (entityName === 'Cliente') {
+        orConds.push({ empresa_id: id }, { empresa_dona_id: id });
+      } else {
+        orConds.push({ [campo]: id });
+      }
+      if (SHARED.has(entityName)) orConds.push({ empresas_compartilhadas_ids: { $in: [id] } });
+    } else if (ids.length > 1) {
+      if (entityName === 'Cliente') {
+        orConds.push({ empresa_id: { $in: ids } }, { empresa_dona_id: { $in: ids } });
+      } else {
+        orConds.push({ [campo]: { $in: ids } });
+      }
+      if (SHARED.has(entityName)) orConds.push({ empresas_compartilhadas_ids: { $in: ids } });
+    }
+  }
+
+  // Sempre adicionar group_id se existir
+  if (groupId && !orConds.some(c => c.group_id)) {
+    orConds.push({ group_id: groupId });
+  }
+
+  return orConds.length ? { $or: orConds } : {};
+}
+
 /**
  * Hook principal de contagem
  */
@@ -84,33 +160,19 @@ export function useEntityCounts(entityNames = []) {
     ? [entityNames]
     : [];
 
-  // Construir filtros de contexto
-  const buildContextFilter = () => {
-    const empresaId = empresaAtual?.id;
-    const groupId = grupoAtual?.id;
-    const empresasIds = (empresasDoGrupo || []).map(e => e.id).filter(Boolean);
-
-    if (contexto === 'grupo' && groupId && empresasIds.length > 0) {
-      return { $or: [{ empresa_id: { $in: empresasIds } }, { group_id: groupId }] };
-    } else if (empresaId) {
-      return { empresa_id: empresaId };
-    } else if (groupId) {
-      return { group_id: groupId };
-    }
-    return {};
-  };
-
-  const contextFilter = buildContextFilter();
+  const empresaId = empresaAtual?.id;
+  const groupId = grupoAtual?.id;
+  const grupoEmpIds = (empresasDoGrupo || []).map(e => e.id).filter(Boolean).sort().join(',');
 
   // Query com batching automático
   const { data: counts = {}, isLoading } = useQuery({
     queryKey: [
       "entityCounts",
       normalized.sort().join(","),
-      grupoAtual?.id,
-      empresaAtual?.id,
+      groupId,
+      empresaId,
       contexto,
-      (empresasDoGrupo || []).map(e => e.id).join(','),
+      grupoEmpIds,
     ],
     queryFn: async () => {
       if (!normalized.length) return {};
@@ -126,7 +188,13 @@ export function useEntityCounts(entityNames = []) {
           globalBatchState.queue = [];
           globalBatchState.timer = null;
 
-          const result = await executeCountBatch(batch, { global: contextFilter });
+          // Construir filtros específicos por entidade
+          const filters = {};
+          batch.forEach(ent => {
+            filters[ent] = buildEntityFilter(ent, empresaId, groupId, empresasDoGrupo);
+          });
+
+          const result = await executeCountBatch(batch, filters);
           resolve(result);
         }, 12);
       });
