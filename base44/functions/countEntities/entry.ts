@@ -186,16 +186,27 @@ Deno.serve(async (req) => {
     if (entitiesBatch && entitiesBatch.length > 0) {
       const results = new Array(entitiesBatch.length);
 
-      // Sequencial com delay entre cada para evitar burst de 429
+      // Sequencial com delay adaptativo entre cada para evitar burst de 429
       for (let mine = 0; mine < entitiesBatch.length; mine++) {
         const payload = entitiesBatch[mine] || {};
-        try {
-          results[mine] = await countOne(base44, user, payload);
-        } catch (err) {
-          results[mine] = { entityName: payload?.entityName, count: 0, isEstimate: true, error: String(err?.message || err) };
+        let attempt = 0;
+        while (attempt <= 2) {
+          try {
+            results[mine] = await countOne(base44, user, payload);
+            break;
+          } catch (err) {
+            const status = err?.status || err?.response?.status;
+            if (status === 429 && attempt < 2) {
+              await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+              attempt++;
+              continue;
+            }
+            results[mine] = { entityName: payload?.entityName, count: 0, isEstimate: true, error: String(err?.message || err) };
+            break;
+          }
         }
         if (mine < entitiesBatch.length - 1) {
-          await new Promise(r => setTimeout(r, 300)); // 300ms entre entidades para evitar 429
+          await new Promise(r => setTimeout(r, 500)); // 500ms entre entidades para evitar 429
         }
       }
 
