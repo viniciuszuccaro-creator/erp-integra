@@ -21,6 +21,14 @@ export default function SetorAtividadeForm({ setor, setorAtividade, item, data, 
     ativo: true
   });
 
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
