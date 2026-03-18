@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -682,7 +682,7 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
       <div className="flex justify-end gap-3 pt-6 border-t mt-6">
         <Button type="submit" className="bg-blue-600 hover:bg-blue-700 px-8">
           <CheckCircle2 className="w-4 h-4 mr-2" />
-          {formaPagamento ? 'Atualizar Forma' : 'Criar Forma'}
+          {formaPagamentoNorm ? 'Atualizar Forma' : 'Criar Forma'}
         </Button>
       </div>
     </FormWrapper>
