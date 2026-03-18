@@ -20,7 +20,7 @@ const globalBatchState = {
 /**
  * Executa contagem em lote (batched)
  */
-const executeCountBatch = async (entities) => {
+const executeCountBatch = async (entities, filters = {}) => {
   if (!entities.length) return {};
 
   const uniqEntities = [...new Set(entities)];
@@ -29,7 +29,10 @@ const executeCountBatch = async (entities) => {
   // Tenta invocar backend se disponível
   try {
     const payload = {
-      batch: uniqEntities.map((ent) => ({ entity: ent, filter: {} })),
+      entities: uniqEntities.map((ent) => ({ 
+        entityName: ent, 
+        filter: filters[ent] || filters.global || {} 
+      })),
     };
     const res = await base44.functions.invoke("countEntities", payload);
     const data = res?.data || {};
@@ -54,7 +57,7 @@ const executeCountBatch = async (entities) => {
     if (status === 429) {
       const delay = 800 + Math.random() * 600;
       await new Promise((r) => setTimeout(r, delay));
-      return executeCountBatch(entities);
+      return executeCountBatch(entities, filters);
     }
 
     // Fallback: usar cache
@@ -72,7 +75,7 @@ const executeCountBatch = async (entities) => {
  */
 export function useEntityCounts(entityNames = []) {
   const queryClient = useQueryClient();
-  const { grupoAtual, empresaAtual, contexto } = useContextoVisual();
+  const { grupoAtual, empresaAtual, contexto, empresasDoGrupo } = useContextoVisual();
 
   // Normalizar para array
   const normalized = Array.isArray(entityNames)
@@ -80,6 +83,24 @@ export function useEntityCounts(entityNames = []) {
     : entityNames
     ? [entityNames]
     : [];
+
+  // Construir filtros de contexto
+  const buildContextFilter = () => {
+    const empresaId = empresaAtual?.id;
+    const groupId = grupoAtual?.id;
+    const empresasIds = (empresasDoGrupo || []).map(e => e.id).filter(Boolean);
+
+    if (contexto === 'grupo' && groupId && empresasIds.length > 0) {
+      return { $or: [{ empresa_id: { $in: empresasIds } }, { group_id: groupId }] };
+    } else if (empresaId) {
+      return { empresa_id: empresaId };
+    } else if (groupId) {
+      return { group_id: groupId };
+    }
+    return {};
+  };
+
+  const contextFilter = buildContextFilter();
 
   // Query com batching automático
   const { data: counts = {}, isLoading } = useQuery({
@@ -89,6 +110,7 @@ export function useEntityCounts(entityNames = []) {
       grupoAtual?.id,
       empresaAtual?.id,
       contexto,
+      (empresasDoGrupo || []).map(e => e.id).join(','),
     ],
     queryFn: async () => {
       if (!normalized.length) return {};
@@ -104,7 +126,7 @@ export function useEntityCounts(entityNames = []) {
           globalBatchState.queue = [];
           globalBatchState.timer = null;
 
-          const result = await executeCountBatch(batch);
+          const result = await executeCountBatch(batch, { global: contextFilter });
           resolve(result);
         }, 12);
       });
