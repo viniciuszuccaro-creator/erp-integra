@@ -162,7 +162,7 @@ export default function CentroCustoForm({ centroCusto, item, data, onSubmit, onS
       </div>
 
       <div className="flex justify-end gap-3 pt-4">
-        {centroCusto && (
+        {dadosCentroCusto && (
           <>
             <Button
               type="button"
@@ -194,7 +194,7 @@ export default function CentroCustoForm({ centroCusto, item, data, onSubmit, onS
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Receipt className="w-5 h-5 text-blue-600" />
-            {centroCusto ? 'Editar Centro de Custo' : 'Novo Centro de Custo'}
+            {dadosCentroCusto ? 'Editar Centro de Custo' : 'Novo Centro de Custo'}
           </h2>
         </div>
         {formContent}

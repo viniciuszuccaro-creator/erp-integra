@@ -305,7 +305,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   };
 
   useEffect(() => {
-    if (cliente) {
+    if (cliente?.id) {
       setFormData({
         ...cliente,
         contatos: cliente.contatos || [],
@@ -330,7 +330,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
         documentos: cliente.documentos || []
       });
     }
-  }, [cliente]);
+  }, [cliente?.id]);
 
   const gerarMapaUrl = (endereco) => {
     if (endereco.latitude && endereco.longitude) {
