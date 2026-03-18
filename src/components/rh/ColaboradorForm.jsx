@@ -16,7 +16,11 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * V21.1.2: Colaborador Form - Adaptado para Window Mode
  * Suporte para Dialog (fallback) e Window Mode (multitarefa)
  */
-function ColaboradorForm({ colaborador, onSubmit, windowMode = false }) {
+function ColaboradorForm({ colaborador: colaboradorProp, item, data, onSubmit, onSave, onClose, windowMode = false }) {
+  const colaborador = colaboradorProp || item || data || null;
+  const onCloseNorm = onClose || onSave;
+  // Sync form when editing existing record
+  const [_syncKey, _setSyncKey] = React.useState(colaborador?.id || 'new');
   const { carimbarContexto } = useContextoVisual();
   const [formData, setFormData] = useState(colaborador || {
     nome_completo: '',

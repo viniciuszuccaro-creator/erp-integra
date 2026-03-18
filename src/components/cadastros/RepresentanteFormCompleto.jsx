@@ -29,7 +29,9 @@ import FormWrapper from "@/components/common/FormWrapper";
 import { useToast } from "@/components/ui/use-toast";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
-export default function RepresentanteFormCompleto({ representante, isOpen, onClose, onSuccess, windowMode = false }) {
+export default function RepresentanteFormCompleto({ representante: representanteProp, item, data, isOpen, onClose, onSuccess, windowMode = false, onSave, onSubmit }) {
+  const representante = representanteProp || item || data || null;
+  const onCloseNorm = onClose || onSave || onSubmit;
   const [activeTab, setActiveTab] = useState("dados-gerais");
   const { toast } = useToast();
   const queryClient = useQueryClient();
