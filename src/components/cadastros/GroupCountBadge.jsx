@@ -16,7 +16,22 @@ const CAMPO_MAP = {
 };
 const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
 
+// Entidades de catálogo simples (não precisam de filtro empresa/grupo)
+const SIMPLE_CATALOG = new Set([
+  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
+  'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
+  'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
+  'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
+  'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
+  'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
+  'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'ChatbotCanal',
+  'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento', 'ContatoB2B',
+]);
+
 function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
+  // Entidades simples: sem filtro de contexto
+  if (SIMPLE_CATALOG.has(entityName)) return {};
+
   const campo = CAMPO_MAP[entityName] || 'empresa_id';
   const orConds = [];
 
@@ -56,10 +71,14 @@ export default function GroupCountBadge({ entities = [], badgeClassName }) {
   const groupId = grupoAtual?.id;
   const grupoEmpIds = (empresasDoGrupo || []).map(e => e.id).filter(Boolean).sort().join(',');
 
+  // Verificar se há pelo menos uma entidade que precise de contexto ou todas são simples
+  const hasAnyNonSimple = entities.some(e => !SIMPLE_CATALOG.has(e));
+  const canFetch = entities.length > 0 && (!hasAnyNonSimple || !!(empresaId || groupId));
+
   const { data: total = 0, isLoading } = useQuery({
     queryKey: ['GroupCountBadge2', entities.join(','), empresaId || null, groupId || null, grupoEmpIds],
     queryFn: async () => {
-      if (!empresaId && !groupId) return 0;
+      if (hasAnyNonSimple && !empresaId && !groupId) return 0;
       const batch = entities.map(entityName => ({
         entityName,
         filter: buildFilter(entityName, empresaId, groupId, empresasDoGrupo),
@@ -73,7 +92,7 @@ export default function GroupCountBadge({ entities = [], badgeClassName }) {
     placeholderData: (prev) => prev ?? 0,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    enabled: !!(empresaId || groupId) && entities.length > 0,
+    enabled: canFetch,
   });
 
   return (
