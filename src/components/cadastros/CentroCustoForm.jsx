@@ -32,9 +32,13 @@ export default function CentroCustoForm({ centroCusto, item, data, onSubmit, onS
       ...formData,
       orcamento_mensal: formData.orcamento_mensal ? parseFloat(formData.orcamento_mensal) : null
     };
-    if (onSubmit) onSubmit(dataToSubmit);
-    if (onSave) onSave();
-    if (onClose) onClose();
+    // onSubmit faz persistência + fecha (Visualizador universal)
+    if (onSubmit) {
+      onSubmit(dataToSubmit);
+    } else {
+      if (onSave) onSave();
+      if (onClose) onClose();
+    }
   };
 
   const handleExcluir = () => {
