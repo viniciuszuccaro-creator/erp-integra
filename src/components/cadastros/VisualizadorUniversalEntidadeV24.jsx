@@ -470,29 +470,20 @@ export default function VisualizadorUniversalEntidadeV24({
     }
   }, [selectAllCrossPage, items, selectedIds, totalCount]);
 
-  // ─── Abrir edição — busca registro completo para garantir todos os campos ─────
+  // ─── Abrir edição — busca registro completo via get direto ───────────────────
   const handleEditItem = useCallback(async (item) => {
     let fullItem = { ...item };
     try {
-      if (ENTITY && item?.id) {
-        // Tenta buscar via entityListSorted para ter o objeto completo
-        const res = await base44.functions.invoke("entityListSorted", {
-          entityName: ENTITY,
-          filter: { id: item.id, ...(grupoAtual?.id ? { group_id: grupoAtual.id } : empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}) },
-          sortField: "updated_date",
-          sortDirection: "desc",
-          limit: 1,
-          skip: 0,
-        });
-        const fetched = Array.isArray(res?.data) ? res.data.find(r => r.id === item.id) : null;
-        if (fetched) fullItem = { ...fetched };
+      if (ENTITY && item?.id && base44.entities[ENTITY]?.get) {
+        const fetched = await base44.entities[ENTITY].get(item.id);
+        if (fetched && fetched.id) fullItem = { ...fetched };
       }
     } catch (_) { /* usa item da listagem como fallback */ }
     startTransition(() => {
       setEditItem(fullItem);
       setShowForm(true);
     });
-  }, [ENTITY, grupoAtual?.id, empresaAtual?.id]);
+  }, [ENTITY]);
 
   // ─── Fechar/salvar (formulários self-managed chamam isso após persistir) ───────
   const handleSave = useCallback(() => {
