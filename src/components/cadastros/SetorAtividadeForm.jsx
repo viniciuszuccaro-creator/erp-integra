@@ -10,8 +10,8 @@ import { Loader2, Factory, Trash2, Power, PowerOff } from "lucide-react";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function SetorAtividadeForm({ setor, setorAtividade, onSubmit, isSubmitting, windowMode = false, closeSelf }) {
-  const dadosIniciais = setorAtividade || setor;
+export default function SetorAtividadeForm({ setor, setorAtividade, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false, closeSelf }) {
+  const dadosIniciais = item || data || initialData || defaultValues || setorAtividade || setor;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome: '',
     descricao: '',

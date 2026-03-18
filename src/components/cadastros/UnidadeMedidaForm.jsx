@@ -7,8 +7,8 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Ruler } from 'lucide-react';
 
-export default function UnidadeMedidaForm({ unidade, unidadeMedida, onSubmit, windowMode = false }) {
-  const dadosIniciais = unidadeMedida || unidade;
+export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, initialData, defaultValues, onSubmit, windowMode = false }) {
+  const dadosIniciais = item || data || initialData || defaultValues || unidadeMedida || unidade;
   const [formData, setFormData] = useState(dadosIniciais || {
     sigla: '',
     nome_completo: '',
@@ -20,6 +20,14 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, onSubmit, wi
     usa_em_vendas: true,
     ativo: true
   });
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
