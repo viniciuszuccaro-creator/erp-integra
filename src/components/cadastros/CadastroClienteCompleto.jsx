@@ -172,7 +172,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       toast({ title: `✅ Cliente ${cliente?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(formData);
-      if (onClose) onClose();
+      if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
       toast({
