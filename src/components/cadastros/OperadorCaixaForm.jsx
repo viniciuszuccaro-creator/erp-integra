@@ -13,9 +13,10 @@ import { Wallet, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
-export default function OperadorCaixaForm({ operador, onSubmit, onCancel, windowMode = false }) {
+export default function OperadorCaixaForm({ operador, item, data, initialData, defaultValues, onSubmit, onSave, onClose, onCancel, windowMode = false }) {
   const { empresaAtual } = useContextoVisual();
-  const [formData, setFormData] = useState({
+  const dadosIniciais = item || data || initialData || defaultValues || operador;
+  const [formData, setFormData] = useState(dadosIniciais || {
     usuario_id: "",
     usuario_nome: "",
     colaborador_id: "",
