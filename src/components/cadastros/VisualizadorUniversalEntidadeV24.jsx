@@ -514,11 +514,37 @@ export default function VisualizadorUniversalEntidadeV24({
               </div>
               <div className="p-6 flex-1 overflow-auto">
                 <FormComponent
+                  // Props universais — cobre TODOS os padrões de formulário do sistema
                   item={editItem}
                   data={editItem}
+                  // Props específicas dos formulários legados (CadastroClienteCompleto, CadastroFornecedorCompleto, etc.)
+                  cliente={editItem}
+                  fornecedor={editItem}
+                  colaborador={editItem}
+                  transportadora={editItem}
+                  representante={editItem}
+                  contato={editItem}
+                  segmento={editItem}
+                  regiao={editItem}
+                  produto={editItem}
+                  servico={editItem}
+                  banco={editItem}
+                  formaPagamento={editItem}
+                  centroCusto={editItem}
+                  planoContas={editItem}
+                  veiculo={editItem}
+                  motorista={editItem}
+                  departamento={editItem}
+                  cargo={editItem}
+                  turno={editItem}
+                  empresa={editItem}
+                  grupo={editItem}
+                  // Callbacks
                   onClose={handleSave}
                   onSave={handleSave}
                   onSubmit={handleSave}
+                  onSuccess={handleSave}
+                  isOpen={true}
                   windowMode={true}
                 />
               </div>
