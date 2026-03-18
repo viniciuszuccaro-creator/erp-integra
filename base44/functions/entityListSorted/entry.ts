@@ -154,14 +154,27 @@ async function expandByGroupIfNeeded(base44, entityName, f) {
   return f;
 }
 
+const SIMPLE_CATALOG_ENTITIES_LIST = new Set([
+  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
+  'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
+  'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
+  'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
+  'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
+  'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
+  'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'JobAgendado',
+  'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento', 'ContatoB2B',
+]);
+
 async function listOne(base44, user, q) {
   const entityName = q?.entityName;
   if (!entityName) return { entityName, items: [] };
   const filtros = q?.filter || {};
 
+  const isSimple = SIMPLE_CATALOG_ENTITIES_LIST.has(entityName);
   const scopeProvided = !!filtros?.empresa_id || !!filtros?.group_id
     || (!!filtros?.$or && Array.isArray(filtros.$or) && filtros.$or.length > 0);
-  if (user.role !== 'admin' && !scopeProvided) {
+  // Entidades simples de catálogo dispensam escopo multiempresa
+  if (user.role !== 'admin' && !scopeProvided && !isSimple) {
     return { entityName, items: [], error: 'escopo_multiempresa_obrigatorio' };
   }
 
