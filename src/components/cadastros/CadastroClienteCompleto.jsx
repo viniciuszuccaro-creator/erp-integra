@@ -191,7 +191,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       toast({ title: "✅ Cliente excluído com sucesso!" });
       if (onSuccess) onSuccess();
-      onClose();
+      if (onCloseNorm) onCloseNorm();
     },
     onError: (error) => {
       toast({
