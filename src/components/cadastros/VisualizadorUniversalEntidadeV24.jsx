@@ -90,9 +90,11 @@ function buildFormProps(editItem, handleSave, handlePersistSubmit) {
   if (!editItem) return callbacks;
 
   return {
-    // Universais
+    // Universais — SEMPRE presentes para garantir preenchimento em qualquer formulário
     item: editItem,
     data: editItem,
+    initialData: editItem,
+    defaultValues: editItem,
     // Props específicos por entidade — cobre TODOS os cadastros
     cliente: editItem,
     fornecedor: editItem,
@@ -108,6 +110,7 @@ function buildFormProps(editItem, handleSave, handlePersistSubmit) {
     produto: editItem,
     servico: editItem,
     banco: editItem,
+    conta: editItem,
     formaPagamento: editItem,
     centroCusto: editItem,
     planoContas: editItem,
@@ -127,19 +130,30 @@ function buildFormProps(editItem, handleSave, handlePersistSubmit) {
     setorAtividade: editItem,
     tabelaPreco: editItem,
     tipoDespesa: editItem,
+    tipo: editItem,
     moedaIndice: editItem,
+    moeda: editItem,
     operadorCaixa: editItem,
+    operador: editItem,
     tabelaFiscal: editItem,
     condicaoComercial: editItem,
     centroResultado: editItem,
+    centro: editItem,
     localEstoque: editItem,
+    local: editItem,
     tipoFrete: editItem,
     rotaPadrao: editItem,
+    rota: editItem,
     gateway: editItem,
     gatewayPagamento: editItem,
     configuracaoCobranca: editItem,
     configuracaoDespesaRecorrente: editItem,
+    despesaRecorrente: editItem,
+    configuracao: editItem,
     perfilAcesso: editItem,
+    perfil: editItem,
+    veiculo: editItem,
+    motorista: editItem,
     regiaoId: editItem?.id,
     ...callbacks,
   };
