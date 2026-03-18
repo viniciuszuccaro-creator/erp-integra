@@ -419,15 +419,26 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [selectAllCrossPage, items]);
 
   // ─── Toggle select all ────────────────────────────────────────────────────────
+  // 1º clique: seleciona todos da página atual
+  // 2º clique (com todos da página selecionados): ativa cross-page (todos registros)
+  // 3º clique (cross-page ativo): cancela tudo
   const toggleSelectAll = useCallback(() => {
+    const allPageSelected = items.length > 0 && items.every((i) => selectedIds.has(i.id));
     if (selectAllCrossPage) {
+      // Cancela tudo
       setSelectAllCrossPage(false);
       setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(items.map((i) => i.id)));
+    } else if (allPageSelected && totalCount > items.length) {
+      // Ativa cross-page
       setSelectAllCrossPage(true);
+    } else if (allPageSelected) {
+      // Já todos selecionados (única página) → desseleciona
+      setSelectedIds(new Set());
+    } else {
+      // Seleciona todos da página
+      setSelectedIds(new Set(items.map((i) => i.id)));
     }
-  }, [selectAllCrossPage, items]);
+  }, [selectAllCrossPage, items, selectedIds, totalCount]);
 
   // ─── Abrir edição ─────────────────────────────────────────────────────────────
   const handleEditItem = useCallback((item) => {
