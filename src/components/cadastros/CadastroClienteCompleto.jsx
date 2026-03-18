@@ -39,7 +39,10 @@ const TimelineCliente = React.lazy(() => import("@/components/cliente/TimelineCl
 const ResumoHistorico = React.lazy(() => import("@/components/cliente/TimelineCliente").then(m => ({ default: m.ResumoHistorico })));
 
 
-export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSuccess, windowMode = false, onSubmit }) {
+export default function CadastroClienteCompleto({ cliente: clienteProp, item, data, isOpen, onClose, onSuccess, windowMode = false, onSubmit, onSave }) {
+  // Normaliza: aceita tanto "cliente" (legado) quanto "item"/"data" (novo Visualizador)
+  const cliente = clienteProp || item || data || null;
+  const onCloseNorm = onClose || onSave || onSubmit;
   const [activeTab, setActiveTab] = useState("dados-gerais");
   const [isSaving, setIsSaving] = useState(false);
 
