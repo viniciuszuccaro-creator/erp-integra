@@ -10,8 +10,8 @@ import { Loader2, Award, Trash2, Power, PowerOff } from "lucide-react";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function MarcaForm({ marca, onSubmit, isSubmitting, windowMode = false }) {
-  const dadosIniciais = marca;
+export default function MarcaForm({ marca, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
+  const dadosIniciais = item || data || initialData || defaultValues || marca;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_marca: '',
     descricao: '',
@@ -21,6 +21,14 @@ export default function MarcaForm({ marca, onSubmit, isSubmitting, windowMode = 
     categoria: 'Aço',
     ativo: true
   });
+
+  const prevIdRef = useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
