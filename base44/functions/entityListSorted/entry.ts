@@ -192,7 +192,10 @@ async function listOne(base44, user, q) {
     Object.entries(filtros).map(([k, v]) => [k, Array.isArray(v) ? v.map(sanitizeVal) : (v && typeof v === 'object' ? v : sanitizeVal(v))])
   );
   let top = normalizeFilterShared(safeFilter);
-  top = await expandByGroupIfNeeded(base44, entityName, top);
+  // Entidades simples sem escopo: não expandir por grupo (não têm empresa_id/group_id)
+  if (!isSimple || scopeProvided) {
+    top = await expandByGroupIfNeeded(base44, entityName, top);
+  }
 
   const term = q?.search || q?.busca || filtros?.__search || filtros?.search || filtros?.busca || null;
   let finalWithSearch = top;
