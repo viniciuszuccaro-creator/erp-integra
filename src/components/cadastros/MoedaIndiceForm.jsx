@@ -16,9 +16,18 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
     ativo: true
   });
 
+  useEffect(() => {
+    if (dadosIniciais?.id) setFormData({ ...dadosIniciais });
+  }, [dadosIniciais?.id]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (onSubmit) {
+      onSubmit(formData);
+    } else {
+      if (onSave) onSave();
+      if (onClose) onClose();
+    }
   };
 
   const content = (
