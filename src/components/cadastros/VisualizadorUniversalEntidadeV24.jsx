@@ -450,8 +450,12 @@ export default function VisualizadorUniversalEntidadeV24({
   // ─── Abrir edição — busca registro completo ───────────────────────────────────
   const handleEditItem = useCallback(async (item) => {
     setIsLoadingEdit(true);
+    // Fecha form anterior e limpa editItem ANTES de buscar o novo
+    setShowForm(false);
+    setEditItem(null);
     try {
       const full = await fetchFullRecord(ENTITY, item);
+      // Só abre o form após ter os dados completos
       setEditItem(full);
       setShowForm(true);
     } catch (_) {
