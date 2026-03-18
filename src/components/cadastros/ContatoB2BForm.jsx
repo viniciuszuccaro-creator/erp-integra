@@ -37,13 +37,16 @@ export default function ContatoB2BForm({ contato, contatoB2B, item, data, onSubm
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.cliente_id || !formData.nome_contato || !formData.email) {
+    if (!formData.nome_contato || !formData.email) {
       alert('Preencha os campos obrigatórios');
       return;
     }
-    if (onSubmit) onSubmit(formData);
-    if (onSave) onSave();
-    if (onClose) onClose();
+    if (onSubmit) {
+      onSubmit(formData);
+    } else {
+      if (onSave) onSave();
+      if (onClose) onClose();
+    }
   };
 
   const formContent = (
