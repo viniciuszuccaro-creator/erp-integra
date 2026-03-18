@@ -31,11 +31,11 @@ const executeCountBatch = async (entities, filters = {}) => {
     const payload = {
       entities: uniqEntities.map((ent) => ({ 
         entityName: ent, 
-        filter: filters[ent] || filters.global || {} 
+        filter: filters[ent] || {} 
       })),
     };
     const res = await base44.functions.invoke("countEntities", payload);
-    const data = res?.data || {};
+    const data = res?.data?.counts || {};
 
     // Cache em memória
     uniqEntities.forEach((ent) => {
