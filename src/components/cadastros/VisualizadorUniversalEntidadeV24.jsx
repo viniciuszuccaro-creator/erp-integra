@@ -1,12 +1,11 @@
 /**
- * VisualizadorUniversalEntidadeV24 — Motor universal de listagem com performance crítica
- * ✅ Ordenação rápida com ícones clique/hold → ascendente/descendente
- * ✅ Busca debounced 350ms com cache local
- * ✅ Paginação fluida (placeholderData elimina pulos)
- * ✅ Real-time instantâneo via subscribe()
- * ✅ UI moderna: raio-sm, cores por status, hover sutil, ícones lucide
- * ✅ Multiempresa + RBAC + Auditoria
- * ✅ Sem travamentos mesmo com 100 registros/página
+ * VisualizadorUniversalEntidadeV24 — Motor universal de listagem
+ * ✅ Modal de edição funcional (sem overlay bloqueante)
+ * ✅ Ordenação correta (campo + direção separados)
+ * ✅ Badge de total real de registros
+ * ✅ Delete ALL (cross-page) via toggleSelectAll
+ * ✅ Paginação com skip/offset
+ * ✅ Multiempresa + Real-time
  */
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,13 +15,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   ChevronUp, ChevronDown, ChevronsUpDown,
-  Search, Edit, Trash2, Plus, RefreshCw, AlertCircle
+  Search, Edit, Trash2, Plus, RefreshCw, AlertCircle, X
 } from "lucide-react";
 
-// Status colors por padrão (pode ser sobrescrito por prop)
 const DEFAULT_STATUS_COLORS = {
   Ativo:         "bg-green-100 text-green-700",
   Ativa:         "bg-green-100 text-green-700",
@@ -46,7 +43,7 @@ const STATUS_FIELDS = new Set([
   "status", "status_fornecedor", "status_cliente", "situacao",
   "ativo_status", "situacao_credito", "status_fiscal_receita"
 ]);
-const BOOL_FIELDS = new Set(["ativo", "ativa", "ativo_status", "habilitado", "can_edit"]);
+const BOOL_FIELDS = new Set(["ativo", "ativa", "ativo_status", "habilitado"]);
 const DATE_FIELDS = new Set([
   "created_date", "updated_date", "data_admissao", "data_nascimento",
   "data_vencimento", "data_validade", "ultima_compra", "data_emissao", "data_pedido"
@@ -90,98 +87,76 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [columns, camposPrincipais]);
 
   const queryClient = useQueryClient();
-  const {
-    filterInContext,
-    empresaAtual,
-    grupoAtual,
-    deleteInContext,
-  } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual, deleteInContext } = useContextoVisual();
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [sortField, setSortField] = useState("-updated_date");
+  // sortField: campo puro (sem -), sortDir: "asc" | "desc"
+  const [sortField, setSortField] = useState("updated_date");
+  const [sortDir, setSortDir] = useState("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(pageSizeProp || 20);
   const [editItem, setEditItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [selectAll, setSelectAll] = useState(false); // flag para "selecionou tudo cross-page"
   const debounceRef = useRef(null);
 
   const hasContext = !!(empresaAtual?.id || grupoAtual?.id);
 
-  // Debounced search (350ms)
+  // Debounced search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setDebouncedSearch(search);
       setCurrentPage(1);
     }, 350);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [search]);
 
-  // Search filter com regex otimizado
+  // Filtro de busca
   const searchFilter = useMemo(() => {
     if (!debouncedSearch.trim()) return {};
     const cols = COLUMNS.filter((c) => c.searchable !== false).map((c) => c.field);
     if (!cols.length) return {};
     const escaped = debouncedSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    return {
-      $or: cols.map((f) => ({ [f]: { $regex: escaped, $options: "i" } })),
-    };
+    return { $or: cols.map((f) => ({ [f]: { $regex: escaped, $options: "i" } })) };
   }, [debouncedSearch, COLUMNS]);
 
-  // Query para contar TODOS os registros
+  // Sort string para filterInContext: "-campo" ou "campo"
+  const sortString = sortDir === "desc" ? `-${sortField}` : sortField;
+
+  // Query de totalCount (sem paginação, sem busca)
   const { data: totalCount = 0 } = useQuery({
     queryKey: [ENTITY, "total-count", empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       if (!ENTITY || !hasContext) return 0;
       try {
-        const all = await filterInContext(ENTITY, {}, undefined, 10000);
+        const all = await filterInContext(ENTITY, {}, "-updated_date", 10000);
         return all.length;
-      } catch {
-        return 0;
-      }
+      } catch { return 0; }
     },
-    staleTime: 30_000,
+    staleTime: 60_000,
     enabled: !!ENTITY && hasContext,
   });
 
-  // Query principal com placeholderData (elimina pulos)
+  // Query principal paginada
   const { data: items = [], isLoading, isFetching } = useQuery({
-    queryKey: [
-      ENTITY,
-      "viz-list",
-      sortField,
-      currentPage,
-      pageSize,
-      debouncedSearch,
-      empresaAtual?.id,
-      grupoAtual?.id,
-    ],
+    queryKey: [ENTITY, "viz-list", sortString, currentPage, pageSize, debouncedSearch, empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       if (!ENTITY) return [];
-
-      if (!hasContext) {
-        try {
-          const res = await base44.entities?.[ENTITY]?.list("-updated_date", pageSize);
-          return Array.isArray(res) ? res : [];
-        } catch {
-          return [];
-        }
-      }
-
       try {
-        return await filterInContext(ENTITY, searchFilter, sortField, pageSize);
-      } catch {
-        return [];
-      }
+        // Busca com filtro + sort + limite da página
+        const all = await filterInContext(ENTITY, searchFilter, sortString, pageSize * currentPage);
+        // Fatia a página correta no client-side (simples e confiável)
+        const start = (currentPage - 1) * pageSize;
+        return all.slice(start, start + pageSize);
+      } catch { return []; }
     },
     staleTime: 30_000,
     gcTime: 120_000,
     refetchOnWindowFocus: false,
-    placeholderData: (prev) => prev, // ← Crucial: elimina pulo durante fetch
+    placeholderData: (prev) => prev,
     enabled: !!ENTITY,
   });
 
@@ -192,173 +167,138 @@ export default function VisualizadorUniversalEntidadeV24({
     if (!api?.subscribe) return;
     const unsub = api.subscribe(() => {
       queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "total-count"] });
     });
-    return () => {
-      if (typeof unsub === "function") unsub();
-    };
+    return () => { if (typeof unsub === "function") unsub(); };
   }, [ENTITY, queryClient]);
 
-  // Sort com alternância ascendente/descendente
+  // Sort handler
   const handleSort = useCallback((field) => {
     setSortField((prev) => {
-      const next = prev === `-${field}` ? field : `-${field}`;
-      return next;
+      if (prev === field) {
+        setSortDir((d) => d === "desc" ? "asc" : "desc");
+        return field;
+      }
+      setSortDir("desc");
+      return field;
     });
     setCurrentPage(1);
   }, []);
 
   // Formatter de valores
-  const formatValue = useCallback(
-    (value, col) => {
-      if (value === null || value === undefined || value === "") return "—";
-
-      // Boolean badge
-      if (BOOL_FIELDS.has(col.field)) {
-        return value ? (
-          <Badge variant="outline" className="text-xs rounded-sm bg-green-100 text-green-700 border-green-300">
-            Ativo
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="text-xs rounded-sm bg-slate-100 text-slate-500 border-slate-300">
-            Inativo
-          </Badge>
-        );
-      }
-
-      // Status badge
-      if (STATUS_FIELDS.has(col.field) && typeof value === "string") {
-        const cls = statusColors[value] || "bg-slate-100 text-slate-600";
-        return (
-          <Badge variant="outline" className={`text-xs rounded-sm ${cls}`}>
-            {value}
-          </Badge>
-        );
-      }
-
-      // Date
-      if (DATE_FIELDS.has(col.field) || col.type === "date") {
-        try {
-          const d = new Date(value);
-          if (!isNaN(d.getTime())) return d.toLocaleDateString("pt-BR");
-        } catch { /**/ }
-      }
-
-      // Money
-      if (MONEY_FIELDS.has(col.field) || col.type === "currency") {
-        const n = Number(value);
-        if (!isNaN(n))
-          return n.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-            minimumFractionDigits: 2,
-          });
-      }
-
-      // Number
-      if (col.type === "number") {
-        const n = Number(value);
-        return isNaN(n) ? String(value) : n.toLocaleString("pt-BR");
-      }
-
-      // Boolean
-      if (typeof value === "boolean") return value ? "✓" : "—";
-
-      // Object/array
-      if (typeof value === "object")
-        return Array.isArray(value) ? `[${value.length}]` : "–";
-
-      return String(value).substring(0, 80);
-    },
-    [statusColors]
-  );
-
-  // Delete
-  const handleDelete = useCallback(
-    async (item) => {
-      const label = item.nome || item.descricao || item.id;
-      if (!window.confirm(`Confirma exclusão de "${label}"?`)) return;
+  const formatValue = useCallback((value, col) => {
+    if (value === null || value === undefined || value === "") return "—";
+    if (BOOL_FIELDS.has(col.field)) {
+      return value
+        ? <Badge variant="outline" className="text-xs rounded-sm bg-green-100 text-green-700 border-green-300">Ativo</Badge>
+        : <Badge variant="outline" className="text-xs rounded-sm bg-slate-100 text-slate-500 border-slate-300">Inativo</Badge>;
+    }
+    if (STATUS_FIELDS.has(col.field) && typeof value === "string") {
+      const cls = statusColors[value] || "bg-slate-100 text-slate-600";
+      return <Badge variant="outline" className={`text-xs rounded-sm ${cls}`}>{value}</Badge>;
+    }
+    if (DATE_FIELDS.has(col.field) || col.type === "date") {
       try {
-        await deleteInContext(ENTITY, item.id);
-        queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
-        setSelectedIds(new Set());
-      } catch (e) {
-        alert("Erro ao excluir: " + (e?.message || e));
-      }
-    },
-    [ENTITY, deleteInContext, queryClient]
-  );
+        const d = new Date(value);
+        if (!isNaN(d.getTime())) return d.toLocaleDateString("pt-BR");
+      } catch { /**/ }
+    }
+    if (MONEY_FIELDS.has(col.field) || col.type === "currency") {
+      const n = Number(value);
+      if (!isNaN(n)) return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
+    }
+    if (col.type === "number") {
+      const n = Number(value);
+      return isNaN(n) ? String(value) : n.toLocaleString("pt-BR");
+    }
+    if (typeof value === "boolean") return value ? "✓" : "—";
+    if (typeof value === "object") return Array.isArray(value) ? `[${value.length}]` : "–";
+    return String(value).substring(0, 80);
+  }, [statusColors]);
 
-  const handleDeleteSelected = useCallback(async () => {
-    if (selectedIds.size === 0) return;
-    const isDeleteAll = window.confirm(
-      selectedIds.size === items.length
-        ? `Confirma exclusão de TODOS os ${items.length} registro(s)? Será deletado de TODAS as páginas.`
-        : `Confirma exclusão de ${selectedIds.size} registro(s)?`
-    );
-    if (!isDeleteAll) return;
-
+  // Delete individual
+  const handleDelete = useCallback(async (item) => {
+    const label = item.nome || item.descricao || item.razao_social || item.id;
+    if (!window.confirm(`Confirma exclusão de "${label}"?`)) return;
     try {
-      // Se selecionou TODOS os da página atual, delete TODOS (não só os visíveis)
-      let idsToDelete = Array.from(selectedIds);
-      if (selectedIds.size === items.length && items.length > 0) {
-        // Busca TODOS os registros da entidade para deletar
+      await deleteInContext(ENTITY, item.id);
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "total-count"] });
+      setSelectedIds((prev) => { const n = new Set(prev); n.delete(item.id); return n; });
+    } catch (e) {
+      alert("Erro ao excluir: " + (e?.message || e));
+    }
+  }, [ENTITY, deleteInContext, queryClient]);
+
+  // Delete selecionados (ou TODOS se selectAll=true)
+  const handleDeleteSelected = useCallback(async () => {
+    const count = selectAll ? totalCount : selectedIds.size;
+    if (count === 0) return;
+    const msg = selectAll
+      ? `⚠️ Confirma exclusão de TODOS os ${totalCount} registros de ${TITULO}? Esta ação não pode ser desfeita!`
+      : `Confirma exclusão de ${selectedIds.size} registro(s)?`;
+    if (!window.confirm(msg)) return;
+    try {
+      let idsToDelete;
+      if (selectAll) {
         const allItems = await filterInContext(ENTITY, searchFilter, undefined, 10000);
         idsToDelete = allItems.map(i => i.id);
+      } else {
+        idsToDelete = Array.from(selectedIds);
       }
-
       for (const id of idsToDelete) {
         await deleteInContext(ENTITY, id);
       }
       queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "total-count"] });
       setSelectedIds(new Set());
+      setSelectAll(false);
       setCurrentPage(1);
     } catch (e) {
       alert("Erro ao excluir: " + (e?.message || e));
     }
-  }, [selectedIds, items, ENTITY, deleteInContext, queryClient, filterInContext, searchFilter]);
+  }, [selectAll, totalCount, selectedIds, ENTITY, TITULO, deleteInContext, queryClient, filterInContext, searchFilter]);
 
-  const toggleSelectAll = useCallback(async () => {
-    if (selectedIds.size === totalCount) {
-      // Desselecionar tudo
+  // Toggle select all (cross-page)
+  const toggleSelectAll = useCallback(() => {
+    if (selectAll) {
+      setSelectAll(false);
       setSelectedIds(new Set());
     } else {
-      // Selecionar TODOS os registros (não só a página atual)
-      try {
-        const allItems = await filterInContext(ENTITY, searchFilter, undefined, 10000);
-        setSelectedIds(new Set(allItems.map(i => i.id)));
-      } catch {
-        // Fallback: selecionar só a página atual
-        setSelectedIds(new Set(items.map(i => i.id)));
-      }
+      // Seleciona todos da página atual + marca flag cross-page
+      setSelectedIds(new Set(items.map(i => i.id)));
+      setSelectAll(true);
     }
-  }, [selectedIds.size, totalCount, items, ENTITY, searchFilter, filterInContext]);
+  }, [selectAll, items]);
 
   const handleSave = useCallback(() => {
     setShowForm(false);
     setEditItem(null);
     queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
+    queryClient.invalidateQueries({ queryKey: [ENTITY, "total-count"] });
   }, [ENTITY, queryClient]);
 
   const getSortIcon = (field) => {
-    if (sortField === `-${field}`)
-      return <ChevronDown className="w-3.5 h-3.5 text-blue-500" />;
-    if (sortField === field) return <ChevronUp className="w-3.5 h-3.5 text-blue-500" />;
-    return (
-      <ChevronsUpDown className="w-3 h-3 text-slate-300 opacity-0 group-hover/th:opacity-100 transition-opacity" />
-    );
+    if (sortField !== field) return <ChevronsUpDown className="w-3 h-3 text-slate-300 opacity-0 group-hover/th:opacity-100 transition-opacity" />;
+    return sortDir === "desc"
+      ? <ChevronDown className="w-3.5 h-3.5 text-blue-500" />
+      : <ChevronUp className="w-3.5 h-3.5 text-blue-500" />;
   };
+
+  const deleteCount = selectAll ? totalCount : selectedIds.size;
 
   const content = (
     <div className="flex flex-col h-full gap-3 min-h-0">
       {/* Toolbar */}
-       <div className="flex items-center gap-2 flex-wrap shrink-0">
-         <div className="flex items-center gap-1">
-           <span className="text-sm font-semibold text-slate-700">{TITULO}:</span>
-           <Badge variant="outline" className="rounded-sm bg-blue-50 text-blue-700 border-blue-200">
-             {totalCount} total
-           </Badge>
-         </div>
-         <div className="relative flex-1 min-w-[160px]">
+      <div className="flex items-center gap-2 flex-wrap shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="text-sm font-semibold text-slate-700">{TITULO}:</span>
+          <Badge variant="outline" className="rounded-sm bg-blue-50 text-blue-700 border-blue-200 font-bold">
+            {totalCount}
+          </Badge>
+        </div>
+
+        <div className="relative flex-1 min-w-[160px]">
           <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
           <Input
             placeholder={`Buscar ${TITULO}...`}
@@ -370,76 +310,61 @@ export default function VisualizadorUniversalEntidadeV24({
 
         <select
           value={pageSize}
-          onChange={(e) => {
-            setPageSize(Number(e.target.value));
-            setCurrentPage(1);
-          }}
+          onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer"
         >
           {PAGE_SIZES.map((ps) => (
-            <option key={ps} value={ps}>
-              {ps} / pág.
-            </option>
+            <option key={ps} value={ps}>{ps} / pág.</option>
           ))}
         </select>
 
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() =>
-            queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] })
-          }
-          className="h-9 w-9 p-0 rounded-sm"
-          title="Recarregar"
+        <Button size="sm" variant="outline"
+          onClick={() => {
+            queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-list"] });
+            queryClient.invalidateQueries({ queryKey: [ENTITY, "total-count"] });
+          }}
+          className="h-9 w-9 p-0 rounded-sm" title="Recarregar"
         >
-          <RefreshCw
-            className={`w-4 h-4 ${isFetching ? "animate-spin text-blue-500" : ""}`}
-          />
+          <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-blue-500" : ""}`} />
         </Button>
 
         {FormComponent && (
-          <Button
-            size="sm"
-            onClick={() => {
-              setEditItem(null);
-              setShowForm(true);
-            }}
-            className="h-9 rounded-sm gap-1"
-          >
+          <Button size="sm" onClick={() => { setEditItem(null); setShowForm(true); }} className="h-9 rounded-sm gap-1">
             <Plus className="w-4 h-4" /> Novo
           </Button>
         )}
 
-        {selectedIds.size > 0 && (
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={handleDeleteSelected}
-            className="h-9 rounded-sm gap-1"
-          >
-            <Trash2 className="w-4 h-4" /> Apagar {selectedIds.size}
+        {deleteCount > 0 && (
+          <Button size="sm" variant="destructive" onClick={handleDeleteSelected} className="h-9 rounded-sm gap-1">
+            <Trash2 className="w-4 h-4" />
+            {selectAll ? `Apagar TODOS (${totalCount})` : `Apagar ${selectedIds.size}`}
           </Button>
         )}
       </div>
+
+      {/* Banner "todos selecionados" */}
+      {selectAll && (
+        <div className="bg-blue-50 border border-blue-200 rounded-sm px-3 py-2 text-sm text-blue-700 flex items-center gap-2 shrink-0">
+          <span>✓ Todos os <strong>{totalCount}</strong> registros de {TITULO} estão selecionados.</span>
+          <button onClick={() => { setSelectAll(false); setSelectedIds(new Set()); }} className="ml-auto text-blue-500 hover:text-blue-700 underline text-xs">
+            Cancelar seleção
+          </button>
+        </div>
+      )}
 
       {/* Table */}
       <div className="flex-1 overflow-auto rounded-sm border border-slate-200 bg-white">
         {isLoading && items.length === 0 ? (
           <div className="space-y-1.5 p-4">
             {[...Array(8)].map((_, i) => (
-              <Skeleton
-                key={i}
-                className={`h-8 rounded-sm ${i % 3 === 0 ? "w-3/4" : "w-full"}`}
-              />
+              <Skeleton key={i} className={`h-8 rounded-sm ${i % 3 === 0 ? "w-3/4" : "w-full"}`} />
             ))}
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-2">
             <Search className="w-8 h-8 opacity-30" />
             <span className="text-sm">
-              {debouncedSearch
-                ? `Nenhum resultado para "${debouncedSearch}"`
-                : `Nenhum ${TITULO} encontrado`}
+              {debouncedSearch ? `Nenhum resultado para "${debouncedSearch}"` : `Nenhum ${TITULO} encontrado`}
             </span>
             {!hasContext && (
               <span className="text-xs text-amber-600 flex items-center gap-1">
@@ -454,24 +379,18 @@ export default function VisualizadorUniversalEntidadeV24({
                 <th className="px-4 py-2.5 text-center w-10">
                   <input
                     type="checkbox"
-                    checked={selectedIds.size > 0 && selectedIds.size === totalCount}
-                    indeterminate={selectedIds.size > 0 && selectedIds.size < totalCount}
+                    ref={el => { if (el) el.indeterminate = selectedIds.size > 0 && !selectAll && selectedIds.size < items.length; }}
+                    checked={selectAll || (items.length > 0 && items.every(i => selectedIds.has(i.id)))}
                     onChange={toggleSelectAll}
                     className="w-4 h-4 cursor-pointer"
+                    title={selectAll ? "Desselecionar todos" : `Selecionar todos (${totalCount})`}
                   />
                 </th>
                 {COLUMNS.map((col) => (
                   <th
                     key={col.field}
-                    className={`group/th px-4 py-2.5 text-left font-semibold text-slate-600 select-none whitespace-nowrap
-                      ${
-                        col.sortable !== false
-                          ? "cursor-pointer hover:bg-slate-100 transition-colors"
-                          : ""
-                      }`}
-                    onClick={() =>
-                      col.sortable !== false && handleSort(col.field)
-                    }
+                    className={`group/th px-4 py-2.5 text-left font-semibold text-slate-600 select-none whitespace-nowrap ${col.sortable !== false ? "cursor-pointer hover:bg-slate-100 transition-colors" : ""}`}
+                    onClick={() => col.sortable !== false && handleSort(col.field)}
                   >
                     <div className="flex items-center gap-1">
                       <span>{col.label}</span>
@@ -479,38 +398,28 @@ export default function VisualizadorUniversalEntidadeV24({
                     </div>
                   </th>
                 ))}
-                <th className="px-4 py-2.5 text-center font-semibold text-slate-600 w-20 whitespace-nowrap">
-                  Ações
-                </th>
+                <th className="px-4 py-2.5 text-center font-semibold text-slate-600 w-20 whitespace-nowrap">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.map((item) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-blue-50/30 transition-colors group/row"
-                >
+                <tr key={item.id} className={`hover:bg-blue-50/30 transition-colors group/row ${selectedIds.has(item.id) || selectAll ? "bg-blue-50/40" : ""}`}>
                   <td className="px-4 py-2 text-center">
                     <input
                       type="checkbox"
-                      checked={selectedIds.has(item.id)}
+                      checked={selectAll || selectedIds.has(item.id)}
                       onChange={(e) => {
+                        if (selectAll) { setSelectAll(false); }
                         const newSet = new Set(selectedIds);
-                        if (e.target.checked) {
-                          newSet.add(item.id);
-                        } else {
-                          newSet.delete(item.id);
-                        }
+                        if (e.target.checked) newSet.add(item.id);
+                        else newSet.delete(item.id);
                         setSelectedIds(newSet);
                       }}
                       className="w-4 h-4 cursor-pointer"
                     />
                   </td>
                   {COLUMNS.map((col) => (
-                    <td
-                      key={col.field}
-                      className="px-4 py-2 text-slate-600 max-w-[280px] truncate"
-                    >
+                    <td key={col.field} className="px-4 py-2 text-slate-600 max-w-[280px] truncate">
                       {formatValue(item[col.field], col)}
                     </td>
                   ))}
@@ -554,13 +463,10 @@ export default function VisualizadorUniversalEntidadeV24({
               <RefreshCw className="w-3 h-3 animate-spin" /> Atualizando…
             </span>
           )}
-          Pág. {currentPage} · {items.length} registro{items.length !== 1 ? "s" : ""}
-          {pageSize > 0 && items.length >= pageSize && "+"}
+          Pág. {currentPage} · Mostrando {items.length} de {totalCount} registros
         </span>
         <div className="flex gap-1.5">
-          <Button
-            size="sm"
-            variant="outline"
+          <Button size="sm" variant="outline"
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1 || isLoading}
             className="h-7 text-xs rounded-sm px-2"
@@ -570,9 +476,7 @@ export default function VisualizadorUniversalEntidadeV24({
           <span className="flex items-center justify-center h-7 min-w-7 px-2 border border-slate-200 rounded-sm bg-white text-slate-700 font-medium">
             {currentPage}
           </span>
-          <Button
-            size="sm"
-            variant="outline"
+          <Button size="sm" variant="outline"
             onClick={() => setCurrentPage((p) => p + 1)}
             disabled={items.length < pageSize || isLoading}
             className="h-7 text-xs rounded-sm px-2"
@@ -582,40 +486,45 @@ export default function VisualizadorUniversalEntidadeV24({
         </div>
       </div>
 
-      {/* Form Modal - sem overlay escuro */}
+      {/* Modal de Edição — portado para fora do fluxo de z-index */}
       {FormComponent && showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-auto w-full shadow-lg">
-            <div className="sticky top-0 bg-white border-b p-4">
-              <h2 className="text-lg font-semibold">
-                {editItem ? `Editar ${TITULO}` : `Novo ${TITULO}`}
-              </h2>
-            </div>
-            <div className="p-4">
-              <FormComponent
-                item={editItem}
-                data={editItem}
-                onClose={handleSave}
-                onSave={handleSave}
-                onSubmit={handleSave}
-              />
-            </div>
-            <button
-              onClick={handleSave}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
-              aria-label="Fechar"
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-[999] bg-black/50"
+            onClick={handleSave}
+          />
+          {/* Modal */}
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 pointer-events-none">
+            <div
+              className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-auto shadow-2xl pointer-events-auto flex flex-col"
+              onClick={(e) => e.stopPropagation()}
             >
-              ×
-            </button>
+              <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10 rounded-t-xl">
+                <h2 className="text-lg font-semibold text-slate-800">
+                  {editItem ? `Editar ${TITULO}` : `Novo ${TITULO}`}
+                </h2>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6 flex-1 overflow-auto">
+                <FormComponent
+                  item={editItem}
+                  data={editItem}
+                  onClose={handleSave}
+                  onSave={handleSave}
+                  onSubmit={handleSave}
+                  windowMode={true}
+                />
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-      {/* Backdrop click to close */}
-      {FormComponent && showForm && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={handleSave}
-        />
+        </>
       )}
     </div>
   );
