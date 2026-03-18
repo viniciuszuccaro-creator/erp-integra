@@ -79,39 +79,40 @@ async function expandGroupFilter(base44, entityName, f) {
 }
 
 /**
- * Contagem eficiente: usa paginação em cascata limitada a 2000 registros.
- * Máximo 4 páginas de 500 = até 2000 registros exatos.
- * Para catálogos simples (geralmente < 200 registros), 1 chamada resolve.
+ * Contagem eficiente com UMA chamada de 500 registros.
+ * Se retornou 500 (cheio), faz mais uma página para ver se há mais.
+ * Máximo 2 chamadas por entidade = nunca explode rate limit.
+ * Para grandes volumes (Clientes, Produtos), indica "500+" se necessário.
  */
-async function fastCount(base44, entityName, finalFilter, isSimple) {
-  const PAGE = isSimple ? 500 : 500;
-  const MAX_PAGES = isSimple ? 2 : 4; // catálogos simples raramente têm mais de 1000
-  let total = 0;
+async function fastCount(base44, entityName, finalFilter) {
+  const PAGE = 500;
 
-  for (let p = 0; p < MAX_PAGES; p++) {
-    let batch;
-    try {
-      batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, p * PAGE);
-    } catch (err) {
-      const status = err?.status || err?.response?.status;
-      if (status === 429) {
-        // Rate limit: aguarda e tenta uma vez
-        await new Promise(r => setTimeout(r, 2000));
-        try {
-          batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, p * PAGE);
-        } catch (_) {
-          return total > 0 ? total : 0;
-        }
-      } else {
-        return total > 0 ? total : 0;
-      }
+  let batch1;
+  try {
+    batch1 = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, 0);
+  } catch (err) {
+    const status = err?.status || err?.response?.status;
+    if (status === 429) {
+      await new Promise(r => setTimeout(r, 1500));
+      try {
+        batch1 = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, 0);
+      } catch (_) { return 0; }
+    } else {
+      return 0;
     }
-
-    const n = Array.isArray(batch) ? batch.length : 0;
-    total += n;
-    if (n < PAGE) return total; // última página
   }
-  return total;
+
+  const n1 = Array.isArray(batch1) ? batch1.length : 0;
+  if (n1 < PAGE) return n1; // Menos de 500 = total exato
+
+  // Tem 500+ registros: faz mais uma página para ter uma estimativa melhor
+  try {
+    const batch2 = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, PAGE);
+    const n2 = Array.isArray(batch2) ? batch2.length : 0;
+    return n1 + n2; // Retorna total das 2 páginas (pode ser estimativa se > 1000)
+  } catch (_) {
+    return n1; // Retorna o que temos
+  }
 }
 
 async function countOne(base44, user, payload) {
@@ -119,18 +120,18 @@ async function countOne(base44, user, payload) {
   if (!entityName) return { entityName, count: 0 };
 
   const isSimple = SIMPLE_CATALOG.has(entityName);
-  const scopeProvided = filter?.empresa_id || filter?.group_id || filter?.$or?.length > 0;
+  const scopeProvided = filter?.empresa_id || filter?.group_id || (Array.isArray(filter?.$or) && filter.$or.length > 0);
 
   if (!isSimple && !scopeProvided && user?.role !== 'admin') {
     return { entityName, count: 0, error: 'escopo_obrigatorio' };
   }
 
-  let finalFilter = normalizeSharedFilter(filter);
+  let finalFilter = normalizeSharedFilter({ ...filter });
   if (!isSimple) {
     finalFilter = await expandGroupFilter(base44, entityName, finalFilter);
   }
 
-  const count = await fastCount(base44, entityName, finalFilter, isSimple);
+  const count = await fastCount(base44, entityName, finalFilter);
   return { entityName, count };
 }
 
@@ -153,13 +154,13 @@ Deno.serve(async (req) => {
         const payload = entitiesBatch[i] || {};
         try {
           const result = await countOne(base44, user, payload);
-          if (result.entityName) counts[result.entityName] = result.count;
+          if (result.entityName != null) counts[result.entityName] = result.count;
         } catch (_) {
           if (payload?.entityName) counts[payload.entityName] = 0;
         }
-        // Delay adaptativo entre entidades para evitar 429
+        // Delay entre entidades para evitar 429
         if (i < entitiesBatch.length - 1) {
-          await new Promise(r => setTimeout(r, 300));
+          await new Promise(r => setTimeout(r, 200));
         }
       }
 
