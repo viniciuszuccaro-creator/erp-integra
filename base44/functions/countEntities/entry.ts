@@ -123,6 +123,7 @@ async function countOne(base44, user, payload) {
   const scopeProvided = filter?.empresa_id || filter?.group_id || (Array.isArray(filter?.$or) && filter.$or.length > 0);
 
   if (!isSimple && !scopeProvided && user?.role !== 'admin') {
+    console.error(`[countOne] ${entityName}: escopo obrigatório não fornecido. Filter:`, filter);
     return { entityName, count: 0, error: 'escopo_obrigatorio' };
   }
 
@@ -131,7 +132,9 @@ async function countOne(base44, user, payload) {
     finalFilter = await expandGroupFilter(base44, entityName, finalFilter);
   }
 
+  console.log(`[countOne] ${entityName} - Filter aplicado:`, JSON.stringify(finalFilter));
   const count = await fastCount(base44, entityName, finalFilter);
+  console.log(`[countOne] ${entityName} - Count: ${count}`);
   return { entityName, count };
 }
 
