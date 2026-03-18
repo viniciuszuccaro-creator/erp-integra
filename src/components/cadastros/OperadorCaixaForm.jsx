@@ -35,6 +35,14 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
     empresa_id: empresaAtual?.id || ""
   });
 
+  const prevIdRef = React.useRef(dadosIniciais?.id);
+  useEffect(() => {
+    if (dadosIniciais?.id && dadosIniciais.id !== prevIdRef.current) {
+      prevIdRef.current = dadosIniciais.id;
+      setFormData({ ...dadosIniciais });
+    }
+  }, [dadosIniciais?.id]);
+
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores'],
     queryFn: () => base44.entities.Colaborador.list(),
