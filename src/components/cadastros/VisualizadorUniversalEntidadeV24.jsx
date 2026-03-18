@@ -521,7 +521,8 @@ export default function VisualizadorUniversalEntidadeV24({
       }
 
       queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
-      queryClient.invalidateQueries({ queryKey: ["entityCounts_v3"] });
+      queryClient.invalidateQueries({ queryKey: ["entityCounts_v4"] });
+      queryClient.invalidateQueries({ queryKey: ["GroupCountBadge3"] });
       setSelectedIds(new Set());
       setCrossPageAll(false);
       setCurrentPage(1);
