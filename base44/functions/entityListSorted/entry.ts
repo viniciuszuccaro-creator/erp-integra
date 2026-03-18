@@ -66,16 +66,16 @@ function normalizeSortField(entityName, requested) {
     else if (['limite', 'credito', 'limite_credito'].includes(r)) canonical = 'condicao_comercial.limite_credito';
   }
 
-  // Para entidades com whitelist definida, validar; para entidades genéricas de cadastro, aceitar qualquer campo simples (sem $, sem .)
+  // Para entidades com whitelist definida: validar; para entidades genéricas de cadastro: aceitar qualquer campo simples válido
   const allowed = SORT_FIELD_MAP[entityName];
   if (allowed) {
     if (!allowed.has(canonical)) {
       return (DEFAULT_SORTS[entityName]?.field) || 'updated_date';
     }
   } else {
-    // Entidade genérica: aceitar qualquer campo que seja um identificador simples válido
-    if (!/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(canonical)) {
-      return 'updated_date';
+    // Entidade genérica de cadastro: aceitar qualquer campo que seja identificador válido (sem $, sem espaço)
+    if (!/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(canonical) || canonical.includes('$')) {
+      return (DEFAULT_SORTS[entityName]?.field) || 'updated_date';
     }
   }
   return canonical;
