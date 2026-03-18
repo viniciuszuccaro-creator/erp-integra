@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
@@ -11,122 +9,15 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  Users,
-  Building2,
-  Truck,
-  DollarSign,
-  User,
-  Plus,
-  Search,
-  Edit,
-  Package,
-  CreditCard,
-  Landmark,
-  Factory,
-  Boxes,
-  Stars,
-  ChevronRight,
-  Cpu,
-  Shield,
-  Award,
-  Receipt,
-  TrendingUp,
-  Database,
-  Zap,
-  CheckCircle2,
-  MessageCircle,
-  Briefcase,
-  Clock,
-  Globe,
-  FileText,
-  Bell,
-  Link2,
-  ShoppingCart,
-  MapPin,
-  Settings,
-  Wallet,
-  Calendar,
+  Users, Building2, Truck, DollarSign, Package,
+  Stars, Cpu, Shield, Database, Zap,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchInput from "@/components/ui/SearchInput";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import CadastroClienteCompleto from "../components/cadastros/CadastroClienteCompleto";
-import CadastroFornecedorCompleto from "../components/cadastros/CadastroFornecedorCompleto";
-import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto";
-import ProdutoFormV22_Completo from "../components/cadastros/ProdutoFormV22_Completo";
-import BotoesImportacaoProduto from "../components/cadastros/BotoesImportacaoProduto";
-import SetorAtividadeForm from "../components/cadastros/SetorAtividadeForm";
-
-
 import usePermissions from "../components/lib/usePermissions";
-import TransportadoraForm from "../components/cadastros/TransportadoraForm";
 import { useWindow } from "../components/lib/useWindow";
-import ColaboradorForm from "../components/rh/ColaboradorForm";
 import GerenciadorJanelas from "../components/sistema/GerenciadorJanelas";
-import BancoForm from "../components/cadastros/BancoForm";
-import FormaPagamentoForm from "../components/cadastros/FormaPagamentoForm";
-import FormaPagamentoFormCompleto from "../components/cadastros/FormaPagamentoFormCompleto";
-import GestorFormasPagamento from "../components/cadastros/GestorFormasPagamento";
-import GestorGatewaysPagamento from "../components/cadastros/GestorGatewaysPagamento";
-import GestorDespesasRecorrentes from "../components/cadastros/GestorDespesasRecorrentes";
-import VeiculoForm from "../components/cadastros/VeiculoForm";
-import MotoristaForm from "../components/cadastros/MotoristaForm";
-import TipoFreteForm from "../components/cadastros/TipoFreteForm";
-import EmpresaForm from "../components/cadastros/EmpresaForm";
-import GrupoEmpresarialForm from "../components/cadastros/GrupoEmpresarialForm";
-import DepartamentoForm from "../components/cadastros/DepartamentoForm";
-import CargoForm from "../components/cadastros/CargoForm";
-import TurnoForm from "../components/cadastros/TurnoForm";
-
-
-import CentroCustoForm from "../components/cadastros/CentroCustoForm";
-import GrupoProdutoForm from "../components/cadastros/GrupoProdutoForm";
-import MarcaForm from "../components/cadastros/MarcaForm";
-import ServicoForm from "../components/cadastros/ServicoForm";
-import RepresentanteForm from "../components/cadastros/RepresentanteForm";
-import RepresentantesTab from "../components/cadastros/RepresentantesTab";
-import RepresentanteFormCompleto from "../components/cadastros/RepresentanteFormCompleto";
-import DashboardRepresentantes from "../components/relatorios/DashboardRepresentantes";
-import ContatoB2BForm from "../components/cadastros/ContatoB2BForm";
-import LocalEstoqueForm from "../components/cadastros/LocalEstoqueForm";
-import TabelaFiscalForm from "../components/cadastros/TabelaFiscalForm";
-import KitProdutoForm from "../components/cadastros/KitProdutoForm";
-import CatalogoWebForm from "../components/cadastros/CatalogoWebForm";
-import CentroResultadoForm from "../components/cadastros/CentroResultadoForm";
-import MoedaIndiceForm from "../components/cadastros/MoedaIndiceForm";
-import WebhookForm from "../components/cadastros/WebhookForm";
-import RotaPadraoForm from "../components/cadastros/RotaPadraoForm";
-import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
-import SegmentoClienteForm from "../components/cadastros/SegmentoClienteForm";
-import CondicaoComercialForm from "../components/cadastros/CondicaoComercialForm";
-import UnidadeMedidaForm from "../components/cadastros/UnidadeMedidaForm";
-import OperadorCaixaForm from "../components/cadastros/OperadorCaixaForm";
-import PlanoContasForm from "../components/cadastros/PlanoContasForm";
-import TipoDespesaForm from "../components/cadastros/TipoDespesaForm";
-import ParametroPortalClienteForm from "../components/cadastros/ParametroPortalClienteForm";
-import ParametroOrigemPedidoForm from "../components/cadastros/ParametroOrigemPedidoForm";
-import ParametroRecebimentoNFeForm from "../components/cadastros/ParametroRecebimentoNFeForm";
-import ParametroRoteirizacaoForm from "../components/cadastros/ParametroRoteirizacaoForm";
-import ParametroConciliacaoBancariaForm from "../components/cadastros/ParametroConciliacaoBancariaForm";
-import ParametroCaixaDiarioForm from "../components/cadastros/ParametroCaixaDiarioForm";
-import EventoNotificacaoForm from "../components/cadastros/EventoNotificacaoForm";
-import ConfiguracaoIntegracaoForm from "../components/cadastros/ConfiguracaoIntegracaoForm";
-import ApiExternaForm from "../components/cadastros/ApiExternaForm";
-import JobAgendadoForm from "../components/cadastros/JobAgendadoForm";
-import ChatbotIntentForm from "../components/cadastros/ChatbotIntentForm";
-import ChatbotCanalForm from "../components/cadastros/ChatbotCanalForm";
-import ConfiguracaoNFeForm from "../components/cadastros/ConfiguracaoNFeForm";
-import ConfiguracaoBoletosForm from "../components/cadastros/ConfiguracaoBoletosForm";
-import ConfiguracaoWhatsAppForm from "../components/cadastros/ConfiguracaoWhatsAppForm";
-import RegiaoAtendimentoForm from "../components/cadastros/RegiaoAtendimentoForm";
-import StatusIntegracoes from '../components/integracoes/StatusIntegracoes';
-import ConfiguracaoNotificacoes from '../components/sistema/ConfiguracaoNotificacoes';
-import VisualizadorUniversalEntidade from '../components/cadastros/VisualizadorUniversalEntidade';
-import VisualizadorProdutos from '../components/cadastros/VisualizadorProdutos';
 import Bloco1Pessoas from "@/components/cadastros/blocks/Bloco1Pessoas.jsx";
 import Bloco2Produtos from "@/components/cadastros/blocks/Bloco2Produtos.jsx";
 import Bloco3Financeiro from "@/components/cadastros/blocks/Bloco3Financeiro.jsx";
@@ -134,17 +25,6 @@ import Bloco4Logistica from "@/components/cadastros/blocks/Bloco4Logistica.jsx";
 import Bloco5Organizacional from "@/components/cadastros/blocks/Bloco5Organizacional.jsx";
 import Bloco6Tecnologia from "@/components/cadastros/blocks/Bloco6Tecnologia.jsx";
 import GroupCountBadge from "@/components/cadastros/GroupCountBadge.jsx";
-import TesteNFe from "../components/integracoes/TesteNFe";
-import TesteBoletos from "../components/integracoes/TesteBoletos";
-import ConfigWhatsAppBusiness from '@/components/integracoes/ConfigWhatsAppBusiness';
-import TesteTransportadoras from "../components/integracoes/TesteTransportadoras";
-import TesteGoogleMaps from "../components/integracoes/TesteGoogleMaps";
-import IALeituraProjeto from "../components/integracoes/IALeituraProjeto";
-import SincronizacaoMarketplacesAtiva from '@/components/integracoes/SincronizacaoMarketplacesAtiva';
-import ConfigGlobal from "@/components/sistema/ConfigGlobal";
-import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
-import ChatbotDashboard from "@/components/chatbot/ChatbotDashboard";
-import DashboardCliente from "@/components/portal/DashboardCliente";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ModuleLayout from "@/components/layout/ModuleLayout";
 import ModuleContent from "@/components/layout/ModuleContent";
