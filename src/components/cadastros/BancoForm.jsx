@@ -40,9 +40,14 @@ export default function BancoForm({ banco, item, data, onSubmit, onSave, onClose
       alert('Preencha os campos obrigatórios');
       return;
     }
-    if (onSubmit) onSubmit(formData);
-    if (onSave) onSave();
-    if (onClose) onClose();
+    // onSubmit faz persistência + fecha (Visualizador universal)
+    // onSave/onClose apenas fecham — não chamar se onSubmit já fecha
+    if (onSubmit) {
+      onSubmit(formData);
+    } else {
+      if (onSave) onSave();
+      if (onClose) onClose();
+    }
   };
 
   const formContent = (
