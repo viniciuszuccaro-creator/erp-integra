@@ -136,7 +136,13 @@ async function countOne(base44, user, payload) {
   }
 
   const normalized = normalizeSharedFilter(entityName, filter);
-  const finalFilter = await expandByGroupIfNeeded(base44, entityName, normalized);
+  // Para entidades simples sem escopo obrigatório, usa filtro limpo (sem grupo/empresa se não fornecidos)
+  let finalFilter;
+  if (isSimple && !scopeProvided) {
+    finalFilter = {};
+  } else {
+    finalFilter = await expandByGroupIfNeeded(base44, entityName, normalized);
+  }
 
   const totalCount = await fastCount(base44, entityName, finalFilter);
   const result = { entityName, count: totalCount, isEstimate: false };
