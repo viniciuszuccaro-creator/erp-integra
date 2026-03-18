@@ -58,11 +58,7 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
     queryFn: () => base44.entities.Empresa.list(),
   });
 
-  useEffect(() => {
-    if (operador) {
-      setFormData(operador);
-    }
-  }, [operador]);
+  // prevIdRef já cobre a sincronização acima
 
   const handleSubmit = async (e) => {
     e.preventDefault();
