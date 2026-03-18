@@ -31,7 +31,7 @@ export default function Bloco3Financeiro() {
     { k: 'PlanoDeContas', t: 'Plano de Contas', i: BookText, c: ['codigo','descricao','tipo'], f: PlanoContasForm },
     { k: 'CentroCusto', t: 'Centros de Custo', i: Layers, c: ['codigo','descricao','tipo','responsavel'], f: CentroCustoForm },
     { k: 'CentroResultado', t: 'Centros de Resultado', i: LineChart, c: ['codigo','descricao'], f: CentroResultadoForm },
-    { k: 'TipoDespesa', t: 'Tipos de Despesa', i: FolderKanban, c: ['descricao','categoria'], f: TipoDespesaForm },
+    { k: 'TipoDespesa', t: 'Tipos de Despesa', i: FolderKanban, c: ['codigo','nome','categoria','ativo'], f: TipoDespesaForm },
     { k: 'MoedaIndice', t: 'Moedas & Índices', i: DollarSign, c: ['moeda','indice','variacao'], f: MoedaIndiceForm },
     { k: 'OperadorCaixa', t: 'Operadores de Caixa', i: Wallet, c: ['nome','matricula','ativo'], f: OperadorCaixaForm },
     { k: 'GatewayPagamento', t: 'Gateways de Pagamento', i: Settings, custom: true },
