@@ -23,7 +23,9 @@ import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
-export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose, onSuccess, windowMode = false, onSubmit }) {
+export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp, item, data, isOpen, onClose, onSuccess, windowMode = false, onSubmit, onSave }) {
+  const fornecedor = fornecedorProp || item || data || null;
+  const onCloseNorm = onClose || onSave || onSubmit;
   const [activeTab, setActiveTab] = useState("dados-gerais");
   
   const { toast } = useToast();
