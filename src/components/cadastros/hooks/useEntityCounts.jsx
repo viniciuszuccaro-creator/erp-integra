@@ -107,12 +107,25 @@ function buildEntityFilter(entityName, empresaId, groupId, empresasDoGrupo) {
     const ids = empresasDoGrupo.map(e => e.id).filter(Boolean);
     if (ids.length > 0) {
       if (entityName === 'Cliente') {
-        orConds.push({ empresa_id: { $in: ids } }, { empresa_dona_id: { $in: ids } });
+        orConds.push(
+          { empresa_id: { $in: ids } },
+          { empresa_dona_id: { $in: ids } },
+          { empresas_compartilhadas_ids: { $in: ids } },
+          { group_id: groupId }
+        );
       } else {
-        orConds.push({ [campo]: { $in: ids } });
+        orConds.push(
+          { [campo]: { $in: ids } },
+          { empresas_compartilhadas_ids: { $in: ids } },
+          { group_id: groupId }
+        );
       }
-      if (SHARED.has(entityName)) orConds.push({ empresas_compartilhadas_ids: { $in: ids } });
+    } else {
+      // Sem empresas no grupo, apenas group_id
+      orConds.push({ group_id: groupId });
     }
+    // Não adicionar group_id novamente abaixo
+    return orConds.length ? { $or: orConds } : {};
   } else {
     // Caso padrão: quando há empresa selecionada
     const allEmpresaIds = new Set();
