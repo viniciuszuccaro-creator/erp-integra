@@ -1,6 +1,6 @@
 /**
- * GroupCountBadge — soma totais de múltiplas entidades em um único batch.
- * Sempre inclui empresa atual + todas as empresas do grupo para contagem correta.
+ * GroupCountBadge — soma totais de múltiplas entidades com batching eficiente.
+ * Divide entidades em grupos de 5 para evitar timeout e rate limit.
  */
 import React from "react";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,6 @@ const CAMPO_MAP = {
 };
 const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
 
-// Entidades de catálogo simples (não precisam de filtro empresa/grupo)
 const SIMPLE_CATALOG = new Set([
   'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
   'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
@@ -25,17 +24,18 @@ const SIMPLE_CATALOG = new Set([
   'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
   'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
   'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'ChatbotCanal',
-  'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento', 'ContatoB2B',
+  'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento',
+  'ContatoB2B', 'CentroCusto', 'PlanoDeContas', 'PlanoContas',
+  'Veiculo', 'Motorista', 'Representante', 'GrupoEmpresarial', 'Empresa',
+  'TabelaPrecoItem', 'CentroOperacao',
 ]);
 
 function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
-  // Entidades simples: sem filtro de contexto
   if (SIMPLE_CATALOG.has(entityName)) return {};
 
   const campo = CAMPO_MAP[entityName] || 'empresa_id';
   const orConds = [];
 
-  // Todos os IDs relevantes: empresa atual + todas do grupo
   const allEmpresaIds = new Set();
   if (empresaId) allEmpresaIds.add(empresaId);
   if (Array.isArray(empresasDoGrupo)) {
@@ -65,30 +65,52 @@ function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
   return orConds.length ? { $or: orConds } : {};
 }
 
+// Divide array em chunks de tamanho n
+function chunk(arr, n) {
+  const result = [];
+  for (let i = 0; i < arr.length; i += n) result.push(arr.slice(i, i + n));
+  return result;
+}
+
 export default function GroupCountBadge({ entities = [], badgeClassName }) {
   const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
   const empresaId = empresaAtual?.id;
   const groupId = grupoAtual?.id;
   const grupoEmpIds = (empresasDoGrupo || []).map(e => e.id).filter(Boolean).sort().join(',');
 
-  // Verificar se há pelo menos uma entidade que precise de contexto ou todas são simples
   const hasAnyNonSimple = entities.some(e => !SIMPLE_CATALOG.has(e));
   const canFetch = entities.length > 0 && (!hasAnyNonSimple || !!(empresaId || groupId));
 
   const { data: total = 0, isLoading } = useQuery({
-    queryKey: ['GroupCountBadge2', entities.join(','), empresaId || null, groupId || null, grupoEmpIds],
+    queryKey: ['GroupCountBadge3', entities.join(','), empresaId || null, groupId || null, grupoEmpIds],
     queryFn: async () => {
       if (hasAnyNonSimple && !empresaId && !groupId) return 0;
+
       const batch = entities.map(entityName => ({
         entityName,
         filter: buildFilter(entityName, empresaId, groupId, empresasDoGrupo),
       }));
-      const res = await base44.functions.invoke('countEntities', { entities: batch });
-      const counts = res?.data?.counts || {};
-      return entities.reduce((sum, e) => sum + (Number(counts[e]) || 0), 0);
+
+      // Divide em chunks de 5 entidades para evitar timeout
+      const chunks = chunk(batch, 5);
+      const allCounts = {};
+
+      for (let i = 0; i < chunks.length; i++) {
+        try {
+          const res = await base44.functions.invoke('countEntities', { entities: chunks[i] });
+          const counts = res?.data?.counts || {};
+          Object.assign(allCounts, counts);
+        } catch (_) {
+          // Em caso de erro, mantém 0 para essas entidades
+        }
+        // Pausa entre chunks para não sobrecarregar
+        if (i < chunks.length - 1) await new Promise(r => setTimeout(r, 100));
+      }
+
+      return entities.reduce((sum, e) => sum + (Number(allCounts[e]) || 0), 0);
     },
-    staleTime: 180_000,
-    gcTime: 300_000,
+    staleTime: 300_000, // 5 min cache
+    gcTime: 600_000,
     placeholderData: (prev) => prev ?? 0,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
