@@ -34,7 +34,9 @@ const executeCountBatch = async (entities, filters = {}) => {
         filter: filters[ent] || {} 
       })),
     };
+    console.log(`[executeCountBatch] Payload enviado:`, JSON.stringify(payload, null, 2));
     const res = await base44.functions.invoke("countEntities", payload);
+    console.log(`[executeCountBatch] Resposta recebida:`, res?.data);
     const data = res?.data || {};
 
     // Cache em memória
