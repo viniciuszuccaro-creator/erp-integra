@@ -354,9 +354,11 @@ export default function VisualizadorUniversalEntidadeV24({
     setIsSavingForm(true);
     try {
       const payload = { ...formData };
-      // Injeta contexto multiempresa se não existir
-      if (!payload.empresa_id && empresaAtual?.id) payload.empresa_id = empresaAtual.id;
-      if (!payload.group_id && grupoAtual?.id) payload.group_id = grupoAtual.id;
+      // Injeta contexto multiempresa se não existir (apenas para entidades não-simples)
+      if (!isSimpleEntity) {
+        if (!payload.empresa_id && empresaAtual?.id) payload.empresa_id = empresaAtual.id;
+        if (!payload.group_id && grupoAtual?.id) payload.group_id = grupoAtual.id;
+      }
 
       if (editItem?.id) {
         await base44.entities[ENTITY].update(editItem.id, payload);
