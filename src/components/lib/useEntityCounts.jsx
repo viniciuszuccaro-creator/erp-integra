@@ -97,11 +97,15 @@ function chunk(arr, n) {
 }
 
 export function useEntityCounts(entities = []) {
-  const { grupoAtual, empresaAtual } = useContextoVisual();
+  const { grupoAtual, empresaAtual, empresasDoGrupo } = useContextoVisual();
   const queryClient = useQueryClient();
 
   const groupId = grupoAtual?.id || null;
   const empresaId = empresaAtual?.id || null;
+  const grupoEmpIdsKey = useMemo(
+    () => (Array.isArray(empresasDoGrupo) ? empresasDoGrupo.map(e => e.id).filter(Boolean).sort().join(',') : ''),
+    [empresasDoGrupo]
+  );
 
   const normalized = useMemo(() => {
     const arr = Array.isArray(entities) ? entities : [entities];
