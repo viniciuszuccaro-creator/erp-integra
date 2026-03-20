@@ -120,7 +120,8 @@ async function countOne(base44, user, payload) {
   if (!entityName) return { entityName, count: 0 };
 
   const isSimple = SIMPLE_CATALOG.has(entityName);
-  const scopeProvided = filter?.empresa_id || filter?.group_id || (Array.isArray(filter?.$or) && filter.$or.length > 0);
+  const hasOr = Array.isArray(filter?.$or) && filter.$or.length > 0;
+  const scopeProvided = filter?.empresa_id || filter?.group_id || filter?.empresa_dona_id || filter?.empresa_alocada_id || hasOr;
 
   if (!isSimple && !scopeProvided && user?.role !== 'admin') {
     console.error(`[countOne] ${entityName}: escopo obrigatório não fornecido. Filter:`, filter);
@@ -128,7 +129,8 @@ async function countOne(base44, user, payload) {
   }
 
   let finalFilter = normalizeSharedFilter({ ...filter });
-  if (!isSimple) {
+  // Só expande se o frontend não enviou $or completo
+  if (!isSimple && !hasOr) {
     finalFilter = await expandGroupFilter(base44, entityName, finalFilter);
   }
 
