@@ -29,6 +29,67 @@ const SIMPLE_CATALOG = new Set([
   'TabelaPrecoItem', 'CentroOperacao',
 ]);
 
+// Campo de contexto por entidade
+const CAMPO_CTX = {
+  Fornecedor: 'empresa_dona_id',
+  Transportadora: 'empresa_dona_id',
+  Colaborador: 'empresa_alocada_id',
+};
+
+// Entidades com empresas_compartilhadas_ids
+const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
+
+/**
+ * Monta filtro $or completo para o backend, considerando empresa E grupo.
+ * O backend `expandGroupFilter` só funciona bem se receber já o $or pronto.
+ */
+function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
+  if (SIMPLE_CATALOG.has(entityName)) return {};
+
+  const campo = CAMPO_CTX[entityName] || 'empresa_id';
+  const orConds = [];
+
+  // IDs de todas as empresas do grupo
+  const grupoEmpIds = Array.isArray(empresasDoGrupo)
+    ? empresasDoGrupo.map(e => e.id).filter(Boolean)
+    : [];
+
+  // Empresa específica selecionada
+  if (empresaId) {
+    if (entityName === 'Cliente') {
+      orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
+    } else {
+      orConds.push({ [campo]: empresaId });
+    }
+    if (SHARED.has(entityName)) {
+      orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
+    }
+  }
+
+  // Empresas do grupo
+  if (grupoEmpIds.length > 0) {
+    if (entityName === 'Cliente') {
+      orConds.push(
+        { empresa_id: { $in: grupoEmpIds } },
+        { empresa_dona_id: { $in: grupoEmpIds } }
+      );
+    } else {
+      orConds.push({ [campo]: { $in: grupoEmpIds } });
+    }
+    if (SHARED.has(entityName)) {
+      orConds.push({ empresas_compartilhadas_ids: { $in: grupoEmpIds } });
+    }
+  }
+
+  // group_id direto
+  if (groupId) {
+    orConds.push({ group_id: groupId });
+  }
+
+  if (orConds.length === 0) return {};
+  return { $or: orConds };
+}
+
 function chunk(arr, n) {
   const result = [];
   for (let i = 0; i < arr.length; i += n) result.push(arr.slice(i, i + n));
