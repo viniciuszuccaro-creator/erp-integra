@@ -116,8 +116,8 @@ export function useEntityCounts(entities = []) {
   const entitiesKey = useMemo(() => normalized.sort().join(','), [normalized]);
 
   const queryKey = useMemo(
-    () => ['entityCounts_v4', entitiesKey, groupId, empresaId],
-    [entitiesKey, groupId, empresaId]
+    () => ['entityCounts_v4', entitiesKey, groupId, empresaId, grupoEmpIdsKey],
+    [entitiesKey, groupId, empresaId, grupoEmpIdsKey]
   );
 
   const hasAnyContext = !!(groupId || empresaId);
