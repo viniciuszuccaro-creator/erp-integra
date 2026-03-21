@@ -13,6 +13,8 @@ import { useMemo, useEffect } from "react";
 
 const CACHE_TTL = 120_000; // 2 min
 const COUNT_CACHE = new Map();
+// Deduplicação global: previne múltiplas chamadas simultâneas para o mesmo contexto
+const INFLIGHT_MAP = new Map();
 
 // Entidades que não precisam de filtro empresa/grupo
 const SIMPLE_CATALOG = new Set([
