@@ -540,11 +540,11 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [crossPageAll, totalCount, selectedIds, ENTITY, TITULO, queryClient, contextFilter]);
 
   // ─── Seleção individual ───────────────────────────────────────────────────────
-  // Quando crossPageAll = true e desmarca um item → converte para seleção explícita
-  // preservando todos os outros itens da PÁGINA ATUAL como selecionados
+  // Quando crossPageAll = true e desmarca um item → cancela o cross-page
+  // e mantém apenas os itens DA PÁGINA ATUAL selecionados (exceto o desmarcado)
   const handleItemCheck = useCallback((id, checked) => {
     if (crossPageAll && !checked) {
-      // Migra cross-page → seleção explícita: todos da página MENOS o desmarcado
+      // Cancela seleção total e seleciona só os da página atual menos o desmarcado
       setCrossPageAll(false);
       setSelectedIds(new Set(items.map((i) => i.id).filter((iid) => iid !== id)));
       return;
