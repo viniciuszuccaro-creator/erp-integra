@@ -452,6 +452,7 @@ export default function VisualizadorUniversalEntidadeV24({
   useEffect(() => {
     if (pendingOpenRef.current && editItem !== null) {
       pendingOpenRef.current = false;
+      formVersionRef.current += 1;
       setShowForm(true);
     }
   }, [editItem]);
