@@ -46,7 +46,7 @@ export default function Bloco1Pessoas() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Users className="w-5 h-5 text-blue-700" /> Pessoas & Parceiros
-              <CountBadgeSimplificado entities={["Cliente","Fornecedor","Colaborador","Representante","ContatoB2B","SegmentoCliente","RegiaoAtendimento"]} />
+              <CountBadgeSimplificado entities={["Cliente","Fornecedor","Transportadora","Colaborador","Representante","ContatoB2B","SegmentoCliente","RegiaoAtendimento"]} />
             </CardTitle>
           </div>
         </CardHeader>
