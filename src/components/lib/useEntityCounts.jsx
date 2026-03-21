@@ -41,7 +41,7 @@ const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
 
 /**
  * Monta filtro $or completo para o backend, considerando empresa E grupo.
- * O backend `expandGroupFilter` só funciona bem se receber já o $or pronto.
+ * REGRA: inclui SEMPRE group_id + empresa_id + empresas do grupo para contagem correta.
  */
 function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
   if (SIMPLE_CATALOG.has(entityName)) return {};
@@ -53,6 +53,11 @@ function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
   const grupoEmpIds = Array.isArray(empresasDoGrupo)
     ? empresasDoGrupo.map(e => e.id).filter(Boolean)
     : [];
+
+  // group_id direto (sempre incluído quando disponível)
+  if (groupId) {
+    orConds.push({ group_id: groupId });
+  }
 
   // Empresa específica selecionada
   if (empresaId) {
@@ -66,27 +71,26 @@ function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
     }
   }
 
-  // Empresas do grupo
+  // Empresas do grupo (para garantir registros sem group_id mas com empresa_id)
   if (grupoEmpIds.length > 0) {
-    if (entityName === 'Cliente') {
-      orConds.push(
-        { empresa_id: { $in: grupoEmpIds } },
-        { empresa_dona_id: { $in: grupoEmpIds } }
-      );
-    } else {
-      orConds.push({ [campo]: { $in: grupoEmpIds } });
+    const ids = empresaId ? grupoEmpIds.filter(id => id !== empresaId) : grupoEmpIds;
+    if (ids.length > 0) {
+      if (entityName === 'Cliente') {
+        orConds.push(
+          { empresa_id: { $in: ids } },
+          { empresa_dona_id: { $in: ids } }
+        );
+      } else {
+        orConds.push({ [campo]: { $in: ids } });
+      }
+      if (SHARED.has(entityName)) {
+        orConds.push({ empresas_compartilhadas_ids: { $in: ids } });
+      }
     }
-    if (SHARED.has(entityName)) {
-      orConds.push({ empresas_compartilhadas_ids: { $in: grupoEmpIds } });
-    }
-  }
-
-  // group_id direto
-  if (groupId) {
-    orConds.push({ group_id: groupId });
   }
 
   if (orConds.length === 0) return {};
+  // Remove duplicatas de conditions simples
   return { $or: orConds };
 }
 
