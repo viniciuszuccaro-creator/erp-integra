@@ -595,10 +595,13 @@ export default function VisualizadorUniversalEntidadeV24({
   const showCrossPageBanner = !crossPageAll && selectedIds.size > 0 && allPageSelected && totalCount > items.length;
 
   // ─── editItemKey — força remontagem do formulário a cada edição ───────────────
-  const editItemKey = useMemo(
-    () => editItem?.id ? `edit-${editItem.id}-${ENTITY}` : `new-${ENTITY}-${Date.now()}`,
-    [editItem?.id, ENTITY]
-  );
+  // Incrementa versão a cada abertura para forçar remontagem mesmo com mesmo ID
+  const formVersionRef = useRef(0);
+  const editItemKey = useMemo(() => {
+    if (editItem?.id) return `edit-${editItem.id}-${ENTITY}-${formVersionRef.current}`;
+    return `new-${ENTITY}-${formVersionRef.current}`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editItem?.id, ENTITY, showForm]);
 
   const formProps = useMemo(
     () => buildFormProps(editItem, handleSave, isSelfManaged ? null : handlePersistSubmit),
