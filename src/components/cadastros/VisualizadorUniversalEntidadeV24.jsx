@@ -905,7 +905,7 @@ export default function VisualizadorUniversalEntidadeV24({
               {/* Corpo — key força remontagem completa ao trocar editItem */}
               <div className="p-6 flex-1 overflow-auto">
                 <FormComponent
-                  key={editItem ? `edit-${editItem.id}-${ENTITY}` : `new-${ENTITY}-${Date.now()}`}
+                  key={editItemKey}
                   {...formProps}
                 />
               </div>
