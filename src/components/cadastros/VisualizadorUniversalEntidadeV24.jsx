@@ -676,12 +676,10 @@ export default function VisualizadorUniversalEntidadeV24({
           <option value="updated_date|asc">Mais Antigos</option>
           <option value="created_date|desc">Criação ↓</option>
           <option value="created_date|asc">Criação ↑</option>
-          {COLUMNS.filter(c => c.sortable !== false && c.field !== "updated_date" && c.field !== "created_date").map(c => (
-            <React.Fragment key={c.field}>
-              <option value={`${c.field}|asc`}>{c.label} ↑</option>
-              <option value={`${c.field}|desc`}>{c.label} ↓</option>
-            </React.Fragment>
-          ))}
+          {COLUMNS.filter(c => c.sortable !== false && c.field !== "updated_date" && c.field !== "created_date").flatMap(c => [
+            <option key={`${c.field}|asc`} value={`${c.field}|asc`}>{c.label} ↑</option>,
+            <option key={`${c.field}|desc`} value={`${c.field}|desc`}>{c.label} ↓</option>
+          ])}
         </select>
 
         <button
