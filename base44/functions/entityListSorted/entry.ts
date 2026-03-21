@@ -163,7 +163,8 @@ async function listOne(base44, user, q) {
 
   const isSimple = SIMPLE_CATALOG.has(entityName);
   const rawFilter = q?.filter || {};
-  const scopeProvided = rawFilter?.empresa_id || rawFilter?.group_id || rawFilter?.$or?.length > 0;
+  const hasOr = Array.isArray(rawFilter?.$or) && rawFilter.$or.length > 0;
+  const scopeProvided = rawFilter?.empresa_id || rawFilter?.group_id || rawFilter?.empresa_dona_id || rawFilter?.empresa_alocada_id || hasOr;
 
   // Entidades não simples precisam de escopo (exceto admin)
   if (!isSimple && !scopeProvided && user?.role !== 'admin') {
