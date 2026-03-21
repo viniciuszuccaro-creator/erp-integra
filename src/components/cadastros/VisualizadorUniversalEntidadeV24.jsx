@@ -600,10 +600,17 @@ export default function VisualizadorUniversalEntidadeV24({
   const showCrossPageBanner = !crossPageAll && selectedIds.size > 0 && allPageSelected && totalCount > items.length;
 
   // ─── Props do formulário — recalculadas quando editItem muda ──────────────────
+  // Usa JSON.stringify para detectar mudanças em campos, não só no id
+  const editItemKey = useMemo(
+    () => editItem?.id ? `${editItem.id}-${ENTITY}` : `new-${ENTITY}`,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [editItem?.id, ENTITY]
+  );
+
   const formProps = useMemo(
     () => buildFormProps(editItem, handleSave, isSelfManaged ? null : handlePersistSubmit),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [editItem?.id, handleSave, handlePersistSubmit, isSelfManaged]
+    [editItemKey, handleSave, handlePersistSubmit, isSelfManaged]
   );
 
   // ─── Render ───────────────────────────────────────────────────────────────────
