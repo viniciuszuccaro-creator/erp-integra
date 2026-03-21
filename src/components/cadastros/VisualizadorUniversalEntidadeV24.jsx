@@ -501,18 +501,25 @@ export default function VisualizadorUniversalEntidadeV24({
     try {
       let idsToDelete;
       if (crossPageAll) {
-        // Busca TODOS os IDs sem paginação (máximo 500 por chamada, loop se necessário)
-        const res = await base44.functions.invoke("entityListSorted", {
-          entityName: ENTITY,
-          filter: contextFilter,
-          sortField: "updated_date",
-          sortDirection: "desc",
-          limit: 500,
-          skip: 0,
-        });
-        const raw = res?.data;
-        const arr = Array.isArray(raw) ? raw : (Array.isArray(raw?.items) ? raw.items : []);
-        idsToDelete = arr.map((i) => i.id).filter(Boolean);
+        // Busca TODOS os IDs sem paginação — loop em páginas de 500 até esgotar
+        idsToDelete = [];
+        let skipAcc = 0;
+        while (true) {
+          const res = await base44.functions.invoke("entityListSorted", {
+            entityName: ENTITY,
+            filter: contextFilter,
+            sortField: "updated_date",
+            sortDirection: "desc",
+            limit: 500,
+            skip: skipAcc,
+          });
+          const raw = res?.data;
+          const arr = Array.isArray(raw) ? raw : (Array.isArray(raw?.items) ? raw.items : []);
+          const ids = arr.map((i) => i.id).filter(Boolean);
+          idsToDelete = idsToDelete.concat(ids);
+          if (arr.length < 500) break;
+          skipAcc += 500;
+        }
       } else {
         idsToDelete = Array.from(selectedIds);
       }
