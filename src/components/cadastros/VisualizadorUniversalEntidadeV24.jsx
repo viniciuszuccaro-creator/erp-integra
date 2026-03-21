@@ -273,6 +273,8 @@ export default function VisualizadorUniversalEntidadeV24({
   // ── Outros ───────────────────────────────────────────────────────────────
   const debounceRef = useRef(null);
   const hasContext  = isSimple || !!(empresaAtual?.id || grupoAtual?.id);
+  // Para exibir aviso "Selecione uma empresa" apenas em entidades que precisam de contexto
+  const needsContextWarning = !isSimple && !empresaAtual?.id && !grupoAtual?.id;
 
   // ── Contagem via hook centralizado ────────────────────────────────────────
   const { total: totalCount } = useEntityCounts(ENTITY ? [ENTITY] : []);
