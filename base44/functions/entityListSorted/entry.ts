@@ -180,7 +180,9 @@ async function listOne(base44, user, q) {
   // Monta filtro final
   let finalFilter = sanitizeFilter(rawFilter);
   finalFilter = normalizeSharedFilter(finalFilter);
-  if (!isSimple) {
+  // Só expande se o frontend NÃO enviou $or pré-montado
+  const hasPrebuiltOr = Array.isArray(finalFilter?.$or) && finalFilter.$or.length > 0;
+  if (!isSimple && !hasPrebuiltOr) {
     finalFilter = await expandGroupFilter(base44, entityName, finalFilter);
   }
 
