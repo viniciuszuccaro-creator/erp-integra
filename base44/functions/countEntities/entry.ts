@@ -123,7 +123,13 @@ async function countOne(base44, user, payload) {
   const hasOr = Array.isArray(filter?.$or) && filter.$or.length > 0;
   const scopeProvided = filter?.empresa_id || filter?.group_id || filter?.empresa_dona_id || filter?.empresa_alocada_id || hasOr;
 
-  if (!isSimple && !scopeProvided && user?.role !== 'admin') {
+  // Entidades simples (catálogos) não precisam de escopo — retorna contagem total
+  if (isSimple) {
+    const simpleCount = await fastCount(base44, entityName, {});
+    return { entityName, count: simpleCount };
+  }
+
+  if (!scopeProvided && user?.role !== 'admin') {
     return { entityName, count: 0, error: 'escopo_obrigatorio' };
   }
 
