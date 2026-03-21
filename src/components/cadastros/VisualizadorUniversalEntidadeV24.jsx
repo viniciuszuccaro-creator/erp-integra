@@ -307,12 +307,16 @@ export default function VisualizadorUniversalEntidadeV24({
   const { data: items = [], isLoading, isFetching } = useQuery({
     queryKey,
     queryFn: async () => {
-      if (!ENTITY || !hasContext) return [];
-      const sf  = sortFieldRef.current;
-      const sd  = sortDirRef.current;
+      if (!ENTITY) return [];
+      // Entidades simples sempre carregam; entidades com contexto precisam de empresa ou grupo
+      if (!isSimple && !empresaAtual?.id && !grupoAtual?.id) return [];
+
+      const sf    = sortFieldRef.current;
+      const sd    = sortDirRef.current;
       const order = `${sd === "desc" ? "-" : ""}${sf}`;
 
       try {
+        // Usa asServiceRole diretamente — bypassa completamente o wrapper do Layout
         const api = base44.asServiceRole?.entities?.[ENTITY];
         if (!api?.filter) return [];
 
@@ -321,9 +325,9 @@ export default function VisualizadorUniversalEntidadeV24({
         // Busca com texto
         if (debouncedSearch?.trim()) {
           const fields = SEARCH_FIELDS_MAP[ENTITY] || ['nome', 'descricao', 'codigo'];
-          const rx = { $regex: debouncedSearch.trim(), $options: 'i' };
+          const rx     = { $regex: debouncedSearch.trim(), $options: 'i' };
           const orConds = fields.map(f => ({ [f]: rx }));
-          const hasFilter = Object.keys(filter).length > 0;
+          const hasFilter = Object.keys(filter).length > 0 && Object.keys(filter).some(k => k !== '$or' || filter.$or?.length > 0);
           filter = hasFilter
             ? { $and: [filter, { $or: orConds }] }
             : { $or: orConds };
@@ -340,7 +344,7 @@ export default function VisualizadorUniversalEntidadeV24({
     gcTime: 120_000,
     refetchOnWindowFocus: false,
     placeholderData: (prev) => prev,
-    enabled: !!ENTITY && hasContext,
+    enabled: !!ENTITY && (isSimple || !!(empresaAtual?.id || grupoAtual?.id)),
   });
 
   // ── Real-time subscribe ───────────────────────────────────────────────────
