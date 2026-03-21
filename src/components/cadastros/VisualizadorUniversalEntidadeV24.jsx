@@ -670,7 +670,12 @@ export default function VisualizadorUniversalEntidadeV24({
         {FormComponent && (
           <Button
             size="sm"
-            onClick={() => { setEditItem(null); setEditError(null); setShowForm(true); }}
+            onClick={() => {
+              pendingOpenRef.current = false;
+              setEditItem(null);
+              setEditError(null);
+              setShowForm(true);
+            }}
             className="h-9 rounded-sm gap-1"
             disabled={isLoadingEdit}
           >
