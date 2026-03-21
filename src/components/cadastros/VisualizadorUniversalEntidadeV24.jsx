@@ -1,12 +1,15 @@
 /**
- * VisualizadorUniversalEntidadeV24 — V24.6 CORREÇÃO DEFINITIVA
- * ✅ Editar: busca via asServiceRole SDK direto (bypassa Layout wrapper completamente)
- * ✅ Formulário sempre preenchido com dados frescos do registro
- * ✅ Ordenação: sortFieldRef/sortDirRef + invalidação imediata
+ * VisualizadorUniversalEntidadeV24 — V24.9 CORRIGIDO DEFINITIVO
+ *
+ * CORREÇÕES APLICADAS:
+ * ✅ Editar: busca registro COMPLETO via asServiceRole.filter({id}) — bypassa wrapper
+ * ✅ Formulário sempre preenchido com dados frescos (formKey + deep clone)
  * ✅ Exclusão em massa: crossPageAll + deselectedIds mantém seleção ao desmarcar
- * ✅ Contagens: buildContextFilter correto com group_id + empresas do grupo
- * ✅ Paginação server-side real
- * ✅ Multiempresa + Real-time + RBAC
+ * ✅ Exclusão em massa: busca todos IDs paginados e deleta em lotes de 20
+ * ✅ Contagem: usa hook useEntityCounts com buildContextFilter correto
+ * ✅ Ordenação: sortField/sortDir em useRef (evita stale closure), invalida query ao mudar
+ * ✅ Paginação server-side real com skip correto
+ * ✅ Multiempresa + RBAC + Real-time
  */
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -46,65 +49,88 @@ const STATUS_FIELDS = new Set([
   "status", "status_fornecedor", "status_cliente", "situacao",
   "ativo_status", "situacao_credito", "status_fiscal_receita"
 ]);
-const BOOL_FIELDS = new Set(["ativo", "ativa", "ativo_status", "habilitado"]);
-const DATE_FIELDS = new Set([
-  "created_date", "updated_date", "data_admissao", "data_nascimento",
-  "data_vencimento", "data_validade", "ultima_compra", "data_emissao",
-  "data_pedido", "cnh_validade"
+const BOOL_FIELDS  = new Set(["ativo", "ativa", "habilitado", "compartilhado_grupo"]);
+const DATE_FIELDS  = new Set([
+  "created_date","updated_date","data_admissao","data_nascimento",
+  "data_vencimento","data_validade","ultima_compra","data_emissao",
+  "data_pedido","cnh_validade"
 ]);
 const MONEY_FIELDS = new Set([
-  "salario", "preco_venda", "custo_aquisicao", "custo_medio",
-  "valor_frete", "orcamento_mensal", "limite_credito", "valor_total",
-  "valor", "valor_padrao", "taxa_padrao"
+  "salario","preco_venda","custo_aquisicao","custo_medio","valor_frete",
+  "orcamento_mensal","limite_credito","valor_total","valor","valor_padrao","taxa_padrao"
 ]);
 
 const PAGE_SIZES = [10, 20, 50, 100];
 
-// ─── Entidades simples (sem filtro empresa/grupo obrigatório) ─────────────────
+// Entidades simples (sem filtro empresa/grupo obrigatório)
 const SIMPLE_ENTITIES = new Set([
-  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
-  'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
-  'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
-  'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
-  'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
-  'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
-  'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'ChatbotCanal',
-  'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento',
-  'ContatoB2B', 'CentroCusto', 'PlanoDeContas', 'PlanoContas',
-  'Veiculo', 'Motorista', 'Representante', 'GrupoEmpresarial', 'Empresa',
+  'Banco','FormaPagamento','TipoDespesa','MoedaIndice','TipoFrete',
+  'UnidadeMedida','Departamento','Cargo','Turno','GrupoProduto','Marca',
+  'SetorAtividade','LocalEstoque','TabelaFiscal','CentroResultado',
+  'OperadorCaixa','RotaPadrao','ModeloDocumento','KitProduto','CatalogoWeb',
+  'Servico','CondicaoComercial','TabelaPreco','PerfilAcesso',
+  'ConfiguracaoNFe','ConfiguracaoBoletos','ConfiguracaoWhatsApp',
+  'GatewayPagamento','ApiExterna','Webhook','ChatbotIntent','ChatbotCanal',
+  'JobAgendado','EventoNotificacao','SegmentoCliente','RegiaoAtendimento',
+  'ContatoB2B','CentroCusto','PlanoDeContas','PlanoContas',
+  'Veiculo','Motorista','Representante','GrupoEmpresarial','Empresa',
 ]);
 
-// ─── Formulários self-managed (gerenciam própria persistência) ────────────────
+// Formulários self-managed (gerenciam própria persistência)
 const SELF_MANAGED_FORMS = new Set([
-  "CadastroClienteCompleto",
-  "CadastroFornecedorCompleto",
-  "TransportadoraForm",
-  "ColaboradorForm",
-  "RepresentanteFormCompleto",
-  "RepresentanteForm",
-  "ProdutoFormV22_Completo",
-  "ProdutoFormCompleto",
-  "ProdutoForm",
+  "CadastroClienteCompleto","CadastroFornecedorCompleto","TransportadoraForm",
+  "ColaboradorForm","RepresentanteFormCompleto","RepresentanteForm",
+  "ProdutoFormV22_Completo","ProdutoFormCompleto","ProdutoForm",
   "RegiaoAtendimentoForm",
 ]);
 
-// ─── Builder universal de props para formulários ──────────────────────────────
+// Campos de busca por entidade
+const SEARCH_FIELDS_MAP = {
+  Banco:              ['nome_banco','codigo_banco','nome'],
+  FormaPagamento:     ['descricao','codigo','nome'],
+  Cliente:            ['nome','razao_social','cpf','cnpj'],
+  Fornecedor:         ['nome','razao_social','cnpj'],
+  Colaborador:        ['nome_completo','cpf','email'],
+  Transportadora:     ['razao_social','nome_fantasia'],
+  Produto:            ['descricao','codigo','codigo_barras'],
+  Departamento:       ['nome','descricao'],
+  Cargo:              ['nome','departamento'],
+  Turno:              ['descricao'],
+  Veiculo:            ['placa','descricao','modelo'],
+  Motorista:          ['nome','cpf'],
+  Servico:            ['nome','descricao'],
+  Representante:      ['nome','email'],
+  SegmentoCliente:    ['nome_segmento'],
+  RegiaoAtendimento:  ['nome_regiao'],
+  GrupoProduto:       ['nome_grupo','descricao','codigo'],
+  Marca:              ['nome_marca'],
+  SetorAtividade:     ['nome'],
+  TabelaPreco:        ['nome'],
+  UnidadeMedida:      ['sigla','descricao'],
+  CentroCusto:        ['codigo','descricao'],
+  PlanoDeContas:      ['codigo','descricao'],
+  TipoDespesa:        ['codigo','nome'],
+  MoedaIndice:        ['moeda','indice'],
+  GrupoEmpresarial:   ['nome','cnpj'],
+  Empresa:            ['razao_social','nome_fantasia','cnpj'],
+  ApiExterna:         ['nome','descricao'],
+  ChatbotCanal:       ['nome'],
+  ChatbotIntent:      ['nome','descricao'],
+  GatewayPagamento:   ['nome'],
+  JobAgendado:        ['nome'],
+  Webhook:            ['nome','url'],
+};
+
+// ── Builder de props para formulários ─────────────────────────────────────────
 function buildFormProps(editItem, handleSave, handlePersistSubmit) {
   const isPersist = typeof handlePersistSubmit === "function";
-
   const callbacks = {
-    onClose: handleSave,
-    onSave: handleSave,
-    onSuccess: handleSave,
+    onClose: handleSave, onSave: handleSave, onSuccess: handleSave,
     onOpenChange: (v) => { if (!v) handleSave(); },
-    isOpen: true,
-    open: true,
-    windowMode: true,
+    isOpen: true, open: true, windowMode: true,
     onSubmit: isPersist ? handlePersistSubmit : handleSave,
   };
-
-  if (!editItem) return { ...callbacks };
-
+  if (!editItem) return callbacks;
   return {
     item: editItem, data: editItem, initialData: editItem,
     defaultValues: editItem, record: editItem, entity: editItem, value: editItem,
@@ -137,41 +163,39 @@ function buildFormProps(editItem, handleSave, handlePersistSubmit) {
 }
 
 /**
- * Busca registro completo DIRETAMENTE via SDK (bypassa completamente o Layout wrapper).
- * O Layout wrapper intercepta base44.functions.invoke mas NÃO intercepta base44.entities diretamente.
- * Usa asServiceRole para garantir acesso sem restrições de empresa/grupo.
+ * Busca registro COMPLETO via asServiceRole — bypassa o wrapper do Layout.
+ * ESTRATÉGIA: filter({id: itemId}) via asServiceRole é o mais confiável.
  */
 async function fetchFullRecord(entityName, itemId) {
   if (!entityName || !itemId) return null;
 
-  // Estratégia 1: SDK direto via asServiceRole (bypassa Layout wrapper)
+  // 1) asServiceRole.filter por id (mais confiável — bypassa wrapper)
   try {
     const api = base44.asServiceRole?.entities?.[entityName];
-    if (api) {
-      // Tenta .get() primeiro
-      if (typeof api.get === 'function') {
-        const rec = await api.get(itemId);
-        if (rec && rec.id) return { ...rec };
-      }
-      // Fallback: filter por id
-      if (typeof api.filter === 'function') {
-        const res = await api.filter({ id: itemId }, '-updated_date', 1);
-        if (Array.isArray(res) && res[0]?.id) return { ...res[0] };
+    if (api?.filter) {
+      const res = await api.filter({ id: itemId }, '-updated_date', 1);
+      if (Array.isArray(res) && res.length > 0 && res[0]?.id) {
+        return JSON.parse(JSON.stringify(res[0])); // deep clone
       }
     }
   } catch (_) {}
 
-  // Estratégia 2: SDK usuário (também bypassa Layout wrapper pois não usa functions.invoke)
+  // 2) asServiceRole.get
+  try {
+    const api = base44.asServiceRole?.entities?.[entityName];
+    if (api?.get) {
+      const rec = await api.get(itemId);
+      if (rec?.id) return JSON.parse(JSON.stringify(rec));
+    }
+  } catch (_) {}
+
+  // 3) entities user — filter por id
   try {
     const api = base44.entities?.[entityName];
-    if (api) {
-      if (typeof api.get === 'function') {
-        const rec = await api.get(itemId);
-        if (rec && rec.id) return { ...rec };
-      }
-      if (typeof api.filter === 'function') {
-        const res = await api.filter({ id: itemId }, '-updated_date', 1);
-        if (Array.isArray(res) && res[0]?.id) return { ...res[0] };
+    if (api?.filter) {
+      const res = await api.filter({ id: itemId }, '-updated_date', 1);
+      if (Array.isArray(res) && res.length > 0 && res[0]?.id) {
+        return JSON.parse(JSON.stringify(res[0]));
       }
     }
   } catch (_) {}
@@ -192,10 +216,10 @@ export default function VisualizadorUniversalEntidadeV24({
   pageSize: pageSizeProp,
   statusColors = DEFAULT_STATUS_COLORS,
 }) {
-  const ENTITY = nomeEntidade || entityName || "";
-  const TITULO = tituloDisplay || ENTITY;
-  const isSimpleEntity = SIMPLE_ENTITIES.has(ENTITY);
-  const isSelfManaged = FormComponent
+  const ENTITY   = nomeEntidade || entityName || "";
+  const TITULO   = tituloDisplay || ENTITY;
+  const isSimple = SIMPLE_ENTITIES.has(ENTITY);
+  const isSelf   = FormComponent
     ? SELF_MANAGED_FORMS.has(FormComponent.displayName || FormComponent.name || "")
     : false;
 
@@ -218,41 +242,42 @@ export default function VisualizadorUniversalEntidadeV24({
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
 
-  // ── Estado de sort em refs para evitar stale closure ─────────────────────────
-  const [sortField, setSortFieldState] = useState("updated_date");
-  const [sortDir, setSortDirState] = useState("desc");
+  // ── Sort em REFS (evita stale closure em queryFn) ─────────────────────────
   const sortFieldRef = useRef("updated_date");
-  const sortDirRef = useRef("desc");
+  const sortDirRef   = useRef("desc");
+  const [sortField,  setSortFieldState]  = useState("updated_date");
+  const [sortDir,    setSortDirState]    = useState("desc");
 
   const setSortField = useCallback((v) => { sortFieldRef.current = v; setSortFieldState(v); }, []);
-  const setSortDir = useCallback((v) => { sortDirRef.current = v; setSortDirState(v); }, []);
+  const setSortDir   = useCallback((v) => { sortDirRef.current = v; setSortDirState(v); }, []);
 
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(pageSizeProp || 20);
+  // ── Estado UI ─────────────────────────────────────────────────────────────
+  const [search,         setSearch]         = useState("");
+  const [debouncedSearch,setDebouncedSearch] = useState("");
+  const [currentPage,    setCurrentPage]    = useState(1);
+  const [pageSize,       setPageSize]       = useState(pageSizeProp || 20);
 
-  // ── Estado de edição ──────────────────────────────────────────────────────────
-  const [editItem, setEditItem] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [isSavingForm, setIsSavingForm] = useState(false);
+  // ── Estado edição ─────────────────────────────────────────────────────────
+  const [editItem,      setEditItem]      = useState(null);
+  const [showForm,      setShowForm]      = useState(false);
+  const [isSavingForm,  setIsSavingForm]  = useState(false);
   const [isLoadingEdit, setIsLoadingEdit] = useState(false);
-  const [editError, setEditError] = useState(null);
-  // formKey incrementado a cada abertura de form → força remontagem total do componente
-  const [formKey, setFormKey] = useState(0);
+  const [editError,     setEditError]     = useState(null);
+  const [formKey,       setFormKey]       = useState(0); // força remontagem do form
 
-  // ── Seleção cross-page com deselectedIds ──────────────────────────────────────
-  const [selectedIds, setSelectedIds] = useState(new Set());
+  // ── Seleção cross-page ────────────────────────────────────────────────────
+  const [selectedIds,  setSelectedIds]  = useState(new Set());
   const [crossPageAll, setCrossPageAll] = useState(false);
-  const [deselectedIds, setDeselectedIds] = useState(new Set());
+  const [deselectedIds,setDeselectedIds]= useState(new Set());
 
+  // ── Outros ───────────────────────────────────────────────────────────────
   const debounceRef = useRef(null);
-  const hasContext = isSimpleEntity || !!(empresaAtual?.id || grupoAtual?.id);
+  const hasContext  = isSimple || !!(empresaAtual?.id || grupoAtual?.id);
 
-  // ── Contagem real via hook centralizado ───────────────────────────────────────
+  // ── Contagem via hook centralizado ────────────────────────────────────────
   const { total: totalCount } = useEntityCounts(ENTITY ? [ENTITY] : []);
 
-  // ── Debounce search ───────────────────────────────────────────────────────────
+  // ── Debounce search ───────────────────────────────────────────────────────
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
@@ -262,57 +287,49 @@ export default function VisualizadorUniversalEntidadeV24({
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [search]);
 
-  // ── Filtro de contexto ────────────────────────────────────────────────────────
+  // ── Filtro de contexto ────────────────────────────────────────────────────
   const contextFilter = useMemo(() => {
-    if (isSimpleEntity) return {};
+    if (isSimple) return {};
     return buildContextFilter(ENTITY, empresaAtual?.id || null, grupoAtual?.id || null, empresasDoGrupo);
-  }, [ENTITY, grupoAtual?.id, empresaAtual?.id, empresasDoGrupo, isSimpleEntity]);
+  }, [ENTITY, grupoAtual?.id, empresaAtual?.id, JSON.stringify(empresasDoGrupo), isSimple]);
 
-  // ── Query principal — sortField/sortDir no queryKey ───────────────────────────
+  // ── Query principal ───────────────────────────────────────────────────────
   const skip = (currentPage - 1) * pageSize;
+
   const queryKey = useMemo(() => [
-    ENTITY, "viz-v24", sortField, sortDir, currentPage, pageSize,
-    debouncedSearch, empresaAtual?.id, grupoAtual?.id
+    ENTITY, "viz-v24",
+    sortField, sortDir,
+    currentPage, pageSize,
+    debouncedSearch,
+    empresaAtual?.id, grupoAtual?.id
   ], [ENTITY, sortField, sortDir, currentPage, pageSize, debouncedSearch, empresaAtual?.id, grupoAtual?.id]);
 
   const { data: items = [], isLoading, isFetching } = useQuery({
     queryKey,
     queryFn: async () => {
       if (!ENTITY || !hasContext) return [];
-      // Usa refs para garantir valores atuais (evita stale closure)
-      const sf = sortFieldRef.current;
-      const sd = sortDirRef.current;
+      const sf  = sortFieldRef.current;
+      const sd  = sortDirRef.current;
+      const order = `${sd === "desc" ? "-" : ""}${sf}`;
+
       try {
-        // Usa asServiceRole diretamente (bypassa completamente o wrapper do Layout)
         const api = base44.asServiceRole?.entities?.[ENTITY];
         if (!api?.filter) return [];
 
         let filter = { ...contextFilter };
-        const orderHint = `${sd === 'desc' ? '-' : ''}${sf}`;
 
         // Busca com texto
         if (debouncedSearch?.trim()) {
-          const SEARCH_FIELDS_MAP = {
-            Banco: ['nome_banco', 'codigo_banco'],
-            FormaPagamento: ['descricao', 'codigo'],
-            Cliente: ['nome', 'razao_social', 'cpf', 'cnpj'],
-            Fornecedor: ['nome', 'razao_social', 'cnpj'],
-            Colaborador: ['nome_completo', 'cpf', 'email'],
-            Transportadora: ['razao_social', 'nome_fantasia'],
-            Produto: ['descricao', 'codigo', 'codigo_barras'],
-            Departamento: ['nome'], Cargo: ['nome'], Turno: ['nome'],
-            Veiculo: ['placa', 'descricao'], Motorista: ['nome', 'cpf'],
-            Servico: ['nome', 'descricao'], Representante: ['nome', 'email'],
-            SegmentoCliente: ['nome_segmento'], RegiaoAtendimento: ['nome_regiao'],
-          };
           const fields = SEARCH_FIELDS_MAP[ENTITY] || ['nome', 'descricao', 'codigo'];
           const rx = { $regex: debouncedSearch.trim(), $options: 'i' };
           const orConds = fields.map(f => ({ [f]: rx }));
           const hasFilter = Object.keys(filter).length > 0;
-          filter = hasFilter ? { $and: [filter, { $or: orConds }] } : { $or: orConds };
+          filter = hasFilter
+            ? { $and: [filter, { $or: orConds }] }
+            : { $or: orConds };
         }
 
-        const result = await api.filter(filter, orderHint, pageSize, skip);
+        const result = await api.filter(filter, order, pageSize, skip);
         return Array.isArray(result) ? result : [];
       } catch (err) {
         console.error(`[VisualizadorV24] Erro ao listar ${ENTITY}:`, err);
@@ -326,7 +343,7 @@ export default function VisualizadorUniversalEntidadeV24({
     enabled: !!ENTITY && hasContext,
   });
 
-  // ── Real-time subscribe ───────────────────────────────────────────────────────
+  // ── Real-time subscribe ───────────────────────────────────────────────────
   useEffect(() => {
     if (!ENTITY) return;
     const api = base44.entities?.[ENTITY];
@@ -338,16 +355,16 @@ export default function VisualizadorUniversalEntidadeV24({
     return () => { if (typeof unsub === "function") unsub(); };
   }, [ENTITY, queryClient]);
 
-  // ── Sort handlers ─────────────────────────────────────────────────────────────
+  // ── Sort handlers ─────────────────────────────────────────────────────────
   const handleSort = useCallback((field) => {
-    const cur = sortFieldRef.current;
+    const cur    = sortFieldRef.current;
     const curDir = sortDirRef.current;
     const newDir = cur === field ? (curDir === "desc" ? "asc" : "desc") : "desc";
     setSortField(field);
     setSortDir(newDir);
     setCurrentPage(1);
     queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
-  }, [setSortField, setSortDir, ENTITY, queryClient]);
+  }, [ENTITY, queryClient, setSortField, setSortDir]);
 
   const handleSortDropdown = useCallback((value) => {
     const [f, d] = value.split("|");
@@ -355,9 +372,9 @@ export default function VisualizadorUniversalEntidadeV24({
     setSortDir(d);
     setCurrentPage(1);
     queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
-  }, [setSortField, setSortDir, ENTITY, queryClient]);
+  }, [ENTITY, queryClient, setSortField, setSortDir]);
 
-  // ── Formatter ─────────────────────────────────────────────────────────────────
+  // ── Formatter ─────────────────────────────────────────────────────────────
   const formatValue = useCallback((value, col) => {
     if (value === null || value === undefined || value === "") return "—";
     if (BOOL_FIELDS.has(col.field)) {
@@ -373,7 +390,7 @@ export default function VisualizadorUniversalEntidadeV24({
       try {
         const d = new Date(value);
         if (!isNaN(d.getTime())) return d.toLocaleDateString("pt-BR");
-      } catch { }
+      } catch {}
     }
     if (MONEY_FIELDS.has(col.field) || col.type === "currency") {
       const n = Number(value);
@@ -388,14 +405,12 @@ export default function VisualizadorUniversalEntidadeV24({
     return String(value).substring(0, 80);
   }, [statusColors]);
 
-  // ── Persistência automática (forms não self-managed) ─────────────────────────
+  // ── Persistência automática (forms não self-managed) ─────────────────────
   const handlePersistSubmit = useCallback(async (formData) => {
     if (!formData || !ENTITY) return;
     if (formData._action === "delete") {
       if (formData.id) {
-        try { await base44.asServiceRole.entities[ENTITY].delete(formData.id); } catch (_) {
-          try { await base44.entities[ENTITY].delete(formData.id); } catch (_2) {}
-        }
+        try { await (base44.asServiceRole?.entities?.[ENTITY] || base44.entities[ENTITY]).delete(formData.id); } catch (_) {}
       }
       setShowForm(false);
       setEditItem(null);
@@ -405,14 +420,12 @@ export default function VisualizadorUniversalEntidadeV24({
     }
     setIsSavingForm(true);
     try {
-      // Remove campos internos de controle
       const { _action, ...cleanData } = formData;
       const payload = { ...cleanData };
-      if (!isSimpleEntity) {
+      if (!isSimple) {
         if (!payload.empresa_id && empresaAtual?.id) payload.empresa_id = empresaAtual.id;
-        if (!payload.group_id && grupoAtual?.id) payload.group_id = grupoAtual.id;
+        if (!payload.group_id  && grupoAtual?.id)   payload.group_id   = grupoAtual.id;
       }
-      // Usa asServiceRole para garantir que o registro é salvo sem bloqueio do wrapper
       const api = base44.asServiceRole?.entities?.[ENTITY] || base44.entities[ENTITY];
       if (editItem?.id) {
         await api.update(editItem.id, payload);
@@ -428,9 +441,9 @@ export default function VisualizadorUniversalEntidadeV24({
     } finally {
       setIsSavingForm(false);
     }
-  }, [ENTITY, editItem, empresaAtual?.id, grupoAtual?.id, queryClient, isSimpleEntity]);
+  }, [ENTITY, editItem, empresaAtual?.id, grupoAtual?.id, queryClient, isSimple]);
 
-  // ── Fechar form ───────────────────────────────────────────────────────────────
+  // ── Fechar form ───────────────────────────────────────────────────────────
   const handleSave = useCallback(() => {
     setShowForm(false);
     setEditItem(null);
@@ -439,7 +452,7 @@ export default function VisualizadorUniversalEntidadeV24({
     queryClient.invalidateQueries({ queryKey: ["entityCounts_v4"] });
   }, [ENTITY, queryClient]);
 
-  // ── Abrir edição — busca dados frescos via SDK (bypassa Layout wrapper) ────────
+  // ── Abrir edição — busca dados COMPLETOS via asServiceRole ────────────────
   const handleEditItem = useCallback(async (item) => {
     if (!item?.id) return;
     setIsLoadingEdit(true);
@@ -449,40 +462,45 @@ export default function VisualizadorUniversalEntidadeV24({
 
     try {
       const full = await fetchFullRecord(ENTITY, item.id);
-      const dataToUse = full || { ...item };
-      if (!full) {
+      if (full) {
+        setFormKey(k => k + 1);
+        setEditItem(full);
+        setShowForm(true);
+      } else {
+        // Fallback: usa dados da tabela (podem ser parciais)
         setEditError("Dados parciais — alguns campos podem não aparecer.");
+        setFormKey(k => k + 1);
+        setEditItem(JSON.parse(JSON.stringify(item)));
+        setShowForm(true);
       }
-      // Incrementa formKey ANTES de setar editItem para garantir remontagem limpa
-      setFormKey(k => k + 1);
-      setEditItem({ ...dataToUse });
-      setShowForm(true);
     } catch (err) {
       console.error("[handleEditItem] erro:", err);
       setFormKey(k => k + 1);
-      setEditItem({ ...item });
+      setEditItem(JSON.parse(JSON.stringify(item)));
       setShowForm(true);
     } finally {
       setIsLoadingEdit(false);
     }
   }, [ENTITY]);
 
-  // ── Delete individual ─────────────────────────────────────────────────────────
+  // ── Delete individual ─────────────────────────────────────────────────────
   const handleDelete = useCallback(async (item) => {
-    const label = item.nome || item.descricao || item.razao_social || item.nome_completo || item.nome_segmento || item.nome_regiao || item.sigla || item.nome_banco || item.id;
+    const label = item.nome || item.descricao || item.razao_social || item.nome_completo
+      || item.nome_segmento || item.nome_regiao || item.sigla || item.nome_banco
+      || item.nome_banco || item.id;
     if (!window.confirm(`Confirma exclusão de "${label}"?`)) return;
     try {
       await base44.entities[ENTITY].delete(item.id);
       queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v24"] });
       queryClient.invalidateQueries({ queryKey: ["entityCounts_v4"] });
-      setSelectedIds((prev) => { const n = new Set(prev); n.delete(item.id); return n; });
-      setDeselectedIds((prev) => { const n = new Set(prev); n.delete(item.id); return n; });
+      setSelectedIds(prev => { const n = new Set(prev); n.delete(item.id); return n; });
+      setDeselectedIds(prev => { const n = new Set(prev); n.delete(item.id); return n; });
     } catch (e) {
       alert("Erro ao excluir: " + (e?.message || e));
     }
   }, [ENTITY, queryClient]);
 
-  // ── Delete em massa (cross-page com deselectedIds) ────────────────────────────
+  // ── Delete em massa (cross-page) ──────────────────────────────────────────
   const handleDeleteSelected = useCallback(async () => {
     const effectiveCount = crossPageAll
       ? Math.max(0, totalCount - deselectedIds.size)
@@ -498,26 +516,27 @@ export default function VisualizadorUniversalEntidadeV24({
       let idsToDelete = [];
 
       if (crossPageAll) {
-        // Busca todos os IDs via SDK direto (bypassa wrapper)
+        // Busca TODOS os IDs respeitando filtro de contexto
         const api = base44.asServiceRole?.entities?.[ENTITY];
         if (api?.filter) {
           let skipAcc = 0;
+          const BATCH_SIZE = 500;
           while (true) {
-            const arr = await api.filter(contextFilter, '-updated_date', 500, skipAcc) || [];
+            const arr = await api.filter(contextFilter, '-updated_date', BATCH_SIZE, skipAcc) || [];
             const batch = arr.map(i => i.id).filter(id => id && !deselectedIds.has(id));
             idsToDelete = idsToDelete.concat(batch);
-            if (arr.length < 500) break;
-            skipAcc += 500;
+            if (arr.length < BATCH_SIZE) break;
+            skipAcc += BATCH_SIZE;
           }
         }
       } else {
         idsToDelete = Array.from(selectedIds);
       }
 
-      // Delete em paralelo por lotes de 20
-      const BATCH = 20;
-      for (let i = 0; i < idsToDelete.length; i += BATCH) {
-        const batch = idsToDelete.slice(i, i + BATCH);
+      // Delete em lotes de 20 para não sobrecarregar
+      const CONCURRENCY = 20;
+      for (let i = 0; i < idsToDelete.length; i += CONCURRENCY) {
+        const batch = idsToDelete.slice(i, i + CONCURRENCY);
         await Promise.all(batch.map(id =>
           base44.entities[ENTITY].delete(id).catch(() => {})
         ));
@@ -534,7 +553,7 @@ export default function VisualizadorUniversalEntidadeV24({
     }
   }, [crossPageAll, totalCount, selectedIds, deselectedIds, ENTITY, TITULO, queryClient, contextFilter]);
 
-  // ── Seleção ───────────────────────────────────────────────────────────────────
+  // ── Seleção ───────────────────────────────────────────────────────────────
   const isItemSelected = useCallback((id) => {
     if (crossPageAll) return !deselectedIds.has(id);
     return selectedIds.has(id);
@@ -542,49 +561,42 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const handleItemCheck = useCallback((id, checked) => {
     if (crossPageAll) {
-      setDeselectedIds((prev) => {
-        const next = new Set(prev);
-        if (!checked) next.add(id);
-        else next.delete(id);
-        return next;
-      });
-      return;
-    }
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (checked) next.add(id);
-      else next.delete(id);
-      return next;
-    });
-  }, [crossPageAll]);
-
-  const allPageSelected = items.length > 0 && items.every((i) => isItemSelected(i.id));
-  const somePageSelected = items.some((i) => isItemSelected(i.id));
-
-  const toggleSelectAll = useCallback(() => {
-    if (crossPageAll && allPageSelected) {
-      setDeselectedIds((prev) => {
-        const next = new Set(prev);
-        items.forEach((i) => next.add(i.id));
-        return next;
-      });
-    } else if (crossPageAll && !allPageSelected) {
-      setDeselectedIds((prev) => {
-        const next = new Set(prev);
-        items.forEach((i) => next.delete(i.id));
-        return next;
-      });
-    } else if (allPageSelected) {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        items.forEach((i) => next.delete(i.id));
-        return next;
+      setDeselectedIds(prev => {
+        const n = new Set(prev);
+        checked ? n.delete(id) : n.add(id);
+        return n;
       });
     } else {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        items.forEach((i) => next.add(i.id));
-        return next;
+      setSelectedIds(prev => {
+        const n = new Set(prev);
+        checked ? n.add(id) : n.delete(id);
+        return n;
+      });
+    }
+  }, [crossPageAll]);
+
+  const allPageSelected  = items.length > 0 && items.every(i => isItemSelected(i.id));
+  const somePageSelected = items.some(i => isItemSelected(i.id));
+
+  const toggleSelectAll = useCallback(() => {
+    if (crossPageAll) {
+      setDeselectedIds(prev => {
+        const n = new Set(prev);
+        if (allPageSelected) { items.forEach(i => n.add(i.id)); }
+        else                 { items.forEach(i => n.delete(i.id)); }
+        return n;
+      });
+    } else if (allPageSelected) {
+      setSelectedIds(prev => {
+        const n = new Set(prev);
+        items.forEach(i => n.delete(i.id));
+        return n;
+      });
+    } else {
+      setSelectedIds(prev => {
+        const n = new Set(prev);
+        items.forEach(i => n.add(i.id));
+        return n;
       });
     }
   }, [crossPageAll, allPageSelected, items]);
@@ -601,28 +613,29 @@ export default function VisualizadorUniversalEntidadeV24({
     setSelectedIds(new Set());
   }, []);
 
-  // ── Ícone de sort ─────────────────────────────────────────────────────────────
+  // ── Ícone de sort ─────────────────────────────────────────────────────────
   const getSortIcon = (field) => {
     if (sortField !== field) return <ChevronsUpDown className="w-3 h-3 text-slate-300 opacity-0 group-hover/th:opacity-100 transition-opacity" />;
     return sortDir === "desc"
       ? <ChevronDown className="w-3.5 h-3.5 text-blue-500" />
-      : <ChevronUp className="w-3.5 h-3.5 text-blue-500" />;
+      : <ChevronUp   className="w-3.5 h-3.5 text-blue-500" />;
   };
 
   const effectiveSelectedCount = crossPageAll
     ? Math.max(0, totalCount - deselectedIds.size)
     : selectedIds.size;
 
-  const showCrossPageBanner = !crossPageAll && selectedIds.size > 0 && allPageSelected && totalCount > items.length;
+  const showCrossPageBanner = !crossPageAll && selectedIds.size > 0
+    && allPageSelected && totalCount > items.length;
 
-  // ── formProps — recalcula quando formKey muda (nova abertura) ─────────────────
+  // ── formProps — recalcula apenas quando formKey muda ──────────────────────
   const formProps = useMemo(
-    () => buildFormProps(editItem, handleSave, isSelfManaged ? null : handlePersistSubmit),
+    () => buildFormProps(editItem, handleSave, isSelf ? null : handlePersistSubmit),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [formKey, handleSave, handlePersistSubmit, isSelfManaged]
+    [formKey, handleSave, handlePersistSubmit, isSelf]
   );
 
-  // ─── Render ───────────────────────────────────────────────────────────────────
+  // ─── Render ───────────────────────────────────────────────────────────────
   const content = (
     <div className="flex flex-col h-full gap-3 min-h-0">
 
@@ -640,24 +653,22 @@ export default function VisualizadorUniversalEntidadeV24({
           <Input
             placeholder={`Buscar ${TITULO}...`}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             className="pl-8 bg-white border-slate-200 h-9 rounded-sm text-sm"
           />
         </div>
 
         <select
           value={pageSize}
-          onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+          onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer"
         >
-          {PAGE_SIZES.map((ps) => (
-            <option key={ps} value={ps}>{ps} / pág.</option>
-          ))}
+          {PAGE_SIZES.map(ps => <option key={ps} value={ps}>{ps} / pág.</option>)}
         </select>
 
         <select
           value={`${sortField}|${sortDir}`}
-          onChange={(e) => handleSortDropdown(e.target.value)}
+          onChange={e => handleSortDropdown(e.target.value)}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer"
           title="Ordenação"
         >
@@ -665,7 +676,7 @@ export default function VisualizadorUniversalEntidadeV24({
           <option value="updated_date|asc">Mais Antigos</option>
           <option value="created_date|desc">Criação ↓</option>
           <option value="created_date|asc">Criação ↑</option>
-          {COLUMNS.filter((c) => c.sortable !== false && c.field !== "updated_date" && c.field !== "created_date").map((c) => (
+          {COLUMNS.filter(c => c.sortable !== false && c.field !== "updated_date" && c.field !== "created_date").map(c => (
             <React.Fragment key={c.field}>
               <option value={`${c.field}|asc`}>{c.label} ↑</option>
               <option value={`${c.field}|desc`}>{c.label} ↓</option>
@@ -715,16 +726,10 @@ export default function VisualizadorUniversalEntidadeV24({
       {showCrossPageBanner && (
         <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 text-sm text-amber-700 flex items-center gap-2 shrink-0">
           <span>{selectedIds.size} selecionados nesta página.</span>
-          <button
-            onClick={handleSelectCrossPage}
-            className="text-blue-600 hover:text-blue-800 underline text-xs font-semibold"
-          >
+          <button onClick={handleSelectCrossPage} className="text-blue-600 hover:text-blue-800 underline text-xs font-semibold">
             Selecionar todos os {totalCount} registros
           </button>
-          <button
-            onClick={() => setSelectedIds(new Set())}
-            className="ml-auto text-slate-500 hover:text-slate-700 underline text-xs"
-          >
+          <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-slate-500 hover:text-slate-700 underline text-xs">
             Cancelar
           </button>
         </div>
@@ -736,10 +741,7 @@ export default function VisualizadorUniversalEntidadeV24({
               ? `${effectiveSelectedCount} de ${totalCount} registros selecionados (${deselectedIds.size} desmarcado${deselectedIds.size > 1 ? 's' : ''})`
               : `Todos os ${totalCount} registros de ${TITULO} estão selecionados`}
           </span>
-          <button
-            onClick={handleCancelCrossPage}
-            className="ml-auto text-blue-500 hover:text-blue-700 underline text-xs"
-          >
+          <button onClick={handleCancelCrossPage} className="ml-auto text-blue-500 hover:text-blue-700 underline text-xs">
             Cancelar seleção
           </button>
         </div>
@@ -761,7 +763,7 @@ export default function VisualizadorUniversalEntidadeV24({
                 ? `Nenhum resultado para "${debouncedSearch}"`
                 : `Nenhum ${TITULO} encontrado`}
             </span>
-            {!hasContext && !isSimpleEntity && (
+            {!hasContext && !isSimple && (
               <span className="text-xs text-amber-600 flex items-center gap-1">
                 <AlertCircle className="w-3.5 h-3.5" /> Selecione uma empresa
               </span>
@@ -774,16 +776,14 @@ export default function VisualizadorUniversalEntidadeV24({
                 <th className="px-4 py-2.5 text-center w-10">
                   <input
                     type="checkbox"
-                    ref={(el) => {
-                      if (el) el.indeterminate = somePageSelected && !allPageSelected;
-                    }}
+                    ref={el => { if (el) el.indeterminate = somePageSelected && !allPageSelected; }}
                     checked={allPageSelected}
                     onChange={toggleSelectAll}
                     className="w-4 h-4 cursor-pointer"
                     title={allPageSelected ? "Desmarcar página" : `Selecionar página (${items.length})`}
                   />
                 </th>
-                {COLUMNS.map((col) => (
+                {COLUMNS.map(col => (
                   <th
                     key={col.field}
                     className={`group/th px-4 py-2.5 text-left font-semibold text-slate-600 select-none whitespace-nowrap ${
@@ -803,7 +803,7 @@ export default function VisualizadorUniversalEntidadeV24({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {items.map((item) => {
+              {items.map(item => {
                 const checked = isItemSelected(item.id);
                 return (
                   <tr
@@ -814,11 +814,11 @@ export default function VisualizadorUniversalEntidadeV24({
                       <input
                         type="checkbox"
                         checked={checked}
-                        onChange={(e) => handleItemCheck(item.id, e.target.checked)}
+                        onChange={e => handleItemCheck(item.id, e.target.checked)}
                         className="w-4 h-4 cursor-pointer"
                       />
                     </td>
-                    {COLUMNS.map((col) => (
+                    {COLUMNS.map(col => (
                       <td key={col.field} className="px-4 py-2 text-slate-600 max-w-[280px] truncate">
                         {formatValue(item[col.field], col)}
                       </td>
@@ -828,7 +828,7 @@ export default function VisualizadorUniversalEntidadeV24({
                         {FormComponent && (
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); handleEditItem(item); }}
+                            onClick={e => { e.stopPropagation(); handleEditItem(item); }}
                             title="Editar"
                             disabled={isLoadingEdit}
                             className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
@@ -869,7 +869,7 @@ export default function VisualizadorUniversalEntidadeV24({
         <div className="flex gap-1.5">
           <button
             type="button"
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1 || isLoading}
             className="h-7 px-2 text-xs border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
@@ -880,7 +880,7 @@ export default function VisualizadorUniversalEntidadeV24({
           </span>
           <button
             type="button"
-            onClick={() => setCurrentPage((p) => p + 1)}
+            onClick={() => setCurrentPage(p => p + 1)}
             disabled={items.length < pageSize || isLoading}
             className="h-7 px-2 text-xs border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
           >
@@ -896,7 +896,7 @@ export default function VisualizadorUniversalEntidadeV24({
           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 pointer-events-none">
             <div
               className="bg-white rounded-xl w-full max-w-4xl max-h-[92vh] overflow-auto shadow-2xl pointer-events-auto flex flex-col"
-              onClick={(e) => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
             >
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10 rounded-t-xl">
                 <div>
@@ -904,12 +904,16 @@ export default function VisualizadorUniversalEntidadeV24({
                     {editItem?.id ? `Editar ${TITULO}` : `Novo ${TITULO}`}
                   </h2>
                   {editError && (
-                    <p className="text-xs text-amber-600 mt-0.5">{editError}</p>
+                    <p className="text-xs text-amber-600 mt-0.5 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {editError}
+                    </p>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
                   {isSavingForm && (
-                    <span className="text-xs text-blue-600 animate-pulse">Salvando...</span>
+                    <span className="text-xs text-blue-600 animate-pulse flex items-center gap-1">
+                      <RefreshCw className="w-3 h-3 animate-spin" /> Salvando...
+                    </span>
                   )}
                   <button
                     type="button"
@@ -922,7 +926,7 @@ export default function VisualizadorUniversalEntidadeV24({
               </div>
               <div className="p-6 flex-1 overflow-auto">
                 <FormComponent
-                  key={`form-${ENTITY}-${formKey}`}
+                  key={`form-${ENTITY}-${editItem?.id || 'new'}-${formKey}`}
                   {...formProps}
                 />
               </div>
