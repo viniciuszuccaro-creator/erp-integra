@@ -188,21 +188,50 @@ export function useEntityCounts(entities = []) {
 
       const fetchPromise = (async () => {
         for (let i = 0; i < chunks.length; i++) {
-          try {
-            const res = await base44.functions.invoke('countEntities', { entities: chunks[i] });
-            const result = res?.data?.counts || {};
-            Object.assign(allCounts, result);
-            // Cachear resultados
-            for (const { entityName } of chunks[i]) {
-              const ck = `${entityName}|${groupId}|${empresaId}`;
-              COUNT_CACHE.set(ck, { count: allCounts[entityName] ?? 0, ts: Date.now() });
-            }
-          } catch (_) {
-            for (const { entityName } of chunks[i]) {
+          // Tenta via asServiceRole direto (bypassa wrapper) para entidades simples
+          // Para entidades com contexto, usa countEntities backend
+          const simpleChunk  = chunks[i].filter(x => SIMPLE_CATALOG.has(x.entityName));
+          const contextChunk = chunks[i].filter(x => !SIMPLE_CATALOG.has(x.entityName));
+
+          // Busca simples via asServiceRole (mais rápido, sem créditos de integração)
+          await Promise.all(simpleChunk.map(async ({ entityName }) => {
+            try {
+              const api = base44.asServiceRole?.entities?.[entityName];
+              if (api?.filter) {
+                const res = await api.filter({}, '-id', 500, 0);
+                // Se retornou 500, pode ter mais — faz outra página
+                let count = Array.isArray(res) ? res.length : 0;
+                if (count === 500) {
+                  const res2 = await api.filter({}, '-id', 500, 500);
+                  count += Array.isArray(res2) ? res2.length : 0;
+                }
+                allCounts[entityName] = count;
+                const ck = `${entityName}|${groupId}|${empresaId}`;
+                COUNT_CACHE.set(ck, { count, ts: Date.now() });
+              }
+            } catch {
               allCounts[entityName] = 0;
             }
+          }));
+
+          // Busca entidades com contexto via backend
+          if (contextChunk.length > 0 && (groupId || empresaId)) {
+            try {
+              const res = await base44.functions.invoke('countEntities', { entities: contextChunk });
+              const result = res?.data?.counts || {};
+              Object.assign(allCounts, result);
+              for (const { entityName } of contextChunk) {
+                const ck = `${entityName}|${groupId}|${empresaId}`;
+                COUNT_CACHE.set(ck, { count: allCounts[entityName] ?? 0, ts: Date.now() });
+              }
+            } catch (_) {
+              for (const { entityName } of contextChunk) {
+                allCounts[entityName] = 0;
+              }
+            }
           }
-          if (i < chunks.length - 1) await new Promise(r => setTimeout(r, 150));
+
+          if (i < chunks.length - 1) await new Promise(r => setTimeout(r, 100));
         }
         return allCounts;
       })();
