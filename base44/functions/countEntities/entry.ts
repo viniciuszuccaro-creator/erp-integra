@@ -151,7 +151,6 @@ Deno.serve(async (req) => {
 
     // MODO LOTE: { entities: [{ entityName, filter }, ...] }
     if (entitiesBatch && entitiesBatch.length > 0) {
-      console.log(`[countEntities] Recebido batch de ${entitiesBatch.length} entidades:`, JSON.stringify(entitiesBatch, null, 2));
       const counts = {};
 
       for (let i = 0; i < entitiesBatch.length; i++) {
