@@ -264,7 +264,7 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [columns, camposPrincipais]);
 
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
 
   // ── Estado ────────────────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
