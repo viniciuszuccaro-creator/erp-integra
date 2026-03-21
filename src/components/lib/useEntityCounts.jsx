@@ -90,6 +90,8 @@ function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
   return { $or: orConds };
 }
 
+export { buildFilter as buildContextFilter };
+
 function chunk(arr, n) {
   const result = [];
   for (let i = 0; i < arr.length; i += n) result.push(arr.slice(i, i + n));
