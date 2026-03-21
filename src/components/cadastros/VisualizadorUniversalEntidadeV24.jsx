@@ -445,6 +445,17 @@ export default function VisualizadorUniversalEntidadeV24({
     queryClient.invalidateQueries({ queryKey: ["entityCounts_v4"] });
   }, [ENTITY, queryClient]);
 
+  // pendingOpenRef: controla abertura do form após fetch do editItem
+  const pendingOpenRef = useRef(false);
+
+  // Efeito reativo: quando editItem muda E há pending open, abre o form
+  useEffect(() => {
+    if (pendingOpenRef.current && editItem !== null) {
+      pendingOpenRef.current = false;
+      setShowForm(true);
+    }
+  }, [editItem]);
+
   // ─── Abrir edição ─────────────────────────────────────────────────────────────
   const handleEditItem = useCallback(async (item) => {
     if (!item?.id) return;
@@ -452,23 +463,23 @@ export default function VisualizadorUniversalEntidadeV24({
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
+    pendingOpenRef.current = false;
 
     try {
       const full = await fetchFullRecord(ENTITY, item.id);
+      pendingOpenRef.current = true;
       if (full) {
         setEditItem(full);
       } else {
-        // Fallback para o item da listagem
         setEditItem({ ...item });
         setEditError("Dados parciais — alguns campos podem não aparecer.");
       }
     } catch (err) {
       console.error("[handleEditItem] erro:", err);
+      pendingOpenRef.current = true;
       setEditItem({ ...item });
     } finally {
       setIsLoadingEdit(false);
-      // Pequeno delay para garantir que o React processou o state antes de abrir o form
-      requestAnimationFrame(() => setShowForm(true));
     }
   }, [ENTITY]);
 
