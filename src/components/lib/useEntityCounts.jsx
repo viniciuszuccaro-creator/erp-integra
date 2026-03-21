@@ -163,29 +163,44 @@ export function useEntityCounts(entities = []) {
         return { entityName, filter };
       });
 
-      // Divide em chunks de 5 para evitar timeout
-      const chunks = chunk(batchItems, 5);
-      const allCounts = {};
-
-      for (let i = 0; i < chunks.length; i++) {
+      // Deduplicação global: se já há uma chamada em voo para este conjunto+contexto, aguarda
+      const inflightKey = `${entitiesKey}|${groupId}|${empresaId}`;
+      if (INFLIGHT_MAP.has(inflightKey)) {
         try {
-          const res = await base44.functions.invoke('countEntities', { entities: chunks[i] });
-          const result = res?.data?.counts || {};
-          Object.assign(allCounts, result);
-          // Cachear resultados
-          for (const { entityName } of chunks[i]) {
-            const ck = `${entityName}|${groupId}|${empresaId}`;
-            COUNT_CACHE.set(ck, { count: allCounts[entityName] ?? 0, ts: Date.now() });
-          }
-        } catch (_) {
-          // Em erro, registra 0 para não bloquear
-          for (const { entityName } of chunks[i]) {
-            allCounts[entityName] = 0;
-          }
-        }
-        if (i < chunks.length - 1) await new Promise(r => setTimeout(r, 100));
+          const inflightCounts = await INFLIGHT_MAP.get(inflightKey);
+          return { ...merged, ...inflightCounts };
+        } catch (_) {}
       }
 
+      // Divide em chunks de 3 para evitar timeout/CPU limit
+      const chunks = chunk(batchItems, 3);
+      const allCounts = {};
+
+      const fetchPromise = (async () => {
+        for (let i = 0; i < chunks.length; i++) {
+          try {
+            const res = await base44.functions.invoke('countEntities', { entities: chunks[i] });
+            const result = res?.data?.counts || {};
+            Object.assign(allCounts, result);
+            // Cachear resultados
+            for (const { entityName } of chunks[i]) {
+              const ck = `${entityName}|${groupId}|${empresaId}`;
+              COUNT_CACHE.set(ck, { count: allCounts[entityName] ?? 0, ts: Date.now() });
+            }
+          } catch (_) {
+            for (const { entityName } of chunks[i]) {
+              allCounts[entityName] = 0;
+            }
+          }
+          if (i < chunks.length - 1) await new Promise(r => setTimeout(r, 150));
+        }
+        return allCounts;
+      })();
+
+      INFLIGHT_MAP.set(inflightKey, fetchPromise);
+      fetchPromise.finally(() => INFLIGHT_MAP.delete(inflightKey));
+
+      await fetchPromise;
       return { ...merged, ...allCounts };
     },
     staleTime: CACHE_TTL,
