@@ -164,6 +164,23 @@ export function useEntityCounts(entities = []) {
 
       if (toFetch.length === 0) return merged;
 
+      // Entidades de contexto sem empresa/grupo → retorna 0 direto (não chama backend)
+      if (!hasAnyContext) {
+        const result = {};
+        for (const entityName of toFetch) {
+          if (SIMPLE_CATALOG.has(entityName)) continue; // simples: deixa passar
+          result[entityName] = 0;
+          const ck = `${entityName}|${groupId}|${empresaId}`;
+          COUNT_CACHE.set(ck, { count: 0, ts: Date.now() });
+        }
+        // Se todas são de contexto, retorna imediatamente
+        const remaining = toFetch.filter(e => SIMPLE_CATALOG.has(e));
+        if (remaining.length === 0) return { ...merged, ...result };
+        // Caso contrário, continua para buscar as simples
+        toFetch.splice(0, toFetch.length, ...remaining);
+        Object.assign(merged, result);
+      }
+
       // Monta batch com filtros corretos por entidade
       // Entidades simples: filtro vazio {}
       // Entidades com contexto: filtro $or completo
