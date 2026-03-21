@@ -140,7 +140,11 @@ export function useEntityCounts(entities = []) {
     queryKey,
     queryFn: async () => {
       if (!normalized.length) return {};
-      if (!hasAnyContext && !allSimple) return {};
+      // Separa entidades simples das que precisam de contexto
+      const simpleOnes  = normalized.filter(e => SIMPLE_CATALOG.has(e));
+      const contextOnes = normalized.filter(e => !SIMPLE_CATALOG.has(e));
+      // Se nenhuma entidade de contexto e sem contexto, retorna apenas simples
+      if (!hasAnyContext && contextOnes.length > 0 && simpleOnes.length === 0) return {};
 
       // Verifica cache
       const now = Date.now();
