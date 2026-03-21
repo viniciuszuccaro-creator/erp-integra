@@ -767,9 +767,9 @@ export default function VisualizadorUniversalEntidadeV24({
                 ? `Nenhum resultado para "${debouncedSearch}"`
                 : `Nenhum ${TITULO} encontrado`}
             </span>
-            {!hasContext && !isSimple && (
+            {needsContextWarning && (
               <span className="text-xs text-amber-600 flex items-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5" /> Selecione uma empresa
+                <AlertCircle className="w-3.5 h-3.5" /> Selecione uma empresa ou grupo
               </span>
             )}
           </div>
