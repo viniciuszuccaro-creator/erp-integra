@@ -188,39 +188,39 @@ function buildFormProps(editItem, handleSave, handlePersistSubmit) {
   };
 }
 
-// ─── Busca registro completo via backend (sem filtros de contexto) ────────────
+// ─── Busca registro completo via service role (sem filtros de contexto) ──────
 async function fetchFullRecord(entityName, item) {
   if (!item?.id || !entityName) return { ...(item || {}) };
 
-  // Tenta via SDK direto primeiro (mais rápido e sem overhead de função)
-  try {
-    const api = base44.entities?.[entityName];
-    if (api?.get) {
-      const record = await api.get(item.id);
-      if (record && record.id) return { ...record };
-    }
-  } catch (_) { /* silencioso - tenta via backend */ }
-
-  // Fallback: função backend dedicada que usa service role (sem filtros de contexto)
+  // 1) Função backend com service role — bypass total de contexto/permissão
   try {
     const res = await base44.functions.invoke("getEntityRecord", {
       entityName,
       id: item.id,
     });
     const record = res?.data?.record;
-    if (record && record.id) return { ...record };
-  } catch (_) { /* silencioso */ }
+    if (record && record.id) {
+      console.log(`[fetchFullRecord] ${entityName}/${item.id} OK via getEntityRecord`);
+      return { ...record };
+    }
+  } catch (e) {
+    console.warn(`[fetchFullRecord] getEntityRecord falhou:`, e?.message);
+  }
 
-  // Último fallback: filter direto sem contexto
+  // 2) SDK direto (pode estar filtrado pelo contexto — menos confiável para edição)
   try {
     const api = base44.entities?.[entityName];
-    if (api?.filter) {
-      const rows = await api.filter({ id: item.id }, undefined, 1);
-      if (Array.isArray(rows) && rows.length > 0 && rows[0]?.id) return { ...rows[0] };
+    if (typeof api?.get === 'function') {
+      const record = await api.get(item.id);
+      if (record && record.id) {
+        console.log(`[fetchFullRecord] ${entityName}/${item.id} OK via api.get`);
+        return { ...record };
+      }
     }
   } catch (_) { /* silencioso */ }
 
-  // Retorna o item da listagem como último recurso
+  // 3) Retorna o item da listagem (ao menos os campos visíveis)
+  console.warn(`[fetchFullRecord] ${entityName}/${item.id} — usando item da listagem`);
   return { ...(item || {}) };
 }
 
