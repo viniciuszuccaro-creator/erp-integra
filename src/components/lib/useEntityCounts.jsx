@@ -159,9 +159,13 @@ export function useEntityCounts(entities = []) {
 
       if (toFetch.length === 0) return merged;
 
-      // Monta batch com filtros corretos (filtro $or completo por entidade)
+      // Monta batch com filtros corretos por entidade
+      // Entidades simples: filtro vazio {}
+      // Entidades com contexto: filtro $or completo
       const batchItems = toFetch.map(entityName => {
-        const filter = buildFilter(entityName, empresaId, groupId, empresasDoGrupo);
+        const filter = SIMPLE_CATALOG.has(entityName)
+          ? {}
+          : buildFilter(entityName, empresaId, groupId, empresasDoGrupo);
         return { entityName, filter };
       });
 
