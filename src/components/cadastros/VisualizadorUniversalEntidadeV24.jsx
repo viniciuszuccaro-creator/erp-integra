@@ -676,6 +676,7 @@ export default function VisualizadorUniversalEntidadeV24({
             size="sm"
             onClick={() => {
               pendingOpenRef.current = false;
+              formVersionRef.current += 1;
               setEditItem(null);
               setEditError(null);
               setShowForm(true);
