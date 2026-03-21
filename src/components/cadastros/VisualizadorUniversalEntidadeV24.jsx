@@ -360,12 +360,16 @@ export default function VisualizadorUniversalEntidadeV24({
     return () => { if (typeof unsub === "function") unsub(); };
   }, [ENTITY, queryClient]);
 
-  // ─── Sort handler — sem stale closure via ref ────────────────────────────────
+  // ─── Sort handler — sem stale closure via refs ───────────────────────────────
   const sortFieldRef = useRef(sortField);
+  const sortDirRef = useRef(sortDir);
   useEffect(() => { sortFieldRef.current = sortField; }, [sortField]);
+  useEffect(() => { sortDirRef.current = sortDir; }, [sortDir]);
 
   const handleSort = useCallback((field) => {
-    setSortDir((prev) => (sortFieldRef.current === field ? (prev === "desc" ? "asc" : "desc") : "desc"));
+    const isSameField = sortFieldRef.current === field;
+    const newDir = isSameField ? (sortDirRef.current === "desc" ? "asc" : "desc") : "desc";
+    setSortDir(newDir);
     setSortField(field);
     setCurrentPage(1);
   }, []);
