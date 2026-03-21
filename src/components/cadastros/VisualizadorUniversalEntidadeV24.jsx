@@ -300,14 +300,12 @@ export default function VisualizadorUniversalEntidadeV24({
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [search]);
 
-  // ─── Filtro de contexto ───────────────────────────────────────────────────────
+  // ─── Filtro de contexto — $or completo igual ao hook de contagem ─────────────
   const contextFilter = useMemo(() => {
     if (isSimpleEntity) return {};
-    const f = {};
-    if (grupoAtual?.id) f.group_id = grupoAtual.id;
-    else if (empresaAtual?.id) f.empresa_id = empresaAtual.id;
-    return f;
-  }, [grupoAtual?.id, empresaAtual?.id, isSimpleEntity]);
+    // Usa o mesmo buildContextFilter do hook para garantir consistência total
+    return buildContextFilter(ENTITY, empresaAtual?.id || null, grupoAtual?.id || null, empresasDoGrupo);
+  }, [ENTITY, grupoAtual?.id, empresaAtual?.id, empresasDoGrupo, isSimpleEntity]);
 
   // ─── Query principal ──────────────────────────────────────────────────────────
   const skip = (currentPage - 1) * pageSize;
