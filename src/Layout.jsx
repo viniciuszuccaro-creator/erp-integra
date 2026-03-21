@@ -769,9 +769,19 @@ function LayoutContent({ children, currentPageName }) {
       return scope;
     };
 
+    // Cache local de permissões RBAC (evita chamadas repetidas ao backend)
+    const __rbacCache = window.__layoutRbacCache || (window.__layoutRbacCache = new Map());
+    const __RBAC_TTL = 5 * 60 * 1000; // 5 minutos
+
     const checkRBAC = async (entityName, action, sectionHint = null, op = null) => {
       try {
-        // Map entity → module (granular)
+        // Proteção imediata de entidades críticas (sem chamada backend)
+        if (entityName === 'AuditLog' || entityName === 'PerfilAcesso') {
+          if (['criar','editar','excluir'].includes(action)) throw new Error('RBAC: entidade protegida');
+        }
+        // Admin sempre permitido (sem chamada backend)
+        if (user?.role === 'admin') return;
+
         const map = {
           Cliente: 'CRM', Oportunidade: 'CRM', Interacao: 'CRM',
           Pedido: 'Comercial', Comissao: 'Comercial',
@@ -782,10 +792,18 @@ function LayoutContent({ children, currentPageName }) {
           ContaPagar: 'Financeiro', ContaReceber: 'Financeiro', CentroCusto: 'Financeiro',
           PerfilAcesso: 'Administração', User: 'Administração', Evento: 'Agenda'
         };
-        const moduleName = map[entityName] || 'Sistema';
+        const modName = map[entityName] || 'Sistema';
         const scope = getScope();
+        const cacheKey = `${modName}|${sectionHint || entityName}|${action}|${scope.empresa_id || ''}|${scope.group_id || ''}`;
+        const now = Date.now();
+        const cached = __rbacCache.get(cacheKey);
+        if (cached && now - cached.ts < __RBAC_TTL) {
+          if (!cached.allowed) throw new Error('RBAC backend: ação negada');
+          return;
+        }
+
         const payload = {
-          module: moduleName,
+          module: modName,
           section: sectionHint || entityName,
           action,
           entity_name: entityName,
@@ -794,12 +812,15 @@ function LayoutContent({ children, currentPageName }) {
           group_id: scope.group_id || null,
         };
         const res = await base44.functions.invoke('entityGuard', payload);
-        if (res?.data && res.data.allowed === false) {
+        const allowed = !(res?.data?.allowed === false);
+        __rbacCache.set(cacheKey, { allowed, ts: now });
+        if (!allowed) throw new Error('RBAC backend: ação negada');
+      } catch (err) {
+        // Só bloqueia em 403 explícito — erros de rede/créditos não bloqueiam
+        if (err?.message === 'RBAC backend: ação negada' || err?.response?.status === 403) {
           throw new Error('RBAC backend: ação negada');
         }
-      } catch (err) {
-        // Se o endpoint não existir/erro rede, não bloquear UI; somente bloquear quando 403/allowed false
-        if (err?.response?.status === 403) throw new Error('RBAC backend: ação negada');
+        // Qualquer outro erro (402, 500, rede) → fail-open (não bloqueia operação)
       }
     };
 
