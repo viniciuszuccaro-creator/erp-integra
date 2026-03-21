@@ -132,7 +132,9 @@ export function useEntityCounts(entities = []) {
 
   const hasAnyContext = !!(groupId || empresaId);
   const allSimple = normalized.length > 0 && normalized.every(e => SIMPLE_CATALOG.has(e));
-  const canFetch = normalized.length > 0 && (hasAnyContext || allSimple);
+  // Se tem pelo menos uma entidade simples no lote, pode buscar mesmo sem contexto
+  const hasSomeSimple = normalized.some(e => SIMPLE_CATALOG.has(e));
+  const canFetch = normalized.length > 0 && (hasAnyContext || allSimple || hasSomeSimple);
 
   const { data: counts = {}, isLoading } = useQuery({
     queryKey,
