@@ -459,20 +459,22 @@ export default function VisualizadorUniversalEntidadeV24({
     queryClient.invalidateQueries({ queryKey: ["GroupCountBadge3"] });
   }, [ENTITY, queryClient]);
 
-  // ─── Abrir edição — busca registro completo ───────────────────────────────────
+  // ─── Abrir edição — busca registro completo via service role ─────────────────
   const handleEditItem = useCallback(async (item) => {
+    if (!item?.id) return;
     setIsLoadingEdit(true);
-    // Fecha form anterior e limpa editItem ANTES de buscar o novo
-    setShowForm(false);
-    setEditItem(null);
+    setShowForm(false);  // fecha form anterior
+    setEditItem(null);   // limpa dados anteriores
     try {
       const full = await fetchFullRecord(ENTITY, item);
-      // Só abre o form após ter os dados completos
-      setEditItem(full);
-      setShowForm(true);
-    } catch (_) {
+      // Garante que o state foi limpo antes de definir o novo (evita formulário com dados stale)
+      setEditItem({ ...full });
+      // Abre form com pequeno delay para garantir que o React remontou o componente
+      setTimeout(() => setShowForm(true), 0);
+    } catch (err) {
+      console.error("[handleEditItem] erro:", err);
       setEditItem({ ...item });
-      setShowForm(true);
+      setTimeout(() => setShowForm(true), 0);
     } finally {
       setIsLoadingEdit(false);
     }
