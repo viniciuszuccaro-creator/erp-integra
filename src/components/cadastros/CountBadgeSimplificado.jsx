@@ -1,6 +1,6 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import useEntityCounts from "@/components/lib/useEntityCounts";
+import useEntityCounts from "@/components/lib/useEntityCounts.js";
 
 /**
  * CountBadgeSimplificado — Badge de contagem com hook centralizado
