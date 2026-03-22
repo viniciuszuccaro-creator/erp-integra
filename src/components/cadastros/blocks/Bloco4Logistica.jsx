@@ -3,10 +3,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
-import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
+import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24.jsx";
 import { Truck, MapPin, Package, FileText, User, Settings } from "lucide-react";
 import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
-import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
+import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado.jsx";
 
 import VeiculoForm from "@/components/cadastros/VeiculoForm";
 import MotoristaForm from "@/components/cadastros/MotoristaForm";
