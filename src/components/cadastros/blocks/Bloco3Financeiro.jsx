@@ -3,9 +3,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
-import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
+import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24.jsx";
 import { Landmark, CreditCard, Wallet, Calculator, FolderKanban, Banknote, LineChart, Layers, BookText, DollarSign, Settings, Blocks } from "lucide-react";
-import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
+import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado.jsx";
 
 import BancoForm from "@/components/cadastros/BancoForm";
 import FormaPagamentoFormCompleto from "@/components/cadastros/FormaPagamentoFormCompleto";
