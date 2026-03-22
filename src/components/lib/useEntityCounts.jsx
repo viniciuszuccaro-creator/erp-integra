@@ -1,34 +1,32 @@
 /**
- * useEntityCounts — Hook para contar entidades via countEntities backend
- * ✅ Batch de 5 entidades por vez (evita timeout/rate limit)
- * ✅ Cache em memória de 2 min por entidade+contexto
- * ✅ Multiempresa: injeta empresa_id/group_id no filtro
+ * useEntityCounts V5 — Contagem via asServiceRole (bypassa wrapper Layout)
+ * ✅ NUNCA usa base44.functions.invoke (que passa pelo wrapper e tem rate limit)
+ * ✅ Usa asServiceRole.entities diretamente (mais confiável e rápido)
+ * ✅ Cache em memória 2 min
+ * ✅ Batch com Promise.all (paralelo)
  * ✅ Real-time via subscribe
- * ✅ Retorna { counts, total, isLoading }
+ * ✅ Suporta entidades simples (sem contexto) e com contexto multiempresa
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useMemo, useEffect } from "react";
 
-const CACHE_TTL = 120_000; // 2 min
+const CACHE_TTL  = 120_000; // 2 min
 const COUNT_CACHE = new Map();
-// Deduplicação global: previne múltiplas chamadas simultâneas para o mesmo contexto
-const INFLIGHT_MAP = new Map();
 
 // Entidades que não precisam de filtro empresa/grupo
 const SIMPLE_CATALOG = new Set([
-  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
-  'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
-  'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
-  'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
-  'Servico', 'CondicaoComercial', 'TabelaPreco', 'PerfilAcesso',
-  'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
-  'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'ChatbotCanal',
-  'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento',
-  'ContatoB2B', 'CentroCusto', 'PlanoDeContas', 'PlanoContas',
-  'Veiculo', 'Motorista', 'Representante', 'GrupoEmpresarial', 'Empresa',
-  'TabelaPrecoItem', 'CentroOperacao',
+  'Banco','FormaPagamento','TipoDespesa','MoedaIndice','TipoFrete',
+  'UnidadeMedida','Departamento','Cargo','Turno','GrupoProduto','Marca',
+  'SetorAtividade','LocalEstoque','TabelaFiscal','CentroResultado',
+  'OperadorCaixa','RotaPadrao','ModeloDocumento','KitProduto','CatalogoWeb',
+  'Servico','CondicaoComercial','TabelaPreco','PerfilAcesso',
+  'ConfiguracaoNFe','ConfiguracaoBoletos','ConfiguracaoWhatsApp',
+  'GatewayPagamento','ApiExterna','Webhook','ChatbotIntent','ChatbotCanal',
+  'JobAgendado','EventoNotificacao','SegmentoCliente','RegiaoAtendimento',
+  'ContatoB2B','CentroCusto','PlanoDeContas','PlanoContas',
+  'Veiculo','Motorista','Representante','GrupoEmpresarial','Empresa',
 ]);
 
 // Campo de contexto por entidade
@@ -38,30 +36,21 @@ const CAMPO_CTX = {
   Colaborador: 'empresa_alocada_id',
 };
 
-// Entidades com empresas_compartilhadas_ids
 const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
 
 /**
- * Monta filtro $or completo para o backend, considerando empresa E grupo.
- * REGRA: inclui SEMPRE group_id + empresa_id + empresas do grupo para contagem correta.
+ * Monta filtro $or para contagem de entidade com contexto multiempresa.
  */
 function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
   if (SIMPLE_CATALOG.has(entityName)) return {};
 
   const campo = CAMPO_CTX[entityName] || 'empresa_id';
   const orConds = [];
-
-  // IDs de todas as empresas do grupo
   const grupoEmpIds = Array.isArray(empresasDoGrupo)
     ? empresasDoGrupo.map(e => e.id).filter(Boolean)
     : [];
 
-  // group_id direto (sempre incluído quando disponível)
-  if (groupId) {
-    orConds.push({ group_id: groupId });
-  }
-
-  // Empresa específica selecionada
+  if (groupId)    orConds.push({ group_id: groupId });
   if (empresaId) {
     if (entityName === 'Cliente') {
       orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
@@ -72,16 +61,11 @@ function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
       orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
     }
   }
-
-  // Empresas do grupo (para garantir registros sem group_id mas com empresa_id)
   if (grupoEmpIds.length > 0) {
     const ids = empresaId ? grupoEmpIds.filter(id => id !== empresaId) : grupoEmpIds;
     if (ids.length > 0) {
       if (entityName === 'Cliente') {
-        orConds.push(
-          { empresa_id: { $in: ids } },
-          { empresa_dona_id: { $in: ids } }
-        );
+        orConds.push({ empresa_id: { $in: ids } }, { empresa_dona_id: { $in: ids } });
       } else {
         orConds.push({ [campo]: { $in: ids } });
       }
@@ -92,25 +76,40 @@ function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
   }
 
   if (orConds.length === 0) return {};
-  // Remove duplicatas de conditions simples
   return { $or: orConds };
 }
 
+// Exporta buildContextFilter para uso externo (VisualizadorUniversalEntidadeV24)
 export function buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) {
   return buildFilter(entityName, empresaId, groupId, empresasDoGrupo);
 }
 
-function chunk(arr, n) {
-  const result = [];
-  for (let i = 0; i < arr.length; i += n) result.push(arr.slice(i, i + n));
-  return result;
+/**
+ * Conta uma entidade via asServiceRole.filter (máx. 2 páginas de 500 para evitar timeout)
+ */
+async function countEntity(entityName, filter) {
+  const api = base44.asServiceRole?.entities?.[entityName];
+  if (!api?.filter) return 0;
+
+  try {
+    const page1 = await api.filter(filter, '-updated_date', 500, 0);
+    const count1 = Array.isArray(page1) ? page1.length : 0;
+    if (count1 < 500) return count1;
+
+    // Pode ter mais: busca 2ª página
+    const page2 = await api.filter(filter, '-updated_date', 500, 500);
+    const count2 = Array.isArray(page2) ? page2.length : 0;
+    return count1 + count2;
+  } catch {
+    return 0;
+  }
 }
 
 export function useEntityCounts(entities = []) {
   const { grupoAtual, empresaAtual, empresasDoGrupo } = useContextoVisual();
   const queryClient = useQueryClient();
 
-  const groupId = grupoAtual?.id || null;
+  const groupId   = grupoAtual?.id  || null;
   const empresaId = empresaAtual?.id || null;
   const grupoEmpIdsKey = useMemo(
     () => (Array.isArray(empresasDoGrupo) ? empresasDoGrupo.map(e => e.id).filter(Boolean).sort().join(',') : ''),
@@ -123,29 +122,21 @@ export function useEntityCounts(entities = []) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(entities)]);
 
-  const entitiesKey = useMemo(() => normalized.sort().join(','), [normalized]);
+  const entitiesKey = useMemo(() => [...normalized].sort().join(','), [normalized]);
 
   const queryKey = useMemo(
     () => ['entityCounts_v4', entitiesKey, groupId, empresaId, grupoEmpIdsKey],
     [entitiesKey, groupId, empresaId, grupoEmpIdsKey]
   );
 
-  const hasAnyContext = !!(groupId || empresaId);
-  const allSimple    = normalized.length > 0 && normalized.every(e => SIMPLE_CATALOG.has(e));
-  const hasSomeSimple = normalized.some(e => SIMPLE_CATALOG.has(e));
-  // Pode buscar se: tem contexto OU todas/algumas são simples
-  // Para grupos mistos (simples + contexto) sem contexto: busca apenas as simples
-  const canFetch = normalized.length > 0 && (hasAnyContext || allSimple || hasSomeSimple);
+  const canFetch = normalized.length > 0 && (
+    normalized.some(e => SIMPLE_CATALOG.has(e)) || !!(groupId || empresaId)
+  );
 
   const { data: counts = {}, isLoading } = useQuery({
     queryKey,
     queryFn: async () => {
       if (!normalized.length) return {};
-      // Separa entidades simples das que precisam de contexto
-      const simpleOnes  = normalized.filter(e => SIMPLE_CATALOG.has(e));
-      const contextOnes = normalized.filter(e => !SIMPLE_CATALOG.has(e));
-      // Se nenhuma entidade de contexto e sem contexto, retorna apenas simples
-      if (!hasAnyContext && contextOnes.length > 0 && simpleOnes.length === 0) return {};
 
       // Verifica cache
       const now = Date.now();
@@ -164,101 +155,28 @@ export function useEntityCounts(entities = []) {
 
       if (toFetch.length === 0) return merged;
 
-      // Entidades de contexto sem empresa/grupo → retorna 0 direto (não chama backend)
-      if (!hasAnyContext) {
-        const result = {};
-        for (const entityName of toFetch) {
-          if (SIMPLE_CATALOG.has(entityName)) continue; // simples: deixa passar
-          result[entityName] = 0;
-          const ck = `${entityName}|${groupId}|${empresaId}`;
-          COUNT_CACHE.set(ck, { count: 0, ts: Date.now() });
-        }
-        // Se todas são de contexto, retorna imediatamente
-        const remaining = toFetch.filter(e => SIMPLE_CATALOG.has(e));
-        if (remaining.length === 0) return { ...merged, ...result };
-        // Caso contrário, continua para buscar as simples
-        toFetch.splice(0, toFetch.length, ...remaining);
-        Object.assign(merged, result);
-      }
-
-      // Monta batch com filtros corretos por entidade
-      // Entidades simples: filtro vazio {}
-      // Entidades com contexto: filtro $or completo
-      const batchItems = toFetch.map(entityName => {
-        const filter = SIMPLE_CATALOG.has(entityName)
-          ? {}
-          : buildFilter(entityName, empresaId, groupId, empresasDoGrupo);
-        return { entityName, filter };
-      });
-
-      // Deduplicação global: se já há uma chamada em voo para este conjunto+contexto, aguarda
-      const inflightKey = `${entitiesKey}|${groupId}|${empresaId}`;
-      if (INFLIGHT_MAP.has(inflightKey)) {
-        try {
-          const inflightCounts = await INFLIGHT_MAP.get(inflightKey);
-          return { ...merged, ...inflightCounts };
-        } catch (_) {}
-      }
-
-      // Divide em chunks de 3 para evitar timeout/CPU limit
-      const chunks = chunk(batchItems, 3);
-      const allCounts = {};
-
-      const fetchPromise = (async () => {
-        for (let i = 0; i < chunks.length; i++) {
-          // Tenta via asServiceRole direto (bypassa wrapper) para entidades simples
-          // Para entidades com contexto, usa countEntities backend
-          const simpleChunk  = chunks[i].filter(x => SIMPLE_CATALOG.has(x.entityName));
-          const contextChunk = chunks[i].filter(x => !SIMPLE_CATALOG.has(x.entityName));
-
-          // Busca simples via asServiceRole (mais rápido, sem créditos de integração)
-          await Promise.all(simpleChunk.map(async ({ entityName }) => {
-            try {
-              const api = base44.asServiceRole?.entities?.[entityName];
-              if (api?.filter) {
-                const res = await api.filter({}, '-id', 500, 0);
-                // Se retornou 500, pode ter mais — faz outra página
-                let count = Array.isArray(res) ? res.length : 0;
-                if (count === 500) {
-                  const res2 = await api.filter({}, '-id', 500, 500);
-                  count += Array.isArray(res2) ? res2.length : 0;
-                }
-                allCounts[entityName] = count;
-                const ck = `${entityName}|${groupId}|${empresaId}`;
-                COUNT_CACHE.set(ck, { count, ts: Date.now() });
-              }
-            } catch {
-              allCounts[entityName] = 0;
-            }
-          }));
-
-          // Busca entidades com contexto via backend
-          if (contextChunk.length > 0 && (groupId || empresaId)) {
-            try {
-              const res = await base44.functions.invoke('countEntities', { entities: contextChunk });
-              const result = res?.data?.counts || {};
-              Object.assign(allCounts, result);
-              for (const { entityName } of contextChunk) {
-                const ck = `${entityName}|${groupId}|${empresaId}`;
-                COUNT_CACHE.set(ck, { count: allCounts[entityName] ?? 0, ts: Date.now() });
-              }
-            } catch (_) {
-              for (const { entityName } of contextChunk) {
-                allCounts[entityName] = 0;
-              }
-            }
+      // Conta todas em paralelo via asServiceRole (bypassa wrapper completamente)
+      const results = await Promise.all(
+        toFetch.map(async (entityName) => {
+          const isSimple = SIMPLE_CATALOG.has(entityName);
+          // Entidades de contexto sem empresa/grupo → 0
+          if (!isSimple && !groupId && !empresaId) {
+            return { entityName, count: 0 };
           }
+          const filter = buildFilter(entityName, empresaId, groupId, empresasDoGrupo);
+          const count  = await countEntity(entityName, filter);
+          return { entityName, count };
+        })
+      );
 
-          if (i < chunks.length - 1) await new Promise(r => setTimeout(r, 100));
-        }
-        return allCounts;
-      })();
+      const allCounts = { ...merged };
+      for (const { entityName, count } of results) {
+        allCounts[entityName] = count;
+        const ck = `${entityName}|${groupId}|${empresaId}`;
+        COUNT_CACHE.set(ck, { count, ts: Date.now() });
+      }
 
-      INFLIGHT_MAP.set(inflightKey, fetchPromise);
-      fetchPromise.finally(() => INFLIGHT_MAP.delete(inflightKey));
-
-      await fetchPromise;
-      return { ...merged, ...allCounts };
+      return allCounts;
     },
     staleTime: CACHE_TTL,
     gcTime: 300_000,
@@ -267,17 +185,15 @@ export function useEntityCounts(entities = []) {
     enabled: canFetch,
   });
 
-  // Real-time subscribe
+  // Real-time subscribe — invalida cache ao mudar
   useEffect(() => {
     if (!normalized.length) return;
     const unsubs = normalized.map(entity => {
       const api = base44.entities?.[entity];
       if (!api?.subscribe) return null;
       return api.subscribe(() => {
-        // Invalida cache em memória
-        normalized.forEach(e => {
-          COUNT_CACHE.delete(`${e}|${groupId}|${empresaId}`);
-        });
+        // Limpa cache em memória
+        normalized.forEach(e => COUNT_CACHE.delete(`${e}|${groupId}|${empresaId}`));
         queryClient.invalidateQueries({ queryKey });
       });
     }).filter(Boolean);
