@@ -1,12 +1,21 @@
+/**
+ * useEntityCounts V5 — contagem robusta multiempresa
+ * - SIMPLE_CATALOG: contagem global (sem filtro de contexto)
+ * - Entidades contextualizadas: filtro por empresa/grupo
+ * - Cache em memória 2min
+ * - Invalidação via subscribe
+ */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useRef } from "react";
 
 const CACHE_TTL = 120_000;
+// Cache global fora do componente para persistir entre remontagens
 const COUNT_CACHE = new Map();
 
-const SIMPLE_CATALOG = new Set([
+// Entidades que NÃO precisam de filtro de empresa/grupo (catálogos globais)
+export const SIMPLE_CATALOG = new Set([
   'Banco','FormaPagamento','TipoDespesa','MoedaIndice','TipoFrete',
   'UnidadeMedida','Departamento','Cargo','Turno','GrupoProduto','Marca',
   'SetorAtividade','LocalEstoque','TabelaFiscal','CentroResultado',
@@ -17,6 +26,7 @@ const SIMPLE_CATALOG = new Set([
   'JobAgendado','EventoNotificacao','SegmentoCliente','RegiaoAtendimento',
   'ContatoB2B','CentroCusto','PlanoDeContas','PlanoContas',
   'Veiculo','Motorista','Representante','GrupoEmpresarial','Empresa',
+  'ConfiguracaoDespesaRecorrente',
 ]);
 
 const CAMPO_CTX = {
@@ -27,70 +37,87 @@ const CAMPO_CTX = {
 
 const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
 
-function buildFilter(entityName, empresaId, groupId, empresasDoGrupo) {
+export function buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) {
+  // Catálogos simples: sem filtro de contexto (globais)
   if (SIMPLE_CATALOG.has(entityName)) return {};
+
   const campo = CAMPO_CTX[entityName] || 'empresa_id';
   const orConds = [];
-  const grupoEmpIds = Array.isArray(empresasDoGrupo) ? empresasDoGrupo.map(e => e.id).filter(Boolean) : [];
+  const grupoEmpIds = Array.isArray(empresasDoGrupo)
+    ? empresasDoGrupo.map(e => e.id).filter(Boolean)
+    : [];
 
   if (groupId) orConds.push({ group_id: groupId });
+
   if (empresaId) {
     if (entityName === 'Cliente') {
       orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
     } else {
       orConds.push({ [campo]: empresaId });
     }
-    if (SHARED.has(entityName)) orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
-  }
-  if (grupoEmpIds.length > 0) {
-    const ids = empresaId ? grupoEmpIds.filter(id => id !== empresaId) : grupoEmpIds;
-    if (ids.length > 0) {
-      if (entityName === 'Cliente') {
-        orConds.push({ empresa_id: { $in: ids } }, { empresa_dona_id: { $in: ids } });
-      } else {
-        orConds.push({ [campo]: { $in: ids } });
-      }
+    if (SHARED.has(entityName)) {
+      orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
     }
   }
-  if (orConds.length === 0) return {};
+
+  // Adicionar outras empresas do grupo
+  const otherIds = empresaId ? grupoEmpIds.filter(id => id !== empresaId) : grupoEmpIds;
+  if (otherIds.length > 0) {
+    if (entityName === 'Cliente') {
+      orConds.push({ empresa_id: { $in: otherIds } }, { empresa_dona_id: { $in: otherIds } });
+    } else if (SHARED.has(entityName)) {
+      orConds.push({ [campo]: { $in: otherIds } }, { empresas_compartilhadas_ids: { $in: otherIds } });
+    } else {
+      orConds.push({ [campo]: { $in: otherIds } });
+    }
+  }
+
+  if (orConds.length === 0) return null; // null = sem contexto, não buscar
   return { $or: orConds };
 }
 
-export function buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) {
-  return buildFilter(entityName, empresaId, groupId, empresasDoGrupo);
-}
-
-async function countEntity(entityName, filter) {
-  const api = base44.asServiceRole?.entities?.[entityName];
-  if (!api?.filter) return 0;
-  try {
-    const page1 = await api.filter(filter, '-updated_date', 500, 0);
-    const count1 = Array.isArray(page1) ? page1.length : 0;
-    if (count1 < 500) return count1;
-    const page2 = await api.filter(filter, '-updated_date', 500, 500);
-    return count1 + (Array.isArray(page2) ? page2.length : 0);
-  } catch { return 0; }
+async function countEntityPages(api, filter, maxPages = 4) {
+  let total = 0;
+  const PAGE = 500;
+  for (let page = 0; page < maxPages; page++) {
+    try {
+      const res = await api.filter(filter || {}, '-updated_date', PAGE, page * PAGE);
+      const count = Array.isArray(res) ? res.length : 0;
+      total += count;
+      if (count < PAGE) break;
+    } catch {
+      break;
+    }
+  }
+  return total;
 }
 
 export function useEntityCounts(entities = []) {
   const { grupoAtual, empresaAtual, empresasDoGrupo } = useContextoVisual();
   const queryClient = useQueryClient();
+
   const groupId = grupoAtual?.id || null;
   const empresaId = empresaAtual?.id || null;
+
+  const normalized = useMemo(() => {
+    const arr = Array.isArray(entities) ? entities : [entities];
+    return arr.filter(Boolean);
+  }, [entities.join ? entities.join(',') : JSON.stringify(entities)]); // eslint-disable-line
+
+  const entitiesKey = useMemo(() => [...normalized].sort().join(','), [normalized]);
+
   const grupoEmpIdsKey = useMemo(
     () => (Array.isArray(empresasDoGrupo) ? empresasDoGrupo.map(e => e.id).filter(Boolean).sort().join(',') : ''),
     [empresasDoGrupo]
   );
 
-  const normalized = useMemo(() => {
-    const arr = Array.isArray(entities) ? entities : [entities];
-    return arr.filter(Boolean);
-  }, [JSON.stringify(entities)]); // eslint-disable-line
+  const queryKey = ['entityCounts_v5', entitiesKey, groupId, empresaId, grupoEmpIdsKey];
 
-  const entitiesKey = useMemo(() => [...normalized].sort().join(','), [normalized]);
-  const queryKey = useMemo(() => ['entityCounts_v4', entitiesKey, groupId, empresaId, grupoEmpIdsKey], [entitiesKey, groupId, empresaId, grupoEmpIdsKey]);
-
-  const canFetch = normalized.length > 0 && (normalized.some(e => SIMPLE_CATALOG.has(e)) || !!(groupId || empresaId));
+  // Entidades simples sempre podem buscar; contextualizadas precisam de empresa ou grupo
+  const canFetch = normalized.length > 0 && normalized.some(e => {
+    if (SIMPLE_CATALOG.has(e)) return true;
+    return !!(groupId || empresaId);
+  });
 
   const { data: counts = {}, isLoading } = useQuery({
     queryKey,
@@ -99,28 +126,46 @@ export function useEntityCounts(entities = []) {
       const now = Date.now();
       const merged = {};
       const toFetch = [];
+
       for (const entityName of normalized) {
-        const ck = `${entityName}|${groupId}|${empresaId}`;
+        const ck = `${entityName}|${groupId}|${empresaId}|${grupoEmpIdsKey}`;
         const cached = COUNT_CACHE.get(ck);
-        if (cached && now - cached.ts < CACHE_TTL) { merged[entityName] = cached.count; }
-        else { toFetch.push(entityName); }
+        if (cached && now - cached.ts < CACHE_TTL) {
+          merged[entityName] = cached.count;
+        } else {
+          toFetch.push(entityName);
+        }
       }
+
       if (toFetch.length === 0) return merged;
 
-      const results = await Promise.all(
+      const results = await Promise.allSettled(
         toFetch.map(async (entityName) => {
           const isSimple = SIMPLE_CATALOG.has(entityName);
+          // Para entidades contextualizadas sem contexto: retorna 0
           if (!isSimple && !groupId && !empresaId) return { entityName, count: 0 };
-          const filter = buildFilter(entityName, empresaId, groupId, empresasDoGrupo);
-          const count = await countEntity(entityName, filter);
+
+          const filter = buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo);
+          // filter === null significa sem contexto para entidade contextualizada
+          if (filter === null) return { entityName, count: 0 };
+
+          // Usar asServiceRole para evitar problemas de permissão
+          const api = base44.asServiceRole?.entities?.[entityName] || base44.entities?.[entityName];
+          if (!api?.filter) return { entityName, count: 0 };
+
+          const count = await countEntityPages(api, filter);
           return { entityName, count };
         })
       );
 
       const allCounts = { ...merged };
-      for (const { entityName, count } of results) {
-        allCounts[entityName] = count;
-        COUNT_CACHE.set(`${entityName}|${groupId}|${empresaId}`, { count, ts: Date.now() });
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          const { entityName, count } = result.value;
+          allCounts[entityName] = count;
+          const ck = `${entityName}|${groupId}|${empresaId}|${grupoEmpIdsKey}`;
+          COUNT_CACHE.set(ck, { count, ts: Date.now() });
+        }
       }
       return allCounts;
     },
@@ -131,20 +176,30 @@ export function useEntityCounts(entities = []) {
     enabled: canFetch,
   });
 
+  // Invalidar contagem quando registros mudam
+  const entitiesKeyRef = useRef(entitiesKey);
+  entitiesKeyRef.current = entitiesKey;
   useEffect(() => {
     if (!normalized.length) return;
     const unsubs = normalized.map(entity => {
       const api = base44.entities?.[entity];
       if (!api?.subscribe) return null;
       return api.subscribe(() => {
-        normalized.forEach(e => COUNT_CACHE.delete(`${e}|${groupId}|${empresaId}`));
-        queryClient.invalidateQueries({ queryKey });
+        // Limpar cache desta entidade
+        for (const [key] of COUNT_CACHE.entries()) {
+          if (key.startsWith(`${entity}|`)) COUNT_CACHE.delete(key);
+        }
+        queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'] });
       });
     }).filter(Boolean);
     return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
-  }, [entitiesKey, groupId, empresaId]); // eslint-disable-line
+  }, [entitiesKey]); // eslint-disable-line
 
-  const total = useMemo(() => normalized.reduce((acc, e) => acc + (Number(counts[e]) || 0), 0), [counts, normalized]);
+  const total = useMemo(
+    () => normalized.reduce((acc, e) => acc + (Number(counts[e]) || 0), 0),
+    [counts, normalized]
+  );
+
   return { counts: counts || {}, total, isLoading };
 }
 
