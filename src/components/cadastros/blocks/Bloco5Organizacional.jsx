@@ -3,9 +3,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
-import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24.jsx";
+import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
 import { Building2, Spline, Users, Briefcase, Clock } from "lucide-react";
-import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado.jsx";
+import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
 import GrupoEmpresarialForm from "@/components/cadastros/GrupoEmpresarialForm";
 import EmpresaForm from "@/components/cadastros/EmpresaForm";
