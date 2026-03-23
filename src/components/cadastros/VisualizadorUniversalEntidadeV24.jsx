@@ -1,18 +1,18 @@
 /**
- * VisualizadorUniversalEntidadeV24 — V26 CORRIGIDO
+ * VisualizadorUniversalEntidadeV24 — V27 DEFINITIVO
  * FIXES:
- * ✅ Editar: formProps recalcula quando editItem muda (deps corretas)
- * ✅ Ordenação: queryKey e queryFn usam mesmo estado (sem ref stale)
- * ✅ Exclusão em massa cross-page: lógica robusta com deselectedIds
- * ✅ Contagem: usa v5 do hook
- * ✅ Formulário preenchido: fetchFullRecord via asServiceRole
- * ✅ Entidades simples: sem bloqueio por contexto
+ * ✅ Editar: fetchFullRecord usa .get() direto (mais confiável) + fallbacks
+ * ✅ Ordenação: handleSort sem stale closure
+ * ✅ Exclusão cross-page: funciona sem ctxFilter (Layout já filtra)
+ * ✅ Contagem: usa useEntityCounts V5
+ * ✅ Query: usa base44.entities (Layout injeta empresa/grupo) para contextualizadas
+ * ✅ Simples: usa asServiceRole (sem filtro de empresa)
  */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import useEntityCounts, { buildContextFilter, SIMPLE_CATALOG } from "@/components/lib/useEntityCounts";
+import useEntityCounts, { SIMPLE_CATALOG } from "@/components/lib/useEntityCounts";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,10 +34,10 @@ const STATUS_COLORS = {
   Bloqueado:"bg-red-100 text-red-700", Cancelado:"bg-red-100 text-red-700",
   Atrasado:"bg-red-100 text-red-700", Descontinuado:"bg-orange-100 text-orange-700",
 };
-const STATUS_FIELDS = new Set(["status","status_fornecedor","status_cliente","situacao","situacao_credito","status_fiscal_receita","status_fornecedor"]);
+const STATUS_FIELDS = new Set(["status","status_fornecedor","status_cliente","situacao","situacao_credito","status_fiscal_receita"]);
 const BOOL_FIELDS   = new Set(["ativo","ativa","habilitado","compartilhado_grupo","ativo_status"]);
-const DATE_FIELDS   = new Set(["created_date","updated_date","data_admissao","data_nascimento","data_vencimento","data_validade","ultima_compra","data_emissao","data_pedido","cnh_validade","vigencia"]);
-const MONEY_FIELDS  = new Set(["salario","preco_venda","custo_aquisicao","custo_medio","valor_frete","orcamento_mensal","limite_credito","valor_total","valor","valor_padrao","taxa_padrao","desconto_maximo"]);
+const DATE_FIELDS   = new Set(["created_date","updated_date","data_admissao","data_nascimento","data_vencimento","data_validade","ultima_compra","data_emissao","data_pedido","cnh_validade"]);
+const MONEY_FIELDS  = new Set(["salario","preco_venda","custo_aquisicao","custo_medio","valor_frete","orcamento_mensal","limite_credito","valor_total","valor","valor_padrao"]);
 const PAGE_SIZES    = [10, 20, 50, 100];
 
 // Campos de busca por entidade
@@ -90,7 +90,7 @@ const SEARCH_FIELDS = {
   ConfiguracaoDespesaRecorrente:['descricao'],
 };
 
-// Formulários que gerenciam seu próprio submit (self-managed)
+// Formulários que gerenciam seu próprio submit
 const SELF_MANAGED = new Set([
   "CadastroClienteCompleto","CadastroFornecedorCompleto","TransportadoraForm",
   "ColaboradorForm","RepresentanteFormCompleto","RepresentanteForm",
@@ -130,50 +130,41 @@ function formatValue(value, col, extraColors = {}) {
   return String(value).substring(0, 100);
 }
 
-// Busca o registro completo — tenta múltiplas abordagens
+/**
+ * Busca registro completo — tenta .get() primeiro (mais confiável),
+ * depois filter por id como fallback
+ */
 async function fetchFullRecord(entityName, itemId) {
   if (!entityName || !itemId) return null;
 
-  // Tentativa 1: asServiceRole .get direto
+  // 1. asServiceRole.get (sem wrapping de empresa)
   try {
-    const api = base44.asServiceRole?.entities?.[entityName];
-    if (api?.get) {
-      const rec = await api.get(itemId);
-      if (rec?.id) return JSON.parse(JSON.stringify(rec));
-    }
+    const rec = await base44.asServiceRole?.entities?.[entityName]?.get?.(itemId);
+    if (rec?.id) return JSON.parse(JSON.stringify(rec));
   } catch (_) {}
 
-  // Tentativa 2: entities normais .get
+  // 2. entities normal .get
   try {
-    const api = base44.entities?.[entityName];
-    if (api?.get) {
-      const rec = await api.get(itemId);
-      if (rec?.id) return JSON.parse(JSON.stringify(rec));
-    }
+    const rec = await base44.entities?.[entityName]?.get?.(itemId);
+    if (rec?.id) return JSON.parse(JSON.stringify(rec));
   } catch (_) {}
 
-  // Tentativa 3: asServiceRole filter por id
+  // 3. asServiceRole filter por id
   try {
-    const api = base44.asServiceRole?.entities?.[entityName];
-    if (api?.filter) {
-      const res = await api.filter({ id: itemId }, '-updated_date', 1, 0);
-      if (Array.isArray(res) && res[0]?.id) return JSON.parse(JSON.stringify(res[0]));
-    }
+    const res = await base44.asServiceRole?.entities?.[entityName]?.filter?.({ id: itemId }, '-updated_date', 1, 0);
+    if (Array.isArray(res) && res[0]?.id) return JSON.parse(JSON.stringify(res[0]));
   } catch (_) {}
 
-  // Tentativa 4: entities normais filter por id (sem filtro de empresa — buscando pelo id exato)
+  // 4. entities filter por id
   try {
-    const api = base44.entities?.[entityName];
-    if (api?.filter) {
-      const res = await api.filter({ id: itemId }, '-updated_date', 1, 0);
-      if (Array.isArray(res) && res[0]?.id) return JSON.parse(JSON.stringify(res[0]));
-    }
+    const res = await base44.entities?.[entityName]?.filter?.({ id: itemId }, '-updated_date', 1, 0);
+    if (Array.isArray(res) && res[0]?.id) return JSON.parse(JSON.stringify(res[0]));
   } catch (_) {}
 
   return null;
 }
 
-// Monta props do formulário — CRÍTICO: editItem deve estar nas deps
+/** Monta props do formulário — editItem nas deps garante preenchimento correto */
 function buildFormProps(editItem, onClose, onSubmit) {
   const base = {
     onClose, onSave: onClose, onSuccess: onClose,
@@ -183,7 +174,6 @@ function buildFormProps(editItem, onClose, onSubmit) {
   };
   if (!editItem) return base;
 
-  // Passa o mesmo objeto como TODOS os possíveis nomes de prop
   const itemProps = {};
   const aliases = [
     'item','data','initialData','defaultValues','record','entity','value',
@@ -221,7 +211,7 @@ export default function VisualizadorUniversalEntidadeV24({
     : false;
 
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
   const empresaId = empresaAtual?.id || null;
   const groupId   = grupoAtual?.id  || null;
 
@@ -251,7 +241,7 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // Formulário
   const [showForm,       setShowForm]       = useState(false);
-  const [editItem,       setEditItem]       = useState(null);   // objeto completo
+  const [editItem,       setEditItem]       = useState(null);
   const [formKey,        setFormKey]        = useState(0);
   const [isLoadingEdit,  setIsLoadingEdit]  = useState(false);
   const [editError,      setEditError]      = useState(null);
@@ -270,20 +260,14 @@ export default function VisualizadorUniversalEntidadeV24({
     return () => clearTimeout(debounceRef.current);
   }, [search]);
 
-  // Contagem total (para o badge e cross-page)
+  // Contagem total
   const { total: totalCount } = useEntityCounts(ENTITY ? [ENTITY] : []);
-
-  // Filtro de contexto
-  const ctxFilter = useMemo(() => {
-    const f = buildContextFilter(ENTITY, empresaId, groupId, empresasDoGrupo);
-    return f === null ? {} : (f || {});
-  }, [ENTITY, empresaId, groupId, JSON.stringify(empresasDoGrupo)]); // eslint-disable-line
 
   const skip = (page - 1) * pageSize;
 
-  // Query key inclui sortField e sortDir no estado (não em ref) → consistente
+  // ── Query principal ──
   const queryKey = [
-    ENTITY, "viz-v26",
+    ENTITY, "viz-v27",
     sortField, sortDir,
     page, pageSize,
     debouncedSearch,
@@ -295,8 +279,8 @@ export default function VisualizadorUniversalEntidadeV24({
     queryFn: async () => {
       if (!ENTITY) return [];
 
-      // Para entidades simples: usar asServiceRole (sem filtro de empresa)
-      // Para contextualizadas: usar base44.entities que o Layout já filtra por empresa/grupo
+      // Simples: asServiceRole (sem filtro empresa, catálogos globais)
+      // Contextualizadas: base44.entities (o Layout já injeta empresa/grupo via wrap)
       let api;
       if (isSimple) {
         api = base44.asServiceRole?.entities?.[ENTITY] || base44.entities?.[ENTITY];
@@ -304,18 +288,16 @@ export default function VisualizadorUniversalEntidadeV24({
         if (!empresaId && !groupId) return [];
         api = base44.entities?.[ENTITY];
       }
-
       if (!api?.filter) return [];
 
       const order = `${sortDir === "desc" ? "-" : ""}${sortField}`;
       let filter = {};
 
-      // Adicionar busca textual
+      // Busca textual
       if (debouncedSearch?.trim()) {
         const fields = SEARCH_FIELDS[ENTITY] || ['nome', 'descricao', 'codigo'];
         const rx = { $regex: debouncedSearch.trim(), $options: 'i' };
-        const orConds = fields.map(f => ({ [f]: rx }));
-        filter = { $or: orConds };
+        filter = { $or: fields.map(f => ({ [f]: rx })) };
       }
 
       const result = await api.filter(filter, order, pageSize, skip);
@@ -328,36 +310,36 @@ export default function VisualizadorUniversalEntidadeV24({
     enabled: !!ENTITY && (isSimple || !!(empresaId || groupId)),
   });
 
-  // Subscribe para invalidar quando entidade muda
+  // Subscribe para invalidar
   useEffect(() => {
     if (!ENTITY) return;
     const api = base44.entities?.[ENTITY];
     if (!api?.subscribe) return;
     const unsub = api.subscribe(() => {
-      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v26"] });
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v27"] });
       queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'] });
     });
     return () => { if (typeof unsub === "function") unsub(); };
   }, [ENTITY, queryClient]);
 
-  // ── ordenação ──
+  // ── ordenação ── sem stale closure
   const handleSort = useCallback((field) => {
-    if (field === sortField) {
-      setSortDir(d => d === "desc" ? "asc" : "desc");
-    } else {
-      setSortField(field);
+    setSortField(prev => {
+      if (prev === field) {
+        setSortDir(d => d === "desc" ? "asc" : "desc");
+        return prev;
+      }
       setSortDir("desc");
-    }
+      return field;
+    });
     setPage(1);
-  }, [sortField]);
+  }, []);
 
   const handleSortDropdown = useCallback((value) => {
     const idx = value.lastIndexOf("|");
     if (idx === -1) return;
-    const f = value.slice(0, idx);
-    const d = value.slice(idx + 1);
-    setSortField(f);
-    setSortDir(d);
+    setSortField(value.slice(0, idx));
+    setSortDir(value.slice(idx + 1));
     setPage(1);
   }, []);
 
@@ -366,7 +348,7 @@ export default function VisualizadorUniversalEntidadeV24({
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
-    queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v26"] });
+    queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v27"] });
     queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'] });
   }, [ENTITY, queryClient]);
 
@@ -374,7 +356,7 @@ export default function VisualizadorUniversalEntidadeV24({
     if (!formData || !ENTITY) return;
     if (formData._action === "delete") {
       if (formData.id) {
-        try { await (base44.asServiceRole?.entities?.[ENTITY] || base44.entities[ENTITY]).delete(formData.id); } catch (_) {}
+        try { await base44.entities[ENTITY].delete(formData.id); } catch (_) {}
       }
       handleCloseForm(); return;
     }
@@ -386,7 +368,7 @@ export default function VisualizadorUniversalEntidadeV24({
         if (!payload.empresa_id && empresaId) payload.empresa_id = empresaId;
         if (!payload.group_id  && groupId)   payload.group_id   = groupId;
       }
-      const api = base44.asServiceRole?.entities?.[ENTITY] || base44.entities[ENTITY];
+      const api = base44.entities[ENTITY];
       if (editItem?.id) {
         await api.update(editItem.id, payload);
       } else {
@@ -419,12 +401,11 @@ export default function VisualizadorUniversalEntidadeV24({
       if (full) {
         setEditItem(full);
       } else {
-        setEditError("Não foi possível carregar todos os dados. Exibindo dados parciais.");
+        setEditError("Dados parciais — alguns campos podem estar em branco.");
         setEditItem(JSON.parse(JSON.stringify(item)));
       }
       setShowForm(true);
     } catch (err) {
-      console.error("[Viz] fetchFullRecord error:", err);
       setFormKey(k => k + 1);
       setEditItem(JSON.parse(JSON.stringify(item)));
       setShowForm(true);
@@ -433,8 +414,7 @@ export default function VisualizadorUniversalEntidadeV24({
     }
   }, [ENTITY]);
 
-  // CRÍTICO: formProps recalcula TODA VEZ que editItem muda
-  // Não usar useMemo com deps omitidas — passar editItem diretamente
+  // formProps recalcula a cada mudança de editItem
   const formProps = buildFormProps(
     editItem,
     handleCloseForm,
@@ -446,9 +426,8 @@ export default function VisualizadorUniversalEntidadeV24({
     const label = item.nome || item.razao_social || item.nome_completo || item.descricao || item.id;
     if (!window.confirm(`Confirma exclusão de "${label}"?`)) return;
     try {
-      const api = base44.asServiceRole?.entities?.[ENTITY] || base44.entities[ENTITY];
-      await api.delete(item.id);
-      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v26"] });
+      await base44.entities[ENTITY].delete(item.id);
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v27"] });
       queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'] });
       setSelectedIds(prev => { const n = new Set(prev); n.delete(item.id); return n; });
     } catch (e) {
@@ -472,7 +451,7 @@ export default function VisualizadorUniversalEntidadeV24({
       let idsToDelete = [];
 
       if (crossPageAll) {
-        // Para simples: asServiceRole (sem filtro empresa); para contextualizadas: entities (Layout filtra)
+        // Busca todos os IDs: simples=asServiceRole, contextualizadas=entities (já filtrado)
         const api = isSimple
           ? (base44.asServiceRole?.entities?.[ENTITY] || base44.entities?.[ENTITY])
           : base44.entities?.[ENTITY];
@@ -481,23 +460,27 @@ export default function VisualizadorUniversalEntidadeV24({
         const BATCH = 500;
         while (true) {
           const arr = await api.filter({}, '-updated_date', BATCH, skipAcc);
+          if (!Array.isArray(arr) || arr.length === 0) break;
+          const validIds = arr.map(i => i.id).filter(id => id && !deselectedIds.has(id));
+          idsToDelete = idsToDelete.concat(validIds);
+          if (arr.length < BATCH) break;
+          skipAcc += BATCH;
+        }
       } else {
         idsToDelete = Array.from(selectedIds);
       }
 
       if (idsToDelete.length === 0) return;
 
-      // Excluir em lotes de 20
       const CONC = 20;
       for (let i = 0; i < idsToDelete.length; i += CONC) {
         const batch = idsToDelete.slice(i, i + CONC);
-        await Promise.all(batch.map(id => {
-          const api = base44.asServiceRole?.entities?.[ENTITY] || base44.entities[ENTITY];
-          return api.delete(id).catch(() => {});
-        }));
+        await Promise.all(batch.map(id =>
+          base44.entities[ENTITY].delete(id).catch(() => {})
+        ));
       }
 
-      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v26"] });
+      queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v27"] });
       queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'] });
       setSelectedIds(new Set());
       setDeselectedIds(new Set());
@@ -506,7 +489,7 @@ export default function VisualizadorUniversalEntidadeV24({
     } catch (e) {
       alert("Erro ao excluir: " + (e?.message || String(e)));
     }
-  }, [ENTITY, crossPageAll, totalCount, selectedIds, deselectedIds, ctxFilter, queryClient]);
+  }, [ENTITY, isSimple, crossPageAll, totalCount, selectedIds, deselectedIds, queryClient]);
 
   // ── seleção ──
   const isItemSelected = useCallback((id) =>
@@ -534,7 +517,6 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const handleToggleSelectPage = useCallback(() => {
     if (crossPageAll) {
-      // Em modo cross-page: toggle desmarcar/marcar todos da página
       setDeselectedIds(prev => {
         const n = new Set(prev);
         if (allPageSelected) {
@@ -571,7 +553,6 @@ export default function VisualizadorUniversalEntidadeV24({
     setSelectedIds(new Set());
   }, []);
 
-  // Ícone de ordenação
   const getSortIcon = (field) => {
     if (sortField !== field) return <ChevronsUpDown className="w-3 h-3 text-slate-300 opacity-0 group-hover/th:opacity-100 transition-opacity" />;
     return sortDir === "desc"
@@ -644,7 +625,7 @@ export default function VisualizadorUniversalEntidadeV24({
         <button
           type="button"
           onClick={() => {
-            queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v26"] });
+            queryClient.invalidateQueries({ queryKey: [ENTITY, "viz-v27"] });
             queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'] });
           }}
           className="h-9 w-9 flex items-center justify-center border border-slate-200 rounded-sm bg-white hover:bg-slate-50"
@@ -880,7 +861,6 @@ export default function VisualizadorUniversalEntidadeV24({
                 </div>
               </div>
               <div className="p-6 flex-1 overflow-auto">
-                {/* key garante remontagem total quando editItem ou formKey muda */}
                 <FormComponent
                   key={`form-${ENTITY}-${editItem?.id || "new"}-${formKey}`}
                   {...formProps}
