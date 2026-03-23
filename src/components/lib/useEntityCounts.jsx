@@ -181,15 +181,12 @@ export function useEntityCounts(entities = []) {
   });
 
   // Invalidar contagem quando registros mudam
-  const entitiesKeyRef = useRef(entitiesKey);
-  entitiesKeyRef.current = entitiesKey;
   useEffect(() => {
     if (!normalized.length) return;
     const unsubs = normalized.map(entity => {
       const api = base44.entities?.[entity];
       if (!api?.subscribe) return null;
       return api.subscribe(() => {
-        // Limpar cache desta entidade
         for (const [key] of COUNT_CACHE.entries()) {
           if (key.startsWith(`${entity}|`)) COUNT_CACHE.delete(key);
         }
@@ -197,7 +194,7 @@ export function useEntityCounts(entities = []) {
       });
     }).filter(Boolean);
     return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
-  }, [entitiesKey]); // eslint-disable-line
+  }, [entitiesKey, queryClient]); // eslint-disable-line
 
   const total = useMemo(
     () => normalized.reduce((acc, e) => acc + (Number(counts[e]) || 0), 0),
