@@ -130,20 +130,11 @@ function formatValue(value, col, extraColors = {}) {
   return String(value).substring(0, 100);
 }
 
-// Busca o registro completo via asServiceRole (contorna wrapping do Layout)
+// Busca o registro completo — tenta múltiplas abordagens
 async function fetchFullRecord(entityName, itemId) {
   if (!entityName || !itemId) return null;
 
-  // Tentativa 1: asServiceRole filter por id
-  try {
-    const api = base44.asServiceRole?.entities?.[entityName];
-    if (api?.filter) {
-      const res = await api.filter({ id: itemId }, '-updated_date', 1, 0);
-      if (Array.isArray(res) && res[0]?.id) return JSON.parse(JSON.stringify(res[0]));
-    }
-  } catch (_) {}
-
-  // Tentativa 2: asServiceRole get
+  // Tentativa 1: asServiceRole .get direto
   try {
     const api = base44.asServiceRole?.entities?.[entityName];
     if (api?.get) {
@@ -152,7 +143,25 @@ async function fetchFullRecord(entityName, itemId) {
     }
   } catch (_) {}
 
-  // Tentativa 3: entities normais filter
+  // Tentativa 2: entities normais .get
+  try {
+    const api = base44.entities?.[entityName];
+    if (api?.get) {
+      const rec = await api.get(itemId);
+      if (rec?.id) return JSON.parse(JSON.stringify(rec));
+    }
+  } catch (_) {}
+
+  // Tentativa 3: asServiceRole filter por id
+  try {
+    const api = base44.asServiceRole?.entities?.[entityName];
+    if (api?.filter) {
+      const res = await api.filter({ id: itemId }, '-updated_date', 1, 0);
+      if (Array.isArray(res) && res[0]?.id) return JSON.parse(JSON.stringify(res[0]));
+    }
+  } catch (_) {}
+
+  // Tentativa 4: entities normais filter por id (sem filtro de empresa — buscando pelo id exato)
   try {
     const api = base44.entities?.[entityName];
     if (api?.filter) {
@@ -285,25 +294,28 @@ export default function VisualizadorUniversalEntidadeV24({
     queryKey,
     queryFn: async () => {
       if (!ENTITY) return [];
-      if (!isSimple && !empresaId && !groupId) return [];
 
-      const api = base44.asServiceRole?.entities?.[ENTITY];
+      // Para entidades simples: usar asServiceRole (sem filtro de empresa)
+      // Para contextualizadas: usar base44.entities que o Layout já filtra por empresa/grupo
+      let api;
+      if (isSimple) {
+        api = base44.asServiceRole?.entities?.[ENTITY] || base44.entities?.[ENTITY];
+      } else {
+        if (!empresaId && !groupId) return [];
+        api = base44.entities?.[ENTITY];
+      }
+
       if (!api?.filter) return [];
 
-      // Ordenação: prefixo "-" para desc
       const order = `${sortDir === "desc" ? "-" : ""}${sortField}`;
-
-      let filter = { ...ctxFilter };
+      let filter = {};
 
       // Adicionar busca textual
       if (debouncedSearch?.trim()) {
         const fields = SEARCH_FIELDS[ENTITY] || ['nome', 'descricao', 'codigo'];
         const rx = { $regex: debouncedSearch.trim(), $options: 'i' };
         const orConds = fields.map(f => ({ [f]: rx }));
-        const hasCtx = Object.keys(filter).length > 0;
-        filter = hasCtx
-          ? { $and: [filter, { $or: orConds }] }
-          : { $or: orConds };
+        filter = { $or: orConds };
       }
 
       const result = await api.filter(filter, order, pageSize, skip);
@@ -330,13 +342,14 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // ── ordenação ──
   const handleSort = useCallback((field) => {
-    setSortField(prev => {
-      const newDir = prev === field ? (sortDir === "desc" ? "asc" : "desc") : "desc";
-      setSortDir(newDir);
-      return field;
-    });
+    if (field === sortField) {
+      setSortDir(d => d === "desc" ? "asc" : "desc");
+    } else {
+      setSortField(field);
+      setSortDir("desc");
+    }
     setPage(1);
-  }, [sortDir]);
+  }, [sortField]);
 
   const handleSortDropdown = useCallback((value) => {
     const idx = value.lastIndexOf("|");
@@ -459,19 +472,15 @@ export default function VisualizadorUniversalEntidadeV24({
       let idsToDelete = [];
 
       if (crossPageAll) {
-        // Buscar TODOS os IDs respeitando filtro de contexto
-        const api = base44.asServiceRole?.entities?.[ENTITY];
+        // Para simples: asServiceRole (sem filtro empresa); para contextualizadas: entities (Layout filtra)
+        const api = isSimple
+          ? (base44.asServiceRole?.entities?.[ENTITY] || base44.entities?.[ENTITY])
+          : base44.entities?.[ENTITY];
         if (!api?.filter) return;
         let skipAcc = 0;
         const BATCH = 500;
         while (true) {
-          const arr = await api.filter(ctxFilter, '-updated_date', BATCH, skipAcc);
-          if (!Array.isArray(arr) || arr.length === 0) break;
-          const validIds = arr.map(i => i.id).filter(id => id && !deselectedIds.has(id));
-          idsToDelete = idsToDelete.concat(validIds);
-          if (arr.length < BATCH) break;
-          skipAcc += BATCH;
-        }
+          const arr = await api.filter({}, '-updated_date', BATCH, skipAcc);
       } else {
         idsToDelete = Array.from(selectedIds);
       }
