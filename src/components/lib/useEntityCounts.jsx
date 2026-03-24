@@ -76,14 +76,9 @@ export function buildContextFilter(entityName, empresaId, groupId, empresasDoGru
   return { $or: orConds };
 }
 
-async function countEntityPages(entityName, filter, isSimple) {
-  // Simples: asServiceRole (sem filtro); contextualizadas: base44.entities (Layout já injeta empresa/grupo)
-  let api;
-  if (isSimple) {
-    api = base44.asServiceRole?.entities?.[entityName] || base44.entities?.[entityName];
-  } else {
-    api = base44.entities?.[entityName];
-  }
+// SEMPRE usa asServiceRole para leituras (bypassa wrap AND do Layout)
+async function countEntityPages(entityName, filter) {
+  const api = base44.asServiceRole?.entities?.[entityName] || base44.entities?.[entityName];
   if (!api?.filter) return 0;
   let total = 0;
   const PAGE = 500;
@@ -150,14 +145,11 @@ export function useEntityCounts(entities = []) {
       const results = await Promise.allSettled(
         toFetch.map(async (entityName) => {
           const isSimple = SIMPLE_CATALOG.has(entityName);
-          // Para entidades contextualizadas sem contexto: retorna 0
           if (!isSimple && !groupId && !empresaId) return { entityName, count: 0 };
-
-          // Para catálogos simples: sem filtro
-          // Para contextualizadas: base44.entities (o Layout já injeta empresa/grupo no filter)
-          const filter = isSimple ? {} : {}; // Layout já cuida do scope via wrap
-
-          const count = await countEntityPages(entityName, filter, isSimple);
+          // buildContextFilter usa $or — correto para asServiceRole
+          const filter = isSimple ? {} : (buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) || {});
+          if (filter === null) return { entityName, count: 0 };
+          const count = await countEntityPages(entityName, filter);
           return { entityName, count };
         })
       );
