@@ -920,7 +920,8 @@ function LayoutContent({ children, currentPageName }) {
         api.filter = async (criteria = {}, order, limit, skip) => {
           if (contexto !== 'grupo' && !empresaAtual?.id) { return []; }
           const scope = getScope();
-          const hasScope = !!criteria?.empresa_id || !!criteria?.group_id;
+          // Se o filtro já contém $or/$and ou campos de escopo, não injetar AND adicional
+          const hasScope = !!criteria?.empresa_id || !!criteria?.group_id || !!criteria?.$or || !!criteria?.$and;
           const merged = (!hasScope) ? { ...criteria, ...scope } : criteria;
           return await orig.filter(merged, order, limit, skip);
         };

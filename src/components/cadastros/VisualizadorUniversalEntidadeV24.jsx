@@ -121,22 +121,29 @@ function formatValue(value, col, extraColors = {}) {
 }
 
 /**
- * Busca registro completo via asServiceRole.get (bypassa wrap do Layout).
- * Fallbacks garantem que registros mais antigos também sejam encontrados.
+ * Busca registro completo via backend function (bypassa wrap do Layout totalmente).
  */
 async function fetchFullRecord(entityName, itemId) {
   if (!entityName || !itemId) return null;
-  // 1. asServiceRole.get — mais direto, sem nenhum filtro de empresa
+  // 1. getEntityRecord via backend (service role, sem wrap)
   try {
-    const rec = await base44.asServiceRole?.entities?.[entityName]?.get?.(itemId);
+    const res = await base44.functions.invoke('getEntityRecord', { entityName, id: itemId });
+    const rec = res?.data;
     if (rec?.id) return JSON.parse(JSON.stringify(rec));
   } catch (_) {}
-  // 2. asServiceRole.filter por id
+  // 2. entityListSorted filtrando por id
   try {
-    const res = await base44.asServiceRole?.entities?.[entityName]?.filter?.({ id: itemId }, '-updated_date', 1, 0);
-    if (Array.isArray(res) && res[0]?.id) return JSON.parse(JSON.stringify(res[0]));
+    const res = await base44.functions.invoke('entityListSorted', {
+      entityName,
+      filter: { id: itemId },
+      sortField: 'id',
+      sortDirection: 'asc',
+      limit: 1,
+    });
+    const arr = res?.data;
+    if (Array.isArray(arr) && arr[0]?.id) return JSON.parse(JSON.stringify(arr[0]));
   } catch (_) {}
-  // 3. entities.get (sem wrap de empresa para get por id específico)
+  // 3. entities.get (fallback final)
   try {
     const rec = await base44.entities?.[entityName]?.get?.(itemId);
     if (rec?.id) return JSON.parse(JSON.stringify(rec));
@@ -246,27 +253,27 @@ export default function VisualizadorUniversalEntidadeV24({
       if (!ENTITY) return [];
       if (!isSimple && readFilter === null) return [];
 
-      // LEITURA: asServiceRole + buildContextFilter ($or) — bypassa wrap AND do Layout
-      const api = base44.asServiceRole?.entities?.[ENTITY] || base44.entities?.[ENTITY];
-      if (!api?.filter) return [];
-
-      const order = `${sortDir === "desc" ? "-" : ""}${sortField}`;
+      // LEITURA via backend function — bypassa completamente o wrap AND do Layout
       let filter = { ...(readFilter || {}) };
 
       if (debouncedSearch?.trim()) {
         const fields = SEARCH_FIELDS[ENTITY] || ['nome', 'descricao', 'codigo'];
         const rx = { $regex: debouncedSearch.trim(), $options: 'i' };
         const searchOr = { $or: fields.map(f => ({ [f]: rx })) };
-        // Combinar com filtro de contexto
-        if (filter.$or) {
-          filter = { $and: [{ $or: filter.$or }, searchOr] };
-        } else {
-          filter = searchOr;
-        }
+        filter = filter.$or
+          ? { $and: [{ $or: filter.$or }, searchOr] }
+          : searchOr;
       }
 
-      const result = await api.filter(filter, order, pageSize, skip);
-      return Array.isArray(result) ? result : [];
+      const res = await base44.functions.invoke('entityListSorted', {
+        entityName: ENTITY,
+        filter,
+        sortField,
+        sortDirection: sortDir,
+        limit: pageSize,
+        skip,
+      });
+      return Array.isArray(res?.data) ? res.data : [];
     },
     staleTime: 30_000,
     gcTime: 180_000,

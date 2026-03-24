@@ -76,23 +76,30 @@ export function buildContextFilter(entityName, empresaId, groupId, empresasDoGru
   return { $or: orConds };
 }
 
-// SEMPRE usa asServiceRole para leituras (bypassa wrap AND do Layout)
+// Usa functions.invoke('countEntities') para bypass total do wrap do Layout
 async function countEntityPages(entityName, filter) {
-  const api = base44.asServiceRole?.entities?.[entityName] || base44.entities?.[entityName];
-  if (!api?.filter) return 0;
-  let total = 0;
-  const PAGE = 500;
-  for (let p = 0; p < 4; p++) {
-    try {
-      const res = await api.filter(filter || {}, '-updated_date', PAGE, p * PAGE);
-      const count = Array.isArray(res) ? res.length : 0;
-      total += count;
-      if (count < PAGE) break;
-    } catch {
-      break;
-    }
-  }
-  return total;
+  try {
+    const res = await base44.functions.invoke('countEntities', {
+      entityName,
+      filter: filter || {},
+    });
+    const d = res?.data;
+    if (typeof d?.count === 'number') return d.count;
+    if (typeof d?.total === 'number') return d.total;
+    if (typeof d === 'number') return d;
+  } catch (_) {}
+  // Fallback: usar entityListSorted com limite alto
+  try {
+    const res = await base44.functions.invoke('entityListSorted', {
+      entityName,
+      filter: filter || {},
+      sortField: 'id',
+      sortDirection: 'asc',
+      limit: 2000,
+    });
+    return Array.isArray(res?.data) ? res.data.length : 0;
+  } catch (_) {}
+  return 0;
 }
 
 export function useEntityCounts(entities = []) {
