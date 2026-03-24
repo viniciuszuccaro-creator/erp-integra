@@ -398,12 +398,16 @@ export default function VisualizadorUniversalEntidadeV24({
     try {
       let idsToDelete = [];
       if (crossPageAll) {
-        // asServiceRole + buildContextFilter para buscar todos os IDs sem falhas
-        const api = base44.asServiceRole?.entities?.[ENTITY] || base44.entities?.[ENTITY];
+        // Busca todos os IDs via backend function (bypassa wrap do Layout)
         const filter = isSimple ? {} : (buildContextFilter(ENTITY, empresaId, groupId, empresasDoGrupo) || {});
         let skipAcc = 0;
         while (true) {
-          const arr = await api.filter(filter, '-updated_date', 500, skipAcc);
+          const res = await base44.functions.invoke('entityListSorted', {
+            entityName: ENTITY, filter,
+            sortField: 'id', sortDirection: 'asc',
+            limit: 500, skip: skipAcc,
+          });
+          const arr = res?.data;
           if (!Array.isArray(arr) || !arr.length) break;
           arr.forEach(i => { if (i.id && !deselectedIds.has(i.id)) idsToDelete.push(i.id); });
           if (arr.length < 500) break;
