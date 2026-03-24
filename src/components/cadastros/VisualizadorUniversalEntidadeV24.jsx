@@ -125,10 +125,10 @@ function formatValue(value, col, extraColors = {}) {
  */
 async function fetchFullRecord(entityName, itemId) {
   if (!entityName || !itemId) return null;
-  // 1. getEntityRecord via backend (service role, sem wrap)
+  // 1. getEntityRecord via backend (service role, sem wrap) — retorna { record }
   try {
     const res = await base44.functions.invoke('getEntityRecord', { entityName, id: itemId });
-    const rec = res?.data;
+    const rec = res?.data?.record;
     if (rec?.id) return JSON.parse(JSON.stringify(rec));
   } catch (_) {}
   // 2. entityListSorted filtrando por id
