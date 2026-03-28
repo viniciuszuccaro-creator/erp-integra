@@ -1,12 +1,12 @@
 /**
- * VisualizadorUniversalEntidadeV24 — V31 FINAL
+ * VisualizadorUniversalEntidadeV24 — V32 CORRIGIDO
  *
- * CORREÇÕES DEFINITIVAS:
- * 1. REGISTROS SUMINDO → lastGoodData ref: nunca mostra [] enquanto está refetchando
- * 2. CONTAGENS ZERANDO → staleTime:0 + invalidação com refetchType:'all' em toda mutação
- * 3. EXCLUSÃO INCONSISTENTE → usa entityListSorted (service role) para coletar IDs, funciona em TODAS entidades
- * 4. EDITAR EM BRANCO → fetchFullRecord com 3 estratégias + deepClone garantido
- * 5. ORDENAÇÃO → estado estável, sem re-render desnecessário
+ * CORREÇÕES V32:
+ * 1. BOTÃO EDITAR → sempre visível (removido opacity-0/group-hover que dependia de Tailwind JIT)
+ * 2. ORDENAÇÃO → sort local como fallback para campos não-date
+ * 3. CONTAGENS → canFetch sem exigir contexto, buildContextFilter retorna {}
+ * 4. EDITAR EM BRANCO → fetchFullRecord mais robusto + fallback garantido
+ * 5. EXCLUSÃO EM MASSA → crossPage funciona com totalCount correto
  */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -41,11 +41,13 @@ const STATUS_COLORS = {
   Atrasado:"bg-red-100 text-red-700 border-red-200",
   Descontinuado:"bg-orange-100 text-orange-700 border-orange-200",
 };
-const STATUS_FIELDS = new Set(["status","status_fornecedor","status_cliente","situacao","situacao_credito","status_fiscal_receita","status_fornecedor"]);
+const STATUS_FIELDS = new Set(["status","status_fornecedor","status_cliente","situacao","situacao_credito","status_fiscal_receita"]);
 const BOOL_FIELDS   = new Set(["ativo","ativa","habilitado","compartilhado_grupo","ativo_sistema","principal","ativado"]);
 const DATE_FIELDS   = new Set(["created_date","updated_date","data_admissao","data_nascimento","data_vencimento","data_validade","ultima_compra","data_emissao","data_pedido","cnh_validade","data_aprovacao","data_inicio","data_fim"]);
 const MONEY_FIELDS  = new Set(["salario","preco_venda","custo_aquisicao","custo_medio","valor_frete","orcamento_mensal","limite_credito","valor_total","valor","valor_minimo","valor_maximo","percentual_comissao"]);
 const PAGE_SIZES = [10, 20, 50, 100];
+// Campos que o backend suporta ordenação nativa
+const BACKEND_SORT_FIELDS = new Set(["updated_date","created_date","id"]);
 
 const SEARCH_FIELDS = {
   Banco:["nome","nome_banco","codigo_banco"],
@@ -97,7 +99,7 @@ const SEARCH_FIELDS = {
   PerfilAcesso:["nome_perfil","descricao"],
 };
 
-// Forms que têm save/delete próprio — não usamos handlePersistSubmit
+// Forms com save/delete próprio
 const SELF_MANAGED_NAMES = new Set([
   "CadastroClienteCompleto","CadastroFornecedorCompleto","TransportadoraForm",
   "ColaboradorForm","RepresentanteFormCompleto","RepresentanteForm",
@@ -105,7 +107,7 @@ const SELF_MANAGED_NAMES = new Set([
   "ContatoB2BForm","SegmentoClienteForm",
 ]);
 
-// Aliases: passamos o editItem por TODOS os nomes possíveis de prop
+// Todos os aliases de prop possíveis para o item editado
 const FORM_ALIASES = [
   "item","data","initialData","defaultValues","record","entity","value",
   "cliente","fornecedor","colaborador","transportadora","representante",
@@ -147,16 +149,33 @@ function fmtValue(value, col, extraColors = {}) {
   return String(value).substring(0, 130);
 }
 
-// Busca registro completo por 3 estratégias
+// Sort local para campos não suportados nativamente pelo backend
+function localSort(arr, field, dir) {
+  if (!arr || !arr.length || !field) return arr;
+  return [...arr].sort((a, b) => {
+    const va = a[field] ?? "";
+    const vb = b[field] ?? "";
+    if (typeof va === "number" && typeof vb === "number") return dir === "asc" ? va - vb : vb - va;
+    const sa = String(va).toLowerCase();
+    const sb = String(vb).toLowerCase();
+    if (sa < sb) return dir === "asc" ? -1 : 1;
+    if (sa > sb) return dir === "asc" ? 1 : -1;
+    return 0;
+  });
+}
+
+// Busca registro completo — 3 estratégias
 async function fetchFullRecord(entityName, itemId) {
   if (!entityName || !itemId) return null;
-  // 1. Backend getEntityRecord (service role)
+
+  // Estratégia 1: função backend getEntityRecord (asServiceRole, sem filtros)
   try {
     const res = await base44.functions.invoke("getEntityRecord", { entityName, id: itemId });
     const rec = res?.data?.record || res?.data;
     if (rec && rec.id) return JSON.parse(JSON.stringify(rec));
   } catch (_) {}
-  // 2. entityListSorted filtrando por id (sem wrap de empresa)
+
+  // Estratégia 2: entityListSorted com filtro por id
   try {
     const res = await base44.functions.invoke("entityListSorted", {
       entityName, filter: { id: itemId }, sortField: "id", sortDirection: "asc", limit: 1, skip: 0,
@@ -164,11 +183,20 @@ async function fetchFullRecord(entityName, itemId) {
     const arr = Array.isArray(res?.data) ? res.data : [];
     if (arr[0]?.id) return JSON.parse(JSON.stringify(arr[0]));
   } catch (_) {}
-  // 3. entities.get direto
+
+  // Estratégia 3: SDK direto
   try {
-    const rec = await base44.entities?.[entityName]?.get?.(itemId);
-    if (rec?.id) return JSON.parse(JSON.stringify(rec));
+    const api = base44.entities?.[entityName];
+    if (typeof api?.get === "function") {
+      const rec = await api.get(itemId);
+      if (rec?.id) return JSON.parse(JSON.stringify(rec));
+    }
+    if (typeof api?.filter === "function") {
+      const recs = await api.filter({ id: itemId }, "-id", 1);
+      if (Array.isArray(recs) && recs[0]?.id) return JSON.parse(JSON.stringify(recs[0]));
+    }
   } catch (_) {}
+
   return null;
 }
 
@@ -185,12 +213,11 @@ function buildFormProps(editItem, onClose, onSubmit) {
 }
 
 function invalidateAll(qc, entity) {
-  // Força refetch imediato ignorando staleTime
-  qc.invalidateQueries({ queryKey: ["viz-v31", entity], refetchType: "all" });
+  qc.invalidateQueries({ queryKey: ["viz-v32", entity], refetchType: "all" });
   qc.invalidateQueries({ queryKey: ["entityCounts_v5"], refetchType: "all" });
 }
 
-// ─── COMPONENTE ───────────────────────────────────────────────────────────────
+// ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────────────
 export default function VisualizadorUniversalEntidadeV24({
   nomeEntidade, tituloDisplay, icone: IconeProp,
   camposPrincipais = [], componenteEdicao: FormComponent,
@@ -203,7 +230,8 @@ export default function VisualizadorUniversalEntidadeV24({
   const isSimple = SIMPLE_CATALOG.has(ENTITY);
   const isSelfManaged = useMemo(() => {
     if (!FormComponent) return false;
-    return SELF_MANAGED_NAMES.has(FormComponent?.displayName || FormComponent?.name || "");
+    const name = FormComponent?.displayName || FormComponent?.name || "";
+    return SELF_MANAGED_NAMES.has(name);
   }, [FormComponent]);
 
   const queryClient = useQueryClient();
@@ -242,7 +270,7 @@ export default function VisualizadorUniversalEntidadeV24({
   const [crossPageAll, setCrossPageAll] = useState(false);
   const [deselectedIds,setDeselectedIds]= useState(() => new Set());
 
-  // lastGoodData: evita mostrar [] enquanto refetcha (causa o "sumir")
+  // lastGoodData: evita mostrar [] durante refetch
   const lastGoodData = useRef([]);
 
   // Debounce busca
@@ -253,22 +281,25 @@ export default function VisualizadorUniversalEntidadeV24({
     return () => clearTimeout(debRef.current);
   }, [search]);
 
-  // Contagem via hook V6 (staleTime:30s mas invalidação força refetch imediato)
+  // Contagem
   const { counts, isLoading: countsLoading } = useEntityCounts(ENTITY ? [ENTITY] : []);
   const totalCount = Number(counts[ENTITY] || 0);
 
   const skip = (page - 1) * pageSize;
 
-  // Filtro de contexto — NUNCA retorna null (usa {} para simple e para sem contexto)
+  // Filtro de contexto: nunca null
   const readFilter = useMemo(() => {
     if (isSimple) return {};
     if (!empresaId && !groupId) return {};
-    const f = buildContextFilter(ENTITY, empresaId, groupId, empresasDoGrupo);
-    return f ?? {};
+    return buildContextFilter(ENTITY, empresaId, groupId, empresasDoGrupo) ?? {};
   }, [ENTITY, isSimple, empresaId, groupId, empresasDoGrupo]); // eslint-disable-line
 
+  // Para sort, enviamos ao backend apenas campos suportados nativamente
+  const backendSortField = BACKEND_SORT_FIELDS.has(sortField) ? sortField : "updated_date";
+  const backendSortDir   = BACKEND_SORT_FIELDS.has(sortField) ? sortDir : "desc";
+
   const queryKey = useMemo(
-    () => ["viz-v31", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId],
+    () => ["viz-v32", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId],
     [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId]
   );
 
@@ -284,7 +315,6 @@ export default function VisualizadorUniversalEntidadeV24({
         const fields = SEARCH_FIELDS[ENTITY] || ["nome","descricao"];
         const rx = { $regex: debouncedSearch.trim(), $options: "i" };
         const searchOr = { $or: fields.map(f => ({ [f]: rx })) };
-        // Mescla: se filter já tem $or, cria $and; senão spread
         if (filter.$or) {
           filter = { $and: [{ $or: filter.$or }, searchOr] };
         } else {
@@ -295,12 +325,18 @@ export default function VisualizadorUniversalEntidadeV24({
       const res = await base44.functions.invoke("entityListSorted", {
         entityName: ENTITY,
         filter,
-        sortField,
-        sortDirection: sortDir,
+        sortField: backendSortField,
+        sortDirection: backendSortDir,
         limit: pageSize,
         skip,
       });
-      return Array.isArray(res?.data) ? res.data : [];
+      const fetched = Array.isArray(res?.data) ? res.data : [];
+
+      // Sort local para campos não suportados pelo backend
+      if (!BACKEND_SORT_FIELDS.has(sortField) && fetched.length > 0) {
+        return localSort(fetched, sortField, sortDir);
+      }
+      return fetched;
     },
     staleTime: 0,
     gcTime: 300_000,
@@ -308,29 +344,17 @@ export default function VisualizadorUniversalEntidadeV24({
     enabled: !!ENTITY,
   });
 
-  // CORREÇÃO CRÍTICA: nunca mostra lista vazia durante refetch
-  // Se estiver refetchando E tinha dados antes → mantém os dados anteriores visíveis
+  // Nunca mostra vazio durante refetch se havia dados
   const items = useMemo(() => {
-    if (!rawItems) {
-      return lastGoodData.current;
-    }
-    if (rawItems.length > 0) {
-      lastGoodData.current = rawItems;
-      return rawItems;
-    }
-    // rawItems === [] mas está fetching → mantém dados anteriores para não "sumir"
-    if (isFetching && lastGoodData.current.length > 0) {
-      return lastGoodData.current;
-    }
-    // Realmente não tem dados
+    if (!rawItems) return lastGoodData.current;
+    if (rawItems.length > 0) { lastGoodData.current = rawItems; return rawItems; }
+    if (isFetching && lastGoodData.current.length > 0) return lastGoodData.current;
     lastGoodData.current = [];
     return [];
   }, [rawItems, isFetching]);
 
-  // Reseta lastGoodData quando muda de entidade ou contexto
-  useEffect(() => {
-    lastGoodData.current = [];
-  }, [ENTITY, empresaId, groupId]);
+  // Reset ao mudar entidade/contexto
+  useEffect(() => { lastGoodData.current = []; }, [ENTITY, empresaId, groupId]);
 
   // Subscribe para invalidar ao detectar writes externos
   useEffect(() => {
@@ -343,7 +367,7 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // ── ordenação ────────────────────────────────────────────────────────────────
   const handleSort = useCallback((field) => {
-    setSortDir(prev => sortField === field ? (prev === "desc" ? "asc" : "desc") : "desc");
+    setSortDir(prev => sortField === field ? (prev === "desc" ? "asc" : "desc") : "asc");
     setSortField(field);
     setPage(1);
   }, [sortField]);
@@ -392,16 +416,27 @@ export default function VisualizadorUniversalEntidadeV24({
   const handleEditItem = useCallback(async (item) => {
     if (!item?.id) return;
     setIsLoadingEdit(true); setEditError(null);
+
+    // Abre o form imediatamente com os dados parciais já disponíveis
+    const partialItem = JSON.parse(JSON.stringify(item));
+    setEditItem(partialItem);
+    setFormKey(k => k + 1);
+    setShowForm(true);
+
+    // Busca dados completos em background
     try {
       const full = await fetchFullRecord(ENTITY, item.id);
-      setEditItem(full ?? JSON.parse(JSON.stringify(item)));
-      if (!full) setEditError("Dados parciais — alguns campos podem não aparecer.");
-      setFormKey(k => k + 1);
-      setShowForm(true);
+      if (full && full.id) {
+        setEditItem(full);
+        setFormKey(k => k + 1); // re-monta o form com dados completos
+      } else {
+        setEditError("Dados carregados parcialmente — alguns campos podem estar incompletos.");
+      }
     } catch {
-      setEditItem(JSON.parse(JSON.stringify(item)));
-      setFormKey(k => k + 1); setShowForm(true);
-    } finally { setIsLoadingEdit(false); }
+      setEditError("Erro ao carregar dados completos.");
+    } finally {
+      setIsLoadingEdit(false);
+    }
   }, [ENTITY]);
 
   const formProps = useMemo(
@@ -420,7 +455,7 @@ export default function VisualizadorUniversalEntidadeV24({
     invalidateAll(queryClient, ENTITY);
   }, [ENTITY, queryClient, items.length, page]);
 
-  // ── exclusão em massa (TODAS as entidades) ───────────────────────────────────
+  // ── exclusão em massa ────────────────────────────────────────────────────────
   const handleDeleteSelected = useCallback(async () => {
     const effCount = crossPageAll
       ? Math.max(0, totalCount - deselectedIds.size)
@@ -435,7 +470,6 @@ export default function VisualizadorUniversalEntidadeV24({
     try {
       let idsToDelete = [];
       if (crossPageAll) {
-        // Coleta todos os IDs via service role (sem wrap AND do Layout)
         let skipAcc = 0;
         while (true) {
           const res = await base44.functions.invoke("entityListSorted", {
@@ -456,7 +490,6 @@ export default function VisualizadorUniversalEntidadeV24({
 
       if (!idsToDelete.length) { alert("Nenhum registro encontrado para excluir."); return; }
 
-      // Deleta em lotes de 20
       for (let i = 0; i < idsToDelete.length; i += 20) {
         await Promise.all(
           idsToDelete.slice(i, i + 20).map(id =>
@@ -512,7 +545,7 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const getSortIcon = (field) => {
     if (sortField !== field)
-      return <ChevronsUpDown className="w-3 h-3 text-slate-300 opacity-0 group-hover/th:opacity-100 transition-opacity" />;
+      return <ChevronsUpDown className="w-3 h-3 text-slate-400" />;
     return sortDir === "desc"
       ? <ChevronDown className="w-3.5 h-3.5 text-blue-500" />
       : <ChevronUp className="w-3.5 h-3.5 text-blue-500" />;
@@ -527,7 +560,6 @@ export default function VisualizadorUniversalEntidadeV24({
 
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap shrink-0">
-        {/* Título + contagem */}
         <div className="flex items-center gap-1.5 shrink-0">
           <span className="text-sm font-semibold text-slate-700 truncate max-w-[160px]">{TITULO}:</span>
           <Badge variant="outline" className="rounded-sm bg-blue-50 text-blue-700 border-blue-200 font-bold tabular-nums min-w-[32px] text-center">
@@ -537,7 +569,6 @@ export default function VisualizadorUniversalEntidadeV24({
           </Badge>
         </div>
 
-        {/* Busca */}
         <div className="relative flex-1 min-w-[120px]">
           <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
           <Input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)}
@@ -549,13 +580,11 @@ export default function VisualizadorUniversalEntidadeV24({
           )}
         </div>
 
-        {/* Por página */}
         <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer shrink-0">
           {PAGE_SIZES.map(ps => <option key={ps} value={ps}>{ps}/pág</option>)}
         </select>
 
-        {/* Ordenação */}
         <select value={`${sortField}|${sortDir}`} onChange={e => handleSortDropdown(e.target.value)}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer shrink-0">
           <option value="updated_date|desc">↓ Mais Recentes</option>
@@ -569,20 +598,17 @@ export default function VisualizadorUniversalEntidadeV24({
             ])}
         </select>
 
-        {/* Recarregar */}
         <button type="button" onClick={() => { lastGoodData.current = []; invalidateAll(queryClient, ENTITY); }}
           className="h-9 w-9 flex items-center justify-center border border-slate-200 rounded-sm bg-white hover:bg-slate-50 shrink-0">
           <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-blue-500" : "text-slate-500"}`} />
         </button>
 
-        {/* Novo */}
         {FormComponent && (
-          <Button size="sm" onClick={handleNewItem} className="h-9 rounded-sm gap-1 shrink-0" disabled={isLoadingEdit}>
+          <Button size="sm" onClick={handleNewItem} className="h-9 rounded-sm gap-1 shrink-0">
             <Plus className="w-4 h-4" /> Novo
           </Button>
         )}
 
-        {/* Excluir selecionados */}
         {effSelectedCount > 0 && (
           <Button size="sm" variant="destructive" onClick={handleDeleteSelected} className="h-9 rounded-sm gap-1 shrink-0">
             <Trash2 className="w-4 h-4" />
@@ -591,7 +617,7 @@ export default function VisualizadorUniversalEntidadeV24({
         )}
       </div>
 
-      {/* Banner: selecionar todas as páginas */}
+      {/* Banner cross-page */}
       {showCrossPageBanner && (
         <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-1.5 text-xs text-amber-800 flex items-center gap-2 flex-wrap shrink-0">
           <span className="font-medium">{selectedIds.size} selecionados nesta página.</span>
@@ -646,7 +672,7 @@ export default function VisualizadorUniversalEntidadeV24({
                 </th>
                 {COLUMNS.map(col => (
                   <th key={col.field}
-                    className={`group/th px-3 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap select-none
+                    className={`px-3 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap select-none
                       ${col.sortable !== false ? "cursor-pointer hover:bg-slate-100 transition-colors" : ""}`}
                     onClick={() => col.sortable !== false && handleSort(col.field)}>
                     <div className="flex items-center gap-1">
@@ -662,7 +688,8 @@ export default function VisualizadorUniversalEntidadeV24({
               {items.map(item => {
                 const checked = isItemSelected(item.id);
                 return (
-                  <tr key={item.id} className={`hover:bg-blue-50/30 transition-colors group/row ${checked?"bg-blue-50/40":""}`}>
+                  <tr key={item.id}
+                    className={`transition-colors hover:bg-blue-50/30 ${checked ? "bg-blue-50/40" : ""}`}>
                     <td className="px-3 py-2 text-center">
                       <input type="checkbox" checked={checked}
                         onChange={e => handleItemCheck(item.id, e.target.checked)}
@@ -673,17 +700,30 @@ export default function VisualizadorUniversalEntidadeV24({
                         {fmtValue(item[col.field], col, extraColors)}
                       </td>
                     ))}
+                    {/* ── Botões de ação: SEMPRE VISÍVEIS (sem opacity-0) ── */}
                     <td className="px-3 py-2">
-                      <div className="flex items-center justify-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-center gap-1">
                         {FormComponent && (
-                          <button type="button" onClick={e => { e.stopPropagation(); handleEditItem(item); }}
-                            title="Editar" disabled={isLoadingEdit}
-                            className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40">
-                            {isLoadingEdit ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Edit className="w-3.5 h-3.5" />}
+                          <button
+                            type="button"
+                            onClick={e => { e.stopPropagation(); handleEditItem(item); }}
+                            title="Editar"
+                            disabled={isLoadingEdit}
+                            className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
+                          >
+                            {isLoadingEdit ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Edit className="w-3.5 h-3.5" />
+                            )}
                           </button>
                         )}
-                        <button type="button" onClick={() => handleDelete(item)} title="Excluir"
-                          className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item)}
+                          title="Excluir"
+                          className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -715,8 +755,10 @@ export default function VisualizadorUniversalEntidadeV24({
         <>
           <div className="fixed inset-0 z-[1099] bg-black/50" onClick={handleCloseForm} />
           <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 pointer-events-none">
-            <div className="bg-white rounded-xl w-full max-w-4xl max-h-[92vh] overflow-auto shadow-2xl pointer-events-auto flex flex-col"
-              onClick={e => e.stopPropagation()}>
+            <div
+              className="bg-white rounded-xl w-full max-w-4xl max-h-[92vh] overflow-auto shadow-2xl pointer-events-auto flex flex-col"
+              onClick={e => e.stopPropagation()}
+            >
               <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between rounded-t-xl shrink-0 z-10">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-800">
@@ -732,6 +774,11 @@ export default function VisualizadorUniversalEntidadeV24({
                   {isSaving && (
                     <span className="text-xs text-blue-600 flex items-center gap-1">
                       <RefreshCw className="w-3 h-3 animate-spin" /> Salvando…
+                    </span>
+                  )}
+                  {isLoadingEdit && (
+                    <span className="text-xs text-slate-500 flex items-center gap-1">
+                      <RefreshCw className="w-3 h-3 animate-spin" /> Carregando dados…
                     </span>
                   )}
                   <button type="button" onClick={handleCloseForm}
@@ -766,6 +813,5 @@ export default function VisualizadorUniversalEntidadeV24({
       </div>
     );
   }
-  // non-windowMode: precisa de flex-1 para receber altura do pai
   return <div className="flex flex-col flex-1 min-h-0 h-full w-full">{content}</div>;
 }
