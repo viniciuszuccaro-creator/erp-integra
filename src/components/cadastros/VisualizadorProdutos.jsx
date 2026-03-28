@@ -62,40 +62,15 @@ export default function VisualizadorProdutos(props) {
     icone: Package,
     camposPrincipais: ['descricao', 'codigo', 'tipo_item', 'setor_atividade_nome', 'grupo_produto_nome', 'marca_nome', 'status', 'estoque_atual', 'preco_venda'],
     componenteEdicao: ProdutoFormV22_Completo,
-    windowMode: true,
+    windowMode: false,
     ...props,
   };
 
   return (
     <div className="flex flex-col h-full w-full bg-slate-50">
-      <div className="p-4 border-b bg-white flex items-center gap-4">
-        <BotoesImportacaoProduto onProdutosCriados={() => queryClient.invalidateQueries({ queryKey: ['produtos'] })} />
-        <Button
-          variant="outline"
-          className="border-green-300 text-green-700 hover:bg-green-50"
-          onClick={() => openWindow(ImportadorProdutosPlanilha, {
-            windowMode: true,
-            onConcluido: () => queryClient.invalidateQueries({ queryKey: ['produtos'] })
-          }, {
-            title: '📥 Importar Planilha',
-            width: 1100,
-            height: 700
-          })}
-        >
-          <Upload className="w-4 h-4 mr-2" />
-          Importar Planilha
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => setIsSetorModalOpen(true)}
-          disabled={selectedProdutos.size === 0}
-          className="border-blue-300 hover:bg-blue-50"
-        >
-          <Edit className="w-4 h-4 mr-2" />
-          Atualizar Setor ({selectedProdutos.size})
-        </Button>
+      <div className="p-4 border-b bg-white flex items-center gap-4 shrink-0">
       </div>
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 min-h-0 overflow-hidden p-4">
         <VisualizadorUniversalEntidadeV24 {...visualizadorProps} />
       </div>
 
