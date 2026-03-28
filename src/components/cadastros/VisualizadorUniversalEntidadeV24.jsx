@@ -275,21 +275,21 @@ export default function VisualizadorUniversalEntidadeV24({
       });
       return Array.isArray(res?.data) ? res.data : [];
     },
-    staleTime: 30_000,
+    staleTime: 0,         // Sempre considera stale — garante refetch após invalidate
     gcTime: 180_000,
     refetchOnWindowFocus: false,
-    placeholderData: prev => prev,
+    placeholderData: prev => prev,  // Mantém dados anteriores visíveis durante refetch
     enabled: !!ENTITY && (isSimple || readFilter !== null),
   });
 
-  // Subscribe para invalidar após writes
+  // Subscribe para invalidar após writes (reativa para refetch imediato)
   useEffect(() => {
     if (!ENTITY) return;
     const api = base44.entities?.[ENTITY];
     if (!api?.subscribe) return;
     const unsub = api.subscribe(() => {
-      queryClient.invalidateQueries({ queryKey: ["viz-v28", ENTITY] });
-      queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'] });
+      queryClient.invalidateQueries({ queryKey: ["viz-v28", ENTITY], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'], refetchType: 'all' });
     });
     return () => { if (typeof unsub === "function") unsub(); };
   }, [ENTITY, queryClient]);
@@ -317,8 +317,8 @@ export default function VisualizadorUniversalEntidadeV24({
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
-    queryClient.invalidateQueries({ queryKey: ["viz-v28", ENTITY] });
-    queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'] });
+    queryClient.invalidateQueries({ queryKey: ["viz-v28", ENTITY], refetchType: 'all' });
+    queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'], refetchType: 'all' });
   }, [ENTITY, queryClient]);
 
   const handlePersistSubmit = useCallback(async (formData) => {
@@ -379,8 +379,8 @@ export default function VisualizadorUniversalEntidadeV24({
     if (!window.confirm(`Confirma exclusão de "${label}"?`)) return;
     try {
       await base44.entities[ENTITY].delete(item.id);
-      queryClient.invalidateQueries({ queryKey: ["viz-v28", ENTITY] });
-      queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'] });
+      queryClient.invalidateQueries({ queryKey: ["viz-v28", ENTITY], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'], refetchType: 'all' });
       setSelectedIds(prev => { const n = new Set(prev); n.delete(item.id); return n; });
     } catch (e) { alert("Erro ao excluir: " + (e?.message || String(e))); }
   }, [ENTITY, queryClient]);
@@ -427,7 +427,7 @@ export default function VisualizadorUniversalEntidadeV24({
       setSelectedIds(new Set()); setDeselectedIds(new Set());
       setCrossPageAll(false); setPage(1);
     } catch (e) { alert("Erro ao excluir: " + (e?.message || String(e))); }
-  }, [ENTITY, isSimple, crossPageAll, totalCount, selectedIds, deselectedIds, empresaId, groupId, empresasDoGrupo, queryClient]);
+  }, [ENTITY, isSimple, crossPageAll, totalCount, selectedIds, deselectedIds, empresaId, groupId, JSON.stringify(empresasDoGrupo), queryClient]); // eslint-disable-line
 
   // ── seleção ──
   const isItemSelected = useCallback((id) =>

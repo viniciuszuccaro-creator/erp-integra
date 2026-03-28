@@ -1,18 +1,14 @@
 /**
- * useEntityCounts V5 — contagem robusta multiempresa
- * - SIMPLE_CATALOG: contagem global (sem filtro de contexto)
- * - Entidades contextualizadas: filtro por empresa/grupo
- * - Cache em memória 2min
- * - Invalidação via subscribe
+ * useEntityCounts V6 — contagem robusta multiempresa
+ * - SEM cache em memória (COUNT_CACHE removido — causava contagens stale após mutações)
+ * - Usa batch API do countEntities (1 request para N entidades)
+ * - React Query com staleTime=30s controla a frequência de re-fetch
+ * - Invalidação automática via subscribe por entidade
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import { useMemo, useEffect, useRef } from "react";
-
-const CACHE_TTL = 120_000;
-// Cache global fora do componente para persistir entre remontagens
-const COUNT_CACHE = new Map();
+import { useMemo, useEffect } from "react";
 
 // Entidades que NÃO precisam de filtro de empresa/grupo (catálogos globais)
 export const SIMPLE_CATALOG = new Set([
@@ -38,7 +34,6 @@ const CAMPO_CTX = {
 const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
 
 export function buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) {
-  // Catálogos simples: sem filtro de contexto (globais)
   if (SIMPLE_CATALOG.has(entityName)) return {};
 
   const campo = CAMPO_CTX[entityName] || 'empresa_id';
@@ -60,7 +55,6 @@ export function buildContextFilter(entityName, empresaId, groupId, empresasDoGru
     }
   }
 
-  // Adicionar outras empresas do grupo
   const otherIds = empresaId ? grupoEmpIds.filter(id => id !== empresaId) : grupoEmpIds;
   if (otherIds.length > 0) {
     if (entityName === 'Cliente') {
@@ -72,12 +66,12 @@ export function buildContextFilter(entityName, empresaId, groupId, empresasDoGru
     }
   }
 
-  if (orConds.length === 0) return null; // null = sem contexto, não buscar
+  if (orConds.length === 0) return null;
   return { $or: orConds };
 }
 
-// Usa functions.invoke('countEntities') para bypass total do wrap do Layout
-async function countEntityPages(entityName, filter) {
+// Fallback: contagem individual via countEntities (single mode)
+async function countSingle(entityName, filter) {
   try {
     const res = await base44.functions.invoke('countEntities', {
       entityName,
@@ -85,10 +79,8 @@ async function countEntityPages(entityName, filter) {
     });
     const d = res?.data;
     if (typeof d?.count === 'number') return d.count;
-    if (typeof d?.total === 'number') return d.total;
-    if (typeof d === 'number') return d;
   } catch (_) {}
-  // Fallback: usar entityListSorted com limite alto
+  // Fallback via listagem
   try {
     const res = await base44.functions.invoke('entityListSorted', {
       entityName,
@@ -123,7 +115,6 @@ export function useEntityCounts(entities = []) {
 
   const queryKey = ['entityCounts_v5', entitiesKey, groupId, empresaId, grupoEmpIdsKey];
 
-  // Entidades simples sempre podem buscar; contextualizadas precisam de empresa ou grupo
   const canFetch = normalized.length > 0 && normalized.some(e => {
     if (SIMPLE_CATALOG.has(e)) return true;
     return !!(groupId || empresaId);
@@ -133,62 +124,60 @@ export function useEntityCounts(entities = []) {
     queryKey,
     queryFn: async () => {
       if (!normalized.length) return {};
-      const now = Date.now();
-      const merged = {};
-      const toFetch = [];
+
+      const batchPayload = [];
+      const fixed = {}; // entidades com resultado imediato (sem escopo)
 
       for (const entityName of normalized) {
-        const ck = `${entityName}|${groupId}|${empresaId}|${grupoEmpIdsKey}`;
-        const cached = COUNT_CACHE.get(ck);
-        if (cached && now - cached.ts < CACHE_TTL) {
-          merged[entityName] = cached.count;
-        } else {
-          toFetch.push(entityName);
+        const isSimple = SIMPLE_CATALOG.has(entityName);
+        if (!isSimple && !groupId && !empresaId) {
+          fixed[entityName] = 0;
+          continue;
         }
+        const filter = isSimple
+          ? {}
+          : (buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) || {});
+        if (filter === null) {
+          fixed[entityName] = 0;
+          continue;
+        }
+        batchPayload.push({ entityName, filter });
       }
 
-      if (toFetch.length === 0) return merged;
+      if (!batchPayload.length) return fixed;
 
-      const results = await Promise.allSettled(
-        toFetch.map(async (entityName) => {
-          const isSimple = SIMPLE_CATALOG.has(entityName);
-          if (!isSimple && !groupId && !empresaId) return { entityName, count: 0 };
-          // buildContextFilter usa $or — correto para asServiceRole
-          const filter = isSimple ? {} : (buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) || {});
-          if (filter === null) return { entityName, count: 0 };
-          const count = await countEntityPages(entityName, filter);
-          return { entityName, count };
-        })
-      );
-
-      const allCounts = { ...merged };
-      for (const result of results) {
-        if (result.status === 'fulfilled') {
-          const { entityName, count } = result.value;
-          allCounts[entityName] = count;
-          const ck = `${entityName}|${groupId}|${empresaId}|${grupoEmpIdsKey}`;
-          COUNT_CACHE.set(ck, { count, ts: Date.now() });
+      // Batch API — 1 request para todas as entidades
+      try {
+        const res = await base44.functions.invoke('countEntities', {
+          entities: batchPayload,
+        });
+        const d = res?.data;
+        if (d?.counts && typeof d.counts === 'object') {
+          return { ...fixed, ...d.counts };
         }
+      } catch (_) {}
+
+      // Fallback sequencial (evita 429)
+      const result = { ...fixed };
+      for (const { entityName, filter } of batchPayload) {
+        result[entityName] = await countSingle(entityName, filter);
       }
-      return allCounts;
+      return result;
     },
-    staleTime: CACHE_TTL,
+    staleTime: 30_000,   // 30s — expira rápido para refletir mutações
     gcTime: 300_000,
-    placeholderData: (prev) => prev,
+    placeholderData: prev => prev,
     refetchOnWindowFocus: false,
     enabled: canFetch,
   });
 
-  // Invalidar contagem quando registros mudam
+  // Invalidar quando registros mudam
   useEffect(() => {
     if (!normalized.length) return;
     const unsubs = normalized.map(entity => {
       const api = base44.entities?.[entity];
       if (!api?.subscribe) return null;
       return api.subscribe(() => {
-        for (const [key] of COUNT_CACHE.entries()) {
-          if (key.startsWith(`${entity}|`)) COUNT_CACHE.delete(key);
-        }
         queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'] });
       });
     }).filter(Boolean);
