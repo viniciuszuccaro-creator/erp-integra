@@ -57,20 +57,20 @@ export default function VisualizadorProdutos(props) {
   };
 
   const visualizadorProps = {
+    ...props,
     nomeEntidade: 'Produto',
     tituloDisplay: 'Produtos',
     icone: Package,
     camposPrincipais: ['descricao', 'codigo', 'tipo_item', 'setor_atividade_nome', 'grupo_produto_nome', 'marca_nome', 'status', 'estoque_atual', 'preco_venda'],
     componenteEdicao: ProdutoFormV22_Completo,
     windowMode: false,
-    ...props,
   };
 
   return (
     <div className="flex flex-col h-full w-full bg-slate-50">
       <div className="p-4 border-b bg-white flex items-center gap-4 shrink-0">
       </div>
-      <div className="flex-1 min-h-0 overflow-hidden p-4">
+      <div className="flex-1 min-h-0 overflow-auto p-4">
         <VisualizadorUniversalEntidadeV24 {...visualizadorProps} />
       </div>
 
