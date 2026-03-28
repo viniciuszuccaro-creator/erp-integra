@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import VisualizadorUniversalEntidade from './VisualizadorUniversalEntidade';
+import VisualizadorUniversalEntidadeV24 from './VisualizadorUniversalEntidadeV24';
 import BotoesImportacaoProduto from './BotoesImportacaoProduto';
 import ProdutoFormV22_Completo from './ProdutoFormV22_Completo';
 import ImportadorProdutosPlanilha from '@/components/estoque/ImportadorProdutosPlanilha';
@@ -60,10 +60,8 @@ export default function VisualizadorProdutos(props) {
     nomeEntidade: 'Produto',
     tituloDisplay: 'Produtos',
     icone: Package,
-    queryKey: ['produtos'],
     camposPrincipais: ['descricao', 'codigo', 'tipo_item', 'setor_atividade_nome', 'grupo_produto_nome', 'marca_nome', 'status', 'estoque_atual', 'preco_venda'],
     componenteEdicao: ProdutoFormV22_Completo,
-    onSelectionChange: setSelectedProdutos,
     windowMode: true,
     ...props,
   };
@@ -98,7 +96,7 @@ export default function VisualizadorProdutos(props) {
         </Button>
       </div>
       <div className="flex-1 overflow-auto p-4">
-        <VisualizadorUniversalEntidade {...visualizadorProps} />
+        <VisualizadorUniversalEntidadeV24 {...visualizadorProps} />
       </div>
 
       <Dialog open={isSetorModalOpen} onOpenChange={setIsSetorModalOpen}>
