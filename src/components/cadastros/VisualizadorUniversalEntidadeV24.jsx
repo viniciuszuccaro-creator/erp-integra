@@ -1,11 +1,12 @@
 /**
- * VisualizadorUniversalEntidadeV24 — V28 DEFINITIVO
+ * VisualizadorUniversalEntidadeV24 — V29 DEFINITIVO
  *
- * REGRA CENTRAL: leituras usam asServiceRole + buildContextFilter ($or correto).
- * O wrap do Layout faz AND (empresa_id AND group_id) quebrando registros com só um campo.
- * Escrita continua via base44.entities (Layout faz stamp + auditoria).
- *
- * Corrige: editar, excluir em massa, contagem, ordenação, form preenchido.
+ * REGRAS:
+ * - Leituras: functions.invoke('entityListSorted') — bypassa wrap AND do Layout
+ * - Contagem: functions.invoke('countEntities') — batch API, sem cache em memória
+ * - Escrita: base44.entities[ENTITY] — Layout faz stamp + auditoria
+ * - staleTime: 0 — sempre refetch após invalidação
+ * - refetchType: 'all' — força refetch em todas as queries ativas
  */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,81 +22,81 @@ import {
   Search, Edit, Trash2, Plus, RefreshCw, AlertCircle, X
 } from "lucide-react";
 
-// ─── formatação ───────────────────────────────────────────────────────────────
+// ─── constantes de formatação ─────────────────────────────────────────────────
 const STATUS_COLORS = {
-  Ativo:"bg-green-100 text-green-700", Ativa:"bg-green-100 text-green-700",
-  Aprovado:"bg-green-100 text-green-700", OK:"bg-green-100 text-green-700",
-  Pago:"bg-green-100 text-green-700", Recebido:"bg-green-100 text-green-700",
-  "Em Análise":"bg-blue-100 text-blue-700",
-  Pendente:"bg-yellow-100 text-yellow-700", Prospect:"bg-yellow-100 text-yellow-700",
-  Alerta:"bg-yellow-100 text-yellow-700",
-  Inativo:"bg-slate-100 text-slate-500", Inativa:"bg-slate-100 text-slate-500",
-  Bloqueado:"bg-red-100 text-red-700", Cancelado:"bg-red-100 text-red-700",
-  Atrasado:"bg-red-100 text-red-700", Descontinuado:"bg-orange-100 text-orange-700",
+  Ativo: "bg-green-100 text-green-700", Ativa: "bg-green-100 text-green-700",
+  Aprovado: "bg-green-100 text-green-700", OK: "bg-green-100 text-green-700",
+  Pago: "bg-green-100 text-green-700", Recebido: "bg-green-100 text-green-700",
+  "Em Análise": "bg-blue-100 text-blue-700",
+  Pendente: "bg-yellow-100 text-yellow-700", Prospect: "bg-yellow-100 text-yellow-700",
+  Alerta: "bg-yellow-100 text-yellow-700",
+  Inativo: "bg-slate-100 text-slate-500", Inativa: "bg-slate-100 text-slate-500",
+  Bloqueado: "bg-red-100 text-red-700", Cancelado: "bg-red-100 text-red-700",
+  Atrasado: "bg-red-100 text-red-700", Descontinuado: "bg-orange-100 text-orange-700",
 };
-const STATUS_FIELDS = new Set(["status","status_fornecedor","status_cliente","situacao","situacao_credito","status_fiscal_receita"]);
-const BOOL_FIELDS   = new Set(["ativo","ativa","habilitado","compartilhado_grupo"]);
-const DATE_FIELDS   = new Set(["created_date","updated_date","data_admissao","data_nascimento","data_vencimento","data_validade","ultima_compra","data_emissao","data_pedido","cnh_validade"]);
-const MONEY_FIELDS  = new Set(["salario","preco_venda","custo_aquisicao","custo_medio","valor_frete","orcamento_mensal","limite_credito","valor_total","valor"]);
-const PAGE_SIZES    = [10, 20, 50, 100];
+const STATUS_FIELDS = new Set(["status", "status_fornecedor", "status_cliente", "situacao", "situacao_credito", "status_fiscal_receita"]);
+const BOOL_FIELDS = new Set(["ativo", "ativa", "habilitado", "compartilhado_grupo"]);
+const DATE_FIELDS = new Set(["created_date", "updated_date", "data_admissao", "data_nascimento", "data_vencimento", "data_validade", "ultima_compra", "data_emissao", "data_pedido", "cnh_validade"]);
+const MONEY_FIELDS = new Set(["salario", "preco_venda", "custo_aquisicao", "custo_medio", "valor_frete", "orcamento_mensal", "limite_credito", "valor_total", "valor"]);
+const PAGE_SIZES = [10, 20, 50, 100];
 
 const SEARCH_FIELDS = {
-  Banco:['nome','nome_banco','codigo_banco'],
-  FormaPagamento:['nome','descricao','codigo'],
-  Cliente:['nome','razao_social','cpf','cnpj'],
-  Fornecedor:['nome','razao_social','cnpj'],
-  Colaborador:['nome_completo','cpf','email'],
-  Transportadora:['razao_social','nome_fantasia'],
-  Produto:['descricao','codigo','codigo_barras'],
-  Departamento:['nome','descricao'],
-  Cargo:['nome','departamento'],
-  Turno:['descricao','nome'],
-  Veiculo:['placa','descricao','modelo'],
-  Motorista:['nome','cpf'],
-  Servico:['nome','descricao'],
-  Representante:['nome','email'],
-  SegmentoCliente:['nome_segmento','descricao'],
-  RegiaoAtendimento:['nome_regiao','descricao'],
-  GrupoProduto:['nome_grupo','descricao','codigo'],
-  Marca:['nome_marca','descricao'],
-  SetorAtividade:['nome','descricao'],
-  TabelaPreco:['nome','descricao'],
-  UnidadeMedida:['sigla','descricao'],
-  CentroCusto:['codigo','descricao'],
-  PlanoDeContas:['codigo','descricao'],
-  TipoDespesa:['codigo','nome'],
-  MoedaIndice:['moeda','indice'],
-  GrupoEmpresarial:['nome','cnpj'],
-  Empresa:['razao_social','nome_fantasia','cnpj'],
-  ApiExterna:['nome','descricao'],
-  ChatbotCanal:['nome'],
-  ChatbotIntent:['nome','descricao'],
-  GatewayPagamento:['nome'],
-  JobAgendado:['nome'],
-  Webhook:['nome','url'],
-  ConfiguracaoNFe:['ambiente','descricao'],
-  LocalEstoque:['descricao','codigo'],
-  RotaPadrao:['nome_rota','regiao'],
-  ModeloDocumento:['tipo','descricao'],
-  TipoFrete:['descricao','modalidade'],
-  CentroResultado:['codigo','descricao'],
-  OperadorCaixa:['nome','matricula'],
-  CondicaoComercial:['nome'],
-  TabelaFiscal:['descricao','uf'],
-  ContatoB2B:['nome','empresa','email'],
-  KitProduto:['nome_kit','descricao'],
-  CatalogoWeb:['titulo','slug'],
-  ConfiguracaoDespesaRecorrente:['descricao'],
+  Banco: ["nome", "nome_banco", "codigo_banco"],
+  FormaPagamento: ["nome", "descricao", "codigo"],
+  Cliente: ["nome", "razao_social", "cpf", "cnpj"],
+  Fornecedor: ["nome", "razao_social", "cnpj"],
+  Colaborador: ["nome_completo", "cpf", "email"],
+  Transportadora: ["razao_social", "nome_fantasia"],
+  Produto: ["descricao", "codigo", "codigo_barras"],
+  Departamento: ["nome", "descricao"],
+  Cargo: ["nome", "departamento"],
+  Turno: ["descricao", "nome"],
+  Veiculo: ["placa", "descricao", "modelo"],
+  Motorista: ["nome", "cpf"],
+  Servico: ["nome", "descricao"],
+  Representante: ["nome", "email"],
+  SegmentoCliente: ["nome_segmento", "descricao"],
+  RegiaoAtendimento: ["nome_regiao", "descricao"],
+  GrupoProduto: ["nome_grupo", "descricao", "codigo"],
+  Marca: ["nome_marca", "descricao"],
+  SetorAtividade: ["nome", "descricao"],
+  TabelaPreco: ["nome", "descricao"],
+  UnidadeMedida: ["sigla", "descricao"],
+  CentroCusto: ["codigo", "descricao"],
+  PlanoDeContas: ["codigo", "descricao"],
+  TipoDespesa: ["codigo", "nome"],
+  MoedaIndice: ["moeda", "indice"],
+  GrupoEmpresarial: ["nome", "cnpj"],
+  Empresa: ["razao_social", "nome_fantasia", "cnpj"],
+  ApiExterna: ["nome", "descricao"],
+  ChatbotCanal: ["nome"],
+  ChatbotIntent: ["nome", "descricao"],
+  GatewayPagamento: ["nome"],
+  JobAgendado: ["nome"],
+  Webhook: ["nome", "url"],
+  ConfiguracaoNFe: ["ambiente", "descricao"],
+  LocalEstoque: ["descricao", "codigo"],
+  RotaPadrao: ["nome_rota", "regiao"],
+  ModeloDocumento: ["tipo", "descricao"],
+  TipoFrete: ["descricao", "modalidade"],
+  CentroResultado: ["codigo", "descricao"],
+  OperadorCaixa: ["nome", "matricula"],
+  CondicaoComercial: ["nome"],
+  TabelaFiscal: ["descricao", "uf"],
+  ContatoB2B: ["nome", "empresa", "email"],
+  KitProduto: ["nome_kit", "descricao"],
+  CatalogoWeb: ["titulo", "slug"],
+  ConfiguracaoDespesaRecorrente: ["descricao"],
 };
 
-// Formulários self-managed (gerenciam próprio save/delete)
+// Forms que gerenciam seu próprio save/delete
 const SELF_MANAGED = new Set([
-  "CadastroClienteCompleto","CadastroFornecedorCompleto","TransportadoraForm",
-  "ColaboradorForm","RepresentanteFormCompleto","RepresentanteForm",
-  "ProdutoFormV22_Completo","ProdutoFormCompleto","ProdutoForm","RegiaoAtendimentoForm",
+  "CadastroClienteCompleto", "CadastroFornecedorCompleto", "TransportadoraForm",
+  "ColaboradorForm", "RepresentanteFormCompleto", "RepresentanteForm",
+  "ProdutoFormV22_Completo", "ProdutoFormCompleto", "ProdutoForm", "RegiaoAtendimentoForm",
 ]);
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+// ─── helpers ──────────────────────────────────────────────────────────────────
 function formatValue(value, col, extraColors = {}) {
   if (value === null || value === undefined || value === "") return "—";
   const allColors = { ...STATUS_COLORS, ...extraColors };
@@ -108,7 +109,7 @@ function formatValue(value, col, extraColors = {}) {
     return <Badge variant="outline" className={`text-xs rounded-sm ${cls}`}>{value}</Badge>;
   }
   if (DATE_FIELDS.has(col.field) || col.type === "date") {
-    try { const d = new Date(value); if (!isNaN(d.getTime())) return d.toLocaleDateString("pt-BR"); } catch {}
+    try { const d = new Date(value); if (!isNaN(d.getTime())) return d.toLocaleDateString("pt-BR"); } catch { }
   }
   if (MONEY_FIELDS.has(col.field) || col.type === "currency") {
     const n = Number(value);
@@ -120,38 +121,32 @@ function formatValue(value, col, extraColors = {}) {
   return String(value).substring(0, 100);
 }
 
-/**
- * Busca registro completo via backend function (bypassa wrap do Layout totalmente).
- */
+/** Busca registro completo via backend (bypassa wrap do Layout) */
 async function fetchFullRecord(entityName, itemId) {
   if (!entityName || !itemId) return null;
-  // 1. getEntityRecord via backend (service role, sem wrap) — retorna { record }
+  // 1. getEntityRecord via backend (service role, sem filtro de empresa)
   try {
-    const res = await base44.functions.invoke('getEntityRecord', { entityName, id: itemId });
-    const rec = res?.data?.record;
+    const res = await base44.functions.invoke("getEntityRecord", { entityName, id: itemId });
+    const rec = res?.data?.record || res?.data;
     if (rec?.id) return JSON.parse(JSON.stringify(rec));
-  } catch (_) {}
+  } catch (_) { }
   // 2. entityListSorted filtrando por id
   try {
-    const res = await base44.functions.invoke('entityListSorted', {
-      entityName,
-      filter: { id: itemId },
-      sortField: 'id',
-      sortDirection: 'asc',
-      limit: 1,
+    const res = await base44.functions.invoke("entityListSorted", {
+      entityName, filter: { id: itemId }, sortField: "id", sortDirection: "asc", limit: 1,
     });
     const arr = res?.data;
     if (Array.isArray(arr) && arr[0]?.id) return JSON.parse(JSON.stringify(arr[0]));
-  } catch (_) {}
+  } catch (_) { }
   // 3. entities.get (fallback final)
   try {
     const rec = await base44.entities?.[entityName]?.get?.(itemId);
     if (rec?.id) return JSON.parse(JSON.stringify(rec));
-  } catch (_) {}
+  } catch (_) { }
   return null;
 }
 
-/** Constrói props do form — inclui TODOS os aliases possíveis para hidratação */
+/** Constrói props do form com todos os aliases possíveis */
 function buildFormProps(editItem, onClose, onSubmit) {
   const base = {
     onClose, onSave: onClose, onSuccess: onClose,
@@ -159,24 +154,31 @@ function buildFormProps(editItem, onClose, onSubmit) {
     isOpen: true, open: true, windowMode: true, onSubmit,
   };
   if (!editItem) return base;
+  const aliases = [
+    "item", "data", "initialData", "defaultValues", "record", "entity", "value",
+    "cliente", "fornecedor", "colaborador", "transportadora", "representante",
+    "contato", "contatoB2B", "segmento", "segmentoCliente", "regiao", "regiaoAtendimento",
+    "produto", "servico", "banco", "conta", "formaPagamento", "centroCusto", "planoContas",
+    "planoDeContas", "veiculo", "motorista", "departamento", "cargo", "turno",
+    "empresa", "grupo", "grupoEmpresarial", "grupoProduto", "marca", "kitProduto",
+    "catalogoWeb", "unidade", "unidadeMedida", "setor", "setorAtividade", "tabelaPreco",
+    "tipoDespesa", "tipo", "moedaIndice", "moeda", "operadorCaixa", "operador",
+    "tabelaFiscal", "condicaoComercial", "centroResultado", "centro",
+    "localEstoque", "local", "tipoFrete", "rotaPadrao", "rota",
+    "gateway", "gatewayPagamento", "configuracaoCobranca",
+    "configuracaoDespesaRecorrente", "despesaRecorrente", "configuracao",
+    "perfilAcesso", "perfil", "modeloDocumento", "apiExterna",
+    "webhook", "chatbotIntent", "chatbotCanal", "jobAgendado", "eventoNotificacao",
+  ];
   const itemProps = {};
-  [
-    'item','data','initialData','defaultValues','record','entity','value',
-    'cliente','fornecedor','colaborador','transportadora','representante',
-    'contato','contatoB2B','segmento','segmentoCliente','regiao','regiaoAtendimento',
-    'produto','servico','banco','conta','formaPagamento','centroCusto','planoContas',
-    'planoDeContas','veiculo','motorista','departamento','cargo','turno',
-    'empresa','grupo','grupoEmpresarial','grupoProduto','marca','kitProduto',
-    'catalogoWeb','unidade','unidadeMedida','setor','setorAtividade','tabelaPreco',
-    'tipoDespesa','tipo','moedaIndice','moeda','operadorCaixa','operador',
-    'tabelaFiscal','condicaoComercial','centroResultado','centro',
-    'localEstoque','local','tipoFrete','rotaPadrao','rota',
-    'gateway','gatewayPagamento','configuracaoCobranca',
-    'configuracaoDespesaRecorrente','despesaRecorrente','configuracao',
-    'perfilAcesso','perfil','modeloDocumento','apiExterna',
-    'webhook','chatbotIntent','chatbotCanal','jobAgendado','eventoNotificacao',
-  ].forEach(a => { itemProps[a] = editItem; });
+  aliases.forEach(a => { itemProps[a] = editItem; });
   return { ...base, ...itemProps, id: editItem.id };
+}
+
+// ─── helpers de invalidação ───────────────────────────────────────────────────
+function invalidateAll(queryClient, ENTITY) {
+  queryClient.invalidateQueries({ queryKey: ["viz-v29", ENTITY], refetchType: "all" });
+  queryClient.invalidateQueries({ queryKey: ["entityCounts_v5"], refetchType: "all" });
 }
 
 // ─── componente principal ─────────────────────────────────────────────────────
@@ -187,9 +189,9 @@ export default function VisualizadorUniversalEntidadeV24({
   pageSize: pageSizeProp = 20,
   statusColors: extraColors = {},
 }) {
-  const ENTITY    = nomeEntidade || entityName || "";
-  const TITULO    = tituloDisplay || ENTITY;
-  const isSimple  = SIMPLE_CATALOG.has(ENTITY);
+  const ENTITY = nomeEntidade || entityName || "";
+  const TITULO = tituloDisplay || ENTITY;
+  const isSimple = SIMPLE_CATALOG.has(ENTITY);
   const isSelfManaged = FormComponent
     ? SELF_MANAGED.has(FormComponent.displayName || FormComponent.name || "")
     : false;
@@ -197,32 +199,36 @@ export default function VisualizadorUniversalEntidadeV24({
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
   const empresaId = empresaAtual?.id || null;
-  const groupId   = grupoAtual?.id  || null;
+  const groupId = grupoAtual?.id || null;
 
   const COLUMNS = useMemo(() => {
     if (columns?.length > 0) return columns;
     if (camposPrincipais?.length > 0)
-      return camposPrincipais.map(c => ({ field: c, label: c.replace(/_/g, " ").replace(/\b\w/g, x => x.toUpperCase()), sortable: true }));
+      return camposPrincipais.map(c => ({
+        field: c,
+        label: c.replace(/_/g, " ").replace(/\b\w/g, x => x.toUpperCase()),
+        sortable: true,
+      }));
     return [{ field: "nome", label: "Nome", sortable: true }, { field: "status", label: "Status", sortable: false }];
   }, [JSON.stringify(columns), JSON.stringify(camposPrincipais)]); // eslint-disable-line
 
   // ── estado ──
   const [sortField, setSortField] = useState("updated_date");
-  const [sortDir,   setSortDir]   = useState("desc");
-  const [search,    setSearch]    = useState("");
+  const [sortDir, setSortDir] = useState("desc");
+  const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [page,      setPage]      = useState(1);
-  const [pageSize,  setPageSize]  = useState(pageSizeProp);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(pageSizeProp);
 
-  const [showForm,      setShowForm]      = useState(false);
-  const [editItem,      setEditItem]      = useState(null);
-  const [formKey,       setFormKey]       = useState(0);
+  const [showForm, setShowForm] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [formKey, setFormKey] = useState(0);
   const [isLoadingEdit, setIsLoadingEdit] = useState(false);
-  const [editError,     setEditError]     = useState(null);
-  const [isSavingForm,  setIsSavingForm]  = useState(false);
+  const [editError, setEditError] = useState(null);
+  const [isSavingForm, setIsSavingForm] = useState(false);
 
-  const [selectedIds,   setSelectedIds]   = useState(new Set());
-  const [crossPageAll,  setCrossPageAll]  = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [crossPageAll, setCrossPageAll] = useState(false);
   const [deselectedIds, setDeselectedIds] = useState(new Set());
 
   // Debounce busca
@@ -233,19 +239,19 @@ export default function VisualizadorUniversalEntidadeV24({
     return () => clearTimeout(debRef.current);
   }, [search]);
 
-  // Contagem total (usa asServiceRole + buildContextFilter internamente)
+  // Contagem via hook V6 (batch API, sem cache em memória)
   const { total: totalCount } = useEntityCounts(ENTITY ? [ENTITY] : []);
 
   const skip = (page - 1) * pageSize;
 
-  // Filtro de leitura com $or correto (asServiceRole bypassa wrap do Layout)
+  // Filtro de contexto com $or correto
   const readFilter = useMemo(() => {
     if (isSimple) return {};
     const f = buildContextFilter(ENTITY, empresaId, groupId, empresasDoGrupo);
     return f === null ? null : (f || {});
   }, [ENTITY, isSimple, empresaId, groupId, JSON.stringify(empresasDoGrupo)]); // eslint-disable-line
 
-  const queryKey = ["viz-v28", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId];
+  const queryKey = ["viz-v29", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId];
 
   const { data: items = [], isLoading, isFetching } = useQuery({
     queryKey,
@@ -253,19 +259,18 @@ export default function VisualizadorUniversalEntidadeV24({
       if (!ENTITY) return [];
       if (!isSimple && readFilter === null) return [];
 
-      // LEITURA via backend function — bypassa completamente o wrap AND do Layout
       let filter = { ...(readFilter || {}) };
 
       if (debouncedSearch?.trim()) {
-        const fields = SEARCH_FIELDS[ENTITY] || ['nome', 'descricao', 'codigo'];
-        const rx = { $regex: debouncedSearch.trim(), $options: 'i' };
+        const fields = SEARCH_FIELDS[ENTITY] || ["nome", "descricao", "codigo"];
+        const rx = { $regex: debouncedSearch.trim(), $options: "i" };
         const searchOr = { $or: fields.map(f => ({ [f]: rx })) };
         filter = filter.$or
           ? { $and: [{ $or: filter.$or }, searchOr] }
           : searchOr;
       }
 
-      const res = await base44.functions.invoke('entityListSorted', {
+      const res = await base44.functions.invoke("entityListSorted", {
         entityName: ENTITY,
         filter,
         sortField,
@@ -275,31 +280,33 @@ export default function VisualizadorUniversalEntidadeV24({
       });
       return Array.isArray(res?.data) ? res.data : [];
     },
-    staleTime: 0,         // Sempre considera stale — garante refetch após invalidate
-    gcTime: 180_000,
+    staleTime: 0,           // Sempre stale → refetch imediato após invalidação
+    gcTime: 300_000,
     refetchOnWindowFocus: false,
-    placeholderData: prev => prev,  // Mantém dados anteriores visíveis durante refetch
+    placeholderData: prev => prev,  // Mantém dados anteriores durante refetch
     enabled: !!ENTITY && (isSimple || readFilter !== null),
   });
 
-  // Subscribe para invalidar após writes (reativa para refetch imediato)
+  // Subscribe: invalida ao detectar qualquer write na entidade
   useEffect(() => {
     if (!ENTITY) return;
     const api = base44.entities?.[ENTITY];
     if (!api?.subscribe) return;
     const unsub = api.subscribe(() => {
-      queryClient.invalidateQueries({ queryKey: ["viz-v28", ENTITY], refetchType: 'all' });
-      queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'], refetchType: 'all' });
+      invalidateAll(queryClient, ENTITY);
     });
     return () => { if (typeof unsub === "function") unsub(); };
   }, [ENTITY, queryClient]);
 
-  // ── ordenação sem stale closure ──
+  // ── ordenação ──
   const handleSort = useCallback((field) => {
     setSortField(prev => {
-      if (prev === field) setSortDir(d => d === "desc" ? "asc" : "desc");
-      else { setSortDir("desc"); return field; }
-      return prev;
+      if (prev === field) {
+        setSortDir(d => d === "desc" ? "asc" : "desc");
+        return prev;
+      }
+      setSortDir("desc");
+      return field;
     });
     setPage(1);
   }, []);
@@ -317,15 +324,15 @@ export default function VisualizadorUniversalEntidadeV24({
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
-    queryClient.invalidateQueries({ queryKey: ["viz-v28", ENTITY], refetchType: 'all' });
-    queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'], refetchType: 'all' });
+    setPage(1);
+    invalidateAll(queryClient, ENTITY);
   }, [ENTITY, queryClient]);
 
   const handlePersistSubmit = useCallback(async (formData) => {
     if (!formData || !ENTITY) return;
     if (formData._action === "delete") {
       if (formData.id) {
-        try { await base44.entities[ENTITY].delete(formData.id); } catch (_) {}
+        try { await base44.entities[ENTITY].delete(formData.id); } catch (_) { }
       }
       handleCloseForm(); return;
     }
@@ -335,7 +342,7 @@ export default function VisualizadorUniversalEntidadeV24({
       const payload = { ...clean };
       if (!isSimple) {
         if (!payload.empresa_id && empresaId) payload.empresa_id = empresaId;
-        if (!payload.group_id  && groupId)   payload.group_id   = groupId;
+        if (!payload.group_id && groupId) payload.group_id = groupId;
       }
       if (editItem?.id) await base44.entities[ENTITY].update(editItem.id, payload);
       else await base44.entities[ENTITY].create(payload);
@@ -379,11 +386,12 @@ export default function VisualizadorUniversalEntidadeV24({
     if (!window.confirm(`Confirma exclusão de "${label}"?`)) return;
     try {
       await base44.entities[ENTITY].delete(item.id);
-      queryClient.invalidateQueries({ queryKey: ["viz-v28", ENTITY], refetchType: 'all' });
-      queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'], refetchType: 'all' });
       setSelectedIds(prev => { const n = new Set(prev); n.delete(item.id); return n; });
+      // Volta p/ pág 1 se era o último item da página
+      if (items.length <= 1 && page > 1) setPage(p => Math.max(1, p - 1));
+      invalidateAll(queryClient, ENTITY);
     } catch (e) { alert("Erro ao excluir: " + (e?.message || String(e))); }
-  }, [ENTITY, queryClient]);
+  }, [ENTITY, queryClient, items.length, page]);
 
   // ── exclusão em massa ──
   const handleDeleteSelected = useCallback(async () => {
@@ -398,13 +406,13 @@ export default function VisualizadorUniversalEntidadeV24({
     try {
       let idsToDelete = [];
       if (crossPageAll) {
-        // Busca todos os IDs via backend function (bypassa wrap do Layout)
+        // Coleta todos os IDs via backend (service role, sem wrap AND do Layout)
         const filter = isSimple ? {} : (buildContextFilter(ENTITY, empresaId, groupId, empresasDoGrupo) || {});
         let skipAcc = 0;
         while (true) {
-          const res = await base44.functions.invoke('entityListSorted', {
+          const res = await base44.functions.invoke("entityListSorted", {
             entityName: ENTITY, filter,
-            sortField: 'id', sortDirection: 'asc',
+            sortField: "id", sortDirection: "asc",
             limit: 500, skip: skipAcc,
           });
           const arr = res?.data;
@@ -417,22 +425,22 @@ export default function VisualizadorUniversalEntidadeV24({
         idsToDelete = Array.from(selectedIds);
       }
       if (!idsToDelete.length) return;
+      // Deleta em lotes de 20
       for (let i = 0; i < idsToDelete.length; i += 20) {
         await Promise.all(idsToDelete.slice(i, i + 20).map(id =>
-          base44.entities[ENTITY].delete(id).catch(() => {})
+          base44.entities[ENTITY].delete(id).catch(() => { })
         ));
       }
-      queryClient.invalidateQueries({ queryKey: ["viz-v28", ENTITY] });
-      queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'] });
       setSelectedIds(new Set()); setDeselectedIds(new Set());
       setCrossPageAll(false); setPage(1);
+      invalidateAll(queryClient, ENTITY);
     } catch (e) { alert("Erro ao excluir: " + (e?.message || String(e))); }
   }, [ENTITY, isSimple, crossPageAll, totalCount, selectedIds, deselectedIds, empresaId, groupId, JSON.stringify(empresasDoGrupo), queryClient]); // eslint-disable-line
 
   // ── seleção ──
   const isItemSelected = useCallback((id) =>
     crossPageAll ? !deselectedIds.has(id) : selectedIds.has(id),
-  [crossPageAll, deselectedIds, selectedIds]);
+    [crossPageAll, deselectedIds, selectedIds]);
 
   const handleItemCheck = useCallback((id, checked) => {
     if (crossPageAll) {
@@ -442,7 +450,7 @@ export default function VisualizadorUniversalEntidadeV24({
     }
   }, [crossPageAll]);
 
-  const allPageSelected  = items.length > 0 && items.every(i => isItemSelected(i.id));
+  const allPageSelected = items.length > 0 && items.every(i => isItemSelected(i.id));
   const somePageSelected = items.some(i => isItemSelected(i.id));
 
   const handleToggleSelectPage = useCallback(() => {
@@ -472,7 +480,7 @@ export default function VisualizadorUniversalEntidadeV24({
     if (sortField !== field) return <ChevronsUpDown className="w-3 h-3 text-slate-300 opacity-0 group-hover/th:opacity-100 transition-opacity" />;
     return sortDir === "desc"
       ? <ChevronDown className="w-3.5 h-3.5 text-blue-500" />
-      : <ChevronUp   className="w-3.5 h-3.5 text-blue-500" />;
+      : <ChevronUp className="w-3.5 h-3.5 text-blue-500" />;
   };
 
   const effectiveSelectedCount = crossPageAll
@@ -517,14 +525,14 @@ export default function VisualizadorUniversalEntidadeV24({
           <option value="updated_date|asc">↑ Mais Antigos</option>
           <option value="created_date|desc">↓ Criação</option>
           <option value="created_date|asc">↑ Criação</option>
-          {COLUMNS.filter(c => c.sortable !== false && !["updated_date","created_date"].includes(c.field)).flatMap(c => [
-            <option key={`${c.field}|asc`}  value={`${c.field}|asc`}>{c.label} ↑</option>,
+          {COLUMNS.filter(c => c.sortable !== false && !["updated_date", "created_date"].includes(c.field)).flatMap(c => [
+            <option key={`${c.field}|asc`} value={`${c.field}|asc`}>{c.label} ↑</option>,
             <option key={`${c.field}|desc`} value={`${c.field}|desc`}>{c.label} ↓</option>,
           ])}
         </select>
 
         <button type="button"
-          onClick={() => { queryClient.invalidateQueries({ queryKey: ["viz-v28", ENTITY] }); queryClient.invalidateQueries({ queryKey: ['entityCounts_v5'] }); }}
+          onClick={() => invalidateAll(queryClient, ENTITY)}
           className="h-9 w-9 flex items-center justify-center border border-slate-200 rounded-sm bg-white hover:bg-slate-50" title="Recarregar">
           <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-blue-500" : "text-slate-500"}`} />
         </button>
@@ -638,7 +646,11 @@ export default function VisualizadorUniversalEntidadeV24({
       {/* Paginação */}
       <div className="flex items-center justify-between text-xs text-slate-500 shrink-0 flex-wrap gap-2">
         <span>
-          {isFetching && items.length > 0 && <span className="inline-flex items-center gap-1 text-blue-500 mr-2"><RefreshCw className="w-3 h-3 animate-spin" /> Atualizando…</span>}
+          {isFetching && items.length > 0 && (
+            <span className="inline-flex items-center gap-1 text-blue-500 mr-2">
+              <RefreshCw className="w-3 h-3 animate-spin" /> Atualizando…
+            </span>
+          )}
           Pág. {page} · {items.length} exibidos · {totalCount} total
         </span>
         <div className="flex gap-1.5">
