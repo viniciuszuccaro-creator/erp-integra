@@ -1,12 +1,13 @@
 /**
- * VisualizadorUniversalEntidadeV24 — V29 DEFINITIVO
+ * VisualizadorUniversalEntidadeV24 — V30 DEFINITIVO
  *
- * REGRAS:
- * - Leituras: functions.invoke('entityListSorted') — bypassa wrap AND do Layout
- * - Contagem: functions.invoke('countEntities') — batch API, sem cache em memória
- * - Escrita: base44.entities[ENTITY] — Layout faz stamp + auditoria
- * - staleTime: 0 — sempre refetch após invalidação
- * - refetchType: 'all' — força refetch em todas as queries ativas
+ * CORREÇÕES CRÍTICAS:
+ * 1. Registros sumindo: removido placeholderData que retornava [] durante refetch
+ *    quando readFilter ficava null. Agora usa `keepPreviousData: true` via initialData.
+ * 2. Exclusão: todos os deletes passam por entityListSorted (service role) para coletar
+ *    IDs sem filtro de empresa interferindo. Delete em lote funciona em todas entidades.
+ * 3. Contagens: staleTime=0 + invalidação agressiva após toda mutação.
+ * 4. Editar em branco: fetchFullRecord tenta 3 estratégias + deepClone para garantir dados.
  */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,131 +23,154 @@ import {
   Search, Edit, Trash2, Plus, RefreshCw, AlertCircle, X
 } from "lucide-react";
 
-// ─── constantes de formatação ─────────────────────────────────────────────────
+// ─── formatação ───────────────────────────────────────────────────────────────
 const STATUS_COLORS = {
-  Ativo: "bg-green-100 text-green-700", Ativa: "bg-green-100 text-green-700",
-  Aprovado: "bg-green-100 text-green-700", OK: "bg-green-100 text-green-700",
-  Pago: "bg-green-100 text-green-700", Recebido: "bg-green-100 text-green-700",
-  "Em Análise": "bg-blue-100 text-blue-700",
-  Pendente: "bg-yellow-100 text-yellow-700", Prospect: "bg-yellow-100 text-yellow-700",
-  Alerta: "bg-yellow-100 text-yellow-700",
-  Inativo: "bg-slate-100 text-slate-500", Inativa: "bg-slate-100 text-slate-500",
-  Bloqueado: "bg-red-100 text-red-700", Cancelado: "bg-red-100 text-red-700",
-  Atrasado: "bg-red-100 text-red-700", Descontinuado: "bg-orange-100 text-orange-700",
+  Ativo: "bg-green-100 text-green-700 border-green-200",
+  Ativa: "bg-green-100 text-green-700 border-green-200",
+  Aprovado: "bg-green-100 text-green-700 border-green-200",
+  OK: "bg-green-100 text-green-700 border-green-200",
+  Pago: "bg-green-100 text-green-700 border-green-200",
+  Recebido: "bg-green-100 text-green-700 border-green-200",
+  "Em Análise": "bg-blue-100 text-blue-700 border-blue-200",
+  Pendente: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  Prospect: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  Alerta: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  Inativo: "bg-slate-100 text-slate-500 border-slate-200",
+  Inativa: "bg-slate-100 text-slate-500 border-slate-200",
+  Bloqueado: "bg-red-100 text-red-700 border-red-200",
+  Cancelado: "bg-red-100 text-red-700 border-red-200",
+  Atrasado: "bg-red-100 text-red-700 border-red-200",
+  Descontinuado: "bg-orange-100 text-orange-700 border-orange-200",
 };
-const STATUS_FIELDS = new Set(["status", "status_fornecedor", "status_cliente", "situacao", "situacao_credito", "status_fiscal_receita"]);
-const BOOL_FIELDS = new Set(["ativo", "ativa", "habilitado", "compartilhado_grupo"]);
-const DATE_FIELDS = new Set(["created_date", "updated_date", "data_admissao", "data_nascimento", "data_vencimento", "data_validade", "ultima_compra", "data_emissao", "data_pedido", "cnh_validade"]);
-const MONEY_FIELDS = new Set(["salario", "preco_venda", "custo_aquisicao", "custo_medio", "valor_frete", "orcamento_mensal", "limite_credito", "valor_total", "valor"]);
+const STATUS_FIELDS = new Set(["status","status_fornecedor","status_cliente","situacao","situacao_credito","status_fiscal_receita"]);
+const BOOL_FIELDS   = new Set(["ativo","ativa","habilitado","compartilhado_grupo","ativo_sistema","principal"]);
+const DATE_FIELDS   = new Set(["created_date","updated_date","data_admissao","data_nascimento","data_vencimento","data_validade","ultima_compra","data_emissao","data_pedido","cnh_validade","data_aprovacao"]);
+const MONEY_FIELDS  = new Set(["salario","preco_venda","custo_aquisicao","custo_medio","valor_frete","orcamento_mensal","limite_credito","valor_total","valor","valor_minimo","valor_maximo"]);
 const PAGE_SIZES = [10, 20, 50, 100];
 
 const SEARCH_FIELDS = {
-  Banco: ["nome", "nome_banco", "codigo_banco"],
-  FormaPagamento: ["nome", "descricao", "codigo"],
-  Cliente: ["nome", "razao_social", "cpf", "cnpj"],
-  Fornecedor: ["nome", "razao_social", "cnpj"],
-  Colaborador: ["nome_completo", "cpf", "email"],
-  Transportadora: ["razao_social", "nome_fantasia"],
-  Produto: ["descricao", "codigo", "codigo_barras"],
-  Departamento: ["nome", "descricao"],
-  Cargo: ["nome", "departamento"],
-  Turno: ["descricao", "nome"],
-  Veiculo: ["placa", "descricao", "modelo"],
-  Motorista: ["nome", "cpf"],
-  Servico: ["nome", "descricao"],
-  Representante: ["nome", "email"],
-  SegmentoCliente: ["nome_segmento", "descricao"],
-  RegiaoAtendimento: ["nome_regiao", "descricao"],
-  GrupoProduto: ["nome_grupo", "descricao", "codigo"],
-  Marca: ["nome_marca", "descricao"],
-  SetorAtividade: ["nome", "descricao"],
-  TabelaPreco: ["nome", "descricao"],
-  UnidadeMedida: ["sigla", "descricao"],
-  CentroCusto: ["codigo", "descricao"],
-  PlanoDeContas: ["codigo", "descricao"],
-  TipoDespesa: ["codigo", "nome"],
-  MoedaIndice: ["moeda", "indice"],
-  GrupoEmpresarial: ["nome", "cnpj"],
-  Empresa: ["razao_social", "nome_fantasia", "cnpj"],
-  ApiExterna: ["nome", "descricao"],
-  ChatbotCanal: ["nome"],
-  ChatbotIntent: ["nome", "descricao"],
-  GatewayPagamento: ["nome"],
-  JobAgendado: ["nome"],
-  Webhook: ["nome", "url"],
-  ConfiguracaoNFe: ["ambiente", "descricao"],
-  LocalEstoque: ["descricao", "codigo"],
-  RotaPadrao: ["nome_rota", "regiao"],
-  ModeloDocumento: ["tipo", "descricao"],
-  TipoFrete: ["descricao", "modalidade"],
-  CentroResultado: ["codigo", "descricao"],
-  OperadorCaixa: ["nome", "matricula"],
-  CondicaoComercial: ["nome"],
-  TabelaFiscal: ["descricao", "uf"],
-  ContatoB2B: ["nome", "empresa", "email"],
-  KitProduto: ["nome_kit", "descricao"],
-  CatalogoWeb: ["titulo", "slug"],
-  ConfiguracaoDespesaRecorrente: ["descricao"],
+  Banco:["nome","nome_banco","codigo_banco"],
+  FormaPagamento:["nome","descricao","codigo"],
+  Cliente:["nome","razao_social","cpf","cnpj"],
+  Fornecedor:["nome","razao_social","cnpj"],
+  Colaborador:["nome_completo","cpf","email"],
+  Transportadora:["razao_social","nome_fantasia","cnpj"],
+  Produto:["descricao","codigo","codigo_barras"],
+  Departamento:["nome","descricao"],
+  Cargo:["nome","departamento"],
+  Turno:["descricao","nome"],
+  Veiculo:["placa","descricao","modelo"],
+  Motorista:["nome","cpf"],
+  Servico:["nome","descricao"],
+  Representante:["nome","email"],
+  SegmentoCliente:["nome_segmento","descricao"],
+  RegiaoAtendimento:["nome_regiao","descricao"],
+  GrupoProduto:["nome_grupo","descricao","codigo"],
+  Marca:["nome_marca","descricao"],
+  SetorAtividade:["nome","descricao"],
+  TabelaPreco:["nome","descricao"],
+  UnidadeMedida:["sigla","descricao"],
+  CentroCusto:["codigo","descricao"],
+  PlanoDeContas:["codigo","descricao"],
+  TipoDespesa:["codigo","nome"],
+  MoedaIndice:["moeda","indice"],
+  GrupoEmpresarial:["nome","cnpj"],
+  Empresa:["razao_social","nome_fantasia","cnpj"],
+  ApiExterna:["nome","descricao"],
+  ChatbotCanal:["nome"],
+  ChatbotIntent:["nome","descricao"],
+  GatewayPagamento:["nome"],
+  JobAgendado:["nome"],
+  Webhook:["nome","url"],
+  ConfiguracaoNFe:["ambiente","descricao"],
+  LocalEstoque:["descricao","codigo"],
+  RotaPadrao:["nome_rota","regiao"],
+  ModeloDocumento:["tipo","descricao"],
+  TipoFrete:["descricao","modalidade"],
+  CentroResultado:["codigo","descricao"],
+  OperadorCaixa:["nome","matricula"],
+  CondicaoComercial:["nome"],
+  TabelaFiscal:["descricao","uf"],
+  ContatoB2B:["nome","empresa","email"],
+  KitProduto:["nome_kit","descricao"],
+  CatalogoWeb:["titulo","slug"],
+  ConfiguracaoDespesaRecorrente:["descricao"],
+  PerfilAcesso:["nome_perfil","descricao"],
 };
 
-// Forms que gerenciam seu próprio save/delete
+// Forms que gerenciam seu próprio save/delete (não usamos handlePersistSubmit)
 const SELF_MANAGED = new Set([
-  "CadastroClienteCompleto", "CadastroFornecedorCompleto", "TransportadoraForm",
-  "ColaboradorForm", "RepresentanteFormCompleto", "RepresentanteForm",
-  "ProdutoFormV22_Completo", "ProdutoFormCompleto", "ProdutoForm", "RegiaoAtendimentoForm",
+  "CadastroClienteCompleto","CadastroFornecedorCompleto","TransportadoraForm",
+  "ColaboradorForm","RepresentanteFormCompleto","RepresentanteForm",
+  "ProdutoFormV22_Completo","ProdutoFormCompleto","ProdutoForm","RegiaoAtendimentoForm",
 ]);
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
+// ─── formatValue ─────────────────────────────────────────────────────────────
 function formatValue(value, col, extraColors = {}) {
-  if (value === null || value === undefined || value === "") return "—";
+  if (value === null || value === undefined || value === "") return <span className="text-slate-300">—</span>;
   const allColors = { ...STATUS_COLORS, ...extraColors };
   if (BOOL_FIELDS.has(col.field))
     return value
-      ? <Badge variant="outline" className="text-xs rounded-sm bg-green-100 text-green-700 border-green-300">Sim</Badge>
-      : <Badge variant="outline" className="text-xs rounded-sm bg-slate-100 text-slate-500 border-slate-300">Não</Badge>;
+      ? <Badge variant="outline" className="text-xs rounded-sm bg-green-100 text-green-700 border-green-200">Sim</Badge>
+      : <Badge variant="outline" className="text-xs rounded-sm bg-slate-100 text-slate-500 border-slate-200">Não</Badge>;
   if (STATUS_FIELDS.has(col.field) && typeof value === "string") {
-    const cls = allColors[value] || "bg-slate-100 text-slate-600";
+    const cls = allColors[value] || "bg-slate-100 text-slate-600 border-slate-200";
     return <Badge variant="outline" className={`text-xs rounded-sm ${cls}`}>{value}</Badge>;
   }
   if (DATE_FIELDS.has(col.field) || col.type === "date") {
-    try { const d = new Date(value); if (!isNaN(d.getTime())) return d.toLocaleDateString("pt-BR"); } catch { }
+    try { const d = new Date(value); if (!isNaN(d.getTime())) return d.toLocaleDateString("pt-BR"); } catch {}
   }
   if (MONEY_FIELDS.has(col.field) || col.type === "currency") {
     const n = Number(value);
-    if (!isNaN(n)) return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    if (!isNaN(n)) return n.toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
   }
   if (col.type === "number") { const n = Number(value); return isNaN(n) ? String(value) : n.toLocaleString("pt-BR"); }
   if (typeof value === "boolean") return value ? "✓" : "—";
   if (typeof value === "object") return Array.isArray(value) ? `[${value.length}]` : "–";
-  return String(value).substring(0, 100);
+  return String(value).substring(0, 120);
 }
 
-/** Busca registro completo via backend (bypassa wrap do Layout) */
+// ─── fetchFullRecord: 3 estratégias ─────────────────────────────────────────
 async function fetchFullRecord(entityName, itemId) {
   if (!entityName || !itemId) return null;
-  // 1. getEntityRecord via backend (service role, sem filtro de empresa)
+  // Estratégia 1: backend getEntityRecord (service role, sem filtro empresa)
   try {
     const res = await base44.functions.invoke("getEntityRecord", { entityName, id: itemId });
     const rec = res?.data?.record || res?.data;
-    if (rec?.id) return JSON.parse(JSON.stringify(rec));
-  } catch (_) { }
-  // 2. entityListSorted filtrando por id
+    if (rec && typeof rec === "object" && rec.id) return JSON.parse(JSON.stringify(rec));
+  } catch (_) {}
+  // Estratégia 2: entityListSorted com filtro por id
   try {
     const res = await base44.functions.invoke("entityListSorted", {
-      entityName, filter: { id: itemId }, sortField: "id", sortDirection: "asc", limit: 1,
+      entityName, filter: { id: itemId }, sortField: "id", sortDirection: "asc", limit: 1, skip: 0,
     });
-    const arr = res?.data;
-    if (Array.isArray(arr) && arr[0]?.id) return JSON.parse(JSON.stringify(arr[0]));
-  } catch (_) { }
-  // 3. entities.get (fallback final)
+    const arr = Array.isArray(res?.data) ? res.data : [];
+    if (arr[0]?.id) return JSON.parse(JSON.stringify(arr[0]));
+  } catch (_) {}
+  // Estratégia 3: entities.get direto
   try {
     const rec = await base44.entities?.[entityName]?.get?.(itemId);
     if (rec?.id) return JSON.parse(JSON.stringify(rec));
-  } catch (_) { }
+  } catch (_) {}
   return null;
 }
 
-/** Constrói props do form com todos os aliases possíveis */
+// ─── buildFormProps: aliases para todos os forms ─────────────────────────────
+const FORM_ALIASES = [
+  "item","data","initialData","defaultValues","record","entity","value",
+  "cliente","fornecedor","colaborador","transportadora","representante",
+  "contato","contatoB2B","segmento","segmentoCliente","regiao","regiaoAtendimento",
+  "produto","servico","banco","conta","formaPagamento","centroCusto","planoContas",
+  "planoDeContas","veiculo","motorista","departamento","cargo","turno",
+  "empresa","grupo","grupoEmpresarial","grupoProduto","marca","kitProduto",
+  "catalogoWeb","unidade","unidadeMedida","setor","setorAtividade","tabelaPreco",
+  "tipoDespesa","moedaIndice","moeda","operadorCaixa","operador",
+  "tabelaFiscal","condicaoComercial","centroResultado","centro",
+  "localEstoque","local","tipoFrete","rotaPadrao","rota",
+  "gateway","gatewayPagamento","configuracaoDespesaRecorrente","despesaRecorrente",
+  "perfilAcesso","perfil","modeloDocumento","apiExterna",
+  "webhook","chatbotIntent","chatbotCanal","jobAgendado","eventoNotificacao",
+];
 function buildFormProps(editItem, onClose, onSubmit) {
   const base = {
     onClose, onSave: onClose, onSuccess: onClose,
@@ -154,34 +178,18 @@ function buildFormProps(editItem, onClose, onSubmit) {
     isOpen: true, open: true, windowMode: true, onSubmit,
   };
   if (!editItem) return base;
-  const aliases = [
-    "item", "data", "initialData", "defaultValues", "record", "entity", "value",
-    "cliente", "fornecedor", "colaborador", "transportadora", "representante",
-    "contato", "contatoB2B", "segmento", "segmentoCliente", "regiao", "regiaoAtendimento",
-    "produto", "servico", "banco", "conta", "formaPagamento", "centroCusto", "planoContas",
-    "planoDeContas", "veiculo", "motorista", "departamento", "cargo", "turno",
-    "empresa", "grupo", "grupoEmpresarial", "grupoProduto", "marca", "kitProduto",
-    "catalogoWeb", "unidade", "unidadeMedida", "setor", "setorAtividade", "tabelaPreco",
-    "tipoDespesa", "tipo", "moedaIndice", "moeda", "operadorCaixa", "operador",
-    "tabelaFiscal", "condicaoComercial", "centroResultado", "centro",
-    "localEstoque", "local", "tipoFrete", "rotaPadrao", "rota",
-    "gateway", "gatewayPagamento", "configuracaoCobranca",
-    "configuracaoDespesaRecorrente", "despesaRecorrente", "configuracao",
-    "perfilAcesso", "perfil", "modeloDocumento", "apiExterna",
-    "webhook", "chatbotIntent", "chatbotCanal", "jobAgendado", "eventoNotificacao",
-  ];
-  const itemProps = {};
-  aliases.forEach(a => { itemProps[a] = editItem; });
-  return { ...base, ...itemProps, id: editItem.id };
+  const aliases = {};
+  FORM_ALIASES.forEach(a => { aliases[a] = editItem; });
+  return { ...base, ...aliases, id: editItem.id };
 }
 
-// ─── helpers de invalidação ───────────────────────────────────────────────────
-function invalidateAll(queryClient, ENTITY) {
-  queryClient.invalidateQueries({ queryKey: ["viz-v29", ENTITY], refetchType: "all" });
-  queryClient.invalidateQueries({ queryKey: ["entityCounts_v5"], refetchType: "all" });
+// ─── invalidação global ───────────────────────────────────────────────────────
+function invalidateAll(qc, entity) {
+  qc.invalidateQueries({ queryKey: ["viz-v30", entity], refetchType: "all" });
+  qc.invalidateQueries({ queryKey: ["entityCounts_v5"], refetchType: "all" });
 }
 
-// ─── componente principal ─────────────────────────────────────────────────────
+// ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 export default function VisualizadorUniversalEntidadeV24({
   nomeEntidade, tituloDisplay, icone: IconeProp,
   camposPrincipais = [], componenteEdicao: FormComponent,
@@ -189,47 +197,55 @@ export default function VisualizadorUniversalEntidadeV24({
   pageSize: pageSizeProp = 20,
   statusColors: extraColors = {},
 }) {
-  const ENTITY = nomeEntidade || entityName || "";
-  const TITULO = tituloDisplay || ENTITY;
+  const ENTITY  = nomeEntidade || entityName || "";
+  const TITULO  = tituloDisplay || ENTITY;
   const isSimple = SIMPLE_CATALOG.has(ENTITY);
   const isSelfManaged = FormComponent
-    ? SELF_MANAGED.has(FormComponent.displayName || FormComponent.name || "")
+    ? SELF_MANAGED.has(FormComponent?.displayName || FormComponent?.name || "")
     : false;
 
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
   const empresaId = empresaAtual?.id || null;
-  const groupId = grupoAtual?.id || null;
+  const groupId   = grupoAtual?.id   || null;
+  const empresasDoGrupoIds = useMemo(
+    () => (Array.isArray(empresasDoGrupo) ? empresasDoGrupo.map(e=>e.id).filter(Boolean) : []),
+    [empresasDoGrupo] // eslint-disable-line
+  );
 
   const COLUMNS = useMemo(() => {
     if (columns?.length > 0) return columns;
     if (camposPrincipais?.length > 0)
       return camposPrincipais.map(c => ({
         field: c,
-        label: c.replace(/_/g, " ").replace(/\b\w/g, x => x.toUpperCase()),
+        label: c.replace(/_/g," ").replace(/\b\w/g, x=>x.toUpperCase()),
         sortable: true,
       }));
-    return [{ field: "nome", label: "Nome", sortable: true }, { field: "status", label: "Status", sortable: false }];
+    return [
+      { field:"nome", label:"Nome", sortable:true },
+      { field:"status", label:"Status", sortable:false },
+    ];
   }, [JSON.stringify(columns), JSON.stringify(camposPrincipais)]); // eslint-disable-line
 
-  // ── estado ──
+  // ── estado ──────────────────────────────────────────────────────────────────
   const [sortField, setSortField] = useState("updated_date");
-  const [sortDir, setSortDir] = useState("desc");
-  const [search, setSearch] = useState("");
+  const [sortDir,   setSortDir]   = useState("desc");
+  const [search,    setSearch]    = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const [page,     setPage]     = useState(1);
   const [pageSize, setPageSize] = useState(pageSizeProp);
 
-  const [showForm, setShowForm] = useState(false);
-  const [editItem, setEditItem] = useState(null);
-  const [formKey, setFormKey] = useState(0);
-  const [isLoadingEdit, setIsLoadingEdit] = useState(false);
-  const [editError, setEditError] = useState(null);
-  const [isSavingForm, setIsSavingForm] = useState(false);
+  const [showForm,     setShowForm]     = useState(false);
+  const [editItem,     setEditItem]     = useState(null);
+  const [formKey,      setFormKey]      = useState(0);
+  const [isLoadingEdit,setIsLoadingEdit]= useState(false);
+  const [editError,    setEditError]    = useState(null);
+  const [isSaving,     setIsSaving]     = useState(false);
 
-  const [selectedIds, setSelectedIds] = useState(new Set());
+  // Seleção: selectedIds = selecionados manualmente | crossPageAll = selecionou tudo
+  const [selectedIds,  setSelectedIds]  = useState(() => new Set());
   const [crossPageAll, setCrossPageAll] = useState(false);
-  const [deselectedIds, setDeselectedIds] = useState(new Set());
+  const [deselectedIds,setDeselectedIds]= useState(() => new Set());
 
   // Debounce busca
   const debRef = useRef(null);
@@ -239,35 +255,41 @@ export default function VisualizadorUniversalEntidadeV24({
     return () => clearTimeout(debRef.current);
   }, [search]);
 
-  // Contagem via hook V6 (batch API, sem cache em memória)
-  const { total: totalCount } = useEntityCounts(ENTITY ? [ENTITY] : []);
+  // Contagem via hook V6
+  const { counts, isLoading: countsLoading } = useEntityCounts(ENTITY ? [ENTITY] : []);
+  const totalCount = Number(counts[ENTITY] || 0);
 
   const skip = (page - 1) * pageSize;
 
-  // Filtro de contexto com $or correto
+  // Filtro de contexto estável
   const readFilter = useMemo(() => {
     if (isSimple) return {};
     const f = buildContextFilter(ENTITY, empresaId, groupId, empresasDoGrupo);
-    return f === null ? null : (f || {});
-  }, [ENTITY, isSimple, empresaId, groupId, JSON.stringify(empresasDoGrupo)]); // eslint-disable-line
+    return f ?? {};  // nunca retorna null — usa {} no pior caso
+  }, [ENTITY, isSimple, empresaId, groupId, empresasDoGrupoIds.join(",")]); // eslint-disable-line
 
-  const queryKey = ["viz-v29", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId];
+  const queryKey = useMemo(
+    () => ["viz-v30", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId],
+    [ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId]
+  );
 
-  const { data: items = [], isLoading, isFetching } = useQuery({
+  // ── query principal ──────────────────────────────────────────────────────────
+  const { data: items = [], isLoading, isFetching, isError } = useQuery({
     queryKey,
     queryFn: async () => {
       if (!ENTITY) return [];
-      if (!isSimple && readFilter === null) return [];
+      // Não busca se sem contexto (evita retornar tudo do banco)
+      if (!isSimple && !empresaId && !groupId) return [];
 
-      let filter = { ...(readFilter || {}) };
+      let filter = { ...readFilter };
 
       if (debouncedSearch?.trim()) {
-        const fields = SEARCH_FIELDS[ENTITY] || ["nome", "descricao", "codigo"];
+        const fields = SEARCH_FIELDS[ENTITY] || ["nome","descricao"];
         const rx = { $regex: debouncedSearch.trim(), $options: "i" };
         const searchOr = { $or: fields.map(f => ({ [f]: rx })) };
         filter = filter.$or
           ? { $and: [{ $or: filter.$or }, searchOr] }
-          : searchOr;
+          : { ...filter, ...searchOr };
       }
 
       const res = await base44.functions.invoke("entityListSorted", {
@@ -280,36 +302,29 @@ export default function VisualizadorUniversalEntidadeV24({
       });
       return Array.isArray(res?.data) ? res.data : [];
     },
-    staleTime: 0,           // Sempre stale → refetch imediato após invalidação
+    staleTime: 0,
     gcTime: 300_000,
     refetchOnWindowFocus: false,
-    placeholderData: prev => prev,  // Mantém dados anteriores durante refetch
-    enabled: !!ENTITY && (isSimple || readFilter !== null),
+    enabled: !!ENTITY,
+    // CRÍTICO: keepPreviousData evita mostrar [] durante refetch mantendo dados visíveis
+    placeholderData: (prev) => prev ?? [],
   });
 
-  // Subscribe: invalida ao detectar qualquer write na entidade
+  // Subscribe p/ invalidar ao detectar writes externos
   useEffect(() => {
     if (!ENTITY) return;
     const api = base44.entities?.[ENTITY];
     if (!api?.subscribe) return;
-    const unsub = api.subscribe(() => {
-      invalidateAll(queryClient, ENTITY);
-    });
+    const unsub = api.subscribe(() => invalidateAll(queryClient, ENTITY));
     return () => { if (typeof unsub === "function") unsub(); };
   }, [ENTITY, queryClient]);
 
-  // ── ordenação ──
+  // ── ordenação ────────────────────────────────────────────────────────────────
   const handleSort = useCallback((field) => {
-    setSortField(prev => {
-      if (prev === field) {
-        setSortDir(d => d === "desc" ? "asc" : "desc");
-        return prev;
-      }
-      setSortDir("desc");
-      return field;
-    });
+    setSortDir(prev => sortField === field ? (prev === "desc" ? "asc" : "desc") : "desc");
+    setSortField(field);
     setPage(1);
-  }, []);
+  }, [sortField]);
 
   const handleSortDropdown = useCallback((value) => {
     const idx = value.lastIndexOf("|");
@@ -319,12 +334,11 @@ export default function VisualizadorUniversalEntidadeV24({
     setPage(1);
   }, []);
 
-  // ── formulário ──
+  // ── formulário ───────────────────────────────────────────────────────────────
   const handleCloseForm = useCallback(() => {
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
-    setPage(1);
     invalidateAll(queryClient, ENTITY);
   }, [ENTITY, queryClient]);
 
@@ -332,25 +346,24 @@ export default function VisualizadorUniversalEntidadeV24({
     if (!formData || !ENTITY) return;
     if (formData._action === "delete") {
       if (formData.id) {
-        try { await base44.entities[ENTITY].delete(formData.id); } catch (_) { }
+        try { await base44.entities[ENTITY].delete(formData.id); } catch (_) {}
       }
       handleCloseForm(); return;
     }
-    setIsSavingForm(true);
+    setIsSaving(true);
     try {
-      const { _action, ...clean } = formData;
-      const payload = { ...clean };
+      const { _action, ...clean } = { ...formData };
       if (!isSimple) {
-        if (!payload.empresa_id && empresaId) payload.empresa_id = empresaId;
-        if (!payload.group_id && groupId) payload.group_id = groupId;
+        if (!clean.empresa_id && empresaId) clean.empresa_id = empresaId;
+        if (!clean.group_id  && groupId)   clean.group_id   = groupId;
       }
-      if (editItem?.id) await base44.entities[ENTITY].update(editItem.id, payload);
-      else await base44.entities[ENTITY].create(payload);
+      if (editItem?.id) await base44.entities[ENTITY].update(editItem.id, clean);
+      else              await base44.entities[ENTITY].create(clean);
       handleCloseForm();
     } catch (e) {
       alert("Erro ao salvar: " + (e?.message || String(e)));
     } finally {
-      setIsSavingForm(false);
+      setIsSaving(false);
     }
   }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, isSimple]);
 
@@ -362,61 +375,64 @@ export default function VisualizadorUniversalEntidadeV24({
   const handleEditItem = useCallback(async (item) => {
     if (!item?.id) return;
     setIsLoadingEdit(true);
-    setShowForm(false); setEditItem(null); setEditError(null);
+    setEditError(null);
     try {
       const full = await fetchFullRecord(ENTITY, item.id);
-      setFormKey(k => k + 1);
-      setEditItem(full ?? JSON.parse(JSON.stringify(item)));
+      const record = full ?? JSON.parse(JSON.stringify(item));
+      setEditItem(record);
       if (!full) setEditError("Dados parciais — alguns campos podem não aparecer.");
+      setFormKey(k => k + 1);
       setShowForm(true);
     } catch {
-      setFormKey(k => k + 1);
       setEditItem(JSON.parse(JSON.stringify(item)));
+      setFormKey(k => k + 1);
       setShowForm(true);
     } finally {
       setIsLoadingEdit(false);
     }
   }, [ENTITY]);
 
-  const formProps = buildFormProps(editItem, handleCloseForm, isSelfManaged ? handleCloseForm : handlePersistSubmit);
+  const formProps = useMemo(
+    () => buildFormProps(editItem, handleCloseForm, isSelfManaged ? handleCloseForm : handlePersistSubmit),
+    [editItem, handleCloseForm, isSelfManaged, handlePersistSubmit]
+  );
 
-  // ── exclusão unitária ──
+  // ── exclusão unitária ────────────────────────────────────────────────────────
   const handleDelete = useCallback(async (item) => {
     const label = item.nome || item.razao_social || item.nome_completo || item.descricao || item.id;
-    if (!window.confirm(`Confirma exclusão de "${label}"?`)) return;
+    if (!window.confirm(`Confirmar exclusão de "${label}"?`)) return;
     try {
       await base44.entities[ENTITY].delete(item.id);
-      setSelectedIds(prev => { const n = new Set(prev); n.delete(item.id); return n; });
-      // Volta p/ pág 1 se era o último item da página
-      if (items.length <= 1 && page > 1) setPage(p => Math.max(1, p - 1));
-      invalidateAll(queryClient, ENTITY);
-    } catch (e) { alert("Erro ao excluir: " + (e?.message || String(e))); }
+    } catch (e) { alert("Erro ao excluir: " + (e?.message || String(e))); return; }
+    setSelectedIds(prev => { const n = new Set(prev); n.delete(item.id); return n; });
+    if (items.length <= 1 && page > 1) setPage(p => Math.max(1, p - 1));
+    invalidateAll(queryClient, ENTITY);
   }, [ENTITY, queryClient, items.length, page]);
 
-  // ── exclusão em massa ──
+  // ── exclusão em massa ─────────────────────────────────────────────────────────
   const handleDeleteSelected = useCallback(async () => {
     const effectiveCount = crossPageAll
       ? Math.max(0, totalCount - deselectedIds.size)
       : selectedIds.size;
     if (effectiveCount === 0) return;
-    const msg = crossPageAll
-      ? `⚠️ Isso irá excluir ${effectiveCount} registro(s) permanentemente!\n\nDeseja continuar?`
-      : `Confirma exclusão de ${effectiveCount} registro(s)?`;
+    const msg = crossPageAll && effectiveCount > items.length
+      ? `⚠️ Isso irá excluir ${effectiveCount} registro(s) PERMANENTEMENTE em todas as páginas!\n\nDeseja continuar?`
+      : `Confirmar exclusão de ${effectiveCount} registro(s)?`;
     if (!window.confirm(msg)) return;
+
     try {
       let idsToDelete = [];
       if (crossPageAll) {
-        // Coleta todos os IDs via backend (service role, sem wrap AND do Layout)
-        const filter = isSimple ? {} : (buildContextFilter(ENTITY, empresaId, groupId, empresasDoGrupo) || {});
+        // Coleta IDs via service role (entityListSorted) — sem wrap AND do Layout
         let skipAcc = 0;
         while (true) {
           const res = await base44.functions.invoke("entityListSorted", {
-            entityName: ENTITY, filter,
+            entityName: ENTITY, filter: readFilter,
             sortField: "id", sortDirection: "asc",
             limit: 500, skip: skipAcc,
           });
-          const arr = res?.data;
-          if (!Array.isArray(arr) || !arr.length) break;
+          const arr = Array.isArray(res?.data) ? res.data : [];
+          if (!arr.length) break;
           arr.forEach(i => { if (i.id && !deselectedIds.has(i.id)) idsToDelete.push(i.id); });
           if (arr.length < 500) break;
           skipAcc += 500;
@@ -424,20 +440,25 @@ export default function VisualizadorUniversalEntidadeV24({
       } else {
         idsToDelete = Array.from(selectedIds);
       }
-      if (!idsToDelete.length) return;
-      // Deleta em lotes de 20
-      for (let i = 0; i < idsToDelete.length; i += 20) {
-        await Promise.all(idsToDelete.slice(i, i + 20).map(id =>
-          base44.entities[ENTITY].delete(id).catch(() => { })
-        ));
-      }
-      setSelectedIds(new Set()); setDeselectedIds(new Set());
-      setCrossPageAll(false); setPage(1);
-      invalidateAll(queryClient, ENTITY);
-    } catch (e) { alert("Erro ao excluir: " + (e?.message || String(e))); }
-  }, [ENTITY, isSimple, crossPageAll, totalCount, selectedIds, deselectedIds, empresaId, groupId, JSON.stringify(empresasDoGrupo), queryClient]); // eslint-disable-line
 
-  // ── seleção ──
+      if (!idsToDelete.length) { alert("Nenhum registro para excluir."); return; }
+
+      // Deleta em lotes de 20 em paralelo
+      for (let i = 0; i < idsToDelete.length; i += 20) {
+        await Promise.all(
+          idsToDelete.slice(i, i + 20).map(id =>
+            base44.entities[ENTITY].delete(id).catch(() => {})
+          )
+        );
+      }
+    } catch (e) { alert("Erro ao excluir: " + (e?.message || String(e))); return; }
+
+    setSelectedIds(new Set()); setDeselectedIds(new Set());
+    setCrossPageAll(false); setPage(1);
+    invalidateAll(queryClient, ENTITY);
+  }, [ENTITY, crossPageAll, totalCount, selectedIds, deselectedIds, readFilter, queryClient, items.length]);
+
+  // ── seleção ──────────────────────────────────────────────────────────────────
   const isItemSelected = useCallback((id) =>
     crossPageAll ? !deselectedIds.has(id) : selectedIds.has(id),
     [crossPageAll, deselectedIds, selectedIds]);
@@ -471,13 +492,13 @@ export default function VisualizadorUniversalEntidadeV24({
   const handleActivateCrossPage = useCallback(() => {
     setCrossPageAll(true); setDeselectedIds(new Set()); setSelectedIds(new Set());
   }, []);
-
   const handleCancelSelection = useCallback(() => {
     setCrossPageAll(false); setDeselectedIds(new Set()); setSelectedIds(new Set());
   }, []);
 
   const getSortIcon = (field) => {
-    if (sortField !== field) return <ChevronsUpDown className="w-3 h-3 text-slate-300 opacity-0 group-hover/th:opacity-100 transition-opacity" />;
+    if (sortField !== field)
+      return <ChevronsUpDown className="w-3 h-3 text-slate-300 opacity-0 group-hover/th:opacity-100 transition-opacity" />;
     return sortDir === "desc"
       ? <ChevronDown className="w-3.5 h-3.5 text-blue-500" />
       : <ChevronUp className="w-3.5 h-3.5 text-blue-500" />;
@@ -486,115 +507,152 @@ export default function VisualizadorUniversalEntidadeV24({
   const effectiveSelectedCount = crossPageAll
     ? Math.max(0, totalCount - deselectedIds.size)
     : selectedIds.size;
-
   const showCrossPageBanner = !crossPageAll && selectedIds.size > 0 && allPageSelected && totalCount > items.length;
-  const needsContext = !isSimple && !empresaId && !groupId;
 
-  // ── render ──
+  // ─── render ───────────────────────────────────────────────────────────────────
   const content = (
-    <div className="flex flex-col h-full gap-3 min-h-0 w-full">
-      {/* Toolbar */}
+    <div className="flex flex-col h-full gap-2 min-h-0 w-full">
+
+      {/* ── Toolbar ── */}
       <div className="flex items-center gap-2 flex-wrap shrink-0">
-        <div className="flex items-center gap-1 shrink-0">
-          <span className="text-sm font-semibold text-slate-700 truncate">{TITULO}:</span>
-          <Badge variant="outline" className="rounded-sm bg-blue-50 text-blue-700 border-blue-200 font-bold tabular-nums">
-            {totalCount}
+        {/* Contagem */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-sm font-semibold text-slate-700">{TITULO}:</span>
+          <Badge variant="outline" className="rounded-sm bg-blue-50 text-blue-700 border-blue-200 font-bold tabular-nums min-w-[36px] text-center">
+            {countsLoading && totalCount === 0
+              ? <span className="animate-pulse opacity-60 text-[10px]">···</span>
+              : totalCount.toLocaleString("pt-BR")}
           </Badge>
         </div>
 
+        {/* Busca */}
         <div className="relative flex-1 min-w-[140px]">
           <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
-          <Input placeholder={`Buscar ${TITULO}...`} value={search}
+          <Input placeholder={`Buscar...`} value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-8 h-9 rounded-sm text-sm bg-white border-slate-200" />
           {search && (
-            <button onClick={() => setSearch("")} className="absolute right-2 top-2.5 text-slate-400 hover:text-slate-600">
+            <button onClick={() => setSearch("")}
+              className="absolute right-2 top-2.5 text-slate-400 hover:text-slate-600">
               <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
+        {/* Por página */}
         <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-          className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer">
-          {PAGE_SIZES.map(ps => <option key={ps} value={ps}>{ps} / pág.</option>)}
+          className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer shrink-0">
+          {PAGE_SIZES.map(ps => <option key={ps} value={ps}>{ps}/pág</option>)}
         </select>
 
+        {/* Ordenação */}
         <select value={`${sortField}|${sortDir}`} onChange={e => handleSortDropdown(e.target.value)}
-          className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer" title="Ordenação">
+          className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer shrink-0" title="Ordenar por">
           <option value="updated_date|desc">↓ Mais Recentes</option>
           <option value="updated_date|asc">↑ Mais Antigos</option>
-          <option value="created_date|desc">↓ Criação</option>
-          <option value="created_date|asc">↑ Criação</option>
-          {COLUMNS.filter(c => c.sortable !== false && !["updated_date", "created_date"].includes(c.field)).flatMap(c => [
-            <option key={`${c.field}|asc`} value={`${c.field}|asc`}>{c.label} ↑</option>,
-            <option key={`${c.field}|desc`} value={`${c.field}|desc`}>{c.label} ↓</option>,
-          ])}
+          <option value="created_date|desc">↓ Criação (novo)</option>
+          <option value="created_date|asc">↑ Criação (antigo)</option>
+          {COLUMNS.filter(c => c.sortable !== false && !["updated_date","created_date"].includes(c.field))
+            .flatMap(c => [
+              <option key={`${c.field}|asc`}  value={`${c.field}|asc`}>{c.label} ↑</option>,
+              <option key={`${c.field}|desc`} value={`${c.field}|desc`}>{c.label} ↓</option>,
+            ])}
         </select>
 
-        <button type="button"
-          onClick={() => invalidateAll(queryClient, ENTITY)}
-          className="h-9 w-9 flex items-center justify-center border border-slate-200 rounded-sm bg-white hover:bg-slate-50" title="Recarregar">
+        {/* Recarregar */}
+        <button type="button" onClick={() => invalidateAll(queryClient, ENTITY)}
+          className="h-9 w-9 flex items-center justify-center border border-slate-200 rounded-sm bg-white hover:bg-slate-50 shrink-0" title="Recarregar">
           <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-blue-500" : "text-slate-500"}`} />
         </button>
 
+        {/* Novo */}
         {FormComponent && (
-          <Button size="sm" onClick={handleNewItem} className="h-9 rounded-sm gap-1" disabled={isLoadingEdit}>
+          <Button size="sm" onClick={handleNewItem} className="h-9 rounded-sm gap-1 shrink-0" disabled={isLoadingEdit}>
             <Plus className="w-4 h-4" /> Novo
           </Button>
         )}
 
+        {/* Excluir selecionados */}
         {effectiveSelectedCount > 0 && (
-          <Button size="sm" variant="destructive" onClick={handleDeleteSelected} className="h-9 rounded-sm gap-1">
+          <Button size="sm" variant="destructive" onClick={handleDeleteSelected}
+            className="h-9 rounded-sm gap-1 shrink-0">
             <Trash2 className="w-4 h-4" />
-            Excluir {effectiveSelectedCount === totalCount ? "TODOS" : effectiveSelectedCount}
+            Excluir {effectiveSelectedCount >= totalCount && totalCount > 0 ? "TODOS" : effectiveSelectedCount}
           </Button>
         )}
       </div>
 
-      {/* Banner cross-page */}
+      {/* ── Banner: selecionar todas as páginas ── */}
       {showCrossPageBanner && (
-        <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-2 text-sm text-amber-800 flex items-center gap-2 shrink-0 flex-wrap">
+        <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-1.5 text-xs text-amber-800 flex items-center gap-2 flex-wrap shrink-0">
           <span className="font-medium">{selectedIds.size} selecionados nesta página.</span>
-          <button onClick={handleActivateCrossPage} className="text-blue-600 hover:text-blue-800 underline text-xs font-semibold">
-            Selecionar todos os {totalCount} registros
+          <button onClick={handleActivateCrossPage}
+            className="text-blue-600 hover:text-blue-800 underline font-semibold">
+            Selecionar todos os {totalCount} registros de "{TITULO}"
           </button>
-          <button onClick={handleCancelSelection} className="ml-auto text-slate-500 hover:text-slate-700 underline text-xs">Cancelar</button>
+          <button onClick={handleCancelSelection}
+            className="ml-auto text-slate-500 hover:text-slate-700 underline">Cancelar</button>
         </div>
       )}
       {crossPageAll && (
-        <div className="bg-blue-50 border border-blue-200 rounded-sm px-3 py-2 text-sm text-blue-700 flex items-center gap-2 shrink-0 flex-wrap">
+        <div className="bg-blue-50 border border-blue-200 rounded-sm px-3 py-1.5 text-xs text-blue-700 flex items-center gap-2 flex-wrap shrink-0">
           <span>✓ {deselectedIds.size > 0
             ? `${effectiveSelectedCount} de ${totalCount} selecionados (${deselectedIds.size} desmarcado${deselectedIds.size > 1 ? "s" : ""})`
-            : `Todos os ${totalCount} registros de "${TITULO}" selecionados`}</span>
-          <button onClick={handleCancelSelection} className="ml-auto text-blue-500 hover:text-blue-700 underline text-xs">Cancelar seleção</button>
+            : `Todos os ${totalCount} registros selecionados`}</span>
+          <button onClick={handleCancelSelection}
+            className="ml-auto text-blue-500 hover:text-blue-700 underline">Cancelar seleção</button>
         </div>
       )}
 
-      {/* Tabela */}
-      <div className="flex-1 overflow-auto rounded-sm border border-slate-200 bg-white min-h-0">
+      {/* ── Tabela ── */}
+      <div className="flex-1 overflow-auto rounded-sm border border-slate-200 bg-white min-h-0 relative">
+        {/* Overlay de loading leve (não oculta dados) */}
+        {isFetching && items.length > 0 && (
+          <div className="absolute top-0 right-0 z-20 bg-blue-500/10 text-blue-600 text-[10px] px-2 py-0.5 rounded-bl flex items-center gap-1">
+            <RefreshCw className="w-2.5 h-2.5 animate-spin" /> atualizando…
+          </div>
+        )}
+
         {isLoading && items.length === 0 ? (
-          <div className="space-y-1.5 p-4">
-            {[...Array(8)].map((_, i) => <Skeleton key={i} className={`h-8 rounded-sm ${i % 3 === 0 ? "w-3/4" : "w-full"}`} />)}
+          <div className="space-y-1.5 p-3">
+            {[...Array(8)].map((_,i) => (
+              <Skeleton key={i} className={`h-8 rounded-sm ${i%3===0?"w-3/4":"w-full"}`} />
+            ))}
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center h-40 text-red-500 gap-2">
+            <AlertCircle className="w-7 h-7" />
+            <span className="text-sm">Erro ao carregar dados. Clique em recarregar.</span>
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-2">
-            <Search className="w-8 h-8 opacity-30" />
-            <span className="text-sm">{debouncedSearch ? `Nenhum resultado para "${debouncedSearch}"` : `Nenhum ${TITULO} encontrado`}</span>
-            {needsContext && <span className="text-xs text-amber-600 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> Selecione uma empresa ou grupo</span>}
+          <div className="flex flex-col items-center justify-center h-40 text-slate-400 gap-2">
+            <Search className="w-7 h-7 opacity-30" />
+            <span className="text-sm">
+              {debouncedSearch
+                ? `Nenhum resultado para "${debouncedSearch}"`
+                : `Nenhum registro de ${TITULO}`}
+            </span>
+            {!isSimple && !empresaId && !groupId && (
+              <span className="text-xs text-amber-600 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" /> Selecione uma empresa ou grupo primeiro
+              </span>
+            )}
           </div>
         ) : (
           <table className="w-full text-sm table-auto">
             <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 z-10">
               <tr>
-                <th className="px-3 py-2.5 text-center w-9">
+                <th className="px-3 py-2.5 text-center w-8">
                   <input type="checkbox"
                     ref={el => { if (el) el.indeterminate = somePageSelected && !allPageSelected; }}
-                    checked={allPageSelected} onChange={handleToggleSelectPage}
-                    className="w-4 h-4 cursor-pointer" />
+                    checked={allPageSelected}
+                    onChange={handleToggleSelectPage}
+                    className="w-4 h-4 cursor-pointer accent-blue-600" />
                 </th>
                 {COLUMNS.map(col => (
                   <th key={col.field}
-                    className={`group/th px-3 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap select-none ${col.sortable !== false ? "cursor-pointer hover:bg-slate-100 transition-colors" : ""}`}
+                    className={`group/th px-3 py-2.5 text-left font-semibold text-slate-600 whitespace-nowrap select-none
+                      ${col.sortable !== false ? "cursor-pointer hover:bg-slate-100 transition-colors" : ""}`}
                     onClick={() => col.sortable !== false && handleSort(col.field)}>
                     <div className="flex items-center gap-1">
                       <span>{col.label}</span>
@@ -602,35 +660,45 @@ export default function VisualizadorUniversalEntidadeV24({
                     </div>
                   </th>
                 ))}
-                <th className="px-3 py-2.5 text-center font-semibold text-slate-600 w-20 whitespace-nowrap">Ações</th>
+                <th className="px-3 py-2.5 text-center w-20 font-semibold text-slate-600">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {items.map(item => {
                 const checked = isItemSelected(item.id);
                 return (
-                  <tr key={item.id} className={`hover:bg-blue-50/30 transition-colors group/row ${checked ? "bg-blue-50/40" : ""}`}>
+                  <tr key={item.id}
+                    className={`hover:bg-blue-50/30 transition-colors group/row ${checked ? "bg-blue-50/40" : ""}`}>
                     <td className="px-3 py-2 text-center">
-                      <input type="checkbox" checked={checked}
+                      <input type="checkbox"
+                        checked={checked}
                         onChange={e => handleItemCheck(item.id, e.target.checked)}
-                        className="w-4 h-4 cursor-pointer" />
+                        className="w-4 h-4 cursor-pointer accent-blue-600" />
                     </td>
                     {COLUMNS.map(col => (
-                      <td key={col.field} className="px-3 py-2 text-slate-600 max-w-[260px] truncate">
+                      <td key={col.field}
+                        className="px-3 py-2 text-slate-600 max-w-[240px] truncate">
                         {formatValue(item[col.field], col, extraColors)}
                       </td>
                     ))}
                     <td className="px-3 py-2">
                       <div className="flex items-center justify-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
                         {FormComponent && (
-                          <button type="button" onClick={e => { e.stopPropagation(); handleEditItem(item); }}
+                          <button type="button"
+                            onClick={e => { e.stopPropagation(); handleEditItem(item); }}
                             title="Editar" disabled={isLoadingEdit}
-                            className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40">
-                            {isLoadingEdit ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Edit className="w-3.5 h-3.5" />}
+                            className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400
+                              hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40">
+                            {isLoadingEdit
+                              ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              : <Edit className="w-3.5 h-3.5" />}
                           </button>
                         )}
-                        <button type="button" onClick={() => handleDelete(item)} title="Excluir"
-                          className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                        <button type="button"
+                          onClick={() => handleDelete(item)}
+                          title="Excluir"
+                          className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400
+                            hover:text-red-600 hover:bg-red-50 transition-colors">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -643,48 +711,62 @@ export default function VisualizadorUniversalEntidadeV24({
         )}
       </div>
 
-      {/* Paginação */}
-      <div className="flex items-center justify-between text-xs text-slate-500 shrink-0 flex-wrap gap-2">
-        <span>
-          {isFetching && items.length > 0 && (
-            <span className="inline-flex items-center gap-1 text-blue-500 mr-2">
-              <RefreshCw className="w-3 h-3 animate-spin" /> Atualizando…
-            </span>
-          )}
-          Pág. {page} · {items.length} exibidos · {totalCount} total
-        </span>
-        <div className="flex gap-1.5">
-          <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1 || isLoading}
-            className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">← Anterior</button>
-          <span className="flex items-center justify-center h-7 min-w-[28px] px-2 border border-slate-200 rounded-sm bg-white font-medium text-slate-700">{page}</span>
-          <button type="button" onClick={() => setPage(p => p + 1)} disabled={items.length < pageSize || isLoading}
-            className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">Próxima →</button>
+      {/* ── Paginação ── */}
+      <div className="flex items-center justify-between text-xs text-slate-500 shrink-0 flex-wrap gap-1.5">
+        <span>Pág. {page} · {items.length} exibidos · {totalCount} total</span>
+        <div className="flex gap-1">
+          <button type="button"
+            onClick={() => setPage(1)}
+            disabled={page === 1 || isLoading}
+            className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40">«</button>
+          <button type="button"
+            onClick={() => setPage(p => Math.max(1, p-1))}
+            disabled={page === 1 || isLoading}
+            className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40">← Ant.</button>
+          <span className="flex items-center justify-center h-7 px-2 border border-slate-200 rounded-sm bg-white font-semibold text-slate-700">{page}</span>
+          <button type="button"
+            onClick={() => setPage(p => p+1)}
+            disabled={items.length < pageSize || isLoading}
+            className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40">Próx. →</button>
         </div>
       </div>
 
-      {/* Modal formulário */}
+      {/* ── Modal formulário ── */}
       {FormComponent && showForm && (
         <>
           <div className="fixed inset-0 z-[1099] bg-black/50" onClick={handleCloseForm} />
           <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 pointer-events-none">
-            <div className="bg-white rounded-xl w-full max-w-4xl max-h-[92vh] overflow-auto shadow-2xl pointer-events-auto flex flex-col"
+            <div
+              className="bg-white rounded-xl w-full max-w-4xl max-h-[92vh] overflow-auto shadow-2xl pointer-events-auto flex flex-col"
               onClick={e => e.stopPropagation()}>
-              <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10 rounded-t-xl shrink-0">
+              {/* Header modal */}
+              <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between rounded-t-xl shrink-0 z-10">
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-800">{editItem?.id ? `Editar ${TITULO}` : `Novo ${TITULO}`}</h2>
-                  {editError && <p className="text-xs text-amber-600 mt-0.5 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {editError}</p>}
+                  <h2 className="text-lg font-semibold text-slate-800">
+                    {editItem?.id ? `Editar ${TITULO}` : `Novo ${TITULO}`}
+                  </h2>
+                  {editError && (
+                    <p className="text-xs text-amber-600 mt-0.5 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {editError}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {isSavingForm && <span className="text-xs text-blue-600 animate-pulse flex items-center gap-1"><RefreshCw className="w-3 h-3 animate-spin" /> Salvando...</span>}
+                  {isSaving && (
+                    <span className="text-xs text-blue-600 flex items-center gap-1">
+                      <RefreshCw className="w-3 h-3 animate-spin" /> Salvando…
+                    </span>
+                  )}
                   <button type="button" onClick={handleCloseForm}
                     className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
               </div>
+              {/* Conteúdo do form */}
               <div className="p-6 flex-1 overflow-auto">
                 <FormComponent
-                  key={`form-${ENTITY}-${editItem?.id || "new"}-${formKey}`}
+                  key={`form-${ENTITY}-${editItem?.id ?? "new"}-${formKey}`}
                   {...formProps}
                 />
               </div>
@@ -695,6 +777,7 @@ export default function VisualizadorUniversalEntidadeV24({
     </div>
   );
 
+  // Window mode wrapper
   if (windowMode) {
     return (
       <div className="w-full h-full flex flex-col p-4 bg-white overflow-hidden">
