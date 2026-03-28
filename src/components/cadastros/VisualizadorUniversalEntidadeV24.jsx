@@ -766,5 +766,6 @@ export default function VisualizadorUniversalEntidadeV24({
       </div>
     );
   }
-  return content;
+  // non-windowMode: precisa de flex-1 para receber altura do pai
+  return <div className="flex flex-col flex-1 min-h-0 h-full w-full">{content}</div>;
 }

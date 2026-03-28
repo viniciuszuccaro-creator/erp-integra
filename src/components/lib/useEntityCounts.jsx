@@ -115,10 +115,9 @@ export function useEntityCounts(entities = []) {
 
   const queryKey = ['entityCounts_v5', entitiesKey, groupId, empresaId, grupoEmpIdsKey];
 
-  const canFetch = normalized.length > 0 && normalized.some(e => {
-    if (SIMPLE_CATALOG.has(e)) return true;
-    return !!(groupId || empresaId);
-  });
+  // Sempre busca — se não há contexto, usa filtro vazio (conta tudo) ou
+  // contexto do grupo/empresa quando disponível
+  const canFetch = normalized.length > 0;
 
   const { data: counts = {}, isLoading } = useQuery({
     queryKey,
@@ -130,10 +129,6 @@ export function useEntityCounts(entities = []) {
 
       for (const entityName of normalized) {
         const isSimple = SIMPLE_CATALOG.has(entityName);
-        if (!isSimple && !groupId && !empresaId) {
-          fixed[entityName] = 0;
-          continue;
-        }
         const filter = isSimple
           ? {}
           : (buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) || {});

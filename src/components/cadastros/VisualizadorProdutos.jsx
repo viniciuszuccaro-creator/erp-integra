@@ -70,7 +70,7 @@ export default function VisualizadorProdutos(props) {
     <div className="flex flex-col h-full w-full bg-slate-50">
       <div className="p-4 border-b bg-white flex items-center gap-4 shrink-0">
       </div>
-      <div className="flex-1 min-h-0 p-4 flex flex-col">
+      <div className="flex-1 min-h-0 p-4 flex flex-col overflow-hidden">
         <VisualizadorUniversalEntidadeV24 {...visualizadorProps} />
       </div>
 
