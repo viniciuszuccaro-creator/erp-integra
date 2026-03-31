@@ -46,7 +46,7 @@ export default function Bloco2Produtos() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Package className="w-5 h-5 text-purple-700"/> Produtos & Serviços
-              <CountBadgeSimplificado entities={["Produto","Servico","SetorAtividade","GrupoProduto","Marca","TabelaPreco","KitProduto","UnidadeMedida"]} />
+              <CountBadgeSimplificado entities={["Produto","Servico","SetorAtividade","GrupoProduto","Marca","TabelaPreco","KitProduto","CatalogoWeb","UnidadeMedida"]} />
             </CardTitle>
           </div>
         </CardHeader>

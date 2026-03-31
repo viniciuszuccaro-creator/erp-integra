@@ -47,7 +47,7 @@ export default function Bloco3Financeiro() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Landmark className="w-5 h-5 text-emerald-700"/> Financeiro & Fiscal
-              <CountBadgeSimplificado entities={["Banco","FormaPagamento","PlanoDeContas","CentroCusto","CentroResultado","TipoDespesa","MoedaIndice","OperadorCaixa","GatewayPagamento","TabelaFiscal","CondicaoComercial"]} />
+              <CountBadgeSimplificado entities={["Banco","FormaPagamento","PlanoDeContas","CentroCusto","CentroResultado","TipoDespesa","MoedaIndice","OperadorCaixa","GatewayPagamento","ConfiguracaoDespesaRecorrente","TabelaFiscal","CondicaoComercial"]} />
             </CardTitle>
           </div>
         </CardHeader>

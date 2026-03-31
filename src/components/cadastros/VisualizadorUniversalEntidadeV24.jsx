@@ -413,31 +413,15 @@ export default function VisualizadorUniversalEntidadeV24({
     setFormKey(k => k + 1); setShowForm(true);
   }, []);
 
-  const handleEditItem = useCallback(async (item) => {
+  const handleEditItem = useCallback((item) => {
     if (!item?.id) return;
-    setIsLoadingEdit(true); setEditError(null);
-
-    // Abre o form imediatamente com os dados parciais já disponíveis
-    const partialItem = JSON.parse(JSON.stringify(item));
-    setEditItem(partialItem);
+    // entityListSorted já retorna objetos completos — sem necessidade de re-fetch
+    setEditItem(JSON.parse(JSON.stringify(item)));
+    setEditError(null);
+    setIsLoadingEdit(false);
     setFormKey(k => k + 1);
     setShowForm(true);
-
-    // Busca dados completos em background
-    try {
-      const full = await fetchFullRecord(ENTITY, item.id);
-      if (full && full.id) {
-        setEditItem(full);
-        setFormKey(k => k + 1); // re-monta o form com dados completos
-      } else {
-        setEditError("Dados carregados parcialmente — alguns campos podem estar incompletos.");
-      }
-    } catch {
-      setEditError("Erro ao carregar dados completos.");
-    } finally {
-      setIsLoadingEdit(false);
-    }
-  }, [ENTITY]);
+  }, []);
 
   const formProps = useMemo(
     () => buildFormProps(editItem, handleCloseForm, isSelfManaged ? handleCloseForm : handlePersistSubmit),
