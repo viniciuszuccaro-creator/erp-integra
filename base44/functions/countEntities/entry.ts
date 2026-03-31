@@ -129,8 +129,10 @@ async function countOne(base44, user, payload) {
     return { entityName, count: simpleCount };
   }
 
-  if (!scopeProvided && user?.role !== 'admin') {
-    return { entityName, count: 0, error: 'escopo_obrigatorio' };
+  // Sem escopo → conta total global (badges indicativos); dados protegidos via entityListSorted
+  if (!scopeProvided) {
+    const totalCount = await fastCount(base44, entityName, {});
+    return { entityName, count: totalCount };
   }
 
   let finalFilter = normalizeSharedFilter({ ...filter });

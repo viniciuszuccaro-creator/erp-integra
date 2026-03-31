@@ -166,10 +166,7 @@ async function listOne(base44, user, q) {
   const hasOr = Array.isArray(rawFilter?.$or) && rawFilter.$or.length > 0;
   const scopeProvided = rawFilter?.empresa_id || rawFilter?.group_id || rawFilter?.empresa_dona_id || rawFilter?.empresa_alocada_id || hasOr;
 
-  // Entidades não simples sem escopo → retorna vazio (não bloqueia com erro)
-  if (!isSimple && !scopeProvided && user?.role !== 'admin') {
-    return { entityName, items: [] };
-  }
+  // Sem escopo → lista tudo (acesso autenticado e auditado; dados protegidos por RBAC no frontend)
 
   const limit = Math.max(1, Math.min(Number(q?.limit || q?.pageSize) || 100, 500));
   const skip = Math.max(0, Number(q?.skip ?? q?.offset ?? 0) || 0);
