@@ -262,11 +262,14 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const skip = (page - 1) * pageSize;
 
+  // Manda contexto limpo ao backend para ele expandir corretamente.
+  // buildContextFilter embutia group_id dentro de $or, impedindo a expansão do backend.
   const readFilter = useMemo(function() {
     if (isSimple) return {};
-    if (!empresaId && !groupId) return {};
-    return buildContextFilter(ENTITY, empresaId, groupId, empresasDoGrupo) || {};
-  }, [ENTITY, isSimple, empresaId, groupId, empresasDoGrupo]); // eslint-disable-line
+    if (groupId && !empresaId) return { group_id: groupId };
+    if (empresaId) return { empresa_id: empresaId };
+    return {};
+  }, [isSimple, empresaId, groupId]); // eslint-disable-line
 
   // Envia o campo real ao backend — o backend aceita qualquer campo válido
   const backendSortField = UNSORTABLE_BACKEND.has(sortField) ? "updated_date" : sortField;
@@ -303,32 +306,26 @@ export default function VisualizadorUniversalEntidadeV24({
     enabled: !!ENTITY,
   });
 
-  // items: nunca mostra vazio enquanto há fetch ativo
+  // items: nunca desaparece durante sort/paginação/exclusão
   const items = useMemo(function() {
     if (Array.isArray(rawItems) && rawItems.length > 0) {
       lastGoodData.current = rawItems;
       everLoadedRef.current = true;
       return rawItems;
     }
-    if (isFetching) {
-      // Enquanto busca: retorna último dado bom (lista não desaparece)
-      if (lastGoodData.current.length > 0) return lastGoodData.current;
-      return [];
-    }
+    // Enquanto fetch ativo: mantém último dado bom (lista não desaparece)
+    if (isFetching) return lastGoodData.current.length > 0 ? lastGoodData.current : [];
     if (isError) return lastGoodData.current;
     if (Array.isArray(rawItems)) {
-      // rawItems = [] após fetch completo.
-      // GUARD: se a contagem diz que há dados mas a query retornou [] (bug de backend/sort),
-      // mantém o lastGoodData em vez de apagar — evita lista sumir ao ordenar/paginar.
-      if (everLoadedRef.current && totalCount > 0 && lastGoodData.current.length > 0) {
-        return lastGoodData.current;
-      }
+      // rawItems = [] após fetch completo
+      // Se já tivemos dados e não há busca ativa: pode ser página vazia ou resultado de sort
+      // Limpa o cache e aceita vazio genuinamente
       lastGoodData.current = [];
       everLoadedRef.current = true;
       return [];
     }
     return lastGoodData.current;
-  }, [rawItems, isFetching, isError, totalCount]);
+  }, [rawItems, isFetching, isError]);
 
   useEffect(function() {
     lastGoodData.current = [];

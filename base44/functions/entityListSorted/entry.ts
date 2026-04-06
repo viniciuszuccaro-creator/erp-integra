@@ -138,28 +138,22 @@ function normalizeSharedFilter(f) {
   return out;
 }
 
-// Expande filtro group_id para incluir todas as empresas do grupo
+// Expande filtro de empresa/grupo para cobrir todos os campos de vinculação
 async function expandGroupFilter(base44, entityName, f) {
   const ctxCampo = (entityName === 'Fornecedor' || entityName === 'Transportadora') ? 'empresa_dona_id'
     : (entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id');
 
-  // empresa_id simples → expande para $or com empresa_dona_id e compartilhadas
-  if (EXPAND_SET.has(entityName) && f?.empresa_id && !f?.$or) {
+  // empresa_id simples → expande para $or cobrindo todos os campos de vinculação
+  if (f?.empresa_id && !f?.$or && !f?.group_id) {
     const { empresa_id, ...rest } = f;
-    return {
-      ...rest,
-      $or: [
-        { empresa_id },
-        { empresa_dona_id: empresa_id },
-        { empresas_compartilhadas_ids: { $in: [empresa_id] } }
-      ]
-    };
-  }
-
-  // $or existente + group_id → inclui group_id no $or
-  if (f?.$or && f?.group_id) {
-    const { group_id, ...rest } = f;
-    return { ...rest, $or: [...f.$or, { group_id }] };
+    const orConds = [{ empresa_id }, { empresa_dona_id: empresa_id }];
+    if (EXPAND_SET.has(entityName)) {
+      orConds.push({ empresas_compartilhadas_ids: { $in: [empresa_id] } });
+    }
+    if (entityName === 'Colaborador') {
+      orConds.push({ empresa_alocada_id: empresa_id });
+    }
+    return { ...rest, $or: orConds };
   }
 
   // Apenas group_id → expande para todas as empresas do grupo
@@ -170,20 +164,27 @@ async function expandGroupFilter(base44, entityName, f) {
       const empresasIds = (empresas || []).map(e => e.id).filter(Boolean);
       const rest = { ...f };
       delete rest.group_id;
+      const orConds = [
+        { empresa_id: { $in: empresasIds } },
+        { empresa_dona_id: { $in: empresasIds } },
+        { group_id: groupId },
+      ];
       if (EXPAND_SET.has(entityName)) {
-        return {
-          ...rest,
-          $or: [
-            { [ctxCampo]: { $in: empresasIds } },
-            ...(ctxCampo !== 'empresa_id' ? [{ empresa_id: { $in: empresasIds } }] : []),
-            { empresas_compartilhadas_ids: { $in: empresasIds } },
-            { group_id: groupId }
-          ]
-        };
+        orConds.push({ empresas_compartilhadas_ids: { $in: empresasIds } });
       }
-      return { ...rest, $or: [{ [ctxCampo]: { $in: empresasIds } }, { group_id: groupId }] };
+      if (entityName === 'Colaborador') {
+        orConds.push({ empresa_alocada_id: { $in: empresasIds } });
+      }
+      return { ...rest, $or: orConds };
     } catch (_) { /* fallback: usa group_id direto */ }
   }
+
+  // $or existente + group_id residual
+  if (f?.$or && f?.group_id) {
+    const { group_id, ...rest } = f;
+    return { ...rest, $or: [...f.$or, { group_id }] };
+  }
+
   return f;
 }
 
