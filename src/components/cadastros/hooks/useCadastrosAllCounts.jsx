@@ -70,5 +70,14 @@ export default function useCadastrosAllCounts() {
     queryClient.invalidateQueries({ queryKey: ["cadastros-all-counts"] });
   }, [empresaId, groupId]); // eslint-disable-line
 
+  const counts = data || {};
+
+  const totals = Object.fromEntries(
+    Object.entries(BLOCOS_ENTITIES).map(([bloco, entities]) => [
+      bloco,
+      entities.reduce((sum, e) => sum + (Number(counts[e]) || 0), 0),
+    ])
+  );
+
   return { counts, totals, isLoading };
 }
