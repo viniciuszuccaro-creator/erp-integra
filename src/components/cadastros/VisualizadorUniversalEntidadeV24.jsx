@@ -237,7 +237,7 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // ── query principal ──────────────────────────────────────────────────────────
   // placeholderData garante que a lista NÃO desaparece durante sort/paginação/exclusão
-  const { data: rawItems, isFetching, isError } = useQuery({
+  const { data: rawItems, isFetching, isError, status } = useQuery({
     queryKey: queryKey,
     queryFn: async function() {
       if (!ENTITY) return [];
@@ -270,17 +270,22 @@ export default function VisualizadorUniversalEntidadeV24({
       everLoadedRef.current = true;
       return arr;
     }
-    // Durante qualquer fetch em progresso: mantém dados anteriores (evita piscar)
-    if (isFetching && lastGoodData.current.length > 0) {
-      return lastGoodData.current;
+    // CORREÇÃO: cobre janela entre queryKey-change e isFetching=true (status='pending')
+    // Mostra lastGoodData em QUALQUER estado de transição para evitar lista sumir
+    if (lastGoodData.current.length > 0) {
+      // Ainda carregando (fetch em progresso ou em fila)
+      if (isFetching || status === 'pending') return lastGoodData.current;
+      // Erro temporário: mantém cache
+      if (isError) return lastGoodData.current;
+      // status='success' + arr=[] → genuinamente vazio (ex: filtro sem resultados)
+      // Não retorna lastGoodData para mostrar estado vazio real
     }
-    // Erro: mantém cache visível
-    if (isError) return lastGoodData.current;
+    if (isError && lastGoodData.current.length === 0) return [];
     // Fetch completo e retornou [] genuíno
     everLoadedRef.current = true;
     lastGoodData.current = [];
     return [];
-  }, [rawItems, isFetching, isError]);
+  }, [rawItems, isFetching, isError, status]);
 
   // Reset do cache quando muda de entidade ou empresa
   useEffect(function() {

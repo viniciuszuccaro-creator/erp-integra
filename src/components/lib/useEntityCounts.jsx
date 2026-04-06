@@ -122,14 +122,17 @@ export function useEntityCounts(entities = []) {
         });
         const d = res?.data;
         if (d?.counts && typeof d.counts === 'object') {
-          return { ...fixed, ...d.counts };
+          // CORREÇÃO: 'fixed' nunca existiu — ReferenceError silencioso zerrava todos os counts
+          return { ...d.counts };
         }
       } catch (_) {}
 
-      // Fallback sequencial (evita 429)
+      // Fallback sequencial com delay para evitar 429
       const result = {};
-      for (const { entityName, filter } of batchPayload) {
+      for (let i = 0; i < batchPayload.length; i++) {
+        const { entityName, filter } = batchPayload[i];
         result[entityName] = await countSingle(entityName, filter);
+        if (i < batchPayload.length - 1) await new Promise(r => setTimeout(r, 200));
       }
       return result;
     },
