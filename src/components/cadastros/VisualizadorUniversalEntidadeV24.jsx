@@ -139,8 +139,9 @@ function buildFormProps(editItem, onClose, onSubmit) {
 
 function invalidateAll(qc, entity) {
   qc.invalidateQueries({ queryKey: ["viz-v33", entity], refetchType: "all" });
+  // CORREÇÃO: chaves corretas que os hooks realmente usam
   qc.invalidateQueries({ queryKey: ["entityCounts_v5"], refetchType: "active" });
-  qc.invalidateQueries({ queryKey: ["cadastros-all-counts"], refetchType: "active" });
+  qc.invalidateQueries({ queryKey: ["cadastros-all-counts-v5"], refetchType: "active" });
 }
 
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────────────
@@ -287,11 +288,11 @@ export default function VisualizadorUniversalEntidadeV24({
     return [];
   }, [rawItems, isFetching, isError, status]);
 
-  // Reset do cache quando muda de entidade ou empresa
+  // Reset do cache quando muda de entidade, empresa, grupo ou busca
   useEffect(function() {
     lastGoodData.current = [];
     everLoadedRef.current = false;
-  }, [ENTITY, empresaId, groupId]);
+  }, [ENTITY, empresaId, groupId, debouncedSearch]);
 
   // Subscribe para invalidar quando houver mudanças na entidade
   useEffect(function() {
@@ -322,12 +323,17 @@ export default function VisualizadorUniversalEntidadeV24({
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
+    // Sempre invalida — mesmo sem salvar (usuário pode ter cancelado após mudança externa)
+    invalidateAll(queryClient, ENTITY);
     if (wasSaved) {
+      // Novos cadastros aparecem no topo imediatamente
       setSortField("updated_date");
       setSortDir("desc");
       setPage(1);
+      // Reset lastGoodData para forçar re-render com novos dados
+      lastGoodData.current = [];
+      everLoadedRef.current = false;
     }
-    invalidateAll(queryClient, ENTITY);
   }, [ENTITY, queryClient]);
 
   const handlePersistSubmit = useCallback(async function(formData) {

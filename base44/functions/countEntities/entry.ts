@@ -79,40 +79,38 @@ async function expandGroupFilter(base44, entityName, f) {
 }
 
 /**
- * Contagem eficiente: usa paginacao escalonada para minimizar requests e evitar 429.
- * Estratégia: pede 1 registro por vez crescendo até encontrar o limite.
- * Para catálogos simples sem filtro, usa pages grandes (500) mas com delay adequado.
+ * fastCount V2 — contagem eficiente com retry automático em 429
+ * Estratégia: páginas de 500 com delay progressivo.
+ * Primeira page: sem delay. Pages seguintes: delay crescente.
  */
 async function fastCount(base44, entityName, finalFilter) {
   const PAGE = 500;
-  const MAX_PAGES = 20;
+  const MAX_PAGES = 20; // cap em 10.000 registros
   let total = 0;
-  let delay = 150; // ms entre pages
 
   for (let page = 0; page < MAX_PAGES; page++) {
-    if (page > 0) await new Promise(r => setTimeout(r, delay));
-    let batch;
-    let attempt = 0;
-    while (attempt < 3) {
+    // Delay entre páginas para evitar 429 (cresce progressivamente)
+    if (page > 0) await new Promise(r => setTimeout(r, 200 + page * 80));
+
+    let batch = null;
+    for (let attempt = 0; attempt < 4; attempt++) {
       try {
         batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, page * PAGE);
         break;
       } catch (err) {
         const status = err?.status || err?.response?.status;
         if (status === 429) {
-          await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
-          attempt++;
+          await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
         } else {
           batch = [];
           break;
         }
       }
     }
+
     const n = Array.isArray(batch) ? batch.length : 0;
     total += n;
     if (n < PAGE) break;
-    // Aumentar delay progressivamente para evitar 429 em bases grandes
-    delay = Math.min(delay + 100, 800);
   }
 
   return total;
@@ -164,7 +162,10 @@ Deno.serve(async (req) => {
     // Processa em janelas de 5 paralelas com delay de 200ms entre janelas
     if (entitiesBatch && entitiesBatch.length > 0) {
       const counts = {};
-      const WINDOW = 5;
+      // OTIMIZAÇÃO: janelas menores (3 paralelas) com delay maior entre janelas
+      // Evita burst de 429s em bases com muitos registros
+      const WINDOW = 3;
+      const DELAY_BETWEEN_WINDOWS = 350;
 
       for (let i = 0; i < entitiesBatch.length; i += WINDOW) {
         const slice = entitiesBatch.slice(i, i + WINDOW);
@@ -180,7 +181,7 @@ Deno.serve(async (req) => {
           }
         });
         if (i + WINDOW < entitiesBatch.length) {
-          await new Promise(r => setTimeout(r, 200));
+          await new Promise(r => setTimeout(r, DELAY_BETWEEN_WINDOWS));
         }
       }
 

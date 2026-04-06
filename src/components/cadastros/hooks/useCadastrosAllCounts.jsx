@@ -61,12 +61,13 @@ export default function useCadastrosAllCounts() {
         return {};
       }
     },
-    staleTime: 30_000,       // 30s — contagens aparecem rápido após cadastros
-    gcTime: 5 * 60_000,
+    staleTime: 90_000,       // 90s — reduz 429s sem sacrificar frequência visível
+    gcTime: 10 * 60_000,
     placeholderData: (prev) => prev,
     refetchOnWindowFocus: false,
     refetchOnMount: true,
-    retry: 2,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * (attempt + 1), 5000),
   });
 
   // Invalida ao trocar empresa/grupo
@@ -76,10 +77,8 @@ export default function useCadastrosAllCounts() {
   }, [empresaId, groupId]); // eslint-disable-line
 
   // Subscrição real-time: invalida contagens quando qualquer entidade muda
-  const subscribedRef = useRef(false);
+  // CORREÇÃO: sem subscribedRef — re-executa quando empresa/grupo muda para garantir invalidação correta
   useEffect(() => {
-    if (subscribedRef.current) return;
-    subscribedRef.current = true;
     const unsubs = ALL_ENTITIES.map(name => {
       const api = base44.entities?.[name];
       if (!api?.subscribe) return null;
@@ -88,8 +87,8 @@ export default function useCadastrosAllCounts() {
         queryClient.invalidateQueries({ queryKey: ["entityCounts_v5"] });
       });
     }).filter(Boolean);
-    return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); subscribedRef.current = false; };
-  }, []); // eslint-disable-line
+    return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
+  }, [empresaId, groupId, queryClient]); // eslint-disable-line
 
   const counts = data || {};
 
