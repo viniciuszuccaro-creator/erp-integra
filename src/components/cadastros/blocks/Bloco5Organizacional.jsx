@@ -16,14 +16,16 @@ import TurnoForm from "@/components/cadastros/TurnoForm";
 export default function Bloco5Organizacional({ allCounts }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
-  const openList = (entidade, titulo, Icon, campos, FormComp) => () => openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
+  const openList = (entidade, titulo, Icon, campos, FormComp) => () =>
+    openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
 
+  // Campos reais de cada entidade (sem alias — getDisplayValue faz fallback)
   const tiles = [
-    { k: 'GrupoEmpresarial', t: 'Grupos Empresariais', i: Building2, c: ['nome','cnpj','descricao'], f: GrupoEmpresarialForm },
-    { k: 'Empresa', t: 'Empresas', i: Spline, c: ['razao_social','nome_fantasia','cnpj','cidade','estado'], f: EmpresaForm },
-    { k: 'Departamento', t: 'Departamentos', i: Users, c: ['nome','descricao'], f: DepartamentoForm },
-    { k: 'Cargo', t: 'Cargos', i: Briefcase, c: ['nome','departamento','descricao'], f: CargoForm },
-    { k: 'Turno', t: 'Turnos', i: Clock, c: ['descricao','horario_inicio','horario_fim'], f: TurnoForm },
+    { k: 'GrupoEmpresarial', t: 'Grupos Empresariais', i: Building2, c: ['nome','cnpj','descricao'],                        f: GrupoEmpresarialForm },
+    { k: 'Empresa',           t: 'Empresas',             i: Spline,    c: ['razao_social','nome_fantasia','cnpj','cidade','estado'], f: EmpresaForm },
+    { k: 'Departamento',      t: 'Departamentos',        i: Users,     c: ['nome','descricao'],                              f: DepartamentoForm },
+    { k: 'Cargo',             t: 'Cargos',               i: Briefcase, c: ['nome','departamento','descricao'],               f: CargoForm },
+    { k: 'Turno',             t: 'Turnos',               i: Clock,     c: ['nome','horario_inicio','horario_fim'],           f: TurnoForm },
   ];
 
   return (
@@ -38,6 +40,7 @@ export default function Bloco5Organizacional({ allCounts }) {
         </CardHeader>
         <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
       </Card>
+
       {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
         <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
           onClick={hasPermission('Cadastros', null, 'visualizar') ? openList(k, t, Icon, c, FormComp) : undefined}>

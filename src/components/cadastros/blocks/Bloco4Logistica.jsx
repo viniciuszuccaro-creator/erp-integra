@@ -18,15 +18,17 @@ import ModeloDocumentoForm from "@/components/cadastros/ModeloDocumentoForm";
 export default function Bloco4Logistica({ allCounts }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
-  const openList = (entidade, titulo, Icon, campos, FormComp) => () => openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
+  const openList = (entidade, titulo, Icon, campos, FormComp) => () =>
+    openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
 
+  // Campos reais das entidades — getDisplayValue faz fallback automático se vazio
   const tiles = [
-    { k: 'Veiculo', t: 'Veículos', i: Truck, c: ['placa','modelo','capacidade_kg','ativo'], f: VeiculoForm },
-    { k: 'Motorista', t: 'Motoristas', i: User, c: ['nome','cnh_categoria','cnh_validade','telefone'], f: MotoristaForm },
-    { k: 'TipoFrete', t: 'Tipos de Frete', i: Settings, c: ['descricao','modalidade'], f: TipoFreteForm },
-    { k: 'LocalEstoque', t: 'Locais de Estoque', i: Package, c: ['descricao','codigo','endereco'], f: LocalEstoqueForm },
-    { k: 'RotaPadrao', t: 'Rotas Padrão', i: MapPin, c: ['nome_rota','regiao','prazo_dias'], f: RotaPadraoForm },
-    { k: 'ModeloDocumento', t: 'Modelos de Documento Logístico', i: FileText, c: ['tipo','descricao'], f: ModeloDocumentoForm },
+    { k: 'Veiculo',          t: 'Veículos',                       i: Truck,     c: ['placa','modelo','capacidade_kg','ativo'],     f: VeiculoForm },
+    { k: 'Motorista',        t: 'Motoristas',                     i: User,      c: ['nome','cnh_categoria','cnh_validade','telefone'], f: MotoristaForm },
+    { k: 'TipoFrete',        t: 'Tipos de Frete',                 i: Settings,  c: ['descricao','modalidade'],                    f: TipoFreteForm },
+    { k: 'LocalEstoque',     t: 'Locais de Estoque',              i: Package,   c: ['descricao','codigo','endereco'],              f: LocalEstoqueForm },
+    { k: 'RotaPadrao',       t: 'Rotas Padrão',                   i: MapPin,    c: ['nome_rota','tipo_rota','distancia_media_km'], f: RotaPadraoForm },
+    { k: 'ModeloDocumento',  t: 'Modelos de Documento Logístico', i: FileText,  c: ['tipo','descricao'],                          f: ModeloDocumentoForm },
   ];
 
   return (
@@ -41,6 +43,7 @@ export default function Bloco4Logistica({ allCounts }) {
         </CardHeader>
         <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
       </Card>
+
       {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
         <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
           onClick={hasPermission('Expedição', null, 'visualizar') ? openList(k, t, Icon, c, FormComp) : undefined}>
@@ -55,7 +58,8 @@ export default function Bloco4Logistica({ allCounts }) {
               </CardTitle>
               <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                 {k === 'Motorista' && (
-                  <Button variant="outline" size="sm" className="rounded-sm text-xs h-7" onClick={() => openWindow(AppEntregasMotorista, {}, { title: 'App Motorista', width: 420, height: 800 })}>
+                  <Button variant="outline" size="sm" className="rounded-sm text-xs h-7"
+                    onClick={() => openWindow(AppEntregasMotorista, {}, { title: 'App Motorista', width: 420, height: 800 })}>
                     App
                   </Button>
                 )}

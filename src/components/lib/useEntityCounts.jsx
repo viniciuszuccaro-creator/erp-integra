@@ -33,41 +33,18 @@ const CAMPO_CTX = {
 
 const SHARED = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
 
+/**
+ * buildContextFilter — mantido para compatibilidade com imports externos.
+ * Internamente o hook agora usa filtro simples (o backend expande).
+ */
 export function buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) {
   if (SIMPLE_CATALOG.has(entityName)) return {};
-
-  const campo = CAMPO_CTX[entityName] || 'empresa_id';
-  const orConds = [];
-  const grupoEmpIds = Array.isArray(empresasDoGrupo)
-    ? empresasDoGrupo.map(e => e.id).filter(Boolean)
-    : [];
-
-  if (groupId) orConds.push({ group_id: groupId });
-
-  if (empresaId) {
-    if (entityName === 'Cliente') {
-      orConds.push({ empresa_id: empresaId }, { empresa_dona_id: empresaId });
-    } else {
-      orConds.push({ [campo]: empresaId });
-    }
-    if (SHARED.has(entityName)) {
-      orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
-    }
-  }
-
-  const otherIds = empresaId ? grupoEmpIds.filter(id => id !== empresaId) : grupoEmpIds;
-  if (otherIds.length > 0) {
-    if (entityName === 'Cliente') {
-      orConds.push({ empresa_id: { $in: otherIds } }, { empresa_dona_id: { $in: otherIds } });
-    } else if (SHARED.has(entityName)) {
-      orConds.push({ [campo]: { $in: otherIds } }, { empresas_compartilhadas_ids: { $in: otherIds } });
-    } else {
-      orConds.push({ [campo]: { $in: otherIds } });
-    }
-  }
-
-  if (orConds.length === 0) return null;
-  return { $or: orConds };
+  // Filtro simples: o backend (countEntities / entityListSorted) já expande
+  // empresa_id → empresa_dona_id, empresa_alocada_id, empresas_compartilhadas_ids
+  // group_id  → todas as empresas do grupo
+  if (groupId && !empresaId) return { group_id: groupId };
+  if (empresaId) return { empresa_id: empresaId };
+  return {};
 }
 
 // Fallback: contagem individual via countEntities (single mode)
@@ -156,11 +133,11 @@ export function useEntityCounts(entities = []) {
       }
       return result;
     },
-    staleTime: 300_000,   // 5 min — evita re-fetches desnecessarios e rate limit
-    gcTime: 900_000,
+    staleTime: 30_000,     // 30s — contagens frescas após cadastros
+    gcTime: 300_000,
     placeholderData: (prev) => prev,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     enabled: canFetch,
   });
 

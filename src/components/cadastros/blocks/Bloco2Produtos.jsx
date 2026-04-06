@@ -28,15 +28,17 @@ export default function Bloco2Produtos({ allCounts }) {
     openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
   };
 
+  // ATENÇÃO: sempre usar o campo real que a entidade salva (não alias como nome_grupo, nome_marca etc.)
+  // getDisplayValue no visualizador faz fallback automático se o campo estiver vazio
   const tiles = [
-    { k: 'Servico', title: 'Serviços', Icon: Stars, campos: ['nome','descricao','valor_padrao','unidade_medida'], form: ServicoForm },
-    { k: 'SetorAtividade', title: 'Setores de Atividade', Icon: Factory, campos: ['nome','tipo_operacao','descricao'], form: SetorAtividadeForm },
-    { k: 'GrupoProduto', title: 'Grupos/Linhas de Produto', Icon: Boxes, campos: ['nome_grupo','descricao','codigo'], form: GrupoProdutoForm },
-    { k: 'Marca', title: 'Marcas', Icon: Award, campos: ['nome_marca','pais_origem','site'], form: MarcaForm },
-    { k: 'TabelaPreco', title: 'Tabelas de Preço', Icon: TrendingUp, campos: ['nome','tipo','ativo','data_inicio'], form: TabelaPrecoFormCompleto },
-    { k: 'KitProduto', title: 'Kits de Produto', Icon: Package, campos: ['nome_kit','descricao','valor_total','ativo'], form: KitProdutoForm },
-    { k: 'CatalogoWeb', title: 'Catálogo Web', Icon: Globe, campos: ['titulo','slug','ativo'], form: CatalogoWebForm },
-    { k: 'UnidadeMedida', title: 'Unidades de Medida', Icon: Ruler, campos: ['sigla','descricao'], form: UnidadeMedidaForm },
+    { k: 'Servico',        title: 'Serviços',               Icon: Stars,      campos: ['nome','descricao','valor_padrao','unidade_medida'], form: ServicoForm },
+    { k: 'SetorAtividade', title: 'Setores de Atividade',   Icon: Factory,    campos: ['nome','tipo_operacao','descricao'],                  form: SetorAtividadeForm },
+    { k: 'GrupoProduto',   title: 'Grupos/Linhas de Produto',Icon: Boxes,     campos: ['nome','descricao','codigo'],                         form: GrupoProdutoForm },
+    { k: 'Marca',          title: 'Marcas',                  Icon: Award,      campos: ['nome','pais_origem','site'],                         form: MarcaForm },
+    { k: 'TabelaPreco',    title: 'Tabelas de Preço',        Icon: TrendingUp, campos: ['nome','tipo','ativo','data_inicio'],                  form: TabelaPrecoFormCompleto },
+    { k: 'KitProduto',     title: 'Kits de Produto',         Icon: Package,    campos: ['nome','descricao','valor_total','ativo'],             form: KitProdutoForm },
+    { k: 'CatalogoWeb',    title: 'Catálogo Web',            Icon: Globe,      campos: ['titulo','slug','ativo'],                             form: CatalogoWebForm },
+    { k: 'UnidadeMedida',  title: 'Unidades de Medida',      Icon: Ruler,      campos: ['sigla','descricao'],                                 form: UnidadeMedidaForm },
   ];
 
   return (
@@ -52,6 +54,7 @@ export default function Bloco2Produtos({ allCounts }) {
         <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo/empresa.</CardContent>
       </Card>
 
+      {/* Card Produtos (abre VisualizadorProdutos especializado) */}
       <Card className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
         onClick={hasPermission('Estoque', null, 'visualizar') ? openProdutos : undefined}>
         <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">

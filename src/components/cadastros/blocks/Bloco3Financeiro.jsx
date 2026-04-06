@@ -26,7 +26,7 @@ export default function Bloco3Financeiro({ allCounts }) {
   const openList = (entidade, titulo, Icon, campos, FormComp) => () => openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
 
   const tiles = [
-    { k: 'Banco', t: 'Bancos', i: Landmark, c: ['codigo','nome','agencia','conta'], f: BancoForm },
+    { k: 'Banco', t: 'Bancos', i: Landmark, c: ['nome_banco','codigo_banco','ativo'], f: BancoForm },
     { k: 'FormaPagamento', t: 'Formas de Pagamento', i: CreditCard, c: ['nome','tipo','ativo'], f: FormaPagamentoFormCompleto },
     { k: 'PlanoDeContas', t: 'Plano de Contas', i: BookText, c: ['codigo','descricao','tipo'], f: PlanoContasForm },
     { k: 'CentroCusto', t: 'Centros de Custo', i: Layers, c: ['codigo','descricao','tipo','responsavel'], f: CentroCustoForm },

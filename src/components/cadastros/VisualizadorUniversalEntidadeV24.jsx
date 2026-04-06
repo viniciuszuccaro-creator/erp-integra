@@ -73,7 +73,8 @@ const FORM_ALIASES = [
 const LABEL_FALLBACKS = [
   'nome','nome_completo','razao_social','nome_fantasia','nome_segmento',
   'nome_regiao','nome_banco','nome_grupo','nome_perfil','nome_kit','nome_rota',
-  'titulo','descricao','sigla','codigo','matricula','placa',
+  'titulo','descricao','sigla','codigo','codigo_banco','matricula','placa',
+  'nome_marca','nome_setor','nome_departamento','nome_cargo',
 ];
 function getDisplayValue(item, col, isFirstCol) {
   const v = item[col.field];
