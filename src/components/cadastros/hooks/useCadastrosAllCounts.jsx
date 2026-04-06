@@ -3,8 +3,11 @@
  * Evita rate limit ao substituir N fetches paralelos por 1 único batch.
  * Retorna: { counts: { EntityName: number }, totals: { bloco1: n, ... }, isLoading }
  */
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { buildContextFilter, SIMPLE_CATALOG } from "@/components/lib/useEntityCounts";
+import { useEffect } from "react";
 
 const ALL_ENTITIES = [
   // Bloco 1 - Pessoas & Parceiros
@@ -33,10 +36,20 @@ export const BLOCOS_ENTITIES = {
 };
 
 export default function useCadastrosAllCounts() {
+  const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
+  const empresaId = empresaAtual?.id || null;
+  const groupId   = grupoAtual?.id   || null;
+  const queryClient = useQueryClient();
+
   const { data, isLoading } = useQuery({
-    queryKey: ["cadastros-all-counts"],
+    queryKey: ["cadastros-all-counts", empresaId, groupId],
     queryFn: async () => {
-      const entities = ALL_ENTITIES.map(entityName => ({ entityName, filter: {} }));
+      const entities = ALL_ENTITIES.map(entityName => ({
+        entityName,
+        filter: SIMPLE_CATALOG.has(entityName)
+          ? {}
+          : (buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) || {}),
+      }));
       try {
         const res = await base44.functions.invoke("countEntities", { entities });
         return res?.data?.counts || {};
@@ -44,22 +57,18 @@ export default function useCadastrosAllCounts() {
         return {};
       }
     },
-    staleTime: 5 * 60_000,   // 5 min — badges são indicativos, não precisam de precisão em tempo real
-    gcTime: 15 * 60_000,
+    staleTime: 2 * 60_000,
+    gcTime: 10 * 60_000,
     placeholderData: (prev) => prev,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     retry: 1,
   });
 
-  const counts = data || {};
-
-  const totals = Object.fromEntries(
-    Object.entries(BLOCOS_ENTITIES).map(([bloco, entities]) => [
-      bloco,
-      entities.reduce((sum, e) => sum + (counts[e] || 0), 0),
-    ])
-  );
+  // Invalida ao trocar empresa/grupo
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["cadastros-all-counts"] });
+  }, [empresaId, groupId]); // eslint-disable-line
 
   return { counts, totals, isLoading };
 }

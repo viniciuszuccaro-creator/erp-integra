@@ -43,7 +43,9 @@ const BOOL_FIELDS   = new Set(["ativo","ativa","habilitado","compartilhado_grupo
 const DATE_FIELDS   = new Set(["created_date","updated_date","data_admissao","data_nascimento","data_vencimento","data_validade","ultima_compra","data_emissao","data_pedido","cnh_validade","data_aprovacao","data_inicio","data_fim"]);
 const MONEY_FIELDS  = new Set(["salario","preco_venda","custo_aquisicao","custo_medio","valor_frete","orcamento_mensal","limite_credito","valor_total","valor","valor_minimo","valor_maximo","percentual_comissao"]);
 const PAGE_SIZES = [10, 20, 50, 100];
-const BACKEND_SORT_FIELDS = new Set(["updated_date","created_date","id"]);
+// Todos os campos são aceitos pelo backend (entityListSorted normaliza)
+// Só evitamos campos do tipo objeto/array que não fazem sentido como sort
+const UNSORTABLE_BACKEND = new Set(["contatos","documentos","locais_entrega","lotes","itens"]);
 
 const SEARCH_FIELDS = {
   Banco:["nome","nome_banco","codigo_banco"],
@@ -243,7 +245,8 @@ export default function VisualizadorUniversalEntidadeV24({
   const [crossPageAll,  setCrossPageAll]  = useState(false);
   const [deselectedIds, setDeselectedIds] = useState(function() { return new Set(); });
 
-  const lastGoodData = useRef([]);
+  const lastGoodData   = useRef([]);
+  const everLoadedRef   = useRef(false); // flag: já carregou ao menos uma vez
 
   // Debounce busca
   const debRef = useRef(null);
@@ -265,8 +268,9 @@ export default function VisualizadorUniversalEntidadeV24({
     return buildContextFilter(ENTITY, empresaId, groupId, empresasDoGrupo) || {};
   }, [ENTITY, isSimple, empresaId, groupId, empresasDoGrupo]); // eslint-disable-line
 
-  const backendSortField = BACKEND_SORT_FIELDS.has(sortField) ? sortField : "updated_date";
-  const backendSortDir   = BACKEND_SORT_FIELDS.has(sortField) ? sortDir   : "desc";
+  // Envia o campo real ao backend — o backend aceita qualquer campo válido
+  const backendSortField = UNSORTABLE_BACKEND.has(sortField) ? "updated_date" : sortField;
+  const backendSortDir   = sortDir;
 
   const queryKey = useMemo(
     function() { return ["viz-v33", ENTITY, sortField, sortDir, page, pageSize, debouncedSearch, empresaId, groupId]; },
@@ -288,12 +292,7 @@ export default function VisualizadorUniversalEntidadeV24({
         limit: pageSize,
         skip: skip,
       });
-      const fetched = Array.isArray(res && res.data) ? res.data : [];
-
-      if (!BACKEND_SORT_FIELDS.has(sortField) && fetched.length > 0) {
-        return localSort(fetched, sortField, sortDir);
-      }
-      return fetched;
+      return Array.isArray(res && res.data) ? res.data : [];
     },
     staleTime: 10000,
     gcTime: 300000,
@@ -306,23 +305,30 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // items: nunca mostra vazio enquanto há fetch ativo
   const items = useMemo(function() {
+    if (Array.isArray(rawItems) && rawItems.length > 0) {
+      lastGoodData.current = rawItems;
+      everLoadedRef.current = true;
+      return rawItems;
+    }
     if (isFetching) {
-      if (Array.isArray(rawItems) && rawItems.length > 0) {
-        lastGoodData.current = rawItems;
-        return rawItems;
-      }
+      // Enquanto busca: retorna último dado bom (lista não desaparece)
       if (lastGoodData.current.length > 0) return lastGoodData.current;
       return [];
     }
     if (isError) return lastGoodData.current;
     if (Array.isArray(rawItems)) {
-      lastGoodData.current = rawItems;
-      return rawItems;
+      // rawItems = [] (página realmente vazia)
+      lastGoodData.current = [];
+      everLoadedRef.current = true;
+      return [];
     }
     return lastGoodData.current;
   }, [rawItems, isFetching, isError]);
 
-  useEffect(function() { lastGoodData.current = []; }, [ENTITY, empresaId, groupId]);
+  useEffect(function() {
+    lastGoodData.current = [];
+    everLoadedRef.current = false;
+  }, [ENTITY, empresaId, groupId]);
 
   useEffect(function() {
     if (!ENTITY) return;
@@ -528,7 +534,8 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // ─── RENDER ───────────────────────────────────────────────────────────────────
   const renderTableBody = function() {
-    if (isLoading && items.length === 0) {
+    const isInitialLoad = isFetching && !everLoadedRef.current && items.length === 0;
+    if (isInitialLoad) {
       return (
         <div className="space-y-1.5 p-3">
           {[...Array(8)].map(function(_, i) {
@@ -537,7 +544,7 @@ export default function VisualizadorUniversalEntidadeV24({
         </div>
       );
     }
-    if (isError && items.length === 0) {
+    if (isError && items.length === 0 && !isFetching) {
       return (
         <div className="flex flex-col items-center justify-center h-40 text-red-500 gap-2">
           <AlertCircle className="w-7 h-7" />
@@ -551,7 +558,7 @@ export default function VisualizadorUniversalEntidadeV24({
         </div>
       );
     }
-    if (items.length === 0) {
+    if (items.length === 0 && !isFetching) {
       return (
         <div className="flex flex-col items-center justify-center h-40 text-slate-400 gap-2">
           <Search className="w-7 h-7 opacity-30" />
