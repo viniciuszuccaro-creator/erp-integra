@@ -13,7 +13,7 @@ import DepartamentoForm from "@/components/cadastros/DepartamentoForm";
 import CargoForm from "@/components/cadastros/CargoForm";
 import TurnoForm from "@/components/cadastros/TurnoForm";
 
-export default function Bloco5Organizacional() {
+export default function Bloco5Organizacional({ allCounts }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
   const openList = (entidade, titulo, Icon, campos, FormComp) => () => openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
@@ -33,7 +33,6 @@ export default function Bloco5Organizacional() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Building2 className="w-5 h-5 text-orange-700"/> Estrutura Organizacional
-              <CountBadgeSimplificado entities={["GrupoEmpresarial","Empresa","Departamento","Cargo","Turno"]} />
             </CardTitle>
           </div>
         </CardHeader>
@@ -49,7 +48,7 @@ export default function Bloco5Organizacional() {
                   <Icon className="w-4 h-4 text-orange-600" />
                 </div>
                 {t}
-                <CountBadgeSimplificado entities={[k]} />
+                <CountBadgeSimplificado entities={[k]} allCounts={allCounts} />
               </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}

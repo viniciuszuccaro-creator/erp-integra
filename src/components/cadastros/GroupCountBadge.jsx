@@ -7,9 +7,12 @@ import useEntityCounts from "@/components/lib/useEntityCounts";
  * GroupCountBadge — badge de contagem para grupos de entidades (soma total)
  * Ideal para o header de cada bloco de Cadastros
  */
-export default function GroupCountBadge({ entities = [], badgeClassName = "", colorClass = "bg-blue-50 text-blue-700 border-blue-200" }) {
+export default function GroupCountBadge({ entities = [], badgeClassName = "", colorClass = "bg-blue-50 text-blue-700 border-blue-200", precomputedTotal }) {
   const list = Array.isArray(entities) ? entities.filter(Boolean) : [];
-  const { total, isLoading } = useEntityCounts(list);
+  // Se precomputedTotal é passado, usa ele (evita fetch extra)
+  const skip = precomputedTotal !== undefined;
+  const { total: fetched, isLoading } = useEntityCounts(skip ? [] : list);
+  const total = skip ? precomputedTotal : fetched;
 
   return (
     <Badge

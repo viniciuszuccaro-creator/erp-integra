@@ -125,18 +125,15 @@ export function useEntityCounts(entities = []) {
       if (!normalized.length) return {};
 
       const batchPayload = [];
-      const fixed = {}; // entidades com resultado imediato (sem escopo)
 
       for (const entityName of normalized) {
         const isSimple = SIMPLE_CATALOG.has(entityName);
-        const filter = isSimple
-          ? {}
-          : (buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) || {});
-        if (filter === null) {
-          fixed[entityName] = 0;
-          continue;
+        let ctxFilter = {};
+        if (!isSimple) {
+          // buildContextFilter pode retornar null quando sem contexto — usa {} para contar global
+          ctxFilter = buildContextFilter(entityName, empresaId, groupId, empresasDoGrupo) ?? {};
         }
-        batchPayload.push({ entityName, filter });
+        batchPayload.push({ entityName, filter: ctxFilter });
       }
 
       if (!batchPayload.length) return fixed;
@@ -159,10 +156,11 @@ export function useEntityCounts(entities = []) {
       }
       return result;
     },
-    staleTime: 30_000,   // 30s — expira rápido para refletir mutações
-    gcTime: 300_000,
-    placeholderData: prev => prev,
+    staleTime: 300_000,   // 5 min — evita re-fetches desnecessarios e rate limit
+    gcTime: 900_000,
+    placeholderData: (prev) => prev,
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
     enabled: canFetch,
   });
 

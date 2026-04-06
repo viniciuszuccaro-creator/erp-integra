@@ -213,8 +213,9 @@ function buildFormProps(editItem, onClose, onSubmit) {
 }
 
 function invalidateAll(qc, entity) {
-  qc.invalidateQueries({ queryKey: ["viz-v32", entity], refetchType: "all" });
-  qc.invalidateQueries({ queryKey: ["entityCounts_v5"], refetchType: "all" });
+  // Invalida sem resetar placeholderData (mantém dados visíveis durante refetch)
+  qc.invalidateQueries({ queryKey: ["viz-v32", entity] });
+  qc.invalidateQueries({ queryKey: ["entityCounts_v5"] });
 }
 
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────────────
@@ -338,17 +339,20 @@ export default function VisualizadorUniversalEntidadeV24({
       }
       return fetched;
     },
-    staleTime: 0,
+    staleTime: 15_000,
     gcTime: 300_000,
     refetchOnWindowFocus: false,
+    placeholderData: (prev) => prev,
     enabled: !!ENTITY,
   });
 
-  // Nunca mostra vazio durante refetch se havia dados
+  // Mantém dados anteriores enquanto refetch, evita piscar lista vazia
   const items = useMemo(() => {
-    if (!rawItems) return lastGoodData.current;
+    if (rawItems === undefined) return lastGoodData.current;
     if (rawItems.length > 0) { lastGoodData.current = rawItems; return rawItems; }
+    // rawItems = [] mas ainda buscando: mantém dados anteriores
     if (isFetching && lastGoodData.current.length > 0) return lastGoodData.current;
+    // Resultado definitivo vazio
     lastGoodData.current = [];
     return [];
   }, [rawItems, isFetching]);
@@ -485,7 +489,7 @@ export default function VisualizadorUniversalEntidadeV24({
 
     setSelectedIds(new Set()); setDeselectedIds(new Set());
     setCrossPageAll(false); setPage(1);
-    lastGoodData.current = [];
+    // Não resetar lastGoodData aqui — placeholderData mantém visível até refetch concluir
     invalidateAll(queryClient, ENTITY);
   }, [ENTITY, crossPageAll, totalCount, selectedIds, deselectedIds, readFilter, queryClient, items.length]);
 

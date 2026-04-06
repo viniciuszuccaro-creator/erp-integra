@@ -169,9 +169,10 @@ Deno.serve(async (req) => {
         } catch (_) {
           if (payload?.entityName) counts[payload.entityName] = 0;
         }
-        // Delay entre entidades para evitar 429
+        // Delay progressivo entre entidades para evitar 429 (aumenta a cada lote)
         if (i < entitiesBatch.length - 1) {
-          await new Promise(r => setTimeout(r, 200));
+          const delay = i < 4 ? 300 : 500;
+          await new Promise(r => setTimeout(r, delay));
         }
       }
 

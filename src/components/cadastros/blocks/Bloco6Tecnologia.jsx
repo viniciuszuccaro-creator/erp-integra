@@ -15,7 +15,7 @@ import JobAgendadoForm from "@/components/cadastros/JobAgendadoForm";
 import WebhookForm from "@/components/cadastros/WebhookForm";
 import ConfiguracaoNFeForm from "@/components/cadastros/ConfiguracaoNFeForm";
 
-export default function Bloco6Tecnologia() {
+export default function Bloco6Tecnologia({ allCounts }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
 
@@ -44,7 +44,6 @@ export default function Bloco6Tecnologia() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Zap className="w-5 h-5 text-indigo-700"/> Tecnologia, IA & Parâmetros
-              <CountBadgeSimplificado entities={["ApiExterna","ChatbotCanal","ChatbotIntent","GatewayPagamento","JobAgendado","Webhook","ConfiguracaoNFe"]} />
             </CardTitle>
           </div>
         </CardHeader>
@@ -64,7 +63,7 @@ export default function Bloco6Tecnologia() {
                   <Icon className="w-4 h-4 text-indigo-600" />
                 </div>
                 {t}
-                <CountBadgeSimplificado entities={[k]} />
+                <CountBadgeSimplificado entities={[k]} allCounts={allCounts} />
               </CardTitle>
               <Button 
                 size="sm" 

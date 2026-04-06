@@ -18,7 +18,7 @@ import KitProdutoForm from "@/components/cadastros/KitProdutoForm";
 import CatalogoWebForm from "@/components/cadastros/CatalogoWebForm";
 import UnidadeMedidaForm from "@/components/cadastros/UnidadeMedidaForm";
 
-export default function Bloco2Produtos() {
+export default function Bloco2Produtos({ allCounts }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
 
@@ -46,7 +46,6 @@ export default function Bloco2Produtos() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Package className="w-5 h-5 text-purple-700"/> Produtos & Serviços
-              <CountBadgeSimplificado entities={["Produto","Servico","SetorAtividade","GrupoProduto","Marca","TabelaPreco","KitProduto","CatalogoWeb","UnidadeMedida"]} />
             </CardTitle>
           </div>
         </CardHeader>
@@ -62,7 +61,7 @@ export default function Bloco2Produtos() {
                 <Package className="w-4 h-4 text-purple-600" />
               </div>
               Produtos
-              <CountBadgeSimplificado entities={["Produto"]} />
+              <CountBadgeSimplificado entities={["Produto"]} allCounts={allCounts} />
             </CardTitle>
             <Button size="sm" className="bg-purple-600 hover:bg-purple-700 rounded-sm text-xs h-7"
               onClick={(e) => { e.stopPropagation(); openProdutos(); }}
@@ -84,7 +83,7 @@ export default function Bloco2Produtos() {
                   <Icon className="w-4 h-4 text-purple-600" />
                 </div>
                 {title}
-                <CountBadgeSimplificado entities={[k]} />
+                <CountBadgeSimplificado entities={[k]} allCounts={allCounts} />
               </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, title, Icon, campos, FormComp)(); }}
