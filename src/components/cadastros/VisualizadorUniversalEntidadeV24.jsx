@@ -216,6 +216,7 @@ function invalidateAll(qc, entity) {
   // Invalida sem resetar placeholderData (mantém dados visíveis durante refetch)
   qc.invalidateQueries({ queryKey: ["viz-v32", entity] });
   qc.invalidateQueries({ queryKey: ["entityCounts_v5"] });
+  qc.invalidateQueries({ queryKey: ["cadastros-all-counts"] });
 }
 
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────────────
@@ -339,7 +340,7 @@ export default function VisualizadorUniversalEntidadeV24({
       }
       return fetched;
     },
-    staleTime: 15_000,
+    staleTime: 0,
     gcTime: 300_000,
     refetchOnWindowFocus: false,
     placeholderData: (prev) => prev,

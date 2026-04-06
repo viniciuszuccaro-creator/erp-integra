@@ -79,40 +79,35 @@ async function expandGroupFilter(base44, entityName, f) {
 }
 
 /**
- * Contagem eficiente com UMA chamada de 500 registros.
- * Se retornou 500 (cheio), faz mais uma página para ver se há mais.
- * Máximo 2 chamadas por entidade = nunca explode rate limit.
- * Para grandes volumes (Clientes, Produtos), indica "500+" se necessário.
+ * Contagem com paginação completa — retorna o total EXATO de registros.
+ * Pagina de 500 em 500 até exaurir todos os registros (máx 20 páginas = 10.000).
  */
 async function fastCount(base44, entityName, finalFilter) {
   const PAGE = 500;
+  const MAX_PAGES = 20;
+  let total = 0;
 
-  let batch1;
-  try {
-    batch1 = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, 0);
-  } catch (err) {
-    const status = err?.status || err?.response?.status;
-    if (status === 429) {
-      await new Promise(r => setTimeout(r, 1500));
-      try {
-        batch1 = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, 0);
-      } catch (_) { return 0; }
-    } else {
-      return 0;
+  for (let page = 0; page < MAX_PAGES; page++) {
+    let batch;
+    try {
+      batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, page * PAGE);
+    } catch (err) {
+      const status = err?.status || err?.response?.status;
+      if (status === 429) {
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+          batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, page * PAGE);
+        } catch (_) { break; }
+      } else {
+        break;
+      }
     }
+    const n = Array.isArray(batch) ? batch.length : 0;
+    total += n;
+    if (n < PAGE) break; // Última página — acabou
   }
 
-  const n1 = Array.isArray(batch1) ? batch1.length : 0;
-  if (n1 < PAGE) return n1; // Menos de 500 = total exato
-
-  // Tem 500+ registros: faz mais uma página para ter uma estimativa melhor
-  try {
-    const batch2 = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, PAGE);
-    const n2 = Array.isArray(batch2) ? batch2.length : 0;
-    return n1 + n2; // Retorna total das 2 páginas (pode ser estimativa se > 1000)
-  } catch (_) {
-    return n1; // Retorna o que temos
-  }
+  return total;
 }
 
 async function countOne(base44, user, payload) {
@@ -158,21 +153,26 @@ Deno.serve(async (req) => {
     const entitiesBatch = Array.isArray(body?.entities) ? body.entities : null;
 
     // MODO LOTE: { entities: [{ entityName, filter }, ...] }
+    // Processa em janelas de 5 paralelas com delay de 200ms entre janelas
     if (entitiesBatch && entitiesBatch.length > 0) {
       const counts = {};
+      const WINDOW = 5;
 
-      for (let i = 0; i < entitiesBatch.length; i++) {
-        const payload = entitiesBatch[i] || {};
-        try {
-          const result = await countOne(base44, user, payload);
-          if (result.entityName != null) counts[result.entityName] = result.count;
-        } catch (_) {
-          if (payload?.entityName) counts[payload.entityName] = 0;
-        }
-        // Delay progressivo entre entidades para evitar 429 (aumenta a cada lote)
-        if (i < entitiesBatch.length - 1) {
-          const delay = i < 4 ? 300 : 500;
-          await new Promise(r => setTimeout(r, delay));
+      for (let i = 0; i < entitiesBatch.length; i += WINDOW) {
+        const slice = entitiesBatch.slice(i, i + WINDOW);
+        const results = await Promise.allSettled(
+          slice.map(payload => countOne(base44, user, payload || {}))
+        );
+        results.forEach((r, idx) => {
+          const payload = slice[idx] || {};
+          if (r.status === 'fulfilled' && r.value?.entityName != null) {
+            counts[r.value.entityName] = r.value.count;
+          } else if (payload?.entityName) {
+            counts[payload.entityName] = 0;
+          }
+        });
+        if (i + WINDOW < entitiesBatch.length) {
+          await new Promise(r => setTimeout(r, 200));
         }
       }
 
