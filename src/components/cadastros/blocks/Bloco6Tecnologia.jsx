@@ -15,7 +15,7 @@ import JobAgendadoForm from "@/components/cadastros/JobAgendadoForm";
 import WebhookForm from "@/components/cadastros/WebhookForm";
 import ConfiguracaoNFeForm from "@/components/cadastros/ConfiguracaoNFeForm";
 
-export default function Bloco6Tecnologia({ allCounts }) {
+export default function Bloco6Tecnologia({ allCounts, isLoading }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
 
@@ -63,7 +63,7 @@ export default function Bloco6Tecnologia({ allCounts }) {
                   <Icon className="w-4 h-4 text-indigo-600" />
                 </div>
                 {t}
-                <CountBadgeSimplificado entities={[k]} allCounts={allCounts} />
+                <CountBadgeSimplificado entities={[k]} allCounts={allCounts} isLoading={isLoading} />
               </CardTitle>
               <Button 
                 size="sm" 

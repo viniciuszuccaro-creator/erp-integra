@@ -210,7 +210,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco1Pessoas allCounts={allCounts} />
+                <Bloco1Pessoas allCounts={allCounts} isLoading={countsLoading} />
               </AccordionContent>
             </AccordionItem>
 
@@ -227,7 +227,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco2Produtos allCounts={allCounts} />
+                <Bloco2Produtos allCounts={allCounts} isLoading={countsLoading} />
               </AccordionContent>
             </AccordionItem>
 
@@ -244,7 +244,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco3Financeiro allCounts={allCounts} />
+                <Bloco3Financeiro allCounts={allCounts} isLoading={countsLoading} />
               </AccordionContent>
             </AccordionItem>
 
@@ -261,7 +261,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco4Logistica allCounts={allCounts} />
+                <Bloco4Logistica allCounts={allCounts} isLoading={countsLoading} />
               </AccordionContent>
             </AccordionItem>
 
@@ -278,7 +278,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco5Organizacional allCounts={allCounts} />
+                <Bloco5Organizacional allCounts={allCounts} isLoading={countsLoading} />
               </AccordionContent>
             </AccordionItem>
 
@@ -295,7 +295,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco6Tecnologia allCounts={allCounts} />
+                <Bloco6Tecnologia allCounts={allCounts} isLoading={countsLoading} />
               </AccordionContent>
             </AccordionItem>
 

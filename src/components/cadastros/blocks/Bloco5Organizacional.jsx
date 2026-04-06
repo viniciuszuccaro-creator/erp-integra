@@ -14,7 +14,7 @@ import CargoForm from "@/components/cadastros/CargoForm";
 import TurnoForm from "@/components/cadastros/TurnoForm";
 import PerfilAcessoForm from "@/components/cadastros/PerfilAcessoForm";
 
-export default function Bloco5Organizacional({ allCounts }) {
+export default function Bloco5Organizacional({ allCounts, isLoading }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
   const openList = (entidade, titulo, Icon, campos, FormComp) => () =>
@@ -53,7 +53,7 @@ export default function Bloco5Organizacional({ allCounts }) {
                   <Icon className="w-4 h-4 text-orange-600" />
                 </div>
                 {t}
-                <CountBadgeSimplificado entities={[k]} allCounts={allCounts} />
+                <CountBadgeSimplificado entities={[k]} allCounts={allCounts} isLoading={isLoading} />
               </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}

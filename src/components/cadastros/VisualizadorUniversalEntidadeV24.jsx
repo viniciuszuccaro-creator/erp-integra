@@ -391,6 +391,8 @@ export default function VisualizadorUniversalEntidadeV24({
     if (!window.confirm('Confirmar exclusão de "' + label + '"?')) return;
     try { await base44.entities[ENTITY].delete(item.id); }
     catch (e) { alert("Erro: " + ((e && e.message) || String(e))); return; }
+    // Atualiza lastGoodData imediatamente (remove item deletado da lista visível)
+    lastGoodData.current = lastGoodData.current.filter(function(i) { return i.id !== item.id; });
     setSelectedIds(function(prev) { const n = new Set(prev); n.delete(item.id); return n; });
     if (items.length <= 1 && page > 1) setPage(function(p) { return Math.max(1, p - 1); });
     invalidateAll(queryClient, ENTITY);

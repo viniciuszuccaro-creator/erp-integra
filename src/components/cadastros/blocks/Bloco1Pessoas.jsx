@@ -16,7 +16,7 @@ import ContatoB2BForm from "@/components/cadastros/ContatoB2BForm";
 import SegmentoClienteForm from "@/components/cadastros/SegmentoClienteForm";
 import RegiaoAtendimentoForm from "@/components/cadastros/RegiaoAtendimentoForm";
 
-export default function Bloco1Pessoas({ allCounts }) {
+export default function Bloco1Pessoas({ allCounts, isLoading }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
 
@@ -62,7 +62,7 @@ export default function Bloco1Pessoas({ allCounts }) {
                   <Icon className="w-4 h-4 text-blue-600" />
                 </div>
                 {t}
-                <CountBadgeSimplificado entities={[k]} allCounts={allCounts} />
+                <CountBadgeSimplificado entities={[k]} allCounts={allCounts} isLoading={isLoading} />
               </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}

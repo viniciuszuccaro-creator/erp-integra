@@ -15,7 +15,7 @@ import LocalEstoqueForm from "@/components/cadastros/LocalEstoqueForm";
 import RotaPadraoForm from "@/components/cadastros/RotaPadraoForm";
 import ModeloDocumentoForm from "@/components/cadastros/ModeloDocumentoForm";
 
-export default function Bloco4Logistica({ allCounts }) {
+export default function Bloco4Logistica({ allCounts, isLoading }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
   const openList = (entidade, titulo, Icon, campos, FormComp) => () =>
@@ -54,7 +54,7 @@ export default function Bloco4Logistica({ allCounts }) {
                   <Icon className="w-4 h-4 text-sky-600" />
                 </div>
                 {t}
-                <CountBadgeSimplificado entities={[k]} allCounts={allCounts} />
+                <CountBadgeSimplificado entities={[k]} allCounts={allCounts} isLoading={isLoading} />
               </CardTitle>
               <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                 {k === 'Motorista' && (
