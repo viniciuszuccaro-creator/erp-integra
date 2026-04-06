@@ -317,13 +317,18 @@ export default function VisualizadorUniversalEntidadeV24({
     }
     if (isError) return lastGoodData.current;
     if (Array.isArray(rawItems)) {
-      // rawItems = [] (página realmente vazia)
+      // rawItems = [] após fetch completo.
+      // GUARD: se a contagem diz que há dados mas a query retornou [] (bug de backend/sort),
+      // mantém o lastGoodData em vez de apagar — evita lista sumir ao ordenar/paginar.
+      if (everLoadedRef.current && totalCount > 0 && lastGoodData.current.length > 0) {
+        return lastGoodData.current;
+      }
       lastGoodData.current = [];
       everLoadedRef.current = true;
       return [];
     }
     return lastGoodData.current;
-  }, [rawItems, isFetching, isError]);
+  }, [rawItems, isFetching, isError, totalCount]);
 
   useEffect(function() {
     lastGoodData.current = [];
@@ -776,20 +781,19 @@ export default function VisualizadorUniversalEntidadeV24({
           <button
             type="button"
             onClick={function() { setPage(1); }}
-            disabled={page === 1 || isLoading}
+            disabled={page === 1 || isFetching}
             className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40"
-          >«</button>
-          <button
-            type="button"
-            onClick={function() { setPage(function(p) { return Math.max(1, p - 1); }); }}
-            disabled={page === 1 || isLoading}
-            className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40"
-          >← Ant.</button>
-          <span className="flex items-center justify-center h-7 px-2 border border-slate-200 rounded-sm bg-white font-semibold text-slate-700">{page}</span>
-          <button
-            type="button"
-            onClick={function() { setPage(function(p) { return p + 1; }); }}
-            disabled={items.length < pageSize || isLoading}
+            >«</button>
+            <button
+              type="button"
+              onClick={function() { setPage(function(p) { return Math.max(1, p - 1); }); }}
+              disabled={page === 1 || isFetching}
+            >← Ant.</button>
+            <span className="flex items-center justify-center h-7 px-2 border border-slate-200 rounded-sm bg-white font-semibold text-slate-700">{page}</span>
+            <button
+              type="button"
+              onClick={function() { setPage(function(p) { return p + 1; }); }}
+              disabled={items.length < pageSize || isFetching}
             className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40"
           >Próx. →</button>
         </div>
