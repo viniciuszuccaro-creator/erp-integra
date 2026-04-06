@@ -339,33 +339,37 @@ export default function VisualizadorUniversalEntidadeV24({
       }
       return fetched;
     },
-    staleTime: 5_000,
+    staleTime: 10_000,
     gcTime: 300_000,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(500 * (attempt + 1), 2000),
     refetchOnWindowFocus: false,
     // Mantém dados da query ANTERIOR enquanto nova query carrega (evita lista sumir ao trocar sort/page/pageSize)
     placeholderData: (previousData) => previousData,
     enabled: !!ENTITY,
   });
 
-  // items: NUNCA mostra vazio enquanto há fetch em andamento — evita piscar/desaparecer
+  // items: regra absoluta — NUNCA mostra vazio enquanto há fetch ativo
   const items = useMemo(() => {
-    // Dados válidos chegaram: atualiza cache e retorna
-    if (Array.isArray(rawItems) && rawItems.length > 0) {
+    // Com fetch em andamento: prefere rawItems (placeholderData) ou cache anterior
+    if (isFetching) {
+      if (Array.isArray(rawItems) && rawItems.length > 0) {
+        lastGoodData.current = rawItems;
+        return rawItems;
+      }
+      // Mantém dados anteriores enquanto busca — evita piscar lista
+      if (lastGoodData.current.length > 0) return lastGoodData.current;
+      return []; // Primeiro carregamento sem dados anteriores
+    }
+    // Erro: mantém último estado válido em vez de mostrar tela em branco
+    if (isError) return lastGoodData.current;
+    // Dados frescos recebidos
+    if (Array.isArray(rawItems)) {
       lastGoodData.current = rawItems;
       return rawItems;
     }
-    // Fetch em andamento (sort/page mudou): mantém dados anteriores para não piscar
-    if (isFetching && lastGoodData.current.length > 0) {
-      return lastGoodData.current;
-    }
-    // rawItems = [] e fetch concluído: lista realmente vazia
-    if (Array.isArray(rawItems) && rawItems.length === 0 && !isFetching) {
-      lastGoodData.current = [];
-      return [];
-    }
-    // rawItems undefined (query ainda não rodou): usa cache
     return lastGoodData.current;
-  }, [rawItems, isFetching]);
+  }, [rawItems, isFetching, isError]);
 
   // Reset cache ao mudar entidade/contexto
   useEffect(() => { lastGoodData.current = []; }, [ENTITY, empresaId, groupId]);
@@ -395,10 +399,16 @@ export default function VisualizadorUniversalEntidadeV24({
   }, []);
 
   // ── formulário ───────────────────────────────────────────────────────────────
-  const handleCloseForm = useCallback(() => {
+  const handleCloseForm = useCallback((wasSaved = false) => {
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
+    // Após salvar: volta para pag 1 com sort por mais recente (novo aparece no topo)
+    if (wasSaved) {
+      setSortField("updated_date");
+      setSortDir("desc");
+      setPage(1);
+    }
     invalidateAll(queryClient, ENTITY);
   }, [ENTITY, queryClient]);
 
@@ -417,7 +427,7 @@ export default function VisualizadorUniversalEntidadeV24({
       }
       if (editItem?.id) await base44.entities[ENTITY].update(editItem.id, clean);
       else              await base44.entities[ENTITY].create(clean);
-      handleCloseForm();
+      handleCloseForm(true); // wasSaved=true: vai para pag 1 + sort recente
     } catch (e) { alert("Erro ao salvar: " + (e?.message || String(e))); }
     finally { setIsSaving(false); }
   }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, isSimple]);
@@ -641,24 +651,23 @@ export default function VisualizadorUniversalEntidadeV24({
             <RefreshCw className="w-2.5 h-2.5 animate-spin" /> atualizando…
           </div>
         )}
+        {isError && items.length > 0 && (
+          <div className="absolute top-0 right-0 z-20 bg-red-500/10 text-red-600 text-[10px] px-2 py-0.5 flex items-center gap-1 rounded-bl">
+            <AlertCircle className="w-2.5 h-2.5" /> erro — exibindo cache
+            <button className="underline ml-1" onClick={() => invalidateAll(queryClient, ENTITY)}>recarregar</button>
+          </div>
+        )}
 
-        {isLoading && items.length === 0 ? (
+        {isError && items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-40 text-red-500 gap-2">
+            <AlertCircle className="w-7 h-7" />
+            <span className="text-sm">Erro ao carregar. <button className="underline" onClick={() => { lastGoodData.current = []; invalidateAll(queryClient, ENTITY); }}>Tentar novamente</button></span>
+          </div>
+        ) : isLoading && items.length === 0 ? (
           <div className="space-y-1.5 p-3">
             {[...Array(8)].map((_,i) => <Skeleton key={i} className={`h-8 rounded-sm ${i%3===0?"w-3/4":"w-full"}`} />)}
           </div>
-        ) : isError ? (
-          <div className="flex flex-col items-center justify-center h-40 text-red-500 gap-2">
-            <AlertCircle className="w-7 h-7" />
-            <span className="text-sm">Erro ao carregar. Clique em recarregar.</span>
-          </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-slate-400 gap-2">
-            <Search className="w-7 h-7 opacity-30" />
-            <span className="text-sm">
-              {debouncedSearch ? `Nenhum resultado para "${debouncedSearch}"` : `Nenhum registro de ${TITULO}`}
-            </span>
-          </div>
-        ) : (
           <table className="w-full text-sm table-auto">
             <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 z-10">
               <tr>
