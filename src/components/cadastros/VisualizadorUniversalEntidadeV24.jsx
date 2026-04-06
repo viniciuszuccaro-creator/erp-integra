@@ -281,11 +281,11 @@ export default function VisualizadorUniversalEntidadeV24({
   );
 
   // ── query principal ──────────────────────────────────────────────────────────
-  const { data: rawItems, isLoading, isFetching, isError } = useQuery({
+  // placeholderData: prev => prev garante que a lista NÃO desaparece durante sort/paginação/exclusão
+  const { data: rawItems, isFetching, isError } = useQuery({
     queryKey: queryKey,
     queryFn: async function() {
       if (!ENTITY) return [];
-
       const res = await base44.functions.invoke("entityListSorted", {
         entityName: ENTITY,
         filter: readFilter,
@@ -297,40 +297,34 @@ export default function VisualizadorUniversalEntidadeV24({
       });
       return Array.isArray(res && res.data) ? res.data : [];
     },
-    staleTime: 10000,
+    staleTime: 0,
     gcTime: 300000,
     retry: 2,
     retryDelay: function(attempt) { return Math.min(500 * (attempt + 1), 2000); },
     refetchOnWindowFocus: false,
-    placeholderData: function(prev) { return prev !== undefined ? prev : lastGoodData.current; },
+    // CHAVE: mantém dados anteriores enquanto nova query está em progresso
+    placeholderData: function(prev) { return prev ?? []; },
     enabled: !!ENTITY,
   });
 
-  // items: NUNCA desaparece durante sort/paginação/exclusão
+  // items: simples e direto — placeholderData já garante estabilidade
   const items = useMemo(function() {
-    // Dados reais chegaram: atualiza cache e retorna
-    if (Array.isArray(rawItems) && rawItems.length > 0) {
-      lastGoodData.current = rawItems;
+    const arr = Array.isArray(rawItems) ? rawItems : [];
+    if (arr.length > 0) {
+      lastGoodData.current = arr;
       everLoadedRef.current = true;
-      return rawItems;
-    }
-    // Enquanto fetch ativo: mantém último dado bom (lista não pisca)
-    if (isFetching) return lastGoodData.current.length > 0 ? lastGoodData.current : [];
-    // Erro de rede: mantém cache
-    if (isError) return lastGoodData.current;
-    // rawItems = [] após fetch completo
-    if (Array.isArray(rawItems)) {
-      // GUARD ANTI-SUMIÇO: se temos dados em cache e totalCount indica que há registros,
-      // NÃO limpa o cache — o backend pode ter retornado [] por mismatch de filtro/sort.
-      // Só aceita vazio genuíno quando: busca ativa (search) OU totalCount === 0 OU primeira carga.
-      if (lastGoodData.current.length > 0 && totalCount > 0 && !debouncedSearch) {
+    } else if (!isFetching && arr.length === 0 && lastGoodData.current.length > 0) {
+      // Backend retornou [] após fetch completo sem busca ativa — pode ser falso negativo
+      // Só aceita vazio quando totalCount confirma que não há dados OU há busca ativa
+      if (totalCount === 0 || !!debouncedSearch) {
+        lastGoodData.current = [];
+        everLoadedRef.current = true;
+      } else {
         return lastGoodData.current;
       }
-      lastGoodData.current = [];
-      everLoadedRef.current = true;
-      return [];
     }
-    return lastGoodData.current;
+    if (isError) return lastGoodData.current;
+    return arr;
   }, [rawItems, isFetching, isError, totalCount, debouncedSearch]);
 
   useEffect(function() {
@@ -542,7 +536,7 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // ─── RENDER ───────────────────────────────────────────────────────────────────
   const renderTableBody = function() {
-    const isInitialLoad = isFetching && !everLoadedRef.current && items.length === 0;
+    const isInitialLoad = isFetching && !everLoadedRef.current && items.length === 0 && lastGoodData.current.length === 0;
     if (isInitialLoad) {
       return (
         <div className="space-y-1.5 p-3">
