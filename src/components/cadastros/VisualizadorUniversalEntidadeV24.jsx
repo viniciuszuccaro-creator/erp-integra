@@ -1,15 +1,15 @@
 /**
- * VisualizadorUniversalEntidadeV24 — V33 ESTÁVEL
- * - Lista NUNCA desaparece durante sort/paginação/exclusão (placeholderData + lastGoodData)
- * - Novos registros aparecem no topo imediatamente após salvar
+ * VisualizadorUniversalEntidadeV24 — V34 ESTAVEL
+ * - Lista NUNCA desaparece durante sort/paginação/exclusão (placeholderData + lastGoodData guard)
+ * - Novos registros aparecem no topo imediatamente após salvar (staleTime: 0)
+ * - 1ª coluna sempre mostra o melhor campo de nome disponível (getDisplayValue fallback)
  * - Erros mantêm cache visível com banner discreto
- * - Retry automático em falhas de rede
  */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import useEntityCounts, { SIMPLE_CATALOG, buildContextFilter } from "@/components/lib/useEntityCounts";
+import useEntityCounts, { SIMPLE_CATALOG } from "@/components/lib/useEntityCounts";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,59 +43,7 @@ const BOOL_FIELDS   = new Set(["ativo","ativa","habilitado","compartilhado_grupo
 const DATE_FIELDS   = new Set(["created_date","updated_date","data_admissao","data_nascimento","data_vencimento","data_validade","ultima_compra","data_emissao","data_pedido","cnh_validade","data_aprovacao","data_inicio","data_fim"]);
 const MONEY_FIELDS  = new Set(["salario","preco_venda","custo_aquisicao","custo_medio","valor_frete","orcamento_mensal","limite_credito","valor_total","valor","valor_minimo","valor_maximo","percentual_comissao"]);
 const PAGE_SIZES = [10, 20, 50, 100];
-// Todos os campos são aceitos pelo backend (entityListSorted normaliza)
-// Só evitamos campos do tipo objeto/array que não fazem sentido como sort
 const UNSORTABLE_BACKEND = new Set(["contatos","documentos","locais_entrega","lotes","itens"]);
-
-const SEARCH_FIELDS = {
-  Banco:["nome","nome_banco","codigo_banco"],
-  FormaPagamento:["nome","descricao","codigo"],
-  Cliente:["nome","razao_social","cpf","cnpj"],
-  Fornecedor:["nome","razao_social","cnpj"],
-  Colaborador:["nome_completo","cpf","email","cargo"],
-  Transportadora:["razao_social","nome_fantasia","cnpj"],
-  Produto:["descricao","codigo","codigo_barras"],
-  Departamento:["nome","descricao"],
-  Cargo:["nome","departamento"],
-  Turno:["descricao","nome"],
-  Veiculo:["placa","descricao","modelo"],
-  Motorista:["nome","cpf"],
-  Servico:["nome","descricao"],
-  Representante:["nome","email"],
-  SegmentoCliente:["nome_segmento","descricao"],
-  RegiaoAtendimento:["nome_regiao","descricao"],
-  GrupoProduto:["nome_grupo","descricao","codigo"],
-  Marca:["nome_marca","descricao"],
-  SetorAtividade:["nome","descricao"],
-  TabelaPreco:["nome","descricao"],
-  UnidadeMedida:["sigla","descricao"],
-  CentroCusto:["codigo","descricao"],
-  PlanoDeContas:["codigo","descricao"],
-  TipoDespesa:["codigo","nome"],
-  MoedaIndice:["moeda","indice","descricao"],
-  GrupoEmpresarial:["nome","cnpj"],
-  Empresa:["razao_social","nome_fantasia","cnpj"],
-  ApiExterna:["nome","descricao"],
-  ChatbotCanal:["nome"],
-  ChatbotIntent:["nome","descricao"],
-  GatewayPagamento:["nome"],
-  JobAgendado:["nome"],
-  Webhook:["nome","url"],
-  ConfiguracaoNFe:["ambiente","descricao"],
-  LocalEstoque:["descricao","codigo"],
-  RotaPadrao:["nome_rota","regiao"],
-  ModeloDocumento:["tipo","descricao"],
-  TipoFrete:["descricao","modalidade"],
-  CentroResultado:["codigo","descricao"],
-  OperadorCaixa:["nome","matricula"],
-  CondicaoComercial:["nome"],
-  TabelaFiscal:["descricao","uf"],
-  ContatoB2B:["nome","empresa","email"],
-  KitProduto:["nome_kit","descricao"],
-  CatalogoWeb:["titulo","slug"],
-  ConfiguracaoDespesaRecorrente:["descricao"],
-  PerfilAcesso:["nome_perfil","descricao"],
-};
 
 const SELF_MANAGED_NAMES = new Set([
   "CadastroClienteCompleto","CadastroFornecedorCompleto","TransportadoraForm",
@@ -119,6 +67,24 @@ const FORM_ALIASES = [
   "perfilAcesso","perfil","modeloDocumento","apiExterna",
   "webhook","chatbotIntent","chatbotCanal","jobAgendado","eventoNotificacao",
 ];
+
+// ─── getDisplayValue: garante que 1ª coluna sempre mostra algo legível ────────
+// Quando o campo configurado está vazio, tenta outros campos de nome em ordem.
+const LABEL_FALLBACKS = [
+  'nome','nome_completo','razao_social','nome_fantasia','nome_segmento',
+  'nome_regiao','nome_banco','nome_grupo','nome_perfil','nome_kit','nome_rota',
+  'titulo','descricao','sigla','codigo','matricula','placa',
+];
+function getDisplayValue(item, col, isFirstCol) {
+  const v = item[col.field];
+  if (v !== null && v !== undefined && v !== '') return v;
+  if (!isFirstCol) return v;
+  for (var i = 0; i < LABEL_FALLBACKS.length; i++) {
+    var f = LABEL_FALLBACKS[i];
+    if (f !== col.field && item[f] != null && item[f] !== '') return item[f];
+  }
+  return v;
+}
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 function fmtValue(value, col, extraColors) {
@@ -152,20 +118,6 @@ function fmtValue(value, col, extraColors) {
   if (typeof value === "boolean") return value ? "✓" : "—";
   if (typeof value === "object") return Array.isArray(value) ? "[" + value.length + "]" : "–";
   return String(value).substring(0, 130);
-}
-
-function localSort(arr, field, dir) {
-  if (!arr || !arr.length || !field) return arr;
-  return [...arr].sort(function(a, b) {
-    const va = a[field] != null ? a[field] : "";
-    const vb = b[field] != null ? b[field] : "";
-    if (typeof va === "number" && typeof vb === "number") return dir === "asc" ? va - vb : vb - va;
-    const sa = String(va).toLowerCase();
-    const sb = String(vb).toLowerCase();
-    if (sa < sb) return dir === "asc" ? -1 : 1;
-    if (sa > sb) return dir === "asc" ? 1 : -1;
-    return 0;
-  });
 }
 
 function buildFormProps(editItem, onClose, onSubmit) {
@@ -208,7 +160,7 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [FormComponent]);
 
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual, empresasDoGrupo } = useContextoVisual();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
   const empresaId = (empresaAtual && empresaAtual.id) || null;
   const groupId   = (grupoAtual   && grupoAtual.id)   || null;
 
@@ -245,8 +197,8 @@ export default function VisualizadorUniversalEntidadeV24({
   const [crossPageAll,  setCrossPageAll]  = useState(false);
   const [deselectedIds, setDeselectedIds] = useState(function() { return new Set(); });
 
-  const lastGoodData   = useRef([]);
-  const everLoadedRef   = useRef(false); // flag: já carregou ao menos uma vez
+  const lastGoodData  = useRef([]);
+  const everLoadedRef = useRef(false);
 
   // Debounce busca
   const debRef = useRef(null);
@@ -262,16 +214,14 @@ export default function VisualizadorUniversalEntidadeV24({
 
   const skip = (page - 1) * pageSize;
 
-  // Manda contexto limpo ao backend para ele expandir corretamente.
-  // buildContextFilter embutia group_id dentro de $or, impedindo a expansão do backend.
+  // Filtro limpo: backend expande empresa_id ou group_id para todos os campos
   const readFilter = useMemo(function() {
     if (isSimple) return {};
     if (groupId && !empresaId) return { group_id: groupId };
     if (empresaId) return { empresa_id: empresaId };
     return {};
-  }, [isSimple, empresaId, groupId]); // eslint-disable-line
+  }, [isSimple, empresaId, groupId]);
 
-  // Envia o campo real ao backend — o backend aceita qualquer campo válido
   const backendSortField = UNSORTABLE_BACKEND.has(sortField) ? "updated_date" : sortField;
   const backendSortDir   = sortDir;
 
@@ -281,7 +231,7 @@ export default function VisualizadorUniversalEntidadeV24({
   );
 
   // ── query principal ──────────────────────────────────────────────────────────
-  // placeholderData: prev => prev garante que a lista NÃO desaparece durante sort/paginação/exclusão
+  // placeholderData garante que a lista NÃO desaparece durante sort/paginação/exclusão
   const { data: rawItems, isFetching, isError } = useQuery({
     queryKey: queryKey,
     queryFn: async function() {
@@ -297,41 +247,45 @@ export default function VisualizadorUniversalEntidadeV24({
       });
       return Array.isArray(res && res.data) ? res.data : [];
     },
-    staleTime: 0,
+    staleTime: 0,           // sempre fresh após mutação
     gcTime: 300000,
     retry: 2,
     retryDelay: function(attempt) { return Math.min(500 * (attempt + 1), 2000); },
     refetchOnWindowFocus: false,
     // CHAVE: mantém dados anteriores enquanto nova query está em progresso
-    placeholderData: function(prev) { return prev ?? []; },
+    placeholderData: function(prev) { return prev !== undefined ? prev : []; },
     enabled: !!ENTITY,
   });
 
-  // items: simples e direto — placeholderData já garante estabilidade
+  // items: garante estabilidade total — nunca pisca/desaparece
   const items = useMemo(function() {
     const arr = Array.isArray(rawItems) ? rawItems : [];
     if (arr.length > 0) {
       lastGoodData.current = arr;
       everLoadedRef.current = true;
-    } else if (!isFetching && arr.length === 0 && lastGoodData.current.length > 0) {
-      // Backend retornou [] após fetch completo sem busca ativa — pode ser falso negativo
-      // Só aceita vazio quando totalCount confirma que não há dados OU há busca ativa
-      if (totalCount === 0 || !!debouncedSearch) {
-        lastGoodData.current = [];
-        everLoadedRef.current = true;
-      } else {
-        return lastGoodData.current;
-      }
+      return arr;
     }
+    // Fetch em progresso: mantém dados anteriores
+    if (isFetching) return lastGoodData.current.length > 0 ? lastGoodData.current : [];
+    // Erro: mantém cache
     if (isError) return lastGoodData.current;
-    return arr;
+    // Backend retornou [] após fetch completo
+    // Guard: só aceita vazio genuíno quando busca ativa OU totalCount confirma zero
+    if (lastGoodData.current.length > 0 && totalCount > 0 && !debouncedSearch) {
+      return lastGoodData.current;
+    }
+    lastGoodData.current = [];
+    everLoadedRef.current = true;
+    return [];
   }, [rawItems, isFetching, isError, totalCount, debouncedSearch]);
 
+  // Reset do cache quando muda de entidade ou empresa
   useEffect(function() {
     lastGoodData.current = [];
     everLoadedRef.current = false;
   }, [ENTITY, empresaId, groupId]);
 
+  // Subscribe para invalidar quando houver mudanças na entidade
   useEffect(function() {
     if (!ENTITY) return;
     const api = base44.entities && base44.entities[ENTITY];
@@ -553,7 +507,7 @@ export default function VisualizadorUniversalEntidadeV24({
           <span className="text-sm">Erro ao carregar dados.</span>
           <button
             className="text-xs underline text-red-400"
-            onClick={function() { lastGoodData.current = []; invalidateAll(queryClient, ENTITY); }}
+            onClick={function() { lastGoodData.current = []; everLoadedRef.current = false; invalidateAll(queryClient, ENTITY); }}
           >
             Tentar novamente
           </button>
@@ -618,10 +572,10 @@ export default function VisualizadorUniversalEntidadeV24({
                     className="w-4 h-4 cursor-pointer accent-blue-600"
                   />
                 </td>
-                {COLUMNS.map(function(col) {
+                {COLUMNS.map(function(col, colIdx) {
                   return (
                     <td key={col.field} className="px-3 py-2 text-slate-600 max-w-[240px] truncate">
-                      {fmtValue(item[col.field], col, _extraColors)}
+                      {fmtValue(getDisplayValue(item, col, colIdx === 0), col, _extraColors)}
                     </td>
                   );
                 })}
@@ -715,8 +669,9 @@ export default function VisualizadorUniversalEntidadeV24({
 
         <button
           type="button"
-          onClick={function() { lastGoodData.current = []; invalidateAll(queryClient, ENTITY); }}
+          onClick={function() { lastGoodData.current = []; everLoadedRef.current = false; invalidateAll(queryClient, ENTITY); }}
           className="h-9 w-9 flex items-center justify-center border border-slate-200 rounded-sm bg-white hover:bg-slate-50 shrink-0"
+          title="Recarregar"
         >
           <RefreshCw className={"w-4 h-4 " + (isFetching ? "animate-spin text-blue-500" : "text-slate-500")} />
         </button>
@@ -780,17 +735,18 @@ export default function VisualizadorUniversalEntidadeV24({
             onClick={function() { setPage(1); }}
             disabled={page === 1 || isFetching}
             className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40"
-            >«</button>
-            <button
-              type="button"
-              onClick={function() { setPage(function(p) { return Math.max(1, p - 1); }); }}
-              disabled={page === 1 || isFetching}
-            >← Ant.</button>
-            <span className="flex items-center justify-center h-7 px-2 border border-slate-200 rounded-sm bg-white font-semibold text-slate-700">{page}</span>
-            <button
-              type="button"
-              onClick={function() { setPage(function(p) { return p + 1; }); }}
-              disabled={items.length < pageSize || isFetching}
+          >«</button>
+          <button
+            type="button"
+            onClick={function() { setPage(function(p) { return Math.max(1, p - 1); }); }}
+            disabled={page === 1 || isFetching}
+            className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40"
+          >← Ant.</button>
+          <span className="flex items-center justify-center h-7 px-2 border border-slate-200 rounded-sm bg-white font-semibold text-slate-700">{page}</span>
+          <button
+            type="button"
+            onClick={function() { setPage(function(p) { return p + 1; }); }}
+            disabled={items.length < pageSize || isFetching}
             className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40"
           >Próx. →</button>
         </div>

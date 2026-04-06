@@ -29,14 +29,16 @@ export default function Bloco1Pessoas({ allCounts }) {
   };
 
   const tiles = [
-    { k: 'Cliente', t: 'Clientes', i: Users, c: ['nome','razao_social','cnpj','cpf','status'], f: CadastroClienteCompleto },
-    { k: 'Fornecedor', t: 'Fornecedores', i: Building2, c: ['nome','razao_social','cnpj','status','categoria'], f: CadastroFornecedorCompleto },
-    { k: 'Transportadora', t: 'Transportadoras', i: Truck, c: ['razao_social','nome_fantasia','cnpj','status'], f: TransportadoraForm },
-    { k: 'Colaborador', t: 'Colaboradores', i: User, c: ['nome_completo','cpf','cargo','departamento','status'], f: ColaboradorForm },
-    { k: 'Representante', t: 'Representantes & Indicadores', i: Award, c: ['nome','tipo_representante','percentual_comissao','email'], f: RepresentanteFormCompleto },
-    { k: 'ContatoB2B', t: 'Contatos B2B', i: MessageCircle, c: ['nome','empresa','cargo','email','telefone'], f: ContatoB2BForm },
-    { k: 'SegmentoCliente', t: 'Segmentos de Cliente', i: TrendingUp, c: ['nome_segmento','descricao'], f: SegmentoClienteForm },
-    { k: 'RegiaoAtendimento', t: 'Regiões de Atendimento', i: MapPin, c: ['nome_regiao','tipo_regiao','estados_abrangidos'], f: RegiaoAtendimentoForm },
+    { k: 'Cliente',           t: 'Clientes',                    i: Users,         c: ['nome','razao_social','cnpj','cpf','status'],              f: CadastroClienteCompleto },
+    { k: 'Fornecedor',        t: 'Fornecedores',                i: Building2,     c: ['nome','razao_social','cnpj','status','categoria'],         f: CadastroFornecedorCompleto },
+    { k: 'Transportadora',    t: 'Transportadoras',             i: Truck,         c: ['razao_social','nome_fantasia','cnpj','status'],            f: TransportadoraForm },
+    { k: 'Colaborador',       t: 'Colaboradores',               i: User,          c: ['nome_completo','cpf','cargo','departamento','status'],     f: ColaboradorForm },
+    { k: 'Representante',     t: 'Representantes & Indicadores',i: Award,         c: ['nome','tipo_representante','percentual_comissao','email'], f: RepresentanteFormCompleto },
+    { k: 'ContatoB2B',        t: 'Contatos B2B',                i: MessageCircle, c: ['nome','empresa','cargo','email','telefone'],               f: ContatoB2BForm },
+    // nome (não nome_segmento) é o campo real salvo pela entidade
+    { k: 'SegmentoCliente',   t: 'Segmentos de Cliente',        i: TrendingUp,    c: ['nome','descricao'],                                        f: SegmentoClienteForm },
+    // nome (não nome_regiao) é o campo real salvo pela entidade
+    { k: 'RegiaoAtendimento', t: 'Regiões de Atendimento',      i: MapPin,        c: ['nome','tipo_regiao','estados_abrangidos'],                 f: RegiaoAtendimentoForm },
   ];
 
   return (
