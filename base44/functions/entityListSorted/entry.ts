@@ -175,25 +175,37 @@ async function listOne(base44, user, q) {
   const sortDir = ((q?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc') === 'asc') ? 'asc' : 'desc';
   const orderHint = `${sortDir === 'desc' ? '-' : ''}${sortField}`;
 
-  // Monta filtro final
-  let finalFilter = sanitizeFilter(rawFilter);
-  finalFilter = normalizeSharedFilter(finalFilter);
-  // Só expande se o frontend NÃO enviou $or pré-montado
-  const hasPrebuiltOr = Array.isArray(finalFilter?.$or) && finalFilter.$or.length > 0;
-  if (!isSimple && !hasPrebuiltOr) {
-    finalFilter = await expandGroupFilter(base44, entityName, finalFilter);
+  // Monta filtro de escopo (sem busca de texto — busca vem em q.search separada)
+  let scopeFilter = sanitizeFilter(rawFilter);
+  scopeFilter = normalizeSharedFilter(scopeFilter);
+  // Remove $or de busca embutido no filter (compatibilidade com clientes antigos)
+  // Detecta se o $or do filter é de busca (campos de texto) ou de escopo (empresa_id/group_id)
+  const isSearchOr = Array.isArray(scopeFilter?.$or) && scopeFilter.$or.length > 0 &&
+    scopeFilter.$or.every(c => {
+      const keys = Object.keys(c || {});
+      return keys.length === 1 && !['empresa_id','empresa_dona_id','empresa_alocada_id','group_id','empresas_compartilhadas_ids'].includes(keys[0]);
+    });
+  const embeddedSearch = isSearchOr ? scopeFilter.$or : null;
+  if (isSearchOr) { scopeFilter = { ...scopeFilter }; delete scopeFilter.$or; }
+
+  // Expande sempre (escopo limpo)
+  let finalFilter = scopeFilter;
+  if (!isSimple) {
+    finalFilter = await expandGroupFilter(base44, entityName, scopeFilter);
   }
 
-  // Busca com texto
+  // Aplica busca por texto (prioridade: q.search, depois embeddedSearch)
   const term = q?.search || q?.busca || null;
   if (term && typeof term === 'string' && term.trim()) {
     const fields = SEARCH_FIELDS[entityName] || SEARCH_FIELDS.default;
     const rx = { $regex: term.trim(), $options: 'i' };
     const orConds = fields.map(f => ({ [f]: rx }));
-    const hasFilter = Object.keys(finalFilter).length > 0;
-    finalFilter = hasFilter
-      ? { $and: [finalFilter, { $or: orConds }] }
-      : { $or: orConds };
+    const hasScope = Object.keys(finalFilter).length > 0;
+    finalFilter = hasScope ? { $and: [finalFilter, { $or: orConds }] } : { $or: orConds };
+  } else if (embeddedSearch) {
+    // Busca legada embutida no filter
+    const hasScope = Object.keys(finalFilter).length > 0;
+    finalFilter = hasScope ? { $and: [finalFilter, { $or: embeddedSearch }] } : { $or: embeddedSearch };
   }
 
   const items = await base44.asServiceRole.entities[entityName].filter(finalFilter, orderHint, limit, skip) || [];

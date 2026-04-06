@@ -278,22 +278,11 @@ export default function VisualizadorUniversalEntidadeV24({
     queryKey: queryKey,
     queryFn: async function() {
       if (!ENTITY) return [];
-      let filter = Object.assign({}, readFilter);
-
-      if (debouncedSearch && debouncedSearch.trim()) {
-        const fields = SEARCH_FIELDS[ENTITY] || ["nome", "descricao"];
-        const rx = { $regex: debouncedSearch.trim(), $options: "i" };
-        const searchOr = { $or: fields.map(function(f) { const o = {}; o[f] = rx; return o; }) };
-        if (filter.$or) {
-          filter = { $and: [{ $or: filter.$or }, searchOr] };
-        } else {
-          filter = Object.assign({}, filter, searchOr);
-        }
-      }
 
       const res = await base44.functions.invoke("entityListSorted", {
         entityName: ENTITY,
-        filter: filter,
+        filter: readFilter,
+        search: debouncedSearch && debouncedSearch.trim() ? debouncedSearch.trim() : undefined,
         sortField: backendSortField,
         sortDirection: backendSortDir,
         limit: pageSize,
@@ -311,7 +300,7 @@ export default function VisualizadorUniversalEntidadeV24({
     retry: 2,
     retryDelay: function(attempt) { return Math.min(500 * (attempt + 1), 2000); },
     refetchOnWindowFocus: false,
-    placeholderData: function(prev) { return prev; },
+    placeholderData: function(prev) { return prev !== undefined ? prev : lastGoodData.current; },
     enabled: !!ENTITY,
   });
 
