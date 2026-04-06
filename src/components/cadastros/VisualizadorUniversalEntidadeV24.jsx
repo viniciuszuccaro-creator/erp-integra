@@ -306,26 +306,32 @@ export default function VisualizadorUniversalEntidadeV24({
     enabled: !!ENTITY,
   });
 
-  // items: nunca desaparece durante sort/paginação/exclusão
+  // items: NUNCA desaparece durante sort/paginação/exclusão
   const items = useMemo(function() {
+    // Dados reais chegaram: atualiza cache e retorna
     if (Array.isArray(rawItems) && rawItems.length > 0) {
       lastGoodData.current = rawItems;
       everLoadedRef.current = true;
       return rawItems;
     }
-    // Enquanto fetch ativo: mantém último dado bom (lista não desaparece)
+    // Enquanto fetch ativo: mantém último dado bom (lista não pisca)
     if (isFetching) return lastGoodData.current.length > 0 ? lastGoodData.current : [];
+    // Erro de rede: mantém cache
     if (isError) return lastGoodData.current;
+    // rawItems = [] após fetch completo
     if (Array.isArray(rawItems)) {
-      // rawItems = [] após fetch completo
-      // Se já tivemos dados e não há busca ativa: pode ser página vazia ou resultado de sort
-      // Limpa o cache e aceita vazio genuinamente
+      // GUARD ANTI-SUMIÇO: se temos dados em cache e totalCount indica que há registros,
+      // NÃO limpa o cache — o backend pode ter retornado [] por mismatch de filtro/sort.
+      // Só aceita vazio genuíno quando: busca ativa (search) OU totalCount === 0 OU primeira carga.
+      if (lastGoodData.current.length > 0 && totalCount > 0 && !debouncedSearch) {
+        return lastGoodData.current;
+      }
       lastGoodData.current = [];
       everLoadedRef.current = true;
       return [];
     }
     return lastGoodData.current;
-  }, [rawItems, isFetching, isError]);
+  }, [rawItems, isFetching, isError, totalCount, debouncedSearch]);
 
   useEffect(function() {
     lastGoodData.current = [];
