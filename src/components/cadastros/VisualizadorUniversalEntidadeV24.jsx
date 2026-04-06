@@ -213,10 +213,10 @@ function buildFormProps(editItem, onClose, onSubmit) {
 }
 
 function invalidateAll(qc, entity) {
-  // Invalida sem resetar placeholderData (mantém dados visíveis durante refetch)
-  qc.invalidateQueries({ queryKey: ["viz-v32", entity] });
-  qc.invalidateQueries({ queryKey: ["entityCounts_v5"] });
-  qc.invalidateQueries({ queryKey: ["cadastros-all-counts"] });
+  // Invalida e faz refetch imediato de todas as páginas/ordenações desta entidade
+  qc.invalidateQueries({ queryKey: ["viz-v32", entity], refetchType: "all" });
+  qc.invalidateQueries({ queryKey: ["entityCounts_v5"], refetchType: "active" });
+  qc.invalidateQueries({ queryKey: ["cadastros-all-counts"], refetchType: "active" });
 }
 
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────────────
@@ -306,7 +306,7 @@ export default function VisualizadorUniversalEntidadeV24({
   );
 
   // ── query principal ──────────────────────────────────────────────────────────
-  const { data: rawItems, isLoading, isFetching, isError } = useQuery({
+  const { data: rawItems, isLoading, isFetching, isError, status } = useQuery({
     queryKey,
     queryFn: async () => {
       if (!ENTITY) return [];
@@ -334,31 +334,40 @@ export default function VisualizadorUniversalEntidadeV24({
       });
       const fetched = Array.isArray(res?.data) ? res.data : [];
 
-      // Sort local para campos não suportados pelo backend
       if (!BACKEND_SORT_FIELDS.has(sortField) && fetched.length > 0) {
         return localSort(fetched, sortField, sortDir);
       }
       return fetched;
     },
-    staleTime: 0,
+    staleTime: 5_000,
     gcTime: 300_000,
     refetchOnWindowFocus: false,
-    placeholderData: (prev) => prev,
+    // Mantém dados da query ANTERIOR enquanto nova query carrega (evita lista sumir ao trocar sort/page/pageSize)
+    placeholderData: (previousData) => previousData,
     enabled: !!ENTITY,
   });
 
-  // Mantém dados anteriores enquanto refetch, evita piscar lista vazia
+  // items: NUNCA mostra vazio enquanto há fetch em andamento — evita piscar/desaparecer
   const items = useMemo(() => {
-    if (rawItems === undefined) return lastGoodData.current;
-    if (rawItems.length > 0) { lastGoodData.current = rawItems; return rawItems; }
-    // rawItems = [] mas ainda buscando: mantém dados anteriores
-    if (isFetching && lastGoodData.current.length > 0) return lastGoodData.current;
-    // Resultado definitivo vazio
-    lastGoodData.current = [];
-    return [];
+    // Dados válidos chegaram: atualiza cache e retorna
+    if (Array.isArray(rawItems) && rawItems.length > 0) {
+      lastGoodData.current = rawItems;
+      return rawItems;
+    }
+    // Fetch em andamento (sort/page mudou): mantém dados anteriores para não piscar
+    if (isFetching && lastGoodData.current.length > 0) {
+      return lastGoodData.current;
+    }
+    // rawItems = [] e fetch concluído: lista realmente vazia
+    if (Array.isArray(rawItems) && rawItems.length === 0 && !isFetching) {
+      lastGoodData.current = [];
+      return [];
+    }
+    // rawItems undefined (query ainda não rodou): usa cache
+    return lastGoodData.current;
   }, [rawItems, isFetching]);
 
-  // Reset ao mudar entidade/contexto
+  // Reset cache ao mudar entidade/contexto
   useEffect(() => { lastGoodData.current = []; }, [ENTITY, empresaId, groupId]);
 
   // Subscribe para invalidar ao detectar writes externos
