@@ -654,20 +654,35 @@ export default function VisualizadorUniversalEntidadeV24({
         {isError && items.length > 0 && (
           <div className="absolute top-0 right-0 z-20 bg-red-500/10 text-red-600 text-[10px] px-2 py-0.5 flex items-center gap-1 rounded-bl">
             <AlertCircle className="w-2.5 h-2.5" /> erro — exibindo cache
-            <button className="underline ml-1" onClick={() => invalidateAll(queryClient, ENTITY)}>recarregar</button>
           </div>
         )}
 
-        {isError && items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-red-500 gap-2">
-            <AlertCircle className="w-7 h-7" />
-            <span className="text-sm">Erro ao carregar. <button className="underline" onClick={() => { lastGoodData.current = []; invalidateAll(queryClient, ENTITY); }}>Tentar novamente</button></span>
-          </div>
-        ) : isLoading && items.length === 0 ? (
+        {isLoading && items.length === 0 && (
           <div className="space-y-1.5 p-3">
             {[...Array(8)].map((_,i) => <Skeleton key={i} className={`h-8 rounded-sm ${i%3===0?"w-3/4":"w-full"}`} />)}
           </div>
-        ) : items.length === 0 ? (
+        )}
+        {isError && items.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-40 text-red-500 gap-2">
+            <AlertCircle className="w-7 h-7" />
+            <span className="text-sm">Erro ao carregar dados.</span>
+            <button
+              className="text-xs underline text-red-400"
+              onClick={() => { lastGoodData.current = []; invalidateAll(queryClient, ENTITY); }}
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
+        {!isLoading && !isError && items.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-40 text-slate-400 gap-2">
+            <Search className="w-7 h-7 opacity-30" />
+            <span className="text-sm">
+              {debouncedSearch ? `Nenhum resultado para "${debouncedSearch}"` : `Nenhum registro de ${TITULO}`}
+            </span>
+          </div>
+        )}
+        {items.length > 0 && (
           <table className="w-full text-sm table-auto">
             <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 z-10">
               <tr>
@@ -707,7 +722,6 @@ export default function VisualizadorUniversalEntidadeV24({
                         {fmtValue(item[col.field], col, extraColors)}
                       </td>
                     ))}
-                    {/* ── Botões de ação: SEMPRE VISÍVEIS (sem opacity-0) ── */}
                     <td className="px-3 py-2">
                       <div className="flex items-center justify-center gap-1">
                         {FormComponent && (
@@ -718,11 +732,9 @@ export default function VisualizadorUniversalEntidadeV24({
                             disabled={isLoadingEdit}
                             className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
                           >
-                            {isLoadingEdit ? (
-                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                              <Edit className="w-3.5 h-3.5" />
-                            )}
+                            {isLoadingEdit
+                              ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              : <Edit className="w-3.5 h-3.5" />}
                           </button>
                         )}
                         <button
