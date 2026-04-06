@@ -71,10 +71,14 @@ const FORM_ALIASES = [
 // ─── getDisplayValue: garante que 1ª coluna sempre mostra algo legível ────────
 // Quando o campo configurado está vazio, tenta outros campos de nome em ordem.
 const LABEL_FALLBACKS = [
-  'nome','nome_completo','razao_social','nome_fantasia','nome_segmento',
-  'nome_regiao','nome_banco','nome_grupo','nome_perfil','nome_kit','nome_rota',
+  // Campos de nome mais comuns primeiro
+  'nome','nome_completo','razao_social','nome_fantasia',
+  // Aliases de entidades específicas
+  'nome_segmento','nome_regiao','nome_banco','nome_grupo',
+  'nome_perfil','nome_kit','nome_rota','nome_marca','nome_setor',
+  'nome_departamento','nome_cargo',
+  // Identifiers alternativos
   'titulo','descricao','sigla','codigo','codigo_banco','matricula','placa',
-  'nome_marca','nome_setor','nome_departamento','nome_cargo',
 ];
 function getDisplayValue(item, col, isFirstCol) {
   const v = item[col.field];
@@ -258,7 +262,7 @@ export default function VisualizadorUniversalEntidadeV24({
     enabled: !!ENTITY,
   });
 
-  // items: garante estabilidade total — nunca pisca/desaparece
+  // items: estabilidade total — nunca desaparece durante sort/paginação/exclusão
   const items = useMemo(function() {
     const arr = Array.isArray(rawItems) ? rawItems : [];
     if (arr.length > 0) {
@@ -266,19 +270,17 @@ export default function VisualizadorUniversalEntidadeV24({
       everLoadedRef.current = true;
       return arr;
     }
-    // Fetch em progresso: mantém dados anteriores
-    if (isFetching) return lastGoodData.current.length > 0 ? lastGoodData.current : [];
-    // Erro: mantém cache
-    if (isError) return lastGoodData.current;
-    // Backend retornou [] após fetch completo
-    // Guard: só aceita vazio genuíno quando busca ativa OU totalCount confirma zero
-    if (lastGoodData.current.length > 0 && totalCount > 0 && !debouncedSearch) {
+    // Durante qualquer fetch em progresso: mantém dados anteriores (evita piscar)
+    if (isFetching && lastGoodData.current.length > 0) {
       return lastGoodData.current;
     }
-    lastGoodData.current = [];
+    // Erro: mantém cache visível
+    if (isError) return lastGoodData.current;
+    // Fetch completo e retornou [] genuíno
     everLoadedRef.current = true;
+    lastGoodData.current = [];
     return [];
-  }, [rawItems, isFetching, isError, totalCount, debouncedSearch]);
+  }, [rawItems, isFetching, isError]);
 
   // Reset do cache quando muda de entidade ou empresa
   useEffect(function() {
@@ -491,7 +493,8 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // ─── RENDER ───────────────────────────────────────────────────────────────────
   const renderTableBody = function() {
-    const isInitialLoad = isFetching && !everLoadedRef.current && items.length === 0 && lastGoodData.current.length === 0;
+    // Skeleton apenas na carga inicial absoluta (nunca durante sort/paginação)
+  const isInitialLoad = isFetching && !everLoadedRef.current && lastGoodData.current.length === 0;
     if (isInitialLoad) {
       return (
         <div className="space-y-1.5 p-3">

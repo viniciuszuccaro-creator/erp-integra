@@ -33,8 +33,10 @@ const SEARCH_FIELDS = {
   GrupoProduto: ['nome', 'nome_grupo', 'codigo', 'descricao'],
   Marca: ['nome', 'nome_marca', 'descricao'],
   Representante: ['nome', 'cpf', 'cnpj', 'email'],
-  SegmentoCliente: ['nome', 'nome_segmento', 'descricao'],
-  RegiaoAtendimento: ['nome', 'nome_regiao', 'descricao'],
+  SegmentoCliente: ['nome', 'nome_segmento', 'descricao', 'tipo_segmento'],
+  RegiaoAtendimento: ['nome', 'nome_regiao', 'descricao', 'tipo_regiao'],
+  PerfilAcesso: ['nome_perfil', 'nome', 'descricao', 'nivel_perfil'],
+  ConfiguracaoDespesaRecorrente: ['descricao', 'nome', 'periodicidade'],
   SetorAtividade: ['nome', 'descricao', 'codigo'],
   TabelaPreco: ['nome', 'descricao'],
   UnidadeMedida: ['sigla', 'nome', 'descricao'],
@@ -80,7 +82,7 @@ const SIMPLE_CATALOG = new Set([
   'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento',
   'ContatoB2B', 'CentroCusto', 'PlanoDeContas', 'PlanoContas',
   'Veiculo', 'Motorista', 'Representante', 'GrupoEmpresarial', 'Empresa',
-  'TabelaPrecoItem', 'CentroOperacao',
+  'TabelaPrecoItem', 'CentroOperacao', 'ConfiguracaoDespesaRecorrente',
 ]);
 
 const EXPAND_SET = new Set(['Cliente', 'Fornecedor', 'Transportadora']);

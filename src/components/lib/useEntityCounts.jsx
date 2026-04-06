@@ -113,7 +113,7 @@ export function useEntityCounts(entities = []) {
         batchPayload.push({ entityName, filter: ctxFilter });
       }
 
-      if (!batchPayload.length) return fixed;
+      if (!batchPayload.length) return {};
 
       // Batch API — 1 request para todas as entidades
       try {
@@ -127,7 +127,7 @@ export function useEntityCounts(entities = []) {
       } catch (_) {}
 
       // Fallback sequencial (evita 429)
-      const result = { ...fixed };
+      const result = {};
       for (const { entityName, filter } of batchPayload) {
         result[entityName] = await countSingle(entityName, filter);
       }

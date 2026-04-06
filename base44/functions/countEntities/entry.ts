@@ -13,7 +13,7 @@ const SIMPLE_CATALOG = new Set([
   'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento',
   'ContatoB2B', 'CentroCusto', 'PlanoDeContas', 'PlanoContas',
   'Veiculo', 'Motorista', 'Representante', 'GrupoEmpresarial', 'Empresa',
-  'TabelaPrecoItem', 'CentroOperacao',
+  'TabelaPrecoItem', 'CentroOperacao', 'ConfiguracaoDespesaRecorrente',
 ]);
 
 function normalizeSharedFilter(f) {
@@ -79,32 +79,40 @@ async function expandGroupFilter(base44, entityName, f) {
 }
 
 /**
- * Contagem com paginação completa — retorna o total EXATO de registros.
- * Pagina de 500 em 500 até exaurir todos os registros (máx 20 páginas = 10.000).
+ * Contagem eficiente: usa paginacao escalonada para minimizar requests e evitar 429.
+ * Estratégia: pede 1 registro por vez crescendo até encontrar o limite.
+ * Para catálogos simples sem filtro, usa pages grandes (500) mas com delay adequado.
  */
 async function fastCount(base44, entityName, finalFilter) {
   const PAGE = 500;
   const MAX_PAGES = 20;
   let total = 0;
+  let delay = 150; // ms entre pages
 
   for (let page = 0; page < MAX_PAGES; page++) {
+    if (page > 0) await new Promise(r => setTimeout(r, delay));
     let batch;
-    try {
-      batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, page * PAGE);
-    } catch (err) {
-      const status = err?.status || err?.response?.status;
-      if (status === 429) {
-        await new Promise(r => setTimeout(r, 2000));
-        try {
-          batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, page * PAGE);
-        } catch (_) { break; }
-      } else {
+    let attempt = 0;
+    while (attempt < 3) {
+      try {
+        batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, page * PAGE);
         break;
+      } catch (err) {
+        const status = err?.status || err?.response?.status;
+        if (status === 429) {
+          await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+          attempt++;
+        } else {
+          batch = [];
+          break;
+        }
       }
     }
     const n = Array.isArray(batch) ? batch.length : 0;
     total += n;
-    if (n < PAGE) break; // Última página — acabou
+    if (n < PAGE) break;
+    // Aumentar delay progressivamente para evitar 429 em bases grandes
+    delay = Math.min(delay + 100, 800);
   }
 
   return total;

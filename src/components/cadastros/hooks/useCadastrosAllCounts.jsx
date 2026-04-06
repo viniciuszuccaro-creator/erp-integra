@@ -11,7 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { SIMPLE_CATALOG } from "@/components/lib/useEntityCounts";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 // Entidades de cada bloco
 export const BLOCOS_ENTITIES = {
@@ -19,7 +19,7 @@ export const BLOCOS_ENTITIES = {
   bloco2: ["Produto","Servico","SetorAtividade","GrupoProduto","Marca","TabelaPreco","KitProduto","CatalogoWeb","UnidadeMedida"],
   bloco3: ["Banco","FormaPagamento","PlanoDeContas","CentroCusto","CentroResultado","TipoDespesa","MoedaIndice","OperadorCaixa","GatewayPagamento","ConfiguracaoDespesaRecorrente","TabelaFiscal","CondicaoComercial"],
   bloco4: ["Veiculo","Motorista","TipoFrete","LocalEstoque","RotaPadrao","ModeloDocumento"],
-  bloco5: ["Empresa","GrupoEmpresarial","Departamento","Cargo","Turno"],
+  bloco5: ["Empresa","GrupoEmpresarial","Departamento","Cargo","Turno","PerfilAcesso"],
   bloco6: ["ApiExterna","ChatbotCanal","ChatbotIntent","JobAgendado","Webhook","ConfiguracaoNFe","EventoNotificacao"],
 };
 
@@ -69,10 +69,27 @@ export default function useCadastrosAllCounts() {
     retry: 2,
   });
 
-  // Invalida imediatamente ao trocar empresa/grupo
+  // Invalida ao trocar empresa/grupo
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ["cadastros-all-counts-v5"] });
+    queryClient.invalidateQueries({ queryKey: ["entityCounts_v5"] });
   }, [empresaId, groupId]); // eslint-disable-line
+
+  // Subscrição real-time: invalida contagens quando qualquer entidade muda
+  const subscribedRef = useRef(false);
+  useEffect(() => {
+    if (subscribedRef.current) return;
+    subscribedRef.current = true;
+    const unsubs = ALL_ENTITIES.map(name => {
+      const api = base44.entities?.[name];
+      if (!api?.subscribe) return null;
+      return api.subscribe(() => {
+        queryClient.invalidateQueries({ queryKey: ["cadastros-all-counts-v5"] });
+        queryClient.invalidateQueries({ queryKey: ["entityCounts_v5"] });
+      });
+    }).filter(Boolean);
+    return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); subscribedRef.current = false; };
+  }, []); // eslint-disable-line
 
   const counts = data || {};
 

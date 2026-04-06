@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
-import { Building2, Spline, Users, Briefcase, Clock } from "lucide-react";
+import { Building2, Spline, Users, Briefcase, Clock, Shield } from "lucide-react";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
 import GrupoEmpresarialForm from "@/components/cadastros/GrupoEmpresarialForm";
@@ -12,6 +12,7 @@ import EmpresaForm from "@/components/cadastros/EmpresaForm";
 import DepartamentoForm from "@/components/cadastros/DepartamentoForm";
 import CargoForm from "@/components/cadastros/CargoForm";
 import TurnoForm from "@/components/cadastros/TurnoForm";
+import PerfilAcessoForm from "@/components/cadastros/PerfilAcessoForm";
 
 export default function Bloco5Organizacional({ allCounts }) {
   const { openWindow } = useWindow();
@@ -26,6 +27,7 @@ export default function Bloco5Organizacional({ allCounts }) {
     { k: 'Departamento',      t: 'Departamentos',        i: Users,     c: ['nome','descricao'],                              f: DepartamentoForm },
     { k: 'Cargo',             t: 'Cargos',               i: Briefcase, c: ['nome','departamento','descricao'],               f: CargoForm },
     { k: 'Turno',             t: 'Turnos',               i: Clock,     c: ['nome','horario_inicio','horario_fim'],           f: TurnoForm },
+    { k: 'PerfilAcesso',      t: 'Perfis de Acesso',     i: Shield,    c: ['nome_perfil','nivel_perfil','ativo'],            f: PerfilAcessoForm },
   ];
 
   return (
