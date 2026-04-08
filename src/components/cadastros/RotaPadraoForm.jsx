@@ -20,7 +20,7 @@ export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({ ...formData, nome: formData.nome_rota || formData.nome || '' });
   };
 
   const content = (

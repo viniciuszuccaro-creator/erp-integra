@@ -74,16 +74,15 @@ const FORM_ALIASES = [
 const LABEL_FALLBACKS = [
   // Campos de nome direto (prioridade máxima)
   'nome','nome_completo','razao_social','nome_fantasia',
-  // Legado: campos antigos renomeados
-  'nome_do_grupo','nome_banco_antigo','nome_segmento_antigo',
-  // Aliases específicos de entidades
-  'nome_segmento','nome_regiao','nome_banco','nome_grupo','nome_perfil',
-  'nome_kit','nome_rota','nome_marca','nome_setor','nome_departamento','nome_cargo',
+  // Legado: campos não-padronizados (forms que não usam 'nome')
+  'nome_do_grupo','nome_banco','nome_cargo','nome_turno','nome_grupo',
+  'nome_marca','nome_rota','nome_modelo','nome_caixa','nome_segmento',
+  'nome_regiao','nome_perfil','nome_kit','nome_setor','nome_departamento',
   'nome_tipo','nome_canal','nome_intent','nome_job','nome_webhook','nome_api',
   'nome_gateway','nome_forma','nome_centro','nome_plano','nome_local',
-  // Campos descritivos
-  'titulo','descricao','apelido','label','tag',
-  // Identificadores
+  // Campos descritivos (Serviço e TipoFrete usam 'descricao' como nome)
+  'descricao','titulo','apelido','label','tag',
+  // Identificadores (Banco usa codigo_banco, Unidade usa sigla)
   'sigla','codigo','codigo_banco','matricula','placa','cpf','cnpj',
   // Campos de moeda/índice
   'moeda','indice','simbolo','abreviacao',

@@ -46,7 +46,7 @@ export default function TurnoForm({ turno, item, data, initialData, defaultValue
       alert('Preencha os campos obrigatórios');
       return;
     }
-    onSubmit(formData);
+    onSubmit({ ...formData, nome: formData.nome_turno });
   };
 
   const formContent = (

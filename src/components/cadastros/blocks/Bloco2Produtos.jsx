@@ -31,10 +31,10 @@ export default function Bloco2Produtos({ allCounts, isLoading }) {
   // ATENÇÃO: sempre usar o campo real que a entidade salva (não alias como nome_grupo, nome_marca etc.)
   // getDisplayValue no visualizador faz fallback automático se o campo estiver vazio
   const tiles = [
-    { k: 'Servico',        title: 'Serviços',                Icon: Stars,      campos: ['nome','descricao','tipo','ativo'],              form: ServicoForm },
+    { k: 'Servico',        title: 'Serviços',                Icon: Stars,      campos: ['nome','descricao','tipo_servico','ativo'],      form: ServicoForm },
     { k: 'SetorAtividade', title: 'Setores de Atividade',    Icon: Factory,    campos: ['nome','descricao','codigo'],                    form: SetorAtividadeForm },
-    { k: 'GrupoProduto',   title: 'Grupos/Linhas de Produto', Icon: Boxes,     campos: ['nome','descricao','codigo'],                    form: GrupoProdutoForm },
-    { k: 'Marca',          title: 'Marcas',                   Icon: Award,     campos: ['nome','descricao','pais_origem'],               form: MarcaForm },
+    { k: 'GrupoProduto',   title: 'Grupos/Linhas de Produto', Icon: Boxes,     campos: ['nome','nome_grupo','codigo','natureza'],        form: GrupoProdutoForm },
+    { k: 'Marca',          title: 'Marcas',                   Icon: Award,     campos: ['nome','nome_marca','pais_origem','categoria'],  form: MarcaForm },
     { k: 'TabelaPreco',    title: 'Tabelas de Preço',         Icon: TrendingUp,campos: ['nome','tipo','ativo'],                          form: TabelaPrecoFormCompleto },
     { k: 'KitProduto',     title: 'Kits de Produto',          Icon: Package,   campos: ['nome','descricao','ativo'],                     form: KitProdutoForm },
     { k: 'CatalogoWeb',    title: 'Catálogo Web',             Icon: Globe,     campos: ['titulo','descricao','slug'],                    form: CatalogoWebForm },

@@ -35,7 +35,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
       alert('Preencha os campos obrigatórios');
       return;
     }
-    onSubmit(formData);
+    onSubmit({ ...formData, nome: formData.nome_grupo });
     if (typeof closeSelf === 'function') closeSelf();
   };
 

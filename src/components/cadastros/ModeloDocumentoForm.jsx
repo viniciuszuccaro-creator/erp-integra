@@ -22,7 +22,7 @@ export default function ModeloDocumentoForm({ modelo, modeloDocumento, onSubmit,
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({ ...formData, nome: formData.nome_modelo || formData.nome || '' });
   };
 
   const content = (

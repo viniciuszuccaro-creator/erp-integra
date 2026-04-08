@@ -44,10 +44,10 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
       alert('Preencha os campos obrigatórios');
       return;
     }
-    // onSubmit faz persistência + fecha (Visualizador universal)
-    // onSave/onClose apenas fecham — não chamar se onSubmit já fecha
+    // Injeta 'nome' para compatibilidade com o Visualizador Universal
+    const payload = { ...formData, nome: formData.nome_banco };
     if (onSubmit) {
-      onSubmit(formData);
+      onSubmit(payload);
     } else {
       if (onSave) onSave();
       if (onClose) onClose();

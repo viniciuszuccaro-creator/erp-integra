@@ -36,7 +36,7 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
       alert('Preencha o nome da marca');
       return;
     }
-    onSubmit(formData);
+    onSubmit({ ...formData, nome: formData.nome_marca });
   };
 
   const handleExcluir = () => {

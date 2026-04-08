@@ -35,7 +35,7 @@ export default function CargoForm({ cargo, item, data, initialData, defaultValue
       alert('Preencha o nome do cargo');
       return;
     }
-    onSubmit(formData);
+    onSubmit({ ...formData, nome: formData.nome_cargo });
   };
 
   const handleExcluir = () => {

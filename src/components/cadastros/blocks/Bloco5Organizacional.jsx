@@ -25,8 +25,8 @@ export default function Bloco5Organizacional({ allCounts, isLoading }) {
     { k: 'GrupoEmpresarial', t: 'Grupos Empresariais', i: Building2, c: ['nome','cnpj','descricao'],                              f: GrupoEmpresarialForm },
     { k: 'Empresa',          t: 'Empresas',             i: Spline,    c: ['razao_social','nome_fantasia','cnpj','cidade'],          f: EmpresaForm },
     { k: 'Departamento',     t: 'Departamentos',        i: Users,     c: ['nome','descricao'],                                     f: DepartamentoForm },
-    { k: 'Cargo',            t: 'Cargos',               i: Briefcase, c: ['nome','descricao'],                                     f: CargoForm },
-    { k: 'Turno',            t: 'Turnos',               i: Clock,     c: ['nome','horario_inicio','horario_fim'],                   f: TurnoForm },
+    { k: 'Cargo',            t: 'Cargos',               i: Briefcase, c: ['nome','nome_cargo','descricao','nivel_hierarquico'],   f: CargoForm },
+    { k: 'Turno',            t: 'Turnos',               i: Clock,     c: ['nome','nome_turno','horario_inicio','horario_fim'],     f: TurnoForm },
     { k: 'PerfilAcesso',     t: 'Perfis de Acesso',     i: Shield,    c: ['nome_perfil','nivel_perfil','descricao','ativo'],        f: PerfilAcessoForm },
   ];
 

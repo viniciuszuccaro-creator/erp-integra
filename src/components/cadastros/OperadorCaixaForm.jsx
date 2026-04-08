@@ -62,12 +62,14 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Injeta 'nome' para compatibilidade com o Visualizador Universal
+    const payload = { ...formData, nome: formData.nome_caixa || formData.usuario_nome || '' };
     try {
       if (operador?.id) {
-        await base44.entities.OperadorCaixa.update(operador.id, formData);
+        await base44.entities.OperadorCaixa.update(operador.id, payload);
         toast.success("✅ Operador atualizado!");
       } else {
-        await base44.entities.OperadorCaixa.create(formData);
+        await base44.entities.OperadorCaixa.create(payload);
         toast.success("✅ Operador criado!");
       }
       onSubmit?.();

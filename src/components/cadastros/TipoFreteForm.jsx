@@ -28,7 +28,7 @@ export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting,
       alert('Preencha os campos obrigatórios');
       return;
     }
-    onSubmit(formData);
+    onSubmit({ ...formData, nome: formData.descricao });
   };
 
   const formContent = (

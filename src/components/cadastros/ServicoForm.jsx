@@ -33,7 +33,7 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
       alert('Preencha os campos obrigatórios');
       return;
     }
-    onSubmit(formData);
+    onSubmit({ ...formData, nome: formData.descricao });
   };
 
   const formContent = (
