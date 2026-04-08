@@ -353,12 +353,21 @@ export default function Relatorios() {
             <Calendar className="w-4 h-4 mr-2" />
             Agendamento
           </TabsTrigger>
-          {/* NEW Triggers from outline */}
-          <TabsTrigger value="vendas">Vendas</TabsTrigger>
-          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-          <TabsTrigger value="estoque">Estoque</TabsTrigger>
-          <TabsTrigger value="producao">Produção</TabsTrigger>
-          <TabsTrigger value="dre">DRE</TabsTrigger>
+          <TabsTrigger value="vendas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TrendingUp className="w-4 h-4 mr-2" />Vendas
+          </TabsTrigger>
+          <TabsTrigger value="financeiro" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+            <DollarSign className="w-4 h-4 mr-2" />Financeiro
+          </TabsTrigger>
+          <TabsTrigger value="estoque" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <Package className="w-4 h-4 mr-2" />Estoque
+          </TabsTrigger>
+          <TabsTrigger value="producao" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
+            <Activity className="w-4 h-4 mr-2" />Produção
+          </TabsTrigger>
+          <TabsTrigger value="dre" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <BarChart3 className="w-4 h-4 mr-2" />DRE
+          </TabsTrigger>
           <TabsTrigger value="exportacao">
             <Download className="w-4 h-4 mr-2" />
             Exportações
@@ -457,8 +466,6 @@ export default function Relatorios() {
           <Suspense fallback={<div>Carregando...</div>}><AgendamentoRelatorios empresaId={empresaAtual?.id} /></Suspense>
         </TabsContent>
 
-        {/* New TabsContent for 'vendas', 'financeiro', 'estoque', 'producao', 'dre' could go here if needed.
-                 For now, they are empty as per the outline not providing content. */}
         <TabsContent value="vendas">
           <Suspense fallback={<div className="p-8 text-center text-slate-500">Carregando...</div>}><RelatorioVendas /></Suspense>
         </TabsContent>
@@ -471,7 +478,7 @@ export default function Relatorios() {
         <TabsContent value="producao">
           <Suspense fallback={<div className="p-8 text-center text-slate-500">Carregando...</div>}><RelatorioProducao /></Suspense>
         </TabsContent>
-        <TabsContent value="dre-novo">
+        <TabsContent value="dre">
           <Suspense fallback={<div className="p-8 text-center text-slate-500">Carregando...</div>}><RelatorioDRE /></Suspense>
         </TabsContent>
 
