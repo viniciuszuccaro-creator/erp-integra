@@ -68,25 +68,48 @@ const FORM_ALIASES = [
   "webhook","chatbotIntent","chatbotCanal","jobAgendado","eventoNotificacao",
 ];
 
-// ─── getDisplayValue: garante que 1ª coluna sempre mostra algo legível ────────
-// Quando o campo configurado está vazio, tenta outros campos de nome em ordem.
+// ─── getDisplayValue: mostra melhor valor disponível para cada célula ───────
+// Para 1ª coluna: tenta todos os campos de nome se o campo configurado estiver vazio.
+// Para demais colunas: tenta variantes comuns do nome do campo (snake_case, sem prefixo, etc.)
 const LABEL_FALLBACKS = [
-  // Campos de nome mais comuns primeiro
   'nome','nome_completo','razao_social','nome_fantasia',
-  // Aliases de entidades específicas
   'nome_segmento','nome_regiao','nome_banco','nome_grupo',
   'nome_perfil','nome_kit','nome_rota','nome_marca','nome_setor',
   'nome_departamento','nome_cargo',
-  // Identifiers alternativos
   'titulo','descricao','sigla','codigo','codigo_banco','matricula','placa',
 ];
+
+function buildFieldVariants(field) {
+  var variants = [field];
+  // tira prefixos comuns: nome_banco → banco, tipo_regiao → regiao
+  var parts = field.split('_');
+  if (parts.length > 1) {
+    variants.push(parts.slice(1).join('_'));
+    variants.push(parts[0]);
+  }
+  // adiciona variante sem sufixo _id
+  if (field.endsWith('_id')) variants.push(field.slice(0, -3));
+  // fallback genérico de nome
+  variants = variants.concat(['nome', 'descricao', 'titulo', 'sigla', 'codigo']);
+  return variants;
+}
+
 function getDisplayValue(item, col, isFirstCol) {
-  const v = item[col.field];
+  var v = item[col.field];
   if (v !== null && v !== undefined && v !== '') return v;
-  if (!isFirstCol) return v;
-  for (var i = 0; i < LABEL_FALLBACKS.length; i++) {
-    var f = LABEL_FALLBACKS[i];
-    if (f !== col.field && item[f] != null && item[f] !== '') return item[f];
+  // Para primeira coluna usa todos os LABEL_FALLBACKS
+  if (isFirstCol) {
+    for (var i = 0; i < LABEL_FALLBACKS.length; i++) {
+      var f = LABEL_FALLBACKS[i];
+      if (f !== col.field && item[f] != null && item[f] !== '') return item[f];
+    }
+    return v;
+  }
+  // Para demais colunas tenta variantes do nome do campo
+  var variants = buildFieldVariants(col.field);
+  for (var j = 0; j < variants.length; j++) {
+    var vf = variants[j];
+    if (vf !== col.field && item[vf] != null && item[vf] !== '') return item[vf];
   }
   return v;
 }
@@ -252,12 +275,12 @@ export default function VisualizadorUniversalEntidadeV24({
       });
       return Array.isArray(res && res.data) ? res.data : [];
     },
-    staleTime: 0,           // sempre fresh após mutação
+    staleTime: 0,
     gcTime: 300000,
     retry: 2,
     retryDelay: function(attempt) { return Math.min(500 * (attempt + 1), 2000); },
     refetchOnWindowFocus: false,
-    // CHAVE: mantém dados anteriores enquanto nova query está em progresso
+    refetchOnMount: 'always',
     placeholderData: function(prev) { return prev !== undefined ? prev : []; },
     enabled: !!ENTITY,
   });
