@@ -72,11 +72,21 @@ const FORM_ALIASES = [
 // Para 1ª coluna: tenta todos os campos de nome se o campo configurado estiver vazio.
 // Para demais colunas: tenta variantes comuns do nome do campo (snake_case, sem prefixo, etc.)
 const LABEL_FALLBACKS = [
+  // Campos de nome direto (prioridade máxima)
   'nome','nome_completo','razao_social','nome_fantasia',
-  'nome_segmento','nome_regiao','nome_banco','nome_grupo',
-  'nome_perfil','nome_kit','nome_rota','nome_marca','nome_setor',
-  'nome_departamento','nome_cargo',
-  'titulo','descricao','sigla','codigo','codigo_banco','matricula','placa',
+  // Aliases específicos de entidades
+  'nome_segmento','nome_regiao','nome_banco','nome_grupo','nome_perfil',
+  'nome_kit','nome_rota','nome_marca','nome_setor','nome_departamento','nome_cargo',
+  'nome_tipo','nome_canal','nome_intent','nome_job','nome_webhook','nome_api',
+  'nome_gateway','nome_forma','nome_centro','nome_plano','nome_local',
+  // Campos descritivos
+  'titulo','descricao','apelido','label','tag',
+  // Identificadores
+  'sigla','codigo','codigo_banco','matricula','placa','cpf','cnpj',
+  // Campos de moeda/índice
+  'moeda','indice','simbolo','abreviacao',
+  // Outros
+  'tipo','categoria','modalidade','funcao','url','email','telefone',
 ];
 
 function buildFieldVariants(field) {

@@ -23,12 +23,12 @@ export default function Bloco4Logistica({ allCounts, isLoading }) {
 
   // Campos reais das entidades — getDisplayValue faz fallback automático se vazio
   const tiles = [
-    { k: 'Veiculo',          t: 'Veículos',                       i: Truck,     c: ['placa','modelo','capacidade_kg','ativo'],     f: VeiculoForm },
-    { k: 'Motorista',        t: 'Motoristas',                     i: User,      c: ['nome','cnh_categoria','cnh_validade','telefone'], f: MotoristaForm },
-    { k: 'TipoFrete',        t: 'Tipos de Frete',                 i: Settings,  c: ['descricao','modalidade'],                    f: TipoFreteForm },
-    { k: 'LocalEstoque',     t: 'Locais de Estoque',              i: Package,   c: ['descricao','codigo','endereco'],              f: LocalEstoqueForm },
-    { k: 'RotaPadrao',       t: 'Rotas Padrão',                   i: MapPin,    c: ['nome_rota','tipo_rota','distancia_media_km'], f: RotaPadraoForm },
-    { k: 'ModeloDocumento',  t: 'Modelos de Documento Logístico', i: FileText,  c: ['tipo','descricao'],                          f: ModeloDocumentoForm },
+    { k: 'Veiculo',         t: 'Veículos',                        i: Truck,    c: ['placa','modelo','tipo','ativo'],              f: VeiculoForm },
+    { k: 'Motorista',       t: 'Motoristas',                      i: User,     c: ['nome','cpf','cnh_categoria','telefone'],      f: MotoristaForm },
+    { k: 'TipoFrete',       t: 'Tipos de Frete',                  i: Settings, c: ['nome','descricao','modalidade'],              f: TipoFreteForm },
+    { k: 'LocalEstoque',    t: 'Locais de Estoque',               i: Package,  c: ['nome','descricao','codigo'],                  f: LocalEstoqueForm },
+    { k: 'RotaPadrao',      t: 'Rotas Padrão',                    i: MapPin,   c: ['nome','descricao','tipo'],                    f: RotaPadraoForm },
+    { k: 'ModeloDocumento', t: 'Modelos de Documento Logístico',  i: FileText, c: ['nome','tipo','descricao'],                    f: ModeloDocumentoForm },
   ];
 
   return (

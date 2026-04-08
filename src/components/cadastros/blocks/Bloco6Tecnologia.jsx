@@ -28,13 +28,13 @@ export default function Bloco6Tecnologia({ allCounts, isLoading }) {
   };
 
   const tiles = [
-    { k: 'ApiExterna', t: 'APIs Externas', i: Code, c: ['nome','descricao','url_base','ativo'], f: ApiExternaForm },
-    { k: 'ChatbotCanal', t: 'Canais Chatbot', i: MessageCircle, c: ['nome','tipo_canal','ativo','webhook_url'], f: ChatbotCanalForm },
-    { k: 'ChatbotIntent', t: 'Intents Chatbot', i: Zap, c: ['nome','descricao','ativo'], f: ChatbotIntentForm },
-    { k: 'GatewayPagamento', t: 'Gateways de Pagamento', i: Package, c: ['nome','tipo','ativo','taxa_padrao'], f: GatewayPagamentoForm },
-    { k: 'JobAgendado', t: 'Jobs Agendados', i: Cloud, c: ['nome','funcao','frequencia','ativo'], f: JobAgendadoForm },
-    { k: 'Webhook', t: 'Webhooks', i: Link2, c: ['nome','url','evento','ativo'], f: WebhookForm },
-    { k: 'ConfiguracaoNFe', t: 'Configurações NF-e', i: Settings, c: ['ambiente','certificado_validade','certificado_ativo'], f: ConfiguracaoNFeForm },
+    { k: 'ApiExterna',         t: 'APIs Externas',          i: Code,          c: ['nome','descricao','url_base','ativo'],        f: ApiExternaForm },
+    { k: 'ChatbotCanal',       t: 'Canais Chatbot',         i: MessageCircle, c: ['nome','tipo_canal','ativo'],                  f: ChatbotCanalForm },
+    { k: 'ChatbotIntent',      t: 'Intents Chatbot',        i: Zap,           c: ['nome','descricao','ativo'],                   f: ChatbotIntentForm },
+    { k: 'GatewayPagamento',   t: 'Gateways de Pagamento',  i: Package,       c: ['nome','tipo','ativo'],                        f: GatewayPagamentoForm },
+    { k: 'JobAgendado',        t: 'Jobs Agendados',         i: Cloud,         c: ['nome','descricao','frequencia','ativo'],      f: JobAgendadoForm },
+    { k: 'Webhook',            t: 'Webhooks',               i: Link2,         c: ['nome','url','evento','ativo'],                f: WebhookForm },
+    { k: 'ConfiguracaoNFe',    t: 'Configurações NF-e',     i: Settings,      c: ['nome','ambiente','ativo'],                    f: ConfiguracaoNFeForm },
   ];
 
   return (

@@ -26,18 +26,18 @@ export default function Bloco3Financeiro({ allCounts, isLoading }) {
   const openList = (entidade, titulo, Icon, campos, FormComp) => () => openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
 
   const tiles = [
-    { k: 'Banco', t: 'Bancos', i: Landmark, c: ['nome_banco','codigo_banco','ativo'], f: BancoForm },
-    { k: 'FormaPagamento', t: 'Formas de Pagamento', i: CreditCard, c: ['nome','tipo','ativo'], f: FormaPagamentoFormCompleto },
-    { k: 'PlanoDeContas', t: 'Plano de Contas', i: BookText, c: ['codigo','descricao','tipo'], f: PlanoContasForm },
-    { k: 'CentroCusto', t: 'Centros de Custo', i: Layers, c: ['codigo','descricao','tipo','responsavel'], f: CentroCustoForm },
-    { k: 'CentroResultado', t: 'Centros de Resultado', i: LineChart, c: ['codigo','descricao'], f: CentroResultadoForm },
-    { k: 'TipoDespesa', t: 'Tipos de Despesa', i: FolderKanban, c: ['codigo','nome','categoria','ativo'], f: TipoDespesaForm },
-    { k: 'MoedaIndice', t: 'Moedas & Índices', i: DollarSign, c: ['moeda','indice','variacao'], f: MoedaIndiceForm },
-    { k: 'OperadorCaixa', t: 'Operadores de Caixa', i: Wallet, c: ['nome','matricula','ativo'], f: OperadorCaixaForm },
-    { k: 'GatewayPagamento', t: 'Gateways de Pagamento', i: Settings, custom: true },
-    { k: 'ConfiguracaoDespesaRecorrente', t: 'Despesas Recorrentes', i: Calculator, c: ['descricao','periodicidade','valor','ativo'], f: ConfiguracaoDespesaRecorrenteForm },
-    { k: 'TabelaFiscal', t: 'Tabelas Fiscais', i: Blocks, c: ['descricao','uf','vigencia'], f: TabelaFiscalForm },
-    { k: 'CondicaoComercial', t: 'Condições Comerciais', i: Banknote, c: ['nome','desconto_maximo','prazo_padrao'], f: CondicaoComercialForm },
+    { k: 'Banco',                         t: 'Bancos',                   i: Landmark,     c: ['nome','codigo_banco','agencia','ativo'],             f: BancoForm },
+    { k: 'FormaPagamento',                t: 'Formas de Pagamento',      i: CreditCard,   c: ['nome','tipo','descricao','ativo'],                   f: FormaPagamentoFormCompleto },
+    { k: 'PlanoDeContas',                 t: 'Plano de Contas',          i: BookText,     c: ['codigo','descricao','tipo'],                        f: PlanoContasForm },
+    { k: 'CentroCusto',                   t: 'Centros de Custo',         i: Layers,       c: ['codigo','descricao','tipo'],                        f: CentroCustoForm },
+    { k: 'CentroResultado',               t: 'Centros de Resultado',     i: LineChart,    c: ['codigo','descricao'],                               f: CentroResultadoForm },
+    { k: 'TipoDespesa',                   t: 'Tipos de Despesa',         i: FolderKanban, c: ['nome','codigo','categoria'],                        f: TipoDespesaForm },
+    { k: 'MoedaIndice',                   t: 'Moedas & Índices',         i: DollarSign,   c: ['nome','tipo','sigla'],                              f: MoedaIndiceForm },
+    { k: 'OperadorCaixa',                 t: 'Operadores de Caixa',      i: Wallet,       c: ['nome','matricula','ativo'],                         f: OperadorCaixaForm },
+    { k: 'GatewayPagamento',              t: 'Gateways de Pagamento',    i: Settings,     custom: true },
+    { k: 'ConfiguracaoDespesaRecorrente', t: 'Despesas Recorrentes',     i: Calculator,   c: ['descricao','periodicidade','ativo'],                 f: ConfiguracaoDespesaRecorrenteForm },
+    { k: 'TabelaFiscal',                  t: 'Tabelas Fiscais',          i: Blocks,       c: ['descricao','uf','tipo'],                            f: TabelaFiscalForm },
+    { k: 'CondicaoComercial',             t: 'Condições Comerciais',     i: Banknote,     c: ['nome','descricao','ativo'],                         f: CondicaoComercialForm },
   ];
 
   return (
