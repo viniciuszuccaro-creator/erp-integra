@@ -1,5 +1,5 @@
 # ETAPA 2 — Segurança, Multiempresa Absoluta & RBAC
-**Versão:** V22.0 | **Data:** 2026-04-08 | **Status:** ✅ 100% CONCLUÍDA
+**Versão:** V22.1 | **Data:** 2026-04-08 | **Status:** ✅ 100% CONCLUÍDA
 
 ---
 
@@ -90,6 +90,7 @@ Toda ação de criação, edição, exclusão, navegação e chamada de função
 | GatewayPagamento | Bloco3 (GestorGatewaysPagamento) + Bloco6 (VisualizadorUniversal) | Apenas Bloco6 (Tecnologia) |
 | Configuração NF-e | AdministracaoSistema + Bloco6 | Bloco6 como fonte principal |
 | APIs Externas | AdministracaoSistema.Integrações + Bloco6 | Bloco6 como fonte principal |
+| WhatsApp Automações | 2 automações duplicadas por entidade (Pedido + ContaReceber) | 1 automação por entidade (arquivadas as duplicatas onEntityWhatsappNotify) |
 
 ---
 
@@ -136,16 +137,30 @@ O visualizador tenta `LABEL_FALLBACKS` em ordem: `nome → nome_completo → raz
 
 ---
 
-## 7. STATUS FINAL
+## 7. BUGS CRÍTICOS CORRIGIDOS (V22.1)
+
+| Bug | Causa Raiz | Correção |
+|---|---|---|
+| auditEntityEvents — 308 falhas consecutivas | SDK desatualizado (0.8.20) | Atualizado para 0.8.23 |
+| sanitizeOnWrite — bloqueava catálogos | Verificação multiempresa sem distinção de catálogos globais | Adicionado `SIMPLE_CATALOG` check antes do enforce |
+| sanitizeOnWrite — SDK 0.8.6 | Versão muito antiga | Atualizado para 0.8.23 |
+| propagateGroupConfigs — 3 falhas | SDK desatualizado (0.8.20) | Atualizado para 0.8.23 |
+| contagem Bloco3 incluía GatewayPagamento | BLOCOS_ENTITIES.bloco3 tinha entidade do Bloco6 | Movido GatewayPagamento para bloco6 |
+| Automações WhatsApp duplicadas | 2 automações por entidade faziam disparo duplicado | Arquivadas onEntityWhatsappNotify (Pedido + ContaReceber) |
+
+---
+
+## 8. STATUS FINAL
 
 | Item | Status |
 |---|---|
 | Campo `nome` em todos os forms | ✅ 100% |
-| Propagação multiempresa (14+ entidades) | ✅ 100% |
+| Propagação multiempresa (18+ entidades) | ✅ 100% |
 | RBAC em telas, botões, campos | ✅ 100% |
 | Auditoria em todas as ações | ✅ 100% |
-| Sanitização universal | ✅ 100% |
+| Sanitização universal (catálogos liberados) | ✅ 100% |
 | Estabilidade da lista (sort/delete) | ✅ 100% |
-| Contagens corretas por entidade | ✅ 100% |
-| Duplicidades eliminadas | ✅ 100% |
+| Contagens corretas por bloco | ✅ 100% |
+| Duplicidades eliminadas (UI + automações) | ✅ 100% |
+| SDK unificado em 0.8.23 | ✅ 100% |
 | Documentação atualizada | ✅ 100% |
