@@ -74,6 +74,8 @@ const FORM_ALIASES = [
 const LABEL_FALLBACKS = [
   // Campos de nome direto (prioridade máxima)
   'nome','nome_completo','razao_social','nome_fantasia',
+  // Legado: campos antigos renomeados
+  'nome_do_grupo','nome_banco_antigo','nome_segmento_antigo',
   // Aliases específicos de entidades
   'nome_segmento','nome_regiao','nome_banco','nome_grupo','nome_perfil',
   'nome_kit','nome_rota','nome_marca','nome_setor','nome_departamento','nome_cargo',

@@ -14,12 +14,20 @@ import { Card, CardContent } from "@/components/ui/card";
  * V21.1.2 - WINDOW MODE READY
  */
 export default function GrupoEmpresarialForm({ grupo, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(grupo || {
-    nome_do_grupo: '',
-    cnpj_opcional: '',
+  // Suporte a legado: campos antigos nome_do_grupo/cnpj_opcional mapeados para nome/cnpj
+  const normalize = (g) => {
+    if (!g) return null;
+    return {
+      ...g,
+      nome: g.nome || g.nome_do_grupo || '',
+      cnpj: g.cnpj || g.cnpj_opcional || '',
+    };
+  };
+  const [formData, setFormData] = useState(normalize(grupo) || {
+    nome: '',
+    cnpj: '',
+    descricao: '',
     inscricao_estadual: '',
-    endereco: {},
-    contato: {},
     empresas_ids: [],
     status: 'Ativo',
     governanca_consolidada: false,
@@ -33,7 +41,7 @@ export default function GrupoEmpresarialForm({ grupo, onSubmit, isSubmitting, wi
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.nome_do_grupo) {
+    if (!formData.nome) {
       alert('Preencha o nome do grupo');
       return;
     }
@@ -41,7 +49,7 @@ export default function GrupoEmpresarialForm({ grupo, onSubmit, isSubmitting, wi
   };
 
   const handleExcluir = () => {
-    if (!window.confirm(`Tem certeza que deseja excluir o grupo "${formData.nome_do_grupo}"? Esta ação não pode ser desfeita.`)) {
+    if (!window.confirm(`Tem certeza que deseja excluir o grupo "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
     if (onSubmit) {
@@ -74,18 +82,28 @@ export default function GrupoEmpresarialForm({ grupo, onSubmit, isSubmitting, wi
       <div>
         <Label>Nome do Grupo *</Label>
         <Input
-          value={formData.nome_do_grupo}
-          onChange={(e) => setFormData({...formData, nome_do_grupo: e.target.value})}
+          value={formData.nome}
+          onChange={(e) => setFormData({...formData, nome: e.target.value})}
           placeholder="Ex: Grupo Integra, Holding XYZ"
+        />
+      </div>
+
+      <div>
+        <Label>Descrição</Label>
+        <Textarea
+          value={formData.descricao || ''}
+          onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+          placeholder="Descrição do grupo empresarial..."
+          rows={2}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>CNPJ do Grupo (Opcional)</Label>
+          <Label>CNPJ do Grupo</Label>
           <Input
-            value={formData.cnpj_opcional}
-            onChange={(e) => setFormData({...formData, cnpj_opcional: e.target.value})}
+            value={formData.cnpj || ''}
+            onChange={(e) => setFormData({...formData, cnpj: e.target.value})}
             placeholder="00.000.000/0001-00"
           />
         </div>
