@@ -7,12 +7,12 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+  AccordionTrigger } from
+"@/components/ui/accordion";
 import {
   Users, Building2, Truck, DollarSign, Package,
-  Stars, Cpu, Shield, Database, Zap,
-} from "lucide-react";
+  Stars, Cpu, Shield, Database, Zap } from
+"lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,7 +38,7 @@ export default function Cadastros() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let t = params.get('tab');
-    if (!t) { try { t = localStorage.getItem('Cadastros_tab'); } catch {} }
+    if (!t) {try {t = localStorage.getItem('Cadastros_tab');} catch {}}
     if (t) setAbaGerenciamento(t);
   }, []);
 
@@ -47,7 +47,7 @@ export default function Cadastros() {
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
-    try { localStorage.setItem('Cadastros_tab', value); } catch {}
+    try {localStorage.setItem('Cadastros_tab', value);} catch {}
   };
 
   const { empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
@@ -58,7 +58,7 @@ export default function Cadastros() {
 
   const handleCardClick = (blocoId) => {
     if (acordeonAberto.includes(blocoId)) {
-      setAcordeonAberto(acordeonAberto.filter(id => id !== blocoId));
+      setAcordeonAberto(acordeonAberto.filter((id) => id !== blocoId));
     } else {
       setAcordeonAberto([...acordeonAberto, blocoId]);
     }
@@ -71,12 +71,12 @@ export default function Cadastros() {
 
       {/* TABS: CADASTROS */}
       <Tabs value={abaGerenciamento} onValueChange={handleAbaChange}>
-        <TabsList className="grid w-full grid-cols-1 bg-slate-100">
-          <TabsTrigger value="cadastros">
-            <Database className="w-4 h-4 mr-2" />
-            Cadastros
-          </TabsTrigger>
-        </TabsList>
+        
+
+
+
+
+        
 
         {/* ABA: CADASTROS */}
         <TabsContent value="cadastros" className="space-y-6 mt-6">
@@ -149,8 +149,8 @@ export default function Cadastros() {
             placeholder="🔍 Busca Universal - Digite para filtrar em todos os 6 blocos simultaneamente..."
             value={searchTerm}
             onChange={(val) => setSearchTerm(val)}
-            className="h-12 text-base shadow-md border-slate-300"
-          />
+            className="h-12 text-base shadow-md border-slate-300" />
+          
 
           {/* ACCORDIONS - 6 BLOCOS */}
           <Accordion type="multiple" value={acordeonAberto} onValueChange={setAcordeonAberto} className="space-y-4">
@@ -251,13 +251,13 @@ export default function Cadastros() {
             </AccordionItem>
           </Accordion>
 
-          <Alert className="mt-6 border-purple-300 bg-gradient-to-r from-purple-50 to-cyan-50">
-            <Stars className="w-4 h-4 text-purple-600" />
-            <AlertDescription className="text-sm text-purple-900">
-              <strong>28 IAs Ativas:</strong> PriceBrain 3.0 • ChurnDetection • ProductClassifier • FiscalValidator •
-              LeadScoring • RouteOptimizer • QualityPredictor • StockRecommender • e mais 20 IAs rodando 24/7
-            </AlertDescription>
-          </Alert>
+          
+
+
+
+
+
+          
 
           <Card className="border-2 border-slate-300 bg-gradient-to-r from-slate-50 to-slate-100">
             <CardContent className="p-6">
@@ -294,6 +294,6 @@ export default function Cadastros() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>);
+
 }
