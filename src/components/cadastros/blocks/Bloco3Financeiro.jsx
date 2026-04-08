@@ -22,21 +22,29 @@ import OperadorCaixaForm from "@/components/cadastros/OperadorCaixaForm";
 export default function Bloco3Financeiro({ allCounts, isLoading }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
-  const openList = (entidade, titulo, Icon, campos, FormComp) => () => openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
+
+  const openList = (entidade, titulo, Icon, campos, FormComp) => () =>
+    openWindow(
+      VisualizadorUniversalEntidadeV24,
+      { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true },
+      { title: titulo, width: 1400, height: 800 }
+    );
 
   const tiles = [
-    { k: 'Banco',                         t: 'Bancos',                   i: Landmark,     c: ['nome','nome_banco','codigo_banco','agencia'],               f: BancoForm },
-    { k: 'FormaPagamento',                t: 'Formas de Pagamento',      i: CreditCard,   c: ['nome','tipo','descricao','ativo'],                          f: FormaPagamentoFormCompleto },
-    { k: 'PlanoDeContas',                 t: 'Plano de Contas',          i: BookText,     c: ['nome','nome_conta','codigo','codigo_conta','tipo_conta'],   f: PlanoContasForm },
-    { k: 'CentroCusto',                   t: 'Centros de Custo',         i: Layers,       c: ['nome','descricao','codigo','tipo'],                         f: CentroCustoForm },
-    { k: 'CentroResultado',               t: 'Centros de Resultado',     i: LineChart,    c: ['nome','codigo','descricao'],                                f: CentroResultadoForm },
-    { k: 'TipoDespesa',                   t: 'Tipos de Despesa',         i: FolderKanban, c: ['nome','codigo','categoria'],                                f: TipoDespesaForm },
-    { k: 'MoedaIndice',                   t: 'Moedas & Índices',         i: DollarSign,   c: ['nome','tipo','sigla','codigo'],                             f: MoedaIndiceForm },
-    { k: 'OperadorCaixa',                 t: 'Operadores de Caixa',      i: Wallet,       c: ['nome','nome_caixa','codigo_operador','ativo'],              f: OperadorCaixaForm },
-    { k: 'ConfiguracaoDespesaRecorrente', t: 'Despesas Recorrentes',     i: Calculator,   c: ['nome','descricao','periodicidade','ativo'],                 f: ConfiguracaoDespesaRecorrenteForm },
-    { k: 'TabelaFiscal',                  t: 'Tabelas Fiscais',          i: Blocks,       c: ['nome','nome_regra','cfop','regime_tributario'],             f: TabelaFiscalForm },
-    { k: 'CondicaoComercial',             t: 'Condições Comerciais',     i: Banknote,     c: ['nome','nome_condicao','forma_pagamento','ativo'],           f: CondicaoComercialForm },
+    { k: 'Banco',                         t: 'Bancos',                  i: Landmark,     c: ['nome','nome_banco','codigo_banco','agencia'],             f: BancoForm },
+    { k: 'FormaPagamento',                t: 'Formas de Pagamento',     i: CreditCard,   c: ['nome','tipo','descricao','ativo'],                        f: FormaPagamentoFormCompleto },
+    { k: 'PlanoDeContas',                 t: 'Plano de Contas',         i: BookText,     c: ['nome','nome_conta','codigo','codigo_conta','tipo_conta'], f: PlanoContasForm },
+    { k: 'CentroCusto',                   t: 'Centros de Custo',        i: Layers,       c: ['nome','descricao','codigo','tipo'],                       f: CentroCustoForm },
+    { k: 'CentroResultado',               t: 'Centros de Resultado',    i: LineChart,    c: ['nome','codigo','descricao'],                              f: CentroResultadoForm },
+    { k: 'TipoDespesa',                   t: 'Tipos de Despesa',        i: FolderKanban, c: ['nome','codigo','categoria'],                              f: TipoDespesaForm },
+    { k: 'MoedaIndice',                   t: 'Moedas & Índices',        i: DollarSign,   c: ['nome','tipo','sigla','codigo'],                           f: MoedaIndiceForm },
+    { k: 'OperadorCaixa',                 t: 'Operadores de Caixa',     i: Wallet,       c: ['nome','nome_caixa','codigo_operador','ativo'],            f: OperadorCaixaForm },
+    { k: 'ConfiguracaoDespesaRecorrente', t: 'Despesas Recorrentes',    i: Calculator,   c: ['nome','descricao','periodicidade','ativo'],               f: ConfiguracaoDespesaRecorrenteForm },
+    { k: 'TabelaFiscal',                  t: 'Tabelas Fiscais',         i: Blocks,       c: ['nome','nome_regra','cfop','regime_tributario'],           f: TabelaFiscalForm },
+    { k: 'CondicaoComercial',             t: 'Condições Comerciais',    i: Banknote,     c: ['nome','nome_condicao','forma_pagamento','ativo'],         f: CondicaoComercialForm },
   ];
+
+  const canView = hasPermission('Financeiro', null, 'visualizar');
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -44,15 +52,19 @@ export default function Bloco3Financeiro({ allCounts, isLoading }) {
         <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b rounded-t-sm">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <Landmark className="w-5 h-5 text-emerald-700"/> Financeiro & Fiscal
+              <Landmark className="w-5 h-5 text-emerald-700" /> Financeiro & Fiscal
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
       </Card>
+
       {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
-        <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
-          onClick={!hasPermission('Financeiro', null, 'visualizar') ? undefined : openList(k, t, Icon, c, FormComp)()}>
+        <Card
+          key={k}
+          className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
+          onClick={canView ? openList(k, t, Icon, c, FormComp) : undefined}
+        >
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
@@ -62,9 +74,12 @@ export default function Bloco3Financeiro({ allCounts, isLoading }) {
                 {t}
                 <CountBadgeSimplificado entities={[k]} allCounts={allCounts} isLoading={isLoading} />
               </CardTitle>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
-                disabled={!hasPermission('Financeiro', null, 'visualizar')}>
+                disabled={!canView}
+              >
                 Abrir
               </Button>
             </div>
