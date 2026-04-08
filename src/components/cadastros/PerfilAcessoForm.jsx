@@ -95,7 +95,8 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
       return;
     }
     
-    onSubmit(formData);
+    // Injeta nome_perfil para compatibilidade com o schema da entidade PerfilAcesso
+    onSubmit({ ...formData, nome_perfil: formData.nome_perfil || formData.nome || '' });
   };
 
   const handleExcluir = () => {

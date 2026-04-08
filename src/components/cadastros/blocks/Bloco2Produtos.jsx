@@ -37,7 +37,7 @@ export default function Bloco2Produtos({ allCounts, isLoading }) {
     { k: 'Marca',          title: 'Marcas',                   Icon: Award,     campos: ['nome','nome_marca','pais_origem','categoria'],  form: MarcaForm },
     { k: 'TabelaPreco',    title: 'Tabelas de Preço',         Icon: TrendingUp,campos: ['nome','tipo','ativo'],                          form: TabelaPrecoFormCompleto },
     { k: 'KitProduto',     title: 'Kits de Produto',          Icon: Package,   campos: ['nome','descricao','ativo'],                     form: KitProdutoForm },
-    { k: 'CatalogoWeb',    title: 'Catálogo Web',             Icon: Globe,     campos: ['titulo','descricao','slug'],                    form: CatalogoWebForm },
+    { k: 'CatalogoWeb',    title: 'Catálogo Web',             Icon: Globe,     campos: ['nome','nome_catalogo','descricao','ativo'],      form: CatalogoWebForm },
     { k: 'UnidadeMedida',  title: 'Unidades de Medida',       Icon: Ruler,     campos: ['sigla','nome','descricao'],                     form: UnidadeMedidaForm },
   ];
 

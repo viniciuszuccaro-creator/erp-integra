@@ -24,7 +24,7 @@ export default function Bloco4Logistica({ allCounts, isLoading }) {
   // Campos reais das entidades — getDisplayValue faz fallback automático se vazio
   const tiles = [
     { k: 'Veiculo',         t: 'Veículos',                        i: Truck,    c: ['placa','modelo','tipo_veiculo','status'],     f: VeiculoForm },
-    { k: 'Motorista',       t: 'Motoristas',                      i: User,     c: ['nome_completo','cpf','cnh_categoria','status'],f: MotoristaForm },
+    { k: 'Motorista',       t: 'Motoristas',                      i: User,     c: ['nome','nome_completo','cpf','status'],         f: MotoristaForm },
     { k: 'TipoFrete',       t: 'Tipos de Frete',                  i: Settings, c: ['nome','descricao','modalidade','cobra_frete'],f: TipoFreteForm },
     { k: 'LocalEstoque',    t: 'Locais de Estoque',               i: Package,  c: ['nome','descricao','codigo'],                  f: LocalEstoqueForm },
     { k: 'RotaPadrao',      t: 'Rotas Padrão',                    i: MapPin,   c: ['nome','nome_rota','origem','destino'],         f: RotaPadraoForm },

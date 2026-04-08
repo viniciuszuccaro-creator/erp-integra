@@ -54,7 +54,7 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
   });
 
   const handleSubmit = async () => {
-    onSubmit(formData);
+    onSubmit({ ...formData, nome: formData.nome_completo || formData.nome || '' });
   };
 
   const formContent = (
