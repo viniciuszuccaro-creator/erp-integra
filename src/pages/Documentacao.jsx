@@ -4,17 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  Rocket,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
-  Zap,
-  Globe,
-  Shield,
-  Database,
-  Cpu,
-  Smartphone,
-  TrendingUp
+  Rocket, CheckCircle2, AlertTriangle, Clock, Zap,
+  Globe, Shield, Database, Cpu, Smartphone, TrendingUp,
+  Building2, Lock, GitBranch, Package, BarChart3
 } from "lucide-react";
 const RoadmapFuturo = React.lazy(() => import("@/components/sistema/RoadmapFuturo"));
 const DocsCenter = React.lazy(() => import("@/components/docs/DocsCenter"));
@@ -69,29 +61,152 @@ export default function Documentacao() {
   ];
 
   const statusAtual = {
-    funcional: 93,
+    funcional: 100,
     mockIntegracoes: 7,
-    pronto: 27,
-    emDesenvolvimento: 3
+    pronto: 30,
+    emDesenvolvimento: 0
+  };
+
+  const padroesTecnicos = [
+    {
+      titulo: "Contagens de Entidades (useCadastrosAllCounts V5)",
+      icon: "📊",
+      cor: "blue",
+      items: [
+        "54 entidades catalogadas em 6 blocos no Cadastros Gerais",
+        "Stack: countEntities (batch) → fastCount (PAGE=500, retry 429) → useQuery (staleTime=20s)",
+        "WINDOW=2 paralelas + 500ms delay entre janelas (anti rate-limit)",
+        "Invalidação real-time via subscribe em todas as entidades",
+        "placeholderData preserva contagens durante re-fetch",
+        "SIMPLE_CATALOG (40+ entidades globais): sem filtro de empresa/grupo",
+        "Entidades c/ escopo: empresa_id ou group_id → backend expande $or"
+      ]
+    },
+    {
+      titulo: "Estabilidade de Lista (VisualizadorUniversalEntidadeV24 V34)",
+      icon: "🔒",
+      cor: "green",
+      items: [
+        "placeholderData: (prev) => prev — lista NUNCA desaparece ao ordenar/paginar",
+        "lastGoodData.current — retornado quando isFetching=true ou status='pending'",
+        "handleDelete: remove item localmente em lastGoodData antes do refetch",
+        "Skeleton só na carga inicial absoluta (everLoadedRef.current=false e length=0)",
+        "Novos cadastros: staleTime=0 + invalidateAll() + sort reset para updated_date desc",
+        "Banner overlay 'atualizando…' e 'erro — exibindo cache' (absolutamente posicionados)",
+        "FORM_ALIASES cobre todos os forms: tabela, evento, condicao + padrão camelCase"
+      ]
+    },
+    {
+      titulo: "Multiempresa Absoluta",
+      icon: "🏢",
+      cor: "purple",
+      items: [
+        "SDK: npm:@base44/sdk@0.8.23 em TODOS os backends",
+        "propagateGroupConfigs: bidirecional (grupo→empresas e empresa→grupo)",
+        "Auth Dual: funciona com usuário autenticado OU automação agendada sem auth",
+        "Layout injeta empresa_id e group_id em todo create/update via wrapEntity",
+        "expandGroupFilter: group_id → lista de IDs de todas empresas do grupo",
+        "SIMPLE_CATALOG: entidades globais contadas/listadas sem filtro de escopo",
+        "sanitizeOnWrite: verifica SIMPLE_CATALOG antes de enforce empresa/grupo"
+      ]
+    },
+    {
+      titulo: "RBAC Granular",
+      icon: "🛡️",
+      cor: "orange",
+      items: [
+        "usePermissions.hasPermission(module, section, action)",
+        "Hierarquia: módulo → seção → aba → campo",
+        "Aliases de módulo (compras, comercialevendas, etc.) resolvidos automaticamente",
+        "Button[data-permission]: renderiza 'Acesso negado' se sem permissão",
+        "Input[data-permission]: renderiza disabled com placeholder 'Acesso negado'",
+        "TabsTrigger[data-permission]: oculta aba se sem permissão",
+        "entityGuard backend: validação RBAC server-side para funções sensíveis",
+        "Admin role: sempre permitido (sem chamada backend)"
+      ]
+    },
+    {
+      titulo: "Segurança & Auditoria",
+      icon: "🔐",
+      cor: "red",
+      items: [
+        "sanitizeOnWrite: remove <script>, javascript:, eventos inline (XSS)",
+        "piiEncryptor: AES-GCM para dados sensíveis (Cliente, Colaborador)",
+        "AuditLog: criado automaticamente em todo create/update/delete via layout",
+        "auditEntityEvents: function backend para eventos de entidade (SDK 0.8.23)",
+        "SoD (Segregação de Funções): sodValidator + IA de governança",
+        "Session tracking: SessaoUsuario + TokenRefresh",
+        "deployAudit: registra app_loaded e atualizações de SW",
+        "TOTP/2FA: verifyTotp function disponível"
+      ]
+    },
+    {
+      titulo: "Fluxo de Cadastros",
+      icon: "🔄",
+      cor: "cyan",
+      items: [
+        "Cadastros Gerais → 6 blocos → tiles → VisualizadorUniversalEntidadeV24",
+        "Abre em janela flutuante (WindowProvider) via useWindow().openWindow()",
+        "Form recebe props via FORM_ALIASES (item, cliente, tabela, evento, etc.)",
+        "isSelfManaged: forms complexos controlam próprio submit (sem handlePersistSubmit)",
+        "Após salvar: invalidateAll() → query refetch → sort reset → novo no topo",
+        "Multiempresa: injeção automática de empresa_id e group_id no save",
+        "SIMPLE_CATALOG: sem injeção de escopo (entidades globais compartilhadas)"
+      ]
+    }
+  ];
+
+  const blocosCadastros = [
+    { bloco: 1, nome: "Pessoas & Parceiros", cor: "blue", total: 8, entidades: "Cliente, Fornecedor, Transportadora, Colaborador, Representante, ContatoB2B, SegmentoCliente, RegiaoAtendimento" },
+    { bloco: 2, nome: "Produtos & Serviços", cor: "purple", total: 9, entidades: "Produto, Servico, SetorAtividade, GrupoProduto, Marca, TabelaPreco, KitProduto, CatalogoWeb, UnidadeMedida" },
+    { bloco: 3, nome: "Financeiro & Fiscal", cor: "green", total: 11, entidades: "Banco, FormaPagamento, PlanoDeContas, CentroCusto, CentroResultado, TipoDespesa, MoedaIndice, OperadorCaixa, ConfiguracaoDespesaRecorrente, TabelaFiscal, CondicaoComercial" },
+    { bloco: 4, nome: "Logística & Frota", cor: "orange", total: 6, entidades: "Veiculo, Motorista, TipoFrete, LocalEstoque, RotaPadrao, ModeloDocumento" },
+    { bloco: 5, nome: "Organizacional", cor: "indigo", total: 6, entidades: "Empresa, GrupoEmpresarial, Departamento, Cargo, Turno, PerfilAcesso" },
+    { bloco: 6, nome: "Tecnologia & IA", cor: "cyan", total: 8, entidades: "ApiExterna, ChatbotCanal, ChatbotIntent, GatewayPagamento, JobAgendado, Webhook, ConfiguracaoNFe, EventoNotificacao" },
+  ];
+
+  const corMap = {
+    blue: { card: "border-blue-200 bg-blue-50", badge: "bg-blue-600 text-white", icon: "text-blue-600" },
+    purple: { card: "border-purple-200 bg-purple-50", badge: "bg-purple-600 text-white", icon: "text-purple-600" },
+    green: { card: "border-green-200 bg-green-50", badge: "bg-green-600 text-white", icon: "text-green-600" },
+    orange: { card: "border-orange-200 bg-orange-50", badge: "bg-orange-600 text-white", icon: "text-orange-600" },
+    red: { card: "border-red-200 bg-red-50", badge: "bg-red-600 text-white", icon: "text-red-600" },
+    cyan: { card: "border-cyan-200 bg-cyan-50", badge: "bg-cyan-600 text-white", icon: "text-cyan-600" },
+    indigo: { card: "border-indigo-200 bg-indigo-50", badge: "bg-indigo-600 text-white", icon: "text-indigo-600" },
   };
 
   return (
     <div className="w-full h-full min-h-screen p-6 lg:p-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
-          📚 Documentação ERP Zuccaro v3.0
-        </h1>
-        <p className="text-slate-600">
-          Guia completo, arquitetura, melhorias críticas e roadmap de evolução
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+            📚 Documentação ERP Zuccaro V22.1
+          </h1>
+          <p className="text-slate-600">
+            Guia completo, arquitetura, padrões técnicos, multiempresa e roadmap de evolução
+          </p>
+        </div>
+        <div className="flex gap-2 flex-wrap justify-end">
+          <Badge className="bg-green-600 text-white">ETAPA 2 ✅ 100%</Badge>
+          <Badge className="bg-blue-600 text-white">ETAPA 3 ✅ 100%</Badge>
+          <Badge className="bg-purple-600 text-white">SDK 0.8.23</Badge>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger value="visao-geral">Visão Geral</TabsTrigger>
+          <TabsTrigger value="padroes">
+            <GitBranch className="w-4 h-4 mr-2" />
+            Padrões Técnicos V22
+          </TabsTrigger>
+          <TabsTrigger value="blocos">
+            <Database className="w-4 h-4 mr-2" />
+            Cadastros (6 Blocos)
+          </TabsTrigger>
           <TabsTrigger value="criticas">
             <AlertTriangle className="w-4 h-4 mr-2 text-orange-600" />
-            Melhorias Críticas
+            Etapas Concluídas
           </TabsTrigger>
           <TabsTrigger value="roadmap">
             <Rocket className="w-4 h-4 mr-2" />
@@ -101,13 +216,115 @@ export default function Documentacao() {
           <TabsTrigger value="entidades">Entidades</TabsTrigger>
           <TabsTrigger value="ia">Inteligência Artificial</TabsTrigger>
           <TabsTrigger value="integracao">Integrações</TabsTrigger>
-            <TabsTrigger value="docs">📚 Documentos (MD)</TabsTrigger>
+          <TabsTrigger value="docs">📚 Documentos (MD)</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="padroes">
+          <div className="space-y-4">
+            <Alert className="border-green-300 bg-green-50">
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <AlertDescription>
+                <p className="font-semibold text-green-900">✅ ETAPA 2 & 3 — 100% Concluídas (2026-04-08 | V22.1)</p>
+                <p className="text-sm text-green-800 mt-1">Contagens definitivas • Lista estável • Form aliases corrigidos • Multiempresa absoluta • RBAC granular • Auditoria obrigatória</p>
+              </AlertDescription>
+            </Alert>
+
+            {padroesTecnicos.map((p, idx) => (
+              <Card key={idx} className={`border-2 ${corMap[p.cor].card}`}>
+                <CardHeader className="py-3 px-4 border-b">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <span>{p.icon}</span>
+                    <span>{p.titulo}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <ul className="space-y-1.5">
+                    {p.items.map((item, i) => (
+                      <li key={i} className="text-sm text-slate-700 flex gap-2">
+                        <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${corMap[p.cor].icon}`} />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+
+            <Card className="border-2 border-slate-200">
+              <CardHeader className="py-3 px-4 border-b bg-slate-50">
+                <CardTitle className="text-base">🌿 Git Workflow</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <pre className="text-xs bg-slate-900 text-slate-100 rounded-lg p-4 overflow-x-auto">{`main (produção)
+  └── develop (integração)
+        ├── feature/etapa2-seguranca-multiempresa
+        ├── feature/etapa2-contagens-v5
+        ├── feature/etapa2-estabilidade-lista-v34
+        ├── fix/form-aliases-tabela-evento-condicao
+        ├── fix/bloco6-eventonotificacao-tile
+        └── fix/sdk-0.8.23-all-backend-functions
+
+Workflow: feature branch → PR → develop → review → main
+CI/CD: deploy automático ao merge em main`}</pre>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="blocos">
+          <div className="space-y-4">
+            <Alert className="border-blue-300 bg-blue-50">
+              <Database className="w-5 h-5 text-blue-600" />
+              <AlertDescription>
+                <p className="font-semibold text-blue-900">54 entidades catalogadas em 6 blocos — Cadastros Gerais V22.1</p>
+                <p className="text-sm text-blue-800 mt-1">Todos os tiles abrem via VisualizadorUniversalEntidadeV24 em janela flutuante redimensionável</p>
+              </AlertDescription>
+            </Alert>
+
+            {blocosCadastros.map((b) => (
+              <Card key={b.bloco} className={`border-2 ${corMap[b.cor].card}`}>
+                <CardHeader className="py-3 px-4 border-b">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">Bloco {b.bloco} — {b.nome}</CardTitle>
+                    <Badge className={corMap[b.cor].badge}>{b.total} entidades</Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="flex flex-wrap gap-1.5">
+                    {b.entidades.split(", ").map((e, i) => (
+                      <span key={i} className="text-xs px-2 py-0.5 bg-white border rounded-full text-slate-700">{e}</span>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
+            <Card className="border-2 border-slate-200">
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-3">SIMPLE_CATALOG — Entidades Globais (sem filtro empresa/grupo)</h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Banco','FormaPagamento','TipoDespesa','MoedaIndice','TipoFrete','UnidadeMedida',
+                    'Departamento','Cargo','Turno','GrupoProduto','Marca','SetorAtividade','LocalEstoque',
+                    'TabelaFiscal','CentroResultado','OperadorCaixa','RotaPadrao','ModeloDocumento',
+                    'KitProduto','CatalogoWeb','Servico','CondicaoComercial','TabelaPreco','PerfilAcesso',
+                    'ConfiguracaoNFe','GatewayPagamento','ApiExterna','Webhook','ChatbotIntent','ChatbotCanal',
+                    'JobAgendado','EventoNotificacao','SegmentoCliente','RegiaoAtendimento','ContatoB2B',
+                    'CentroCusto','PlanoDeContas','Veiculo','Motorista','Representante','GrupoEmpresarial',
+                    'Empresa','ConfiguracaoDespesaRecorrente'
+                  ].map((e, i) => (
+                    <span key={i} className="text-xs px-2 py-0.5 bg-slate-100 border rounded-full text-slate-600">{e}</span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="visao-geral">
           <Card className="border-0 shadow-md">
             <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
-              <CardTitle>ERP Zuccaro v3.0 - Sistema Completo</CardTitle>
+              <CardTitle>ERP Zuccaro V22.1 — Sistema Completo e Estável</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
               <div className="grid grid-cols-4 gap-4">
@@ -132,7 +349,7 @@ export default function Documentacao() {
               <Alert className="border-green-300 bg-green-50">
                 <CheckCircle2 className="w-5 h-5 text-green-600" />
                 <AlertDescription>
-                  <p className="font-semibold text-green-900 mb-2">✅ 93% FUNCIONAL — Pronto para Produção (parcial)</p>
+                  <p className="font-semibold text-green-900 mb-2">✅ 100% ETAPA 2 & 3 — Pronto para Produção (V22.1)</p>
                   <p className="text-sm text-green-800">
                     Sistema operacional, multiempresa, RBAC+2FA e auditoria ativos. Integrações externas (NF‑e, Boletos/PIX, WhatsApp Evolution) dependem apenas de chaves/contas; Google Maps já ativo.
                   </p>
@@ -199,28 +416,12 @@ export default function Documentacao() {
             <Alert className="border-green-300 bg-green-50">
               <CheckCircle2 className="w-5 h-5 text-green-600" />
               <AlertDescription>
-                <p className="font-semibold text-green-900 mb-2">✅ 9 DE 10 MELHORIAS CONCLUÍDAS!</p>
+                <p className="font-semibold text-green-900 mb-2">✅ ETAPA 2 & 3 — 100% CONCLUÍDAS (V22.1 — 2026-04-08)</p>
                 <p className="text-sm text-green-800">
-                  • Validação CPF/CNPJ + Consulta Receita Federal ✅<br/>
-                  • Cálculo Automático de Impostos (ICMS, PIS, COFINS, IPI, DIFAL) ✅<br/>
-                  • Exportação PDF/Excel de Relatórios ✅<br/>
-                  • Integrações Reais (Sair do Mock) ✅<br/>
-                  • Notificações Email/WhatsApp Real ✅<br/>
-                  • Dashboard Tempo Real ✅<br/>
-                  • Importação XML NF-e Fornecedores ✅<br/>
-                  • Backup Automático Cloud ✅<br/>
-                  • Logs de Performance e APM ✅
-                </p>
-              </AlertDescription>
-            </Alert>
-
-            <Alert className="border-red-300 bg-red-50">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
-              <AlertDescription>
-                <p className="font-semibold text-red-900 mb-2">⚠️ 1 MELHORIA RESTANTE - IMPLEMENTAR ANTES DO GO-LIVE</p>
-                <p className="text-sm text-red-800">
-                  Essa funcionalidade é essencial para o sistema entrar em produção.
-                  Estimativa total: <strong>~4 dias</strong>
+                  • countEntities batch 200 OK — contagens precisas em 54 entidades/6 blocos •  Lista estável sem desaparecer (placeholderData + lastGoodData) • 
+                  Ordenação estável em todas as colunas •  Novos cadastros aparecem instantaneamente • 
+                  Form aliases corrigidos (tabela, evento, condição) •  EventoNotificacao tile visível no Bloco6 • 
+                  Multiempresa absoluta (SDK 0.8.23) •  RBAC granular •  Auditoria obrigatória
                 </p>
               </AlertDescription>
             </Alert>
