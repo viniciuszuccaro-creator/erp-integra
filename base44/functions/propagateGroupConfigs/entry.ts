@@ -8,9 +8,15 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    if (user.role !== 'admin') return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    // Suporta dois modos:
+    // 1) Chamada por usuário autenticado (admin) — requer role=admin
+    // 2) Chamada por automação agendada (sem auth) — permitida via service role
+    let user = null;
+    try { user = await base44.auth.me(); } catch (_) {}
+    const isScheduledAutomation = !user; // sem auth → automação agendada
+    if (user && user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
 
     const raw = await req.json().catch(() => ({}));
     const event = raw?.event || null;
@@ -148,7 +154,8 @@ Deno.serve(async (req) => {
 
     // Audit
     try { await base44.asServiceRole.entities.AuditLog.create({
-      usuario: user.full_name || user.email || 'Sistema', usuario_id: user.id,
+      usuario: user ? (user.full_name || user.email || 'Admin') : 'Sistema Agendado',
+      usuario_id: user?.id || null,
       acao: 'Execução', modulo: 'Sistema', tipo_auditoria: 'sistema', entidade: 'PropagacaoGrupo',
       descricao: `Propagação ${direction} (${entidades.join(', ')})`, dados_novos: { group_id: groupId, empresa_id: empresaId || null, direction, strategy, results },
       data_hora: new Date().toISOString()
