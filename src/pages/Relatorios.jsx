@@ -35,8 +35,13 @@ import FormWrapper from "@/components/common/FormWrapper";
 
 
 const AgendamentoRelatorios = React.lazy(() => import("../components/relatorios/AgendamentoRelatorios"));
-const GeradorRelatorios = React.lazy(() => import('../components/sistema/GeradorRelatorios')); // Added import
+const GeradorRelatorios = React.lazy(() => import('../components/sistema/GeradorRelatorios'));
 const MatrizAdequacaoFase3 = React.lazy(() => import("@/components/relatorios/MatrizAdequacaoFase3"));
+const RelatorioVendas = React.lazy(() => import("@/components/relatorios/RelatorioVendas"));
+const RelatorioFinanceiro = React.lazy(() => import("@/components/relatorios/RelatorioFinanceiro"));
+const RelatorioEstoque = React.lazy(() => import("@/components/relatorios/RelatorioEstoque"));
+const RelatorioProducao = React.lazy(() => import("@/components/relatorios/RelatorioProducao"));
+const RelatorioDRE = React.lazy(() => import("@/components/relatorios/RelatorioDRE"));
 
 export default function Relatorios() {
   const [activeTab, setActiveTab] = useState("vendas");
@@ -455,34 +460,19 @@ export default function Relatorios() {
         {/* New TabsContent for 'vendas', 'financeiro', 'estoque', 'producao', 'dre' could go here if needed.
                  For now, they are empty as per the outline not providing content. */}
         <TabsContent value="vendas">
-          <div className="text-center py-12 text-slate-500">
-            <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
-            <p>Conteúdo de Vendas em desenvolvimento.</p>
-          </div>
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Carregando...</div>}><RelatorioVendas /></Suspense>
         </TabsContent>
         <TabsContent value="financeiro">
-          <div className="text-center py-12 text-slate-500">
-            <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
-            <p>Conteúdo Financeiro em desenvolvimento.</p>
-          </div>
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Carregando...</div>}><RelatorioFinanceiro /></Suspense>
         </TabsContent>
         <TabsContent value="estoque">
-          <div className="text-center py-12 text-slate-500">
-            <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
-            <p>Conteúdo de Estoque em desenvolvimento.</p>
-          </div>
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Carregando...</div>}><RelatorioEstoque /></Suspense>
         </TabsContent>
         <TabsContent value="producao">
-          <div className="text-center py-12 text-slate-500">
-            <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
-            <p>Conteúdo de Produção em desenvolvimento.</p>
-          </div>
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Carregando...</div>}><RelatorioProducao /></Suspense>
         </TabsContent>
-        <TabsContent value="dre">
-          <div className="text-center py-12 text-slate-500">
-            <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
-            <p>Conteúdo DRE em desenvolvimento.</p>
-          </div>
+        <TabsContent value="dre-novo">
+          <Suspense fallback={<div className="p-8 text-center text-slate-500">Carregando...</div>}><RelatorioDRE /></Suspense>
         </TabsContent>
 
         <TabsContent value="matriz">
