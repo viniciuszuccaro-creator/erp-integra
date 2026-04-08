@@ -33,8 +33,15 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Injeta 'nome'/'codigo'/'descricao' para o Visualizador Universal
+    const payload = {
+      ...formData,
+      nome: formData.nome_conta || formData.nome || '',
+      codigo: formData.codigo_conta || formData.codigo || '',
+      descricao: formData.descricao || formData.nome_conta || '',
+    };
     if (onSubmit) {
-      onSubmit(formData);
+      onSubmit(payload);
     } else {
       if (onSave) onSave();
       if (onClose) onClose();

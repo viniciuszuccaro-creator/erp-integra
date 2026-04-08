@@ -22,7 +22,7 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({ ...formData, nome: formData.nome_condicao || formData.nome || '' });
   };
 
   const content = (

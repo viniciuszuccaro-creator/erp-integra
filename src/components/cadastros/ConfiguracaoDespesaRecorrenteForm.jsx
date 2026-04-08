@@ -107,7 +107,7 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
       toast.error("Selecione a empresa para a despesa ou configure o rateio.");
       return;
     }
-    onSubmit?.(formData);
+    onSubmit?.({ ...formData, nome: formData.descricao || formData.tipo_despesa_nome || '' });
   };
 
   const mesesAno = [

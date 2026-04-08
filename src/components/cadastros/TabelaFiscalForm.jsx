@@ -127,14 +127,12 @@ Seja preciso e cite a legislação aplicável.`,
 
   const handleSubmitForm = (e) => {
     e.preventDefault();
-    
     if (!formData.nome_regra || !formData.cfop) {
       toast.error("Preencha os campos obrigatórios");
       return;
     }
-
     if (onSubmit) {
-      onSubmit(formData);
+      onSubmit({ ...formData, nome: formData.nome_regra, descricao: formData.cfop + ' - ' + formData.regime_tributario });
     }
   };
 

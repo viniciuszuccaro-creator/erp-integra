@@ -34,9 +34,10 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
     e.preventDefault();
     const dataToSubmit = {
       ...formData,
-      orcamento_mensal: formData.orcamento_mensal ? parseFloat(formData.orcamento_mensal) : null
+      orcamento_mensal: formData.orcamento_mensal ? parseFloat(formData.orcamento_mensal) : null,
+      // Injeta 'nome' para o Visualizador Universal (CentroCusto usa 'descricao' como nome)
+      nome: formData.nome || formData.descricao || '',
     };
-    // onSubmit faz persistência + fecha (Visualizador universal)
     if (onSubmit) {
       onSubmit(dataToSubmit);
     } else {
