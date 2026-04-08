@@ -28,50 +28,20 @@ import Bloco5Organizacional from "@/components/cadastros/blocks/Bloco5Organizaci
 import Bloco6Tecnologia from "@/components/cadastros/blocks/Bloco6Tecnologia";
 import GroupCountBadge from "@/components/cadastros/GroupCountBadge";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import ModuleLayout from "@/components/layout/ModuleLayout";
-import ModuleContent from "@/components/layout/ModuleContent";
 
-
-/**
- * ⭐⭐⭐ CADASTROS GERAIS V21.3 - FASE 3: 100% COMPLETA ⭐⭐⭐
- * Hub Central de Dados Mestre • 6 Blocos • 23 Entidades • Multiempresa Total
- *
- * REGRA-MÃE: Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR
- *
- * ✅ ESTRUTURA DOS 6 BLOCOS COMPLETA:
- * 1️⃣ PESSOAS & PARCEIROS - Clientes, Fornecedores, Transportadoras, Colaboradores, Representantes, Contatos B2B
- * 2️⃣ PRODUTOS & SERVIÇOS - Setores, Grupos, Marcas, Produtos, Serviços, Kits, Catálogo Web, Unidades Medida
- * 3️⃣ FINANCEIRO - Bancos, Contas, Formas Pagamento, Plano Contas, Centros Custo/Resultado, Tipos Despesa, Tabelas Fiscais
- * 4️⃣ LOGÍSTICA - Veículos, Motoristas, Tipos Frete, Locais Estoque, Rotas Padrão, Modelos Documento
- * 5️⃣ ORGANIZACIONAL - Grupos Empresariais, Empresas, Departamentos, Cargos, Turnos, Usuários, Perfis Acesso
- * 6️⃣ INTEGRAÇÕES & IA - APIs Externas, Webhooks, Chatbot (Intents/Canais), Jobs Agendados, Logs IA, Parâmetros Operacionais
- *
- * ✅ FASE 3 - DIFERENCIAIS:
- * - 23 novas entidades estruturantes (TipoDespesa, PlanoContas, ApiExterna, Webhook, ChatbotIntent, ChatbotCanal, JobAgendado, LogsIA, 8 Parâmetros, Motorista, RotaPadrao, etc)
- * - Entidades core expandidas (Cliente, Fornecedor, Colaborador, Transportadora, CentroCusto) com multiempresa, validação KYC/KYB, LGPD, contatos B2B
- * - 3 IAs implementadas: Governança/SoD, KYC/KYB Validação, Churn Detection
- * - Parâmetros operacionais por empresa (Portal, Origem Pedido, Recebimento NFe, Roteirização, Conciliação, Caixa Diário)
- * - Chatbot multicanal com intents e canais configuráveis
- * - Jobs agendados de IA (DIFAL, Churn, PriceBrain, Monitoramento, KYC, Governança)
- * - Validador e Status Widget Fase 3 integrados ao Dashboard
- * - 100% multiempresa, w-full/h-full, janelas multitarefa, controle acesso granular
- */
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
   const [acordeonAberto, setAcordeonAberto] = useState([]);
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
-  const [abaIntegracoes, setAbaIntegracoes] = useState("gerenciamento");
   const { counts: allCounts, totals, isLoading: countsLoading } = useCadastrosAllCounts();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let t = params.get('tab');
-    let s = params.get('sub');
     if (!t) { try { t = localStorage.getItem('Cadastros_tab'); } catch {} }
-    if (!s) { try { s = localStorage.getItem('Cadastros_subtab'); } catch {} }
     if (t) setAbaGerenciamento(t);
-    if (s) setAbaIntegracoes(s);
   }, []);
+
   const handleAbaChange = (value) => {
     setAbaGerenciamento(value);
     const url = new URL(window.location.href);
@@ -79,24 +49,13 @@ export default function Cadastros() {
     window.history.replaceState({}, '', url.toString());
     try { localStorage.setItem('Cadastros_tab', value); } catch {}
   };
-  const handleSubChange = (value) => {
-    setAbaIntegracoes(value);
-    const url = new URL(window.location.href);
-    url.searchParams.set('sub', value);
-    window.history.replaceState({}, '', url.toString());
-    try { localStorage.setItem('Cadastros_subtab', value); } catch {}
-  };
-  const { empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
 
+  const { empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
 
-
- 
-
-  // Handler para clicar nos cards do dashboard
   const handleCardClick = (blocoId) => {
     if (acordeonAberto.includes(blocoId)) {
       setAcordeonAberto(acordeonAberto.filter(id => id !== blocoId));
@@ -106,13 +65,11 @@ export default function Cadastros() {
   };
 
   return (
-    <ModuleLayout title="Cadastros Gerais">
-      <ModuleContent>
-        <div className="h-full w-full p-6 lg:p-8 space-y-6">
+    <div className="h-full w-full p-6 lg:p-8 space-y-6">
       {/* GERENCIADOR DE JANELAS ABERTAS */}
       <GerenciadorJanelas />
 
-      {/* TABS: CADASTROS vs GERENCIAMENTO */}
+      {/* TABS: CADASTROS */}
       <Tabs value={abaGerenciamento} onValueChange={handleAbaChange}>
         <TabsList className="grid w-full grid-cols-1 bg-slate-100">
           <TabsTrigger value="cadastros">
@@ -123,7 +80,7 @@ export default function Cadastros() {
 
         {/* ABA: CADASTROS */}
         <TabsContent value="cadastros" className="space-y-6 mt-6">
-          {/* DASHBOARD DE TOTAIS - usa GroupCountBadge para contagem real e precisa */}
+          {/* DASHBOARD DE TOTAIS */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100" onClick={() => handleCardClick('bloco1')}>
               <CardContent className="p-4">
@@ -187,7 +144,7 @@ export default function Cadastros() {
             </Card>
           </div>
 
-          {/* ✅ V22.0 ETAPA 5 e 6: BUSCA UNIVERSAL LIMPA */}
+          {/* BUSCA UNIVERSAL */}
           <SearchInput
             placeholder="🔍 Busca Universal - Digite para filtrar em todos os 6 blocos simultaneamente..."
             value={searchTerm}
@@ -197,7 +154,6 @@ export default function Cadastros() {
 
           {/* ACCORDIONS - 6 BLOCOS */}
           <Accordion type="multiple" value={acordeonAberto} onValueChange={setAcordeonAberto} className="space-y-4">
-            {/* BLOCO 1: PESSOAS & PARCEIROS */}
             <AccordionItem value="bloco1" className="border-2 border-blue-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 hover:from-blue-100 hover:to-blue-200">
                 <div className="flex items-center gap-3 flex-1">
@@ -214,7 +170,6 @@ export default function Cadastros() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* BLOCO 2: PRODUTOS & SERVIÇOS */}
             <AccordionItem value="bloco2" className="border-2 border-purple-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-purple-50 to-purple-100 px-6 py-4 hover:from-purple-100 hover:to-purple-200">
                 <div className="flex items-center gap-3 flex-1">
@@ -231,7 +186,6 @@ export default function Cadastros() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* BLOCO 3: FINANCEIRO */}
             <AccordionItem value="bloco3" className="border-2 border-green-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 hover:from-green-100 hover:to-green-200">
                 <div className="flex items-center gap-3 flex-1">
@@ -248,7 +202,6 @@ export default function Cadastros() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* BLOCO 4: LOGÍSTICA, FROTA & ALMOXARIFADO */}
             <AccordionItem value="bloco4" className="border-2 border-orange-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-4 hover:from-orange-100 hover:to-orange-200">
                 <div className="flex items-center gap-3 flex-1">
@@ -265,7 +218,6 @@ export default function Cadastros() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* BLOCO 5: ESTRUTURA ORGANIZACIONAL */}
             <AccordionItem value="bloco5" className="border-2 border-indigo-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-indigo-50 to-indigo-100 px-6 py-4 hover:from-indigo-100 hover:to-indigo-200">
                 <div className="flex items-center gap-3 flex-1">
@@ -282,7 +234,6 @@ export default function Cadastros() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* BLOCO 6: TECNOLOGIA, IA & PARÂMETROS */}
             <AccordionItem value="bloco6" className="border-2 border-cyan-200 rounded-sm overflow-hidden shadow-md">
               <AccordionTrigger className="bg-gradient-to-r from-cyan-50 to-cyan-100 px-6 py-4 hover:from-cyan-100 hover:to-cyan-200">
                 <div className="flex items-center gap-3 flex-1">
@@ -298,20 +249,16 @@ export default function Cadastros() {
                 <Bloco6Tecnologia allCounts={allCounts} isLoading={countsLoading} />
               </AccordionContent>
             </AccordionItem>
+          </Accordion>
 
-              </Accordion>
+          <Alert className="mt-6 border-purple-300 bg-gradient-to-r from-purple-50 to-cyan-50">
+            <Stars className="w-4 h-4 text-purple-600" />
+            <AlertDescription className="text-sm text-purple-900">
+              <strong>28 IAs Ativas:</strong> PriceBrain 3.0 • ChurnDetection • ProductClassifier • FiscalValidator •
+              LeadScoring • RouteOptimizer • QualityPredictor • StockRecommender • e mais 20 IAs rodando 24/7
+            </AlertDescription>
+          </Alert>
 
-
-
-                <Alert className="mt-6 border-purple-300 bg-gradient-to-r from-purple-50 to-cyan-50">
-                  <Stars className="w-4 h-4 text-purple-600" />
-                  <AlertDescription className="text-sm text-purple-900">
-                    <strong>28 IAs Ativas:</strong> PriceBrain 3.0 • ChurnDetection • ProductClassifier • FiscalValidator •
-                    LeadScoring • RouteOptimizer • QualityPredictor • StockRecommender • e mais 20 IAs rodando 24/7
-                  </AlertDescription>
-                </Alert>
-
-                {/* FOOTER - PRINCÍPIOS DA FASE 0 */}
           <Card className="border-2 border-slate-300 bg-gradient-to-r from-slate-50 to-slate-100">
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -324,7 +271,6 @@ export default function Cadastros() {
                     <p className="text-xs text-slate-600">Sem duplicação • Referências integradas</p>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                     <Shield className="w-6 h-6 text-blue-600" />
@@ -334,7 +280,6 @@ export default function Cadastros() {
                     <p className="text-xs text-slate-600">Perfis • Permissões • Auditoria</p>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                     <Zap className="w-6 h-6 text-purple-600" />
@@ -349,12 +294,6 @@ export default function Cadastros() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* ==================== FASE 1 DEFINITIVO-100% ==================== */}
-      {/* TODOS OS FORMULÁRIOS AGORA ABREM EM JANELAS REDIMENSIONÁVEIS */}
-      {/* ZERO DIALOGS - TUDO É WINDOW MODE */}
-        </div>
-      </ModuleContent>
-    </ModuleLayout>
+    </div>
   );
 }
