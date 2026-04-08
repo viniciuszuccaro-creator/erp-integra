@@ -34,7 +34,7 @@ export default function Bloco6Tecnologia({ allCounts, isLoading }) {
     { k: 'GatewayPagamento', t: 'Gateways de Pagamento', i: Package, c: ['nome','tipo','ativo','taxa_padrao'], f: GatewayPagamentoForm },
     { k: 'JobAgendado', t: 'Jobs Agendados', i: Cloud, c: ['nome','funcao','frequencia','ativo'], f: JobAgendadoForm },
     { k: 'Webhook', t: 'Webhooks', i: Link2, c: ['nome','url','evento','ativo'], f: WebhookForm },
-    { k: 'ConfiguracaoNFe', t: 'Configurações NF-e', i: Settings, c: ['certificado_ativo','certificado_validade','ambiente'], f: ConfiguracaoNFeForm },
+    { k: 'ConfiguracaoNFe', t: 'Configurações NF-e', i: Settings, c: ['ambiente','certificado_validade','certificado_ativo'], f: ConfiguracaoNFeForm },
   ];
 
   return (
