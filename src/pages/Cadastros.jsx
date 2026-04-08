@@ -260,37 +260,37 @@ export default function Cadastros() {
           
 
           <Card className="border-2 border-slate-300 bg-gradient-to-r from-slate-50 to-slate-100">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <Database className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">Fonte Única de Verdade</p>
-                    <p className="text-xs text-slate-600">Sem duplicação • Referências integradas</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Shield className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">Controle de Acesso Granular</p>
-                    <p className="text-xs text-slate-600">Perfis • Permissões • Auditoria</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <Zap className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">Global Audit Log</p>
-                    <p className="text-xs text-slate-600">Todas alterações rastreadas</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
           </Card>
         </TabsContent>
       </Tabs>
