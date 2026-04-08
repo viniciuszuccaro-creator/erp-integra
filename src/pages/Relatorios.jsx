@@ -43,7 +43,7 @@ export default function Relatorios() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
-    if (!initial) { try { initial = localStorage.getItem('Relatorios_tab'); } catch {} }
+    if (!initial) {try {initial = localStorage.getItem('Relatorios_tab');} catch {}}
     if (initial) setActiveTab(initial);
   }, []);
   const handleTabChange = (value) => {
@@ -51,7 +51,7 @@ export default function Relatorios() {
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
-    try { localStorage.setItem('Relatorios_tab', value); } catch {}
+    try {localStorage.setItem('Relatorios_tab', value);} catch {}
   }; // Changed default active tab to "vendas"
   const [selectedReport, setSelectedReport] = useState(null);
   const [agendarEmailDialogOpen, setAgendarEmailDialogOpen] = useState(false);
@@ -77,33 +77,33 @@ export default function Relatorios() {
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes', empresaAtual?.id],
-    queryFn: () => filterInContext('Cliente', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('Cliente', {}, '-created_date', 9999)
   });
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos', empresaAtual?.id],
-    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 9999),
+    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 9999)
   });
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', empresaAtual?.id],
-    queryFn: () => filterInContext('Produto', {}, '-created_date', 9999),
+    queryFn: () => filterInContext('Produto', {}, '-created_date', 9999)
   });
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contasReceber', empresaAtual?.id],
-    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
+    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999)
   });
 
   const { data: contasPagar = [] } = useQuery({
     queryKey: ['contasPagar', empresaAtual?.id],
-    queryFn: () => filterInContext('ContaPagar', {}, '-data_vencimento', 9999),
+    queryFn: () => filterInContext('ContaPagar', {}, '-data_vencimento', 9999)
   });
 
   const filtrarPorPeriodo = (data, campo = 'created_date') => {
     const inicio = new Date(filtros.data_inicio);
     const fim = new Date(filtros.data_fim);
-    return data.filter(item => {
+    return data.filter((item) => {
       const dataItem = new Date(item[campo] || item.created_date);
       return dataItem >= inicio && dataItem <= fim;
     });
@@ -112,8 +112,8 @@ export default function Relatorios() {
   const relatorioVendasPorCliente = useMemo(() => {
     const pedidosFiltrados = filtrarPorPeriodo(pedidos, 'data_pedido');
     const porCliente = {};
-    
-    pedidosFiltrados.forEach(p => {
+
+    pedidosFiltrados.forEach((p) => {
       if (p.status !== 'Cancelado' && p.cliente_nome) {
         if (!porCliente[p.cliente_nome]) {
           porCliente[p.cliente_nome] = {
@@ -128,13 +128,13 @@ export default function Relatorios() {
       }
     });
 
-    return Object.values(porCliente)
-      .map(item => ({
-        ...item,
-        ticket_medio: item.quantidade_pedidos > 0 ? item.valor_total / item.quantidade_pedidos : 0
-      }))
-      .sort((a, b) => b.valor_total - a.valor_total)
-      .slice(0, 20);
+    return Object.values(porCliente).
+    map((item) => ({
+      ...item,
+      ticket_medio: item.quantidade_pedidos > 0 ? item.valor_total / item.quantidade_pedidos : 0
+    })).
+    sort((a, b) => b.valor_total - a.valor_total).
+    slice(0, 20);
   }, [pedidos, filtros]);
 
   const exportarParaExcel = (dados, nomeArquivo) => {
@@ -148,11 +148,11 @@ export default function Relatorios() {
     }
 
     const headers = Object.keys(dados[0]).join(',');
-    const rows = dados.map(item => 
-      Object.values(item).map(v => {
-        if (typeof v === 'object') return JSON.stringify(v);
-        return typeof v === 'string' && v.includes(',') ? `"${v}"` : v;
-      }).join(',')
+    const rows = dados.map((item) =>
+    Object.values(item).map((v) => {
+      if (typeof v === 'object') return JSON.stringify(v);
+      return typeof v === 'string' && v.includes(',') ? `"${v}"` : v;
+    }).join(',')
     );
     const csv = [headers, ...rows].join('\n');
 
@@ -169,7 +169,7 @@ export default function Relatorios() {
   };
 
   const scheduleSchema = z.object({
-    frequencia: z.enum(['Diário','Semanal','Mensal']),
+    frequencia: z.enum(['Diário', 'Semanal', 'Mensal']),
     dia_semana: z.string().optional(),
     dia_mes: z.string().optional(),
     hora: z.string().optional(),
@@ -183,7 +183,7 @@ export default function Relatorios() {
         description: "Configurando envio automático"
       });
 
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
       return data;
     },
     onSuccess: (data) => {
@@ -192,7 +192,7 @@ export default function Relatorios() {
         description: `O relatório será enviado ${data.frequencia.toLowerCase()} para ${data.destinatarios}`
       });
       setAgendarEmailDialogOpen(false);
-    },
+    }
   });
 
   const handleAgendarEmail = (e) => {
@@ -206,96 +206,96 @@ export default function Relatorios() {
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#64748b'];
 
   const relatoriosEstrategicos = [
-    {
-      id: 'dre-comparativo',
-      titulo: 'DRE Comparativo Multi-períodos',
-      descricao: 'Análise comparativa de resultados (3, 6 ou 12 meses)',
-      icone: BarChart3,
-      cor: 'text-blue-600',
-      component: DREComparativo
-    },
-    {
-      id: 'fluxo-caixa',
-      titulo: 'Fluxo de Caixa Projetado',
-      descricao: 'Projeção de entradas e saídas (6 meses)',
-      icone: Activity,
-      cor: 'text-cyan-600',
-      component: FluxoCaixaProjetado
-    },
-    {
-      id: 'rentabilidade-cliente',
-      titulo: 'Rentabilidade por Cliente',
-      descricao: 'Top 20 clientes mais rentáveis com score',
-      icone: Users,
-      cor: 'text-green-600',
-      component: RentabilidadeCliente
-    },
-    {
-      id: 'rentabilidade-produto',
-      titulo: 'Rentabilidade por Produto',
-      descricao: 'Análise de margem e curva ABC',
-      icone: Package,
-      cor: 'text-purple-600',
-      component: RentabilidadeProduto
-    },
-    {
-      id: 'inadimplencia',
-      titulo: 'Dashboard de Inadimplência',
-      descricao: 'Score de risco e previsão de recebimento',
-      icone: AlertCircle,
-      cor: 'text-red-600',
-      component: DashboardInadimplencia
-    },
-    {
-      id: 'vendas-regiao',
-      titulo: 'Vendas por Região de Atendimento',
-      descricao: 'Análise geográfica de desempenho comercial com metas e métricas',
-      icone: MapPin,
-      cor: 'text-indigo-600',
-      component: RelatorioVendasPorRegiao
-    },
-    {
-      id: 'pedidos-origem',
-      titulo: 'Análise de Canais de Origem',
-      descricao: 'Performance, conversão e ROI por canal de venda (ERP, Site, Chatbot, etc.)',
-      icone: Activity,
-      cor: 'text-cyan-600',
-      component: DashboardCanaisOrigem
-    },
-    {
-      id: 'origem-detalhado',
-      titulo: 'Relatório Detalhado por Origem',
-      descricao: 'Lista completa de pedidos filtrados por origem com métricas',
-      icone: FileText,
-      cor: 'text-purple-600',
-      component: RelatorioPedidosPorOrigem
-    }
-  ];
+  {
+    id: 'dre-comparativo',
+    titulo: 'DRE Comparativo Multi-períodos',
+    descricao: 'Análise comparativa de resultados (3, 6 ou 12 meses)',
+    icone: BarChart3,
+    cor: 'text-blue-600',
+    component: DREComparativo
+  },
+  {
+    id: 'fluxo-caixa',
+    titulo: 'Fluxo de Caixa Projetado',
+    descricao: 'Projeção de entradas e saídas (6 meses)',
+    icone: Activity,
+    cor: 'text-cyan-600',
+    component: FluxoCaixaProjetado
+  },
+  {
+    id: 'rentabilidade-cliente',
+    titulo: 'Rentabilidade por Cliente',
+    descricao: 'Top 20 clientes mais rentáveis com score',
+    icone: Users,
+    cor: 'text-green-600',
+    component: RentabilidadeCliente
+  },
+  {
+    id: 'rentabilidade-produto',
+    titulo: 'Rentabilidade por Produto',
+    descricao: 'Análise de margem e curva ABC',
+    icone: Package,
+    cor: 'text-purple-600',
+    component: RentabilidadeProduto
+  },
+  {
+    id: 'inadimplencia',
+    titulo: 'Dashboard de Inadimplência',
+    descricao: 'Score de risco e previsão de recebimento',
+    icone: AlertCircle,
+    cor: 'text-red-600',
+    component: DashboardInadimplencia
+  },
+  {
+    id: 'vendas-regiao',
+    titulo: 'Vendas por Região de Atendimento',
+    descricao: 'Análise geográfica de desempenho comercial com metas e métricas',
+    icone: MapPin,
+    cor: 'text-indigo-600',
+    component: RelatorioVendasPorRegiao
+  },
+  {
+    id: 'pedidos-origem',
+    titulo: 'Análise de Canais de Origem',
+    descricao: 'Performance, conversão e ROI por canal de venda (ERP, Site, Chatbot, etc.)',
+    icone: Activity,
+    cor: 'text-cyan-600',
+    component: DashboardCanaisOrigem
+  },
+  {
+    id: 'origem-detalhado',
+    titulo: 'Relatório Detalhado por Origem',
+    descricao: 'Lista completa de pedidos filtrados por origem com métricas',
+    icone: FileText,
+    cor: 'text-purple-600',
+    component: RelatorioPedidosPorOrigem
+  }];
+
 
   const relatoriosPredefinidos = [
-    {
-      id: 'vendas-cliente',
-      titulo: 'Vendas por Cliente',
-      descricao: 'Ranking de clientes por faturamento',
-      icone: Users,
-      cor: 'text-blue-600',
-      getData: () => relatorioVendasPorCliente,
-      tipo: 'bar',
-      valorKey: 'valor_total',
-      nomeKey: 'cliente'
-    }
-  ];
+  {
+    id: 'vendas-cliente',
+    titulo: 'Vendas por Cliente',
+    descricao: 'Ranking de clientes por faturamento',
+    icone: Users,
+    cor: 'text-blue-600',
+    getData: () => relatorioVendasPorCliente,
+    tipo: 'bar',
+    valorKey: 'valor_total',
+    nomeKey: 'cliente'
+  }];
+
 
   const renderChart = (relatorio) => {
     const dados = relatorio.getData();
 
-    if (!dados || (Array.isArray(dados) && dados.length === 0)) {
+    if (!dados || Array.isArray(dados) && dados.length === 0) {
       return (
         <div className="text-center py-12 text-slate-500">
           <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
           <p>Sem dados para exibir no período selecionado</p>
-        </div>
-      );
+        </div>);
+
     }
 
     if (relatorio.tipo === 'bar') {
@@ -305,17 +305,17 @@ export default function Relatorios() {
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis dataKey={relatorio.nomeKey} tick={{ fontSize: 11 }} angle={-45} textAnchor="end" height={100} />
             <YAxis tick={{ fontSize: 12 }} />
-            <Tooltip 
-              formatter={(value) => typeof value === 'number' 
-                ? `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
-                : value}
-              contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-            />
+            <Tooltip
+              formatter={(value) => typeof value === 'number' ?
+              `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` :
+              value}
+              contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }} />
+            
             <Legend />
             <Bar dataKey={relatorio.valorKey} fill="#3b82f6" name="Valor" />
           </BarChart>
-        </ResponsiveContainer>
-      );
+        </ResponsiveContainer>);
+
     }
 
     return null;
@@ -341,10 +341,10 @@ export default function Relatorios() {
             <Activity className="w-4 h-4 mr-2" />
             Relatórios Operacionais
           </TabsTrigger>
-          <TabsTrigger 
-            value="agendamento" 
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-          >
+          <TabsTrigger
+                value="agendamento"
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                
             <Calendar className="w-4 h-4 mr-2" />
             Agendamento
           </TabsTrigger>
@@ -358,33 +358,33 @@ export default function Relatorios() {
             <Download className="w-4 h-4 mr-2" />
             Exportações
           </TabsTrigger>
-          <TabsTrigger value="matriz">
-            <FileText className="w-4 h-4 mr-2" />
-            Matriz Fase 3
-          </TabsTrigger>
+          
+
+
+              
           </TabsList>
 
         <TabsContent value="estrategicos">
           <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
             <ResizablePanel defaultSize={55} minSize={35} className="overflow-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {relatoriosEstrategicos.map((rel) => (
-                  <RelatorioCard
-                    key={rel.id}
-                    title={rel.titulo}
-                    description={rel.descricao}
-                    Icon={rel.icone}
-                    colorClass={rel.cor}
-                    badgeText="Estratégico"
-                    onClick={() => setSelectedReport(rel)}
-                  />
-                ))}
+                {relatoriosEstrategicos.map((rel) =>
+                    <RelatorioCard
+                      key={rel.id}
+                      title={rel.titulo}
+                      description={rel.descricao}
+                      Icon={rel.icone}
+                      colorClass={rel.cor}
+                      badgeText="Estratégico"
+                      onClick={() => setSelectedReport(rel)} />
+
+                    )}
               </div>
             </ResizablePanel>
             <ResizableHandle withHandle />
             <ResizablePanel defaultSize={45} minSize={25} className="overflow-auto">
-              {selectedReport && selectedReport.component ? (
-                <Card className="border-0 shadow-md">
+              {selectedReport && selectedReport.component ?
+                  <Card className="border-0 shadow-md">
                   <CardHeader className="border-b bg-slate-50">
                     <div className="flex justify-between items-center">
                       <div>
@@ -402,13 +402,13 @@ export default function Relatorios() {
                   <CardContent className="p-6">
                     <Suspense fallback={<div>Carregando...</div>}><selectedReport.component empresaId={empresaAtual?.id} /></Suspense>
                   </CardContent>
-                </Card>
-              ) : (
-                <div className="text-center py-12 text-slate-500">
+                </Card> :
+
+                  <div className="text-center py-12 text-slate-500">
                   <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
                   <p>Selecione um relatório para visualizar.</p>
                 </div>
-              )}
+                  }
             </ResizablePanel>
           </ResizablePanelGroup>
         </TabsContent>
@@ -423,27 +423,27 @@ export default function Relatorios() {
             <ResizablePanel defaultSize={65} minSize={35} className="overflow-auto">
               {/* Grid de Relatórios Operacionais */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {relatoriosPredefinidos.map((rel) => (
-                  <RelatorioCard
-                    key={rel.id}
-                    title={rel.titulo}
-                    description={rel.descricao}
-                    Icon={rel.icone}
-                    colorClass={rel.cor}
-                    badgeText={rel.tipo}
-                    onClick={() => setSelectedReport(rel)}
-                  />
-                ))}
+                {relatoriosPredefinidos.map((rel) =>
+                    <RelatorioCard
+                      key={rel.id}
+                      title={rel.titulo}
+                      description={rel.descricao}
+                      Icon={rel.icone}
+                      colorClass={rel.cor}
+                      badgeText={rel.tipo}
+                      onClick={() => setSelectedReport(rel)} />
+
+                    )}
               </div>
 
               {/* Relatório Selecionado Operacional */}
               <SelectedOperationalReport
-                selectedReport={selectedReport}
-                filtros={filtros}
-                onExport={(dados, nome) => exportarParaExcel(dados, nome)}
-                onClose={() => setSelectedReport(null)}
-                renderChart={renderChart}
-              />
+                    selectedReport={selectedReport}
+                    filtros={filtros}
+                    onExport={(dados, nome) => exportarParaExcel(dados, nome)}
+                    onClose={() => setSelectedReport(null)}
+                    renderChart={renderChart} />
+                  
             </ResizablePanel>
           </ResizablePanelGroup>
         </TabsContent>
@@ -453,7 +453,7 @@ export default function Relatorios() {
         </TabsContent>
 
         {/* New TabsContent for 'vendas', 'financeiro', 'estoque', 'producao', 'dre' could go here if needed.
-            For now, they are empty as per the outline not providing content. */}
+                 For now, they are empty as per the outline not providing content. */}
         <TabsContent value="vendas">
           <div className="text-center py-12 text-slate-500">
             <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
@@ -503,14 +503,14 @@ export default function Relatorios() {
             <DialogTitle>Agendar Envio por E-mail</DialogTitle>
           </DialogHeader>
           <FormWrapper
-            schema={scheduleSchema}
-            defaultValues={agendamentoForm}
-            onSubmit={(values) => agendarRelatorioMutation.mutate({
-              ...values,
-              relatorio: selectedReport?.titulo
-            })}
-          >
-            {(methods) => (
+              schema={scheduleSchema}
+              defaultValues={agendamentoForm}
+              onSubmit={(values) => agendarRelatorioMutation.mutate({
+                ...values,
+                relatorio: selectedReport?.titulo
+              })}>
+              
+            {(methods) =>
               <div className="space-y-4">
             <div className="p-3 bg-blue-50 rounded border border-blue-200">
               <Mail className="w-5 h-5 text-blue-600 mb-2" />
@@ -527,9 +527,9 @@ export default function Relatorios() {
             <div>
               <Label htmlFor="frequencia">Frequência *</Label>
               <Select
-                value={methods.watch('frequencia')}
-                onValueChange={(value) => methods.setValue('frequencia', value, { shouldValidate: true })}
-              >
+                    value={methods.watch('frequencia')}
+                    onValueChange={(value) => methods.setValue('frequencia', value, { shouldValidate: true })}>
+                    
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -541,13 +541,13 @@ export default function Relatorios() {
               </Select>
             </div>
 
-            {methods.watch('frequencia') === 'Semanal' && (
-              <div>
+            {methods.watch('frequencia') === 'Semanal' &&
+                <div>
                 <Label htmlFor="dia_semana">Dia da Semana</Label>
                 <Select
-                  value={methods.watch('dia_semana')}
-                  onValueChange={(value) => methods.setValue('dia_semana', value)}
-                >
+                    value={methods.watch('dia_semana')}
+                    onValueChange={(value) => methods.setValue('dia_semana', value)}>
+                    
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -560,46 +560,46 @@ export default function Relatorios() {
                   </SelectContent>
                 </Select>
               </div>
-            )}
+                }
 
-            {methods.watch('frequencia') === 'Mensal' && (
-              <div>
+            {methods.watch('frequencia') === 'Mensal' &&
+                <div>
                 <Label htmlFor="dia_mes">Dia do Mês</Label>
                 <Input
-                  id="dia_mes"
-                  type="number"
-                  min="1"
-                  max="28"
-                  {...methods.register('dia_mes')}
-                />
+                    id="dia_mes"
+                    type="number"
+                    min="1"
+                    max="28"
+                    {...methods.register('dia_mes')} />
+                  
               </div>
-            )}
+                }
 
             <div>
               <Label htmlFor="hora">Horário</Label>
               <Input
-                id="hora"
-                type="time"
-                {...methods.register('hora')}
-              />
+                    id="hora"
+                    type="time"
+                    {...methods.register('hora')} />
+                  
             </div>
 
             <div>
               <Label htmlFor="destinatarios">Destinatários * (separados por vírgula)</Label>
               <Textarea
-                id="destinatarios"
-                {...methods.register('destinatarios')}
-                placeholder="email1@exemplo.com, email2@exemplo.com"
-                rows={2}
-              />
+                    id="destinatarios"
+                    {...methods.register('destinatarios')}
+                    placeholder="email1@exemplo.com, email2@exemplo.com"
+                    rows={2} />
+                  
             </div>
 
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="ativo"
-                checked={agendamentoForm.ativo}
-                onCheckedChange={(checked) => setAgendamentoForm({ ...agendamentoForm, ativo: checked })}
-              />
+                    id="ativo"
+                    checked={agendamentoForm.ativo}
+                    onCheckedChange={(checked) => setAgendamentoForm({ ...agendamentoForm, ativo: checked })} />
+                  
               <Label htmlFor="ativo" className="font-normal cursor-pointer">
                 Ativar agendamento
               </Label>
@@ -610,19 +610,19 @@ export default function Relatorios() {
                 Cancelar
               </Button>
               <Button
-                type="submit"
-                disabled={agendarRelatorioMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
+                    type="submit"
+                    disabled={agendarRelatorioMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700">
+                    
                 {agendarRelatorioMutation.isPending ? 'Agendando...' : 'Agendar'}
               </Button>
             </div>
           </div>
-          )}
+              }
           </FormWrapper>
         </DialogContent>
       </Dialog>
     </div>
-    </ProtectedSection>
-  );
+    </ProtectedSection>);
+
 }
