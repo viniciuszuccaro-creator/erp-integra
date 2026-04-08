@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidadeV24 from "@/components/cadastros/VisualizadorUniversalEntidadeV24";
-import { Zap, Code, Settings, Package, Link2, Cloud, MessageCircle } from "lucide-react";
+import { Zap, Code, Settings, Package, Link2, Cloud, MessageCircle, Bell } from "lucide-react";
 import CountBadgeSimplificado from "@/components/cadastros/CountBadgeSimplificado";
 
 import ApiExternaForm from "@/components/cadastros/ApiExternaForm";
@@ -14,6 +14,7 @@ import GatewayPagamentoForm from "@/components/cadastros/GatewayPagamentoForm";
 import JobAgendadoForm from "@/components/cadastros/JobAgendadoForm";
 import WebhookForm from "@/components/cadastros/WebhookForm";
 import ConfiguracaoNFeForm from "@/components/cadastros/ConfiguracaoNFeForm";
+import EventoNotificacaoForm from "@/components/cadastros/EventoNotificacaoForm";
 
 export default function Bloco6Tecnologia({ allCounts, isLoading }) {
   const { openWindow } = useWindow();
@@ -35,6 +36,7 @@ export default function Bloco6Tecnologia({ allCounts, isLoading }) {
     { k: 'JobAgendado',        t: 'Jobs Agendados',         i: Cloud,         c: ['nome','nome_job','frequencia','tipo_job'],         f: JobAgendadoForm },
     { k: 'Webhook',            t: 'Webhooks',               i: Link2,         c: ['nome','nome_webhook','evento_gatilho','ativo'],    f: WebhookForm },
     { k: 'ConfiguracaoNFe',    t: 'Configurações NF-e',     i: Settings,      c: ['nome','provedor','ambiente','ativo'],              f: ConfiguracaoNFeForm },
+    { k: 'EventoNotificacao',   t: 'Eventos & Notificações', i: Bell,          c: ['nome_evento','tipo_evento','prioridade','ativo'],  f: EventoNotificacaoForm },
   ];
 
   return (
