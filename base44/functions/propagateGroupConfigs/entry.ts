@@ -28,7 +28,17 @@ Deno.serve(async (req) => {
     // Resolve contexto
     let { group_id: groupId, empresa_id: empresaId, direction, entidades, strategy, empresas_ids } = input || {};
     direction = direction || (empresaId && !groupId ? 'empresa_to_grupo' : 'grupo_to_empresas');
-    entidades = Array.isArray(entidades) && entidades.length ? entidades : ['PlanoDeContas', 'CentroCusto'];
+    entidades = Array.isArray(entidades) && entidades.length ? entidades : [
+      // Financeiro & Fiscal
+      'PlanoDeContas', 'CentroCusto', 'CentroResultado', 'TipoDespesa', 'MoedaIndice',
+      'FormaPagamento', 'CondicaoComercial', 'TabelaFiscal', 'Banco',
+      // Produtos & Serviços
+      'GrupoProduto', 'Marca', 'SetorAtividade', 'UnidadeMedida',
+      // Logística
+      'TipoFrete', 'LocalEstoque', 'RotaPadrao',
+      // Estrutura Organizacional
+      'Cargo', 'Departamento', 'Turno',
+    ];
     strategy = strategy || 'merge'; // 'skip' | 'merge' | 'override'
 
     if (!groupId && empresaId) {
