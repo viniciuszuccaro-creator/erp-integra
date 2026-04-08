@@ -45,7 +45,7 @@ export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmittin
       alert('Nome da intent é obrigatório');
       return;
     }
-    await onSubmit(formData);
+    await onSubmit({ ...formData, nome: formData.nome_intent });
   };
 
   const form = (

@@ -26,7 +26,8 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onSubmit(formData);
+    // Injeta 'nome' para o Visualizador Universal (usa provedor + ambiente como identificador)
+    await onSubmit({ ...formData, nome: formData.nome || (formData.provedor + ' - ' + formData.ambiente) });
   };
 
   const form = (

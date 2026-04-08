@@ -26,7 +26,7 @@ export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, w
       alert('Nome do job é obrigatório');
       return;
     }
-    await onSubmit(formData);
+    await onSubmit({ ...formData, nome: formData.nome_job });
   };
 
   const form = (

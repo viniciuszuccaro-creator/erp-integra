@@ -28,7 +28,7 @@ export default function ApiExternaForm({ apiExterna, onSubmit, isSubmitting, win
       alert('Nome da integração é obrigatório');
       return;
     }
-    await onSubmit(formData);
+    await onSubmit({ ...formData, nome: formData.nome_integracao });
   };
 
   const form = (

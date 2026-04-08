@@ -28,7 +28,7 @@ export default function ChatbotCanalForm({ chatbotCanal, onSubmit, isSubmitting,
       alert('Nome do canal é obrigatório');
       return;
     }
-    await onSubmit(formData);
+    await onSubmit({ ...formData, nome: formData.nome_canal });
   };
 
   const form = (
