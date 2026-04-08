@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const EXPAND_SET = new Set(['Cliente', 'Fornecedor', 'Transportadora', 'Colaborador']);
 
@@ -37,16 +37,22 @@ async function expandGroupFilter(base44, entityName, f) {
   const ctxCampo = (entityName === 'Fornecedor' || entityName === 'Transportadora') ? 'empresa_dona_id'
     : (entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id');
 
+  // Caso 1: entidades do EXPAND_SET com empresa_id — inclui legados (empresa_id: null)
   if (EXPAND_SET.has(entityName) && f?.empresa_id && !f?.$or) {
     const { empresa_id, ...rest } = f;
     const orConds = [
       { [ctxCampo]: empresa_id },
-      { empresas_compartilhadas_ids: { $in: [empresa_id] } }
+      { empresas_compartilhadas_ids: { $in: [empresa_id] } },
+      { empresa_id: null }, // registros legados sem empresa
     ];
-    if (ctxCampo !== 'empresa_id') {
-      orConds.push({ empresa_id });
-    }
+    if (ctxCampo !== 'empresa_id') orConds.push({ empresa_id });
     return { ...rest, $or: orConds };
+  }
+
+  // Caso 2: demais entidades com empresa_id — inclui legados
+  if (!EXPAND_SET.has(entityName) && f?.empresa_id && !f?.$or && !f?.group_id) {
+    const { empresa_id, ...rest } = f;
+    return { ...rest, $or: [{ empresa_id }, { empresa_id: null }] };
   }
 
   if (f?.$or && f?.group_id) {
@@ -68,11 +74,12 @@ async function expandGroupFilter(base44, entityName, f) {
             { [ctxCampo]: { $in: empresasIds } },
             ...(ctxCampo !== 'empresa_id' ? [{ empresa_id: { $in: empresasIds } }] : []),
             { empresas_compartilhadas_ids: { $in: empresasIds } },
-            { group_id: groupId }
+            { group_id: groupId },
+            { empresa_id: null }, // registros legados
           ]
         };
       }
-      return { ...rest, $or: [{ [ctxCampo]: { $in: empresasIds } }, { group_id: groupId }] };
+      return { ...rest, $or: [{ [ctxCampo]: { $in: empresasIds } }, { group_id: groupId }, { empresa_id: null }] };
     } catch (_) { /* fallback */ }
   }
   return f;
@@ -89,18 +96,17 @@ async function fastCount(base44, entityName, finalFilter) {
   let total = 0;
 
   for (let page = 0; page < MAX_PAGES; page++) {
-    // Delay entre páginas para evitar 429 (cresce progressivamente)
-    if (page > 0) await new Promise(r => setTimeout(r, 200 + page * 80));
+    if (page > 0) await new Promise(r => setTimeout(r, 400 + page * 100));
 
     let batch = null;
-    for (let attempt = 0; attempt < 4; attempt++) {
+    for (let attempt = 0; attempt < 5; attempt++) {
       try {
         batch = await base44.asServiceRole.entities[entityName].filter(finalFilter, '-id', PAGE, page * PAGE);
         break;
       } catch (err) {
         const status = err?.status || err?.response?.status;
         if (status === 429) {
-          await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
+          await new Promise(r => setTimeout(r, 1500 * Math.pow(2, attempt)));
         } else {
           batch = [];
           break;
@@ -162,10 +168,9 @@ Deno.serve(async (req) => {
     // Processa em janelas de 5 paralelas com delay de 200ms entre janelas
     if (entitiesBatch && entitiesBatch.length > 0) {
       const counts = {};
-      // OTIMIZAÇÃO: janelas menores (3 paralelas) com delay maior entre janelas
-      // Evita burst de 429s em bases com muitos registros
-      const WINDOW = 3;
-      const DELAY_BETWEEN_WINDOWS = 350;
+      // 2 paralelas com delay maior — evita burst de 429s
+      const WINDOW = 2;
+      const DELAY_BETWEEN_WINDOWS = 500;
 
       for (let i = 0; i < entitiesBatch.length; i += WINDOW) {
         const slice = entitiesBatch.slice(i, i + WINDOW);

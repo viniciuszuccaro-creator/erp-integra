@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const DEFAULT_SORTS = {
   Produto: { field: 'descricao', direction: 'asc' }, Cliente: { field: 'nome', direction: 'asc' },
@@ -145,10 +145,10 @@ async function expandGroupFilter(base44, entityName, f) {
   const ctxCampo = (entityName === 'Fornecedor' || entityName === 'Transportadora') ? 'empresa_dona_id'
     : (entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id');
 
-  // empresa_id simples → expande para $or cobrindo todos os campos de vinculação
+  // empresa_id simples → expande para $or cobrindo todos os campos + registros legados
   if (f?.empresa_id && !f?.$or && !f?.group_id) {
     const { empresa_id, ...rest } = f;
-    const orConds = [{ empresa_id }, { empresa_dona_id: empresa_id }];
+    const orConds = [{ empresa_id }, { empresa_dona_id: empresa_id }, { empresa_id: null }];
     if (EXPAND_SET.has(entityName)) {
       orConds.push({ empresas_compartilhadas_ids: { $in: [empresa_id] } });
     }
@@ -170,6 +170,7 @@ async function expandGroupFilter(base44, entityName, f) {
         { empresa_id: { $in: empresasIds } },
         { empresa_dona_id: { $in: empresasIds } },
         { group_id: groupId },
+        { empresa_id: null }, // registros legados sem empresa
       ];
       if (EXPAND_SET.has(entityName)) {
         orConds.push({ empresas_compartilhadas_ids: { $in: empresasIds } });

@@ -53,21 +53,35 @@ export default function useCadastrosAllCounts() {
         entityName,
         filter: buildSimpleFilter(entityName, empresaId, groupId),
       }));
+      // Tentativa 1: batch completo
       try {
         const res = await base44.functions.invoke("countEntities", { entities });
         const raw = res?.data?.counts || res?.data || {};
-        return raw;
-      } catch (_) {
-        return {};
+        if (raw && typeof raw === 'object' && Object.keys(raw).length > 0) return raw;
+      } catch (_) {}
+      // Tentativa 2: batches de 5 com delay anti-429
+      const result = {};
+      const BATCH = 5;
+      for (let i = 0; i < entities.length; i += BATCH) {
+        const slice = entities.slice(i, i + BATCH);
+        try {
+          if (i > 0) await new Promise(r => setTimeout(r, 500));
+          const res = await base44.functions.invoke("countEntities", { entities: slice });
+          const raw = res?.data?.counts || res?.data || {};
+          Object.assign(result, raw);
+        } catch (_) {
+          slice.forEach(e => { result[e.entityName] = result[e.entityName] ?? 0; });
+        }
       }
+      return result;
     },
-    staleTime: 90_000,       // 90s — reduz 429s sem sacrificar frequência visível
+    staleTime: 20_000,
     gcTime: 10 * 60_000,
     placeholderData: (prev) => prev,
     refetchOnWindowFocus: false,
-    refetchOnMount: true,
-    retry: 3,
-    retryDelay: (attempt) => Math.min(1000 * (attempt + 1), 5000),
+    refetchOnMount: 'always',
+    retry: 2,
+    retryDelay: (attempt) => Math.min(2000 * (attempt + 1), 8000),
   });
 
   // Invalida ao trocar empresa/grupo
