@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-const EXPAND_SET = new Set(['Cliente', 'Fornecedor', 'Transportadora', 'Colaborador']);
+// Entidades com campo empresas_compartilhadas_ids — precisam de $or expandido
+const EXPAND_SET = new Set(['Cliente', 'Fornecedor', 'Transportadora', 'Colaborador', 'Produto']);
 
 const SIMPLE_CATALOG = new Set([
   'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
@@ -37,14 +38,19 @@ async function expandGroupFilter(base44, entityName, f) {
   const ctxCampo = (entityName === 'Fornecedor' || entityName === 'Transportadora') ? 'empresa_dona_id'
     : (entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id');
 
-  // Caso 1: entidades do EXPAND_SET com empresa_id — inclui legados (empresa_id: null)
+  // Caso 1: entidades do EXPAND_SET com empresa_id — inclui legados + compartilhados
   if (EXPAND_SET.has(entityName) && f?.empresa_id && !f?.$or) {
     const { empresa_id, ...rest } = f;
     const orConds = [
       { [ctxCampo]: empresa_id },
       { empresas_compartilhadas_ids: { $in: [empresa_id] } },
-      { empresa_id: null }, // registros legados sem empresa
     ];
+    // Para Produto: inclui produtos do grupo compartilhados
+    if (entityName === 'Produto') {
+      orConds.push({ compartilhado_grupo: true });
+    } else {
+      orConds.push({ empresa_id: null }); // registros legados sem empresa
+    }
     if (ctxCampo !== 'empresa_id') orConds.push({ empresa_id });
     return { ...rest, $or: orConds };
   }

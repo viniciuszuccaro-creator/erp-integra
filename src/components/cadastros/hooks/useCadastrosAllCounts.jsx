@@ -53,19 +53,26 @@ export default function useCadastrosAllCounts() {
         entityName,
         filter: buildSimpleFilter(entityName, empresaId, groupId),
       }));
-      // Tentativa 1: batch completo
+
+      // Tentativa 1: batch completo (WINDOW=2 no backend, ~54/2 * 500ms ≈ 13s max)
       try {
         const res = await base44.functions.invoke("countEntities", { entities });
         const raw = res?.data?.counts || res?.data || {};
-        if (raw && typeof raw === 'object' && Object.keys(raw).length > 0) return raw;
+        if (raw && typeof raw === 'object' && Object.keys(raw).length > 0) {
+          // Garantir que TODAS as entidades estão no resultado (default 0)
+          const full = {};
+          ALL_ENTITIES.forEach(e => { full[e] = Number(raw[e]) || 0; });
+          return full;
+        }
       } catch (_) {}
-      // Tentativa 2: batches de 5 com delay anti-429
+
+      // Tentativa 2: batches de 8 com delay anti-429
       const result = {};
-      const BATCH = 5;
+      const BATCH = 8;
       for (let i = 0; i < entities.length; i += BATCH) {
         const slice = entities.slice(i, i + BATCH);
         try {
-          if (i > 0) await new Promise(r => setTimeout(r, 500));
+          if (i > 0) await new Promise(r => setTimeout(r, 600));
           const res = await base44.functions.invoke("countEntities", { entities: slice });
           const raw = res?.data?.counts || res?.data || {};
           Object.assign(result, raw);

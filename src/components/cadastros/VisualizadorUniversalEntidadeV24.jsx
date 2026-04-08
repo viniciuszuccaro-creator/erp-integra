@@ -178,9 +178,10 @@ function buildFormProps(editItem, onClose, onSubmit) {
 }
 
 function invalidateAll(qc, entity) {
-  qc.invalidateQueries({ queryKey: ["viz-v33", entity], refetchType: "active" });
-  qc.invalidateQueries({ queryKey: ["entityCounts_v5"], refetchType: "active" });
-  qc.invalidateQueries({ queryKey: ["cadastros-all-counts-v5"], refetchType: "active" });
+  // refetchType: 'all' garante que queries inativas (ex.: troca de aba) também revalidam
+  qc.invalidateQueries({ queryKey: ["viz-v33", entity] });
+  qc.invalidateQueries({ queryKey: ["entityCounts_v5"] });
+  qc.invalidateQueries({ queryKey: ["cadastros-all-counts-v5"] });
 }
 
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────────────
@@ -328,9 +329,11 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [rawItems, isFetching, isError, status]);
 
   // Reset do cache quando muda de entidade, empresa, grupo ou busca
+  // NÃO reseta ao mudar sort/page para manter estabilidade visual
   useEffect(function() {
     lastGoodData.current = [];
     everLoadedRef.current = false;
+    setPage(1);
   }, [ENTITY, empresaId, groupId, debouncedSearch]);
 
   // Subscribe para invalidar quando houver mudanças na entidade
@@ -362,13 +365,14 @@ export default function VisualizadorUniversalEntidadeV24({
     setShowForm(false);
     setEditItem(null);
     setEditError(null);
-    invalidateAll(queryClient, ENTITY);
     if (wasSaved) {
-      // Novos cadastros no topo; NÃO reseta lastGoodData para evitar flash de lista vazia
+      // Novos cadastros no topo: sort por updated_date desc, mantém lastGoodData
       setSortField("updated_date");
       setSortDir("desc");
       setPage(1);
     }
+    // Invalida DEPOIS de ajustar o estado para garantir query correta no refetch
+    setTimeout(function() { invalidateAll(queryClient, ENTITY); }, 50);
   }, [ENTITY, queryClient]);
 
   const handlePersistSubmit = useCallback(async function(formData) {
