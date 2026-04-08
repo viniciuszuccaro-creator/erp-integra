@@ -91,7 +91,10 @@ export default function Documentacao() {
         "lastGoodData.current — retornado quando isFetching=true ou status='pending'",
         "handleDelete: remove item localmente em lastGoodData antes do refetch",
         "Skeleton só na carga inicial absoluta (everLoadedRef.current=false e length=0)",
-        "Novos cadastros: staleTime=0 + invalidateAll() + sort reset para updated_date desc",
+        "Novos cadastros: staleTime=0 + invalidateAll() (refetchType=all) + sort reset updated_date desc",
+        "invalidateAll usa refetchType padrão (all) — invalida queries mesmo inativas (troca de aba)",
+        "Reset de página ao trocar entidade/empresa/grupo/busca (sem flash de lista vazia)",
+        "handleCloseForm invalida após 50ms do reset de estado (query correta no refetch)",
         "Banner overlay 'atualizando…' e 'erro — exibindo cache' (absolutamente posicionados)",
         "FORM_ALIASES cobre todos os forms: tabela, evento, condicao + padrão camelCase"
       ]
@@ -106,6 +109,8 @@ export default function Documentacao() {
         "Auth Dual: funciona com usuário autenticado OU automação agendada sem auth",
         "Layout injeta empresa_id e group_id em todo create/update via wrapEntity",
         "expandGroupFilter: group_id → lista de IDs de todas empresas do grupo",
+        "EXPAND_SET: Cliente, Fornecedor, Transportadora, Colaborador, Produto (empresas_compartilhadas_ids)",
+        "Produto: compartilhado_grupo=true incluído no $or de listagem e contagem",
         "SIMPLE_CATALOG: entidades globais contadas/listadas sem filtro de escopo",
         "sanitizeOnWrite: verifica SIMPLE_CATALOG antes de enforce empresa/grupo"
       ]

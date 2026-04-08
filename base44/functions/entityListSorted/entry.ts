@@ -85,7 +85,8 @@ const SIMPLE_CATALOG = new Set([
   'TabelaPrecoItem', 'CentroOperacao', 'ConfiguracaoDespesaRecorrente',
 ]);
 
-const EXPAND_SET = new Set(['Cliente', 'Fornecedor', 'Transportadora']);
+// Entidades com empresas_compartilhadas_ids ou campos de vinculação múltiplos
+const EXPAND_SET = new Set(['Cliente', 'Fornecedor', 'Transportadora', 'Colaborador', 'Produto']);
 
 function normalizeSortField(entityName, requested) {
   if (!requested || typeof requested !== 'string') return DEFAULT_SORTS[entityName]?.field || 'updated_date';
@@ -148,12 +149,16 @@ async function expandGroupFilter(base44, entityName, f) {
   // empresa_id simples → expande para $or cobrindo todos os campos + registros legados
   if (f?.empresa_id && !f?.$or && !f?.group_id) {
     const { empresa_id, ...rest } = f;
-    const orConds = [{ empresa_id }, { empresa_dona_id: empresa_id }, { empresa_id: null }];
+    const orConds = [{ empresa_id }, { empresa_dona_id: empresa_id }];
+    if (entityName !== 'Produto') orConds.push({ empresa_id: null }); // legados (não para Produto)
     if (EXPAND_SET.has(entityName)) {
       orConds.push({ empresas_compartilhadas_ids: { $in: [empresa_id] } });
     }
     if (entityName === 'Colaborador') {
       orConds.push({ empresa_alocada_id: empresa_id });
+    }
+    if (entityName === 'Produto') {
+      orConds.push({ compartilhado_grupo: true }); // produtos compartilhados do grupo
     }
     return { ...rest, $or: orConds };
   }
@@ -170,13 +175,16 @@ async function expandGroupFilter(base44, entityName, f) {
         { empresa_id: { $in: empresasIds } },
         { empresa_dona_id: { $in: empresasIds } },
         { group_id: groupId },
-        { empresa_id: null }, // registros legados sem empresa
       ];
+      if (entityName !== 'Produto') orConds.push({ empresa_id: null }); // legados
       if (EXPAND_SET.has(entityName)) {
         orConds.push({ empresas_compartilhadas_ids: { $in: empresasIds } });
       }
       if (entityName === 'Colaborador') {
         orConds.push({ empresa_alocada_id: { $in: empresasIds } });
+      }
+      if (entityName === 'Produto') {
+        orConds.push({ compartilhado_grupo: true }); // produtos compartilhados do grupo
       }
       return { ...rest, $or: orConds };
     } catch (_) { /* fallback: usa group_id direto */ }

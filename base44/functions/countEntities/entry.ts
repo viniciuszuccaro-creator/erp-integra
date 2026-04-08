@@ -74,16 +74,15 @@ async function expandGroupFilter(base44, entityName, f) {
       const rest = { ...f };
       delete rest.group_id;
       if (EXPAND_SET.has(entityName)) {
-        return {
-          ...rest,
-          $or: [
-            { [ctxCampo]: { $in: empresasIds } },
-            ...(ctxCampo !== 'empresa_id' ? [{ empresa_id: { $in: empresasIds } }] : []),
-            { empresas_compartilhadas_ids: { $in: empresasIds } },
-            { group_id: groupId },
-            { empresa_id: null }, // registros legados
-          ]
-        };
+        const orConds = [
+          { [ctxCampo]: { $in: empresasIds } },
+          ...(ctxCampo !== 'empresa_id' ? [{ empresa_id: { $in: empresasIds } }] : []),
+          { empresas_compartilhadas_ids: { $in: empresasIds } },
+          { group_id: groupId },
+        ];
+        if (entityName !== 'Produto') orConds.push({ empresa_id: null }); // legados
+        if (entityName === 'Produto') orConds.push({ compartilhado_grupo: true });
+        return { ...rest, $or: orConds };
       }
       return { ...rest, $or: [{ [ctxCampo]: { $in: empresasIds } }, { group_id: groupId }, { empresa_id: null }] };
     } catch (_) { /* fallback */ }
