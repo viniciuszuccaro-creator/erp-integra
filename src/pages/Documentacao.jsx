@@ -69,17 +69,20 @@ export default function Documentacao() {
 
   const padroesTecnicos = [
     {
-      titulo: "Contagens de Entidades (useCadastrosAllCounts V5)",
+      titulo: "Contagens de Entidades (useCadastrosAllCounts V5 — V22.1)",
       icon: "📊",
       cor: "blue",
       items: [
         "54 entidades catalogadas em 6 blocos no Cadastros Gerais",
-        "Stack: countEntities (batch) → fastCount (PAGE=500, retry 429) → useQuery (staleTime=20s)",
-        "WINDOW=2 paralelas + 500ms delay entre janelas (anti rate-limit)",
+        "Stack: countEntities (batch) → fallback batches de 8 c/ 600ms → useQuery (staleTime=20s)",
+        "Normalização final obrigatória: ALL_ENTITIES.forEach → default 0 em tentativa 1 e 2",
         "Invalidação real-time via subscribe em todas as entidades",
         "placeholderData preserva contagens durante re-fetch",
         "SIMPLE_CATALOG (40+ entidades globais): sem filtro de empresa/grupo",
-        "Entidades c/ escopo: empresa_id ou group_id → backend expande $or"
+        "Entidades c/ escopo: empresa_id ou group_id → backend expande $or",
+        "EXPAND_SET: Cliente, Fornecedor, Transportadora, Colaborador, Produto (V22.1)",
+        "Produto: compartilhado_grupo=true no $or de contagem e listagem",
+        "GroupCountBadge nos accordions usa precomputedTotal (sem fetch adicional)"
       ]
     },
     {
@@ -195,6 +198,7 @@ export default function Documentacao() {
           <Badge className="bg-green-600 text-white">ETAPA 2 ✅ 100%</Badge>
           <Badge className="bg-blue-600 text-white">ETAPA 3 ✅ 100%</Badge>
           <Badge className="bg-purple-600 text-white">SDK 0.8.23</Badge>
+          <Badge className="bg-cyan-600 text-white">V22.1 FINAL</Badge>
         </div>
       </div>
 

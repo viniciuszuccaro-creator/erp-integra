@@ -80,7 +80,10 @@ export default function useCadastrosAllCounts() {
           slice.forEach(e => { result[e.entityName] = result[e.entityName] ?? 0; });
         }
       }
-      return result;
+      // Normalização final: garante que TODAS as entidades têm valor (default 0)
+      const full = {};
+      ALL_ENTITIES.forEach(e => { full[e] = Number(result[e]) || 0; });
+      return full;
     },
     staleTime: 20_000,
     gcTime: 10 * 60_000,
