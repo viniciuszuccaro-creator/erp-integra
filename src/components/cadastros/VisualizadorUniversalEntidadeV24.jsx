@@ -66,6 +66,12 @@ const FORM_ALIASES = [
   "gateway","gatewayPagamento","configuracaoDespesaRecorrente","despesaRecorrente",
   "perfilAcesso","perfil","modeloDocumento","apiExterna",
   "webhook","chatbotIntent","chatbotCanal","jobAgendado","eventoNotificacao",
+  // aliases extras para forms que usam nomes específicos (não camelCase da entidade)
+  "evento",       // EventoNotificacaoForm usa { evento }
+  "tabela",       // TabelaFiscalForm usa { tabela }
+  "condicao",     // CondicaoComercialForm usa { condicao }
+  "apiExternaForm", // cobertura extra
+  "webhookForm",    // cobertura extra
 ];
 
 // ─── getDisplayValue: mostra melhor valor disponível para cada célula ───────
