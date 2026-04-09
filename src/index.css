@@ -156,3 +156,30 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+/* === BOTÕES AZUIS GLOBAIS === */
+@layer components {
+  /* Botão primário padrão (shadcn/ui variant=default) */
+  button.bg-primary,
+  [class*="bg-primary"] {
+    background-color: hsl(221.2 83.2% 53.3%) !important;
+    color: #fff !important;
+  }
+
+  /* Botões com bg-slate escuro usados como primários */
+  button.bg-slate-800,
+  button.bg-slate-900,
+  button.bg-gray-800,
+  button.bg-gray-900,
+  button.bg-zinc-800,
+  button.bg-zinc-900 {
+    background-color: hsl(221.2 83.2% 53.3%) !important;
+    color: #fff !important;
+  }
+  button.bg-slate-800:hover,
+  button.bg-slate-900:hover,
+  button.bg-gray-800:hover,
+  button.bg-gray-900:hover {
+    background-color: hsl(221.2 83.2% 45%) !important;
+  }
+}
