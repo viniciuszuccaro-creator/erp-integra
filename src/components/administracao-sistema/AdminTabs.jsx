@@ -20,7 +20,8 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
   const { hasPermission } = usePermissions();
   const canGerais = hasPermission('Sistema', 'Configurações', 'visualizar');
   const canIntegracoes = hasPermission('Sistema', 'Integrações', 'visualizar');
-  const canApps = (typeof isAdmin === 'function' && isAdmin()) || hasPermission('Sistema', 'Integrações', 'gerenciar');
+  // canApps: apenas admin pode ver — Apps & Portais é gerenciamento interno
+  const canApps = typeof isAdmin === 'function' ? isAdmin() : !!isAdmin;
   const canAcessos = hasPermission('Sistema', 'Controle de Acesso', 'visualizar');
   const canSeguranca = hasPermission('Sistema', 'Segurança', 'visualizar');
   const canIA = hasPermission('Sistema', 'IA', 'visualizar');

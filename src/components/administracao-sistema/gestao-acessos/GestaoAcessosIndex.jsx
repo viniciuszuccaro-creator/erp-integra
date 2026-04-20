@@ -48,19 +48,19 @@ export default function GestaoAcessosIndex() {
   }
 
   return (
-    <div className="w-full min-w-0 flex flex-col gap-3 overflow-hidden">
-      {/* Info RBAC — compacto e responsivo */}
-      <div className="flex items-start gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 min-w-0">
+    <div className="w-full flex flex-col gap-3">
+      {/* Info RBAC banner */}
+      <div className="flex items-start gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
         <Shield className="w-4 h-4 flex-shrink-0 text-blue-600 mt-0.5" />
-        <span className="leading-relaxed min-w-0">
+        <span className="leading-relaxed">
           <strong>RBAC ativo</strong> — Perfis controlam acesso granular por módulo/seção/ação. Admins têm acesso total.
           Atribua perfis na aba <em>Usuários</em>.
         </span>
       </div>
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="w-full min-w-0">
-        {/* TabsList com scroll horizontal — nunca espreme em telas pequenas */}
-        <div className="w-full overflow-x-auto pb-1 -mx-1 px-1">
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
+        {/* Scroll horizontal nas abas para não espreme em telas pequenas */}
+        <div className="w-full overflow-x-auto">
           <TabsList className="inline-flex h-auto gap-1 flex-nowrap min-w-max bg-slate-100 p-1 rounded-lg">
             <TabsTrigger value="perfis" className="text-xs px-3 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               🔐 Perfis RBAC
@@ -77,26 +77,26 @@ export default function GestaoAcessosIndex() {
           </TabsList>
         </div>
 
-        <TabsContent value="perfis" className="mt-3 w-full min-w-0">
-          <div className="w-full min-w-0 overflow-x-auto">
+        <TabsContent value="perfis" className="mt-3 w-full">
+          <div className="w-full overflow-auto">
             <CentralPerfisAcesso />
           </div>
         </TabsContent>
 
-        <TabsContent value="usuarios" className="mt-3 w-full min-w-0">
-          <div className="w-full min-w-0 overflow-x-auto">
+        <TabsContent value="usuarios" className="mt-3 w-full">
+          <div className="w-full overflow-auto">
             <GestaoUsuariosAvancada />
           </div>
         </TabsContent>
 
-        <TabsContent value="sod" className="mt-3 w-full min-w-0">
-          <div className="w-full min-w-0 overflow-x-auto">
+        <TabsContent value="sod" className="mt-3 w-full">
+          <div className="w-full overflow-auto">
             <SoDChecker />
           </div>
         </TabsContent>
 
-        <TabsContent value="relatorios" className="mt-3 w-full min-w-0">
-          <div className="w-full min-w-0 overflow-x-auto">
+        <TabsContent value="relatorios" className="mt-3 w-full">
+          <div className="w-full overflow-auto">
             <RelatorioPermissoes perfis={perfis} usuarios={usuarios} empresas={empresas} />
           </div>
         </TabsContent>

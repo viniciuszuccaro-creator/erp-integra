@@ -58,8 +58,8 @@ export default function Cadastros() {
 
       <Tabs value={abaGerenciamento} onValueChange={handleAbaChange}>
         <TabsList className="flex flex-wrap gap-2 mb-2">
-          <TabsTrigger value="cadastros">📋 Cadastros</TabsTrigger>
-          <TabsTrigger value="apps-externos">📱 Apps & Portais</TabsTrigger>
+          <TabsTrigger value="cadastros">📋 Cadastros Gerais</TabsTrigger>
+          <TabsTrigger value="apps-externos">📱 Apps & Portais Externos</TabsTrigger>
         </TabsList>
 
         {/* ABA: APPS EXTERNOS */}

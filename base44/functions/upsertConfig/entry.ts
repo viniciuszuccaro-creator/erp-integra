@@ -26,8 +26,13 @@ Deno.serve(async (req) => {
 
     // MODO 1: update por ID direto
     if (id) {
-      const updated = await api.update(id, data);
-      return Response.json({ record: updated, _ts: Date.now() });
+      // Garante que chave está no payload do update (necessário para manter consistência)
+      const updateData = { ...data };
+      if (chave && !updateData.chave) updateData.chave = chave;
+      if (scope?.group_id) updateData.group_id = scope.group_id;
+      if (scope?.empresa_id) updateData.empresa_id = scope.empresa_id;
+      const updated = await api.update(id, updateData);
+      return Response.json({ record: updated, id, _ts: Date.now() });
     }
 
     // MODO 2: upsert por chave + scope

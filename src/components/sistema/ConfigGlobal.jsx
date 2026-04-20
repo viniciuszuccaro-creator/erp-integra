@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +33,12 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const gId = grupoId || grupoAtual?.id;
   const canLoad = Boolean(gId || eId);
 
+  // Limpa optimistic e cache de IDs quando empresa/grupo mudar
+  useEffect(() => {
+    setOptimistic({});
+    idCacheRef.current = {};
+  }, [eId, gId]);
+
   // Query via getEntityRecord com asServiceRole — bypassa wrapper do layout totalmente
   const { data: configs = [], refetch, isFetching } = useQuery({
     queryKey: ['config-global-v2', eId ?? 'sem', gId ?? 'sem'],
@@ -54,20 +60,24 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     refetchOnWindowFocus: false,
   });
 
-  // Retorna o registro mais específico para a chave
+  // Retorna o registro mais específico para a chave (prioridade: exato > empresa > grupo > qualquer)
   const getConfig = (chave) => {
     const list = (configs || []).filter(c => c.chave === chave);
+    if (!list.length) return null;
+    // 1) Exato: grupo + empresa
     if (gId && eId) {
       const exact = list.find(c => c.group_id === gId && c.empresa_id === eId);
       if (exact) return exact;
     }
-    if (gId) {
-      const byG = list.find(c => c.group_id === gId && !c.empresa_id);
-      if (byG) return byG;
-    }
+    // 2) Só empresa
     if (eId) {
       const byE = list.find(c => c.empresa_id === eId);
       if (byE) return byE;
+    }
+    // 3) Só grupo
+    if (gId) {
+      const byG = list.find(c => c.group_id === gId);
+      if (byG) return byG;
     }
     return list[0] || null;
   };
@@ -90,37 +100,50 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   // Salva via backend (bypass total do wrapper do layout)
   const upsert = async (chave, categoria, dados) => {
     const scope = getScope();
-    // Se já temos o ID em cache, passa direto para update (mais rápido e confiável)
     const cachedId = idCacheRef.current[chave];
+    // Sempre inclui chave e categoria para garantir consistência no update/create
+    const mergedData = { chave, categoria, ...dados };
     const payload = cachedId
-      ? { id: cachedId, data: { chave, categoria, ...dados, ...scope } }
-      : { chave, data: { categoria, ...dados }, scope };
+      ? { id: cachedId, chave, data: mergedData, scope }
+      : { chave, data: mergedData, scope };
     const res = await base44.functions.invoke('upsertConfig', payload);
-    // Guarda o ID retornado para próximas chamadas
     const returnedId = res?.data?.id || res?.data?.record?.id;
     if (returnedId) idCacheRef.current[chave] = returnedId;
     return res;
   };
 
-  // Toggle: optimistic → upsert → refetch → confirma ou reverte
+  // Toggle: optimistic → upsert → refetch com retry → confirma ou reverte
   const handleToggle = async (chave, categoria, newValue) => {
     if (saving[chave]) return;
     setOptimistic(prev => ({ ...prev, [chave]: newValue }));
     setSaving(prev => ({ ...prev, [chave]: true }));
     try {
-      await upsert(chave, categoria, { ativa: newValue });
-      // Pequeno delay para garantir que o backend persistiu antes do refetch
-      await new Promise(r => setTimeout(r, 400));
-      await queryClient.invalidateQueries({ queryKey: ['config-global-v2'] });
-      const result = await refetch();
-      // Lê o valor real do backend para confirmar
-      const realRecs = result?.data || configs;
-      const saved = (realRecs || []).find(c => c.chave === chave);
-      const realVal = saved ? (typeof saved.ativa === 'boolean' ? saved.ativa : false) : newValue;
-      // Mantém optimistic se o backend confirma; reverte se divergir
+      const res = await upsert(chave, categoria, { ativa: newValue });
+      // Guarda ID imediatamente se vier no retorno
+      const retId = res?.data?.id || res?.data?.record?.id;
+      if (retId) idCacheRef.current[chave] = retId;
+
+      // Aguarda backend persistir (retry até 3x)
+      let realVal = newValue;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await new Promise(r => setTimeout(r, 500 + attempt * 300));
+        await queryClient.invalidateQueries({ queryKey: ['config-global-v2'] });
+        const result = await refetch();
+        const realRecs = Array.isArray(result?.data) ? result.data : configs;
+        const saved = realRecs.find(c => c.chave === chave && (
+          (!eId && !gId) ||
+          (eId && c.empresa_id === eId) ||
+          (gId && c.group_id === gId)
+        ));
+        if (saved && typeof saved.ativa === 'boolean') {
+          realVal = saved.ativa;
+          break;
+        }
+      }
+
       if (realVal !== newValue) {
         setOptimistic(prev => ({ ...prev, [chave]: realVal }));
-        toast({ title: `⚠️ Estado sincronizado com o servidor: ${realVal ? 'Ativado' : 'Desativado'}` });
+        toast({ title: `⚠️ Sincronizado: ${realVal ? 'Ativado' : 'Desativado'}` });
       } else {
         setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
         toast({ title: `✅ ${newValue ? 'Ativado' : 'Desativado'} com sucesso!` });
