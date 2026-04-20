@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -8,14 +8,11 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, MessageCircle, Lock } from "lucide-react";
-
-import React from "react";
 import ChatbotIntentForm from "./ChatbotIntentForm";
 import { base44 } from "@/api/base44Client";
 
 // Adapter: mantém a API antiga mas grava/edita na entidade consolidada ChatbotIntent
 export default function ChatbotIntentsForm({ intent, onSubmit, isSubmitting }) {
-  // Mapeia dados legados -> ChatbotIntent
   const toNew = (legacy) => {
     const prioridadeMap = { Baixa: 25, Normal: 50, Alta: 75, Urgente: 100 };
     return {
@@ -34,7 +31,6 @@ export default function ChatbotIntentsForm({ intent, onSubmit, isSubmitting }) {
     };
   };
 
-  // Opcional: converter de novo -> legado (para callbacks existentes)
   const toLegacy = (neo) => ({
     nome_intent: neo?.nome_intent,
     descricao: neo?.descricao,
@@ -51,11 +47,9 @@ export default function ChatbotIntentsForm({ intent, onSubmit, isSubmitting }) {
   const initial = toNew(intent);
 
   const handleSubmit = async (data) => {
-    // Persistir diretamente na entidade consolidada
     if (intent?.id && intent?.__entity === 'ChatbotIntent') {
       await base44.entities.ChatbotIntent.update(intent.id, data);
     } else if (intent?.id && intent?.__entity === 'ChatbotIntents') {
-      // Se veio de registro legado, cria/atualiza correspondente consolidado
       const existentes = await base44.entities.ChatbotIntent.filter({ nome_intent: intent.nome_intent }, undefined, 1);
       if (existentes?.length) {
         await base44.entities.ChatbotIntent.update(existentes[0].id, data);
@@ -65,19 +59,8 @@ export default function ChatbotIntentsForm({ intent, onSubmit, isSubmitting }) {
     } else {
       await base44.entities.ChatbotIntent.create(data);
     }
-
-    // Mantém compatibilidade chamando callback existente com forma legada
-    if (typeof onSubmit === 'function') {
-      onSubmit(toLegacy(data));
-    }
+    if (typeof onSubmit === 'function') onSubmit(toLegacy(data));
   };
 
-  return (
-    <ChatbotIntentForm
-      chatbotIntent={initial}
-      onSubmit={handleSubmit}
-      isSubmitting={isSubmitting}
-      windowMode={false}
-    />
-  );
+  return <ChatbotIntentForm chatbotIntent={initial} onSubmit={handleSubmit} isSubmitting={isSubmitting} windowMode={false} />;
 }

@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import useCadastrosAllCounts, { BLOCOS_ENTITIES } from "@/components/cadastros/hooks/useCadastrosAllCounts";
+import useCadastrosAllCounts from "@/components/cadastros/hooks/useCadastrosAllCounts";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger } from
-"@/components/ui/accordion";
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger
+} from "@/components/ui/accordion";
 import {
-  Users, Building2, Truck, DollarSign, Package,
-  Stars, Cpu, Shield, Database, Zap } from
-"lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/components/ui/use-toast";
+  Users, Building2, Truck, DollarSign, Package, Cpu
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchInput from "@/components/ui/SearchInput";
 import usePermissions from "../components/lib/usePermissions";
@@ -39,7 +32,7 @@ export default function Cadastros() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let t = params.get('tab');
-    if (!t) {try {t = localStorage.getItem('Cadastros_tab');} catch {}}
+    if (!t) { try { t = localStorage.getItem('Cadastros_tab'); } catch {} }
     if (t) setAbaGerenciamento(t);
   }, []);
 
@@ -48,14 +41,8 @@ export default function Cadastros() {
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
-    try {localStorage.setItem('Cadastros_tab', value);} catch {}
+    try { localStorage.setItem('Cadastros_tab', value); } catch {}
   };
-
-  const { empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const { hasPermission } = usePermissions();
-  const { openWindow } = useWindow();
 
   const handleCardClick = (blocoId) => {
     if (acordeonAberto.includes(blocoId)) {
@@ -67,17 +54,15 @@ export default function Cadastros() {
 
   return (
     <div className="h-full w-full p-6 lg:p-8 space-y-6">
-      {/* GERENCIADOR DE JANELAS ABERTAS */}
       <GerenciadorJanelas />
 
-      {/* TABS: CADASTROS */}
       <Tabs value={abaGerenciamento} onValueChange={handleAbaChange}>
         <TabsList className="flex flex-wrap gap-2 mb-2">
           <TabsTrigger value="cadastros">📋 Cadastros</TabsTrigger>
           <TabsTrigger value="apps-externos">📱 Apps & Portais</TabsTrigger>
         </TabsList>
 
-        {/* ABA: APPS EXTERNOS — consolidação de Portal Cliente, App Motorista, etc. */}
+        {/* ABA: APPS EXTERNOS */}
         <TabsContent value="apps-externos" className="mt-6">
           <ExternalAppsHub />
         </TabsContent>
@@ -153,8 +138,8 @@ export default function Cadastros() {
             placeholder="🔍 Busca Universal - Digite para filtrar em todos os 6 blocos simultaneamente..."
             value={searchTerm}
             onChange={(val) => setSearchTerm(val)}
-            className="h-12 text-base shadow-md border-slate-300" />
-          
+            className="h-12 text-base shadow-md border-slate-300"
+          />
 
           {/* ACCORDIONS - 6 BLOCOS */}
           <Accordion type="multiple" value={acordeonAberto} onValueChange={setAcordeonAberto} className="space-y-4">
@@ -254,50 +239,8 @@ export default function Cadastros() {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-
-          
-
-
-
-
-
-          
-
-          <Card className="border-2 border-slate-300 bg-gradient-to-r from-slate-50 to-slate-100">
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
-          </Card>
         </TabsContent>
       </Tabs>
-    </div>);
-
+    </div>
+  );
 }

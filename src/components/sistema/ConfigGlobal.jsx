@@ -134,13 +134,21 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   };
 
   const getConfig = (chave) => {
-    const scope = { group_id: grupoAtual?.id || null, empresa_id: empresaAtual?.id || null };
     const list = (configs || []).filter(c => c.chave === chave);
-    const exact = list.find(c =>
-      ((scope.group_id ? c.group_id === scope.group_id : !c.group_id) &&
-       (scope.empresa_id ? c.empresa_id === scope.empresa_id : !c.empresa_id))
-    );
-    return exact || list[0] || {};
+    // Prioridade: match exato de grupo+empresa, depois só grupo, depois qualquer
+    if (grupoAtual?.id && empresaAtual?.id) {
+      const exact = list.find(c => c.group_id === grupoAtual.id && c.empresa_id === empresaAtual.id);
+      if (exact) return exact;
+    }
+    if (grupoAtual?.id) {
+      const byGroup = list.find(c => c.group_id === grupoAtual.id);
+      if (byGroup) return byGroup;
+    }
+    if (empresaAtual?.id) {
+      const byEmpresa = list.find(c => c.empresa_id === empresaAtual.id);
+      if (byEmpresa) return byEmpresa;
+    }
+    return list[0] || {};
   };
 
   // Lê um valor booleano "ativa" de forma consistente

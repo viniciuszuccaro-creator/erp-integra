@@ -18,17 +18,15 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { toast } from "sonner";
 import {
   Shield, Users, Building2, CheckCircle, XCircle, Plus, Edit, Search, Settings,
-  Eye, Pencil, Trash2, AlertTriangle, RefreshCw, Sparkles, UserPlus, UserCheck,
-  Key, ShieldCheck, CheckSquare, LayoutDashboard, ShoppingCart, DollarSign,
+  Eye, Pencil, Trash2, AlertTriangle, RefreshCw, UserPlus,
+  Key, CheckSquare, LayoutDashboard, ShoppingCart, DollarSign,
   Package, Truck, Factory, UserCircle, FileText, BarChart3, Download,
   MessageCircle, Briefcase, Calendar, Info
 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import { createPageUrl } from "@/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-// ESTRUTURA COMPLETA DO SISTEMA
 const ESTRUTURA_SISTEMA = {
   dashboard: { nome: "Dashboard", icone: LayoutDashboard, cor: "blue", secoes: { principal: { nome: "Visão Geral", abas: ["kpis", "graficos", "alertas"] }, corporativo: { nome: "Dashboard Corporativo", abas: ["multiempresa", "consolidado"] } } },
   comercial: { nome: "Comercial e Vendas", icone: ShoppingCart, cor: "green", secoes: { clientes: { nome: "Clientes", abas: ["lista", "detalhes", "historico", "crm"] }, pedidos: { nome: "Pedidos", abas: ["lista", "novo", "aprovacao", "faturamento"] }, orcamentos: { nome: "Orçamentos", abas: ["lista", "novo", "conversao"] }, tabelas_preco: { nome: "Tabelas de Preço", abas: ["lista", "itens"] }, comissoes: { nome: "Comissões", abas: ["lista", "calculo", "pagamento"] }, notas_fiscais: { nome: "Notas Fiscais", abas: ["emissao", "lista", "cancelamento"] } } },
@@ -158,7 +156,6 @@ export default function CentralPerfisAcesso() {
   };
 
   const temPermissao = (modulo, secao, acao) => formPerfil.permissoes?.[modulo]?.[secao]?.includes(acao) || false;
-
   const contarPermissoesModulo = (modulo) => Object.values(formPerfil.permissoes?.[modulo] || {}).reduce((t, s) => t + (s?.length || 0), 0);
   const contarPermissoesTotal = () => Object.values(formPerfil.permissoes || {}).reduce((t, m) => t + Object.values(m || {}).reduce((s, sec) => s + (sec?.length || 0), 0), 0);
 
@@ -205,7 +202,6 @@ export default function CentralPerfisAcesso() {
 
   return (
     <div className="w-full space-y-4">
-      {/* Header compacto */}
       <div className="flex items-center justify-between flex-wrap gap-3 p-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-white">
         <div className="flex items-center gap-3">
           <Shield className="w-8 h-8" />
@@ -221,7 +217,6 @@ export default function CentralPerfisAcesso() {
         </div>
       </div>
 
-      {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card className="bg-blue-500 text-white"><CardContent className="p-3"><p className="text-2xl font-bold">{stats.totalPerfis}</p><p className="text-xs opacity-90">Perfis</p></CardContent></Card>
         <Card className="bg-green-500 text-white"><CardContent className="p-3"><p className="text-2xl font-bold">{stats.usuariosComPerfil}</p><p className="text-xs opacity-90">Com Perfil</p></CardContent></Card>
@@ -229,13 +224,11 @@ export default function CentralPerfisAcesso() {
         <Card className="bg-indigo-500 text-white"><CardContent className="p-3"><p className="text-2xl font-bold">{stats.cobertura}%</p><p className="text-xs opacity-90">Cobertura RBAC</p><Progress value={stats.cobertura} className="mt-1 h-1 bg-indigo-400" /></CardContent></Card>
       </div>
 
-      {/* Busca */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
         <Input placeholder="Buscar perfis ou usuários..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-10" />
       </div>
 
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="perfis"><Shield className="w-4 h-4 mr-1" />Perfis</TabsTrigger>
@@ -243,7 +236,6 @@ export default function CentralPerfisAcesso() {
           <TabsTrigger value="empresas"><Building2 className="w-4 h-4 mr-1" />Empresas</TabsTrigger>
         </TabsList>
 
-        {/* TAB: PERFIS */}
         <TabsContent value="perfis" className="space-y-3 mt-3">
           <div className="flex justify-end">
             <Button onClick={() => { resetForm(); setPerfilAberto({ novo: true }); }} className="bg-blue-600 hover:bg-blue-700">
@@ -295,7 +287,6 @@ export default function CentralPerfisAcesso() {
           {perfisFiltrados.length === 0 && <div className="text-center py-8 text-slate-500"><Shield className="w-12 h-12 mx-auto mb-2 opacity-30" /><p className="text-sm">Nenhum perfil encontrado</p></div>}
         </TabsContent>
 
-        {/* TAB: USUÁRIOS */}
         <TabsContent value="usuarios" className="mt-3">
           <Card>
             <CardContent className="p-0">
@@ -346,7 +337,6 @@ export default function CentralPerfisAcesso() {
           </Card>
         </TabsContent>
 
-        {/* TAB: EMPRESAS */}
         <TabsContent value="empresas" className="mt-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
@@ -514,7 +504,7 @@ export default function CentralPerfisAcesso() {
               </Select>
             </div>
             <div>
-              <Label className="font-bold mb-2 block flex items-center gap-2"><Building2 className="w-4 h-4 text-purple-600" />Empresas Vinculadas</Label>
+              <Label className="font-bold mb-2 flex items-center gap-2"><Building2 className="w-4 h-4 text-purple-600" />Empresas Vinculadas</Label>
               <Card className="border-purple-200"><CardContent className="p-3 space-y-2 max-h-56 overflow-y-auto">
                 {empresas.length > 0 ? empresas.map(e => {
                   const vinc = usuarioAberto.empresas_vinculadas?.some(v => v.empresa_id === e.id && v.ativo) || false;
@@ -526,7 +516,7 @@ export default function CentralPerfisAcesso() {
               </CardContent></Card>
             </div>
             <div>
-              <Label className="font-bold mb-2 block flex items-center gap-2"><Users className="w-4 h-4 text-blue-600" />Grupos Empresariais</Label>
+              <Label className="font-bold mb-2 flex items-center gap-2"><Users className="w-4 h-4 text-blue-600" />Grupos Empresariais</Label>
               <Card className="border-blue-200"><CardContent className="p-3 space-y-2 max-h-56 overflow-y-auto">
                 {grupos.length > 0 ? grupos.map(g => {
                   const vinc = usuarioAberto.grupos_vinculados?.some(v => v.grupo_id === g.id && v.ativo) || false;
