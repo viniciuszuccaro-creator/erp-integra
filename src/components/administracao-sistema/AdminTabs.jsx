@@ -155,7 +155,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
 
       <TabsContent value="acessos" className="mt-4">
         <ProtectedSection module="Sistema" section={["Controle de Acesso"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</div>}>
-          <div className="w-full min-w-0 overflow-hidden">
+          <div className="w-full min-w-0">
             <GestaoAcessosIndex />
           </div>
         </ProtectedSection>

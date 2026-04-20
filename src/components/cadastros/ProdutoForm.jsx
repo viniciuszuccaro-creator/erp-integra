@@ -389,7 +389,7 @@ Caso contrário, sugira:
                 </div>
               </AlertDescription>
             </Alert>
-          )
+          )}
 
           {modoManual && iaSugestao && (
             <Alert className="border-orange-200 bg-orange-50">

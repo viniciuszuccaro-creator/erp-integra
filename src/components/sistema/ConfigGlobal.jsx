@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,27 +48,27 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
         return Array.isArray(list) ? list : [];
       },
       enabled: canLoadConfigs,
-      staleTime: 60000,
+      staleTime: 0,
+      refetchOnMount: true,
     });
 
   const updateMutation = useMutation({
     mutationFn: async (data) => {
       const { __before, __scope, ...payload } = data || {};
-      // Upsert simples: busca registro existente para o mesmo chave+escopo
-      const match = configs.find(c => {
-        if (c.chave !== payload.chave) return false;
-        const gMatch = payload.group_id ? c.group_id === payload.group_id : !c.group_id;
-        const eMatch = payload.empresa_id ? c.empresa_id === payload.empresa_id : !c.empresa_id;
-        return gMatch && eMatch;
-      });
+      // Busca FRESCA do banco para evitar usar configs stale do closure
+      const freshScope = {};
+      if (grupoAtual?.id) freshScope.group_id = grupoAtual.id;
+      if (empresaAtual?.id) freshScope.empresa_id = empresaAtual.id;
+      const freshList = await base44.entities.ConfiguracaoSistema.filter({ chave: payload.chave, ...freshScope }, '-updated_date', 5);
+      const match = Array.isArray(freshList) ? freshList[0] : null;
       if (match?.id) {
-        return base44.entities.ConfiguracaoSistema.update(match.id, payload);
+        return base44.entities.ConfiguracaoSistema.update(match.id, { ...payload, ...freshScope });
       }
-      return base44.entities.ConfiguracaoSistema.create(payload);
+      return base44.entities.ConfiguracaoSistema.create({ ...payload, ...freshScope });
     },
     onSuccess: async (res, variables) => {
       // Recarrega todos os consumidores
-      queryClient.invalidateQueries({ queryKey: ['config-sistema', empresaAtual?.id || 'sem-empresa', grupoAtual?.id || 'sem-grupo'] });
+      await queryClient.invalidateQueries({ queryKey: ['config-sistema'] });
       queryClient.invalidateQueries({ queryKey: ['configuracaoSistema'] });
       toast({ title: '✅ Configuração salva com sucesso!' });
       try {
@@ -126,21 +127,23 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     return list[0] || null;
   };
 
-  // Lê valor booleano diretamente do campo "ativa" no registro
+  // Lê valor booleano — suporta campo flat "ativa" (novo) e aninhado legado
   const getToggleValue = (chave) => {
     const rec = getConfig(chave);
-    return rec?.ativa === true;
+    if (!rec) return false;
+    // Campo flat (novo padrão)
+    if (typeof rec.ativa === 'boolean') return rec.ativa;
+    // Legado: tentativa de leitura aninhada
+    return false;
   };
 
-  // Salva: upsert simples — { chave, categoria, ativa, group_id, empresa_id }
+  // Salva toggle: upsert com escopo correto — { chave, categoria, ativa, group_id, empresa_id }
   const handleSave = (chave, categoria, dados) => {
     const before = getConfig(chave);
-    const scope = { group_id: grupoAtual?.id || null, empresa_id: empresaAtual?.id || null };
     updateMutation.mutate({
       chave,
       categoria,
       ...dados,
-      ...scope,
       __before: before,
     });
   };
@@ -366,7 +369,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                 </div>
               </div>
 
-              <Button className="w-full" onClick={() => queryClient.invalidateQueries({ queryKey: ['config-sistema', empresaAtual?.id || 'sem-empresa', grupoAtual?.id || 'sem-grupo'] })}>
+              <Button className="w-full" onClick={() => queryClient.invalidateQueries({ queryKey: ['config-sistema'] })}>
                 Recarregar Estado
               </Button>
             </CardContent>

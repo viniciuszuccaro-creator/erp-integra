@@ -48,46 +48,52 @@ export default function GestaoAcessosIndex() {
   }
 
   return (
-    <div className="w-full h-full min-w-0 flex flex-col">
-      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full flex flex-col">
-        {/* TabsList responsiva: não espreme em telas menores */}
-        <div className="w-full overflow-x-auto pb-1">
-          <TabsList className="inline-flex h-auto gap-1 flex-nowrap min-w-max">
-            <TabsTrigger value="perfis" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+    <div className="w-full min-w-0 flex flex-col gap-2">
+      {/* Info RBAC */}
+      <div className="flex items-center gap-2 px-1 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+        <Shield className="w-4 h-4 flex-shrink-0 text-blue-600" />
+        <span>RBAC ativo — Perfis controlam acesso granular por módulo/seção/ação. Admins têm acesso total.</span>
+      </div>
+
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
+        {/* TabsList responsiva com scroll horizontal em telas menores */}
+        <div className="w-full overflow-x-auto pb-1 -mb-px">
+          <TabsList className="inline-flex h-auto gap-1 flex-nowrap min-w-max bg-slate-100 p-1 rounded-lg">
+            <TabsTrigger value="perfis" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               🔐 Perfis RBAC
             </TabsTrigger>
-            <TabsTrigger value="usuarios" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="usuarios" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               👤 Usuários
             </TabsTrigger>
-            <TabsTrigger value="sod" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="sod" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               ⚖️ SoD
             </TabsTrigger>
-            <TabsTrigger value="relatorios" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="relatorios" className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               📊 Relatórios
             </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="perfis" className="mt-3 flex-1 min-h-0">
-          <div className="w-full h-full min-w-0 overflow-x-auto">
+        <TabsContent value="perfis" className="mt-3">
+          <div className="w-full min-w-0 overflow-x-auto">
             <CentralPerfisAcesso />
           </div>
         </TabsContent>
 
-        <TabsContent value="usuarios" className="mt-3 flex-1 min-h-0">
-          <div className="w-full h-full min-w-0 overflow-x-auto">
+        <TabsContent value="usuarios" className="mt-3">
+          <div className="w-full min-w-0 overflow-x-auto">
             <GestaoUsuariosAvancada />
           </div>
         </TabsContent>
 
-        <TabsContent value="sod" className="mt-3 flex-1 min-h-0">
-          <div className="w-full h-full min-w-0">
+        <TabsContent value="sod" className="mt-3">
+          <div className="w-full min-w-0">
             <SoDChecker />
           </div>
         </TabsContent>
 
-        <TabsContent value="relatorios" className="mt-3 flex-1 min-h-0">
-          <div className="w-full h-full min-w-0 overflow-x-auto">
+        <TabsContent value="relatorios" className="mt-3">
+          <div className="w-full min-w-0 overflow-x-auto">
             <RelatorioPermissoes perfis={perfis} usuarios={usuarios} empresas={empresas} />
           </div>
         </TabsContent>
