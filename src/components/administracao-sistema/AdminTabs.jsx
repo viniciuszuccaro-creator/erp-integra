@@ -155,7 +155,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
 
       <TabsContent value="acessos" className="mt-4">
         <ProtectedSection module="Sistema" section={["Controle de Acesso"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</div>}>
-          <div className="w-full min-w-0">
+          <div className="w-full min-w-0 overflow-x-auto">
             <GestaoAcessosIndex />
           </div>
         </ProtectedSection>
@@ -169,7 +169,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
         </ProtectedSection>
       </TabsContent>
 
-      {isAdmin() && (
+      {(typeof isAdmin === 'function' ? isAdmin() : !!isAdmin) && (
         <TabsContent value="seguranca" className="mt-4">
           <ProtectedSection module="Sistema" section={["Segurança"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Segurança.</div>}>
             <div className="w-full h-full">

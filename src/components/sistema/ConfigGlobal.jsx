@@ -209,7 +209,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                 </div>
               </div>
               <div className="flex justify-end">
-                <Link to={createPageUrl('AdministracaoSistema?tab=integracoes')} className="inline-flex items-center px-3 py-2 rounded-md border bg-white hover:bg-slate-50 text-sm">
+                <Link to="/AdministracaoSistema?tab=integracoes" className="inline-flex items-center px-3 py-2 rounded-md border bg-white hover:bg-slate-50 text-sm">
                   Abrir Gerenciamento de Integrações
                 </Link>
               </div>
