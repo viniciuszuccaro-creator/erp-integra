@@ -1,4 +1,5 @@
 import React from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Settings, Users, Shield, FileText, Sparkles, Link2 } from "lucide-react";
@@ -150,66 +151,63 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
 
       <TabsContent value="apps" className="mt-4">
         <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito aos Apps Externos.</div>}>
-          <div className="w-full h-full space-y-4">
-            {/* Hub principal de Apps Externos (Portal Cliente, App Motorista, Chatbot, Produção Mobile) */}
-            <ExternalAppsHub />
-            {/* Atalhos para cadastros de apps externos em Cadastros Gerais */}
-            <Card>
-              <CardContent className="p-4 flex flex-wrap gap-2 items-center">
-                <span className="text-sm text-slate-600 mr-2">Cadastros relacionados em:</span>
-                <Link to="/Cadastros?tab=cadastros" className="inline-flex">
-                  <Button variant="outline" size="sm">Cadastros Gerais → Bloco 6 Tecnologia</Button>
-                </Link>
-                <Link to="/AdministracaoSistema?tab=integracoes" className="inline-flex">
-                  <Button variant="outline" size="sm">Integrações</Button>
-                </Link>
+          <div className="w-full space-y-4">
+            <Card className="border-blue-200 bg-blue-50">
+              <CardContent className="p-5">
+                <div className="flex items-start gap-3">
+                  <Link2 className="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-blue-900 mb-1">Apps & Portais Externos foram consolidados</h3>
+                    <p className="text-sm text-blue-700 mb-3">
+                      Portal do Cliente, App Motorista, Chatbot Dashboard, Apontamento de Produção e Chat do Cliente estão centralizados em <strong>Cadastros Gerais → aba "Apps & Portais"</strong>.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Link to="/Cadastros?tab=apps-externos" className="inline-flex">
+                        <Button className="bg-blue-600 hover:bg-blue-700">Ir para Apps & Portais em Cadastros</Button>
+                      </Link>
+                      <Link to="/AdministracaoSistema?tab=integracoes" className="inline-flex">
+                        <Button variant="outline">Configurar Integrações</Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
+            {/* Mantém o hub aqui também para acesso rápido sem sair da tela */}
+            <ExternalAppsHub />
           </div>
         </ProtectedSection>
       </TabsContent>
 
       <TabsContent value="acessos" className="mt-4">
         <ProtectedSection module="Sistema" section={["Controle de Acesso"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</div>}>
-          <div className="w-full h-full flex flex-col gap-4">
-            {/* Linha 1: Usuários + Perfis — ocupam 100% e quebram para coluna em mobile */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              <Card className="w-full min-w-0">
-                <CardContent className="p-4">
-                  <h2 className="font-semibold mb-3">Gestão de Usuários</h2>
-                  <div className="w-full overflow-x-auto">
-                    <GestaoUsuariosAvancada />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="w-full min-w-0">
-                <CardContent className="p-4">
-                  <h2 className="font-semibold mb-3">Perfis de Acesso (RBAC)</h2>
-                  <div className="w-full overflow-x-auto">
-                    <CentralPerfisAcesso />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            {/* Linha 2: Monitor Realtime + Sessões + SoD */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              <Card className="w-full min-w-0 md:col-span-2 xl:col-span-2">
-                <CardContent className="p-4">
-                  <h2 className="font-semibold mb-3">Monitoramento de Acesso em Tempo Real</h2>
+          <div className="w-full flex flex-col gap-4 min-w-0">
+            {/* Perfis ocupa tela cheia — componente mais completo */}
+            <Card className="w-full min-w-0 overflow-hidden">
+              <CardContent className="p-3 sm:p-4 w-full min-w-0 overflow-x-auto">
+                <h2 className="font-semibold mb-3 text-sm sm:text-base">Perfis de Acesso (RBAC) e Usuários</h2>
+                <CentralPerfisAcesso />
+              </CardContent>
+            </Card>
+            {/* Monitor + Sessões em grid responsivo */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full min-w-0">
+              <Card className="w-full min-w-0 overflow-hidden">
+                <CardContent className="p-3 sm:p-4 overflow-x-auto">
+                  <h2 className="font-semibold mb-3 text-sm sm:text-base">Monitor de Acesso em Tempo Real</h2>
                   <MonitorAcessoRealtimeSection />
                 </CardContent>
               </Card>
-              <Card className="w-full min-w-0">
-                <CardContent className="p-4">
-                  <h2 className="font-semibold mb-3">Gestão de Sessões</h2>
+              <Card className="w-full min-w-0 overflow-hidden">
+                <CardContent className="p-3 sm:p-4 overflow-x-auto">
+                  <h2 className="font-semibold mb-3 text-sm sm:text-base">Gestão de Sessões</h2>
                   <GerenciadorSessoes />
                 </CardContent>
               </Card>
             </div>
-            {/* Linha 3: SoD */}
-            <Card className="w-full min-w-0">
-              <CardContent className="p-4">
-                <h2 className="font-semibold mb-3">Verificação SoD — Segregação de Funções</h2>
+            {/* SoD */}
+            <Card className="w-full min-w-0 overflow-hidden">
+              <CardContent className="p-3 sm:p-4">
+                <h2 className="font-semibold mb-3 text-sm sm:text-base">Verificação SoD — Segregação de Funções</h2>
                 <SoDChecker />
               </CardContent>
             </Card>
