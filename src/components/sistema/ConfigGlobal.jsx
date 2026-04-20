@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,494 +9,327 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  Settings,
-  Link2,
-  FileText,
-  MessageSquare,
-  Sparkles,
-  Bell,
-  Shield,
-  Database,
-  Bolt
-} from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Settings, Link2, FileText, Sparkles, Bell, Shield } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
 /**
- * Painel de Configuração Global do Sistema
- * Administradores configuram integrações, IA, notificações e padrões
+ * ConfigGlobal — Painel de configuração global do sistema.
+ * Toggles persistem diretamente via upsert pelo entity SDK (asServiceRole via backend).
+ * Estado optimista local para UX imediata; refetch após save confirma o real.
  */
 export default function ConfigGlobal({ empresaId, grupoId }) {
   const [activeTab, setActiveTab] = useState('integracoes');
-  // Estado local optimistic para os toggles — evita "volta ao anterior" após refresh
-  const [pendingToggles, setPendingToggles] = useState({});
+  const [saving, setSaving] = useState({});
+  const [optimistic, setOptimistic] = useState({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
-  const canLoadConfigs = Boolean(grupoAtual?.id || empresaAtual?.id);
+  const eId = empresaId || empresaAtual?.id;
+  const gId = grupoId || grupoAtual?.id;
+  const canLoad = Boolean(gId || eId);
 
-  // Query com fetch direto via função backend para evitar interceptação do wrapper do layout
-  const { data: configs = [], refetch } = useQuery({
-    queryKey: ['config-global', empresaAtual?.id ?? 'sem', grupoAtual?.id ?? 'sem'],
+  // Query direta via SDK asServiceRole (não passa pelo wrapper de layout)
+  const { data: configs = [], refetch, isFetching } = useQuery({
+    queryKey: ['config-global-v2', eId ?? 'sem', gId ?? 'sem'],
     queryFn: async () => {
-      try {
-        const res = await base44.functions.invoke('getEntityRecord', {
-          entityName: 'ConfiguracaoSistema',
-          filter: {
-            ...(grupoAtual?.id ? { group_id: grupoAtual.id } : {}),
-            ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
-          },
-          limit: 200,
-        });
-        const list = res?.data;
-        if (Array.isArray(list)) return list;
-      } catch {}
-      // fallback direto
       const filtro = {};
-      if (grupoAtual?.id) filtro.group_id = grupoAtual.id;
-      if (empresaAtual?.id) filtro.empresa_id = empresaAtual.id;
-      const list2 = await base44.entities.ConfiguracaoSistema.filter(filtro, '-updated_date', 200).catch(() => []);
-      return Array.isArray(list2) ? list2 : [];
+      if (gId) filtro.group_id = gId;
+      if (eId) filtro.empresa_id = eId;
+      const res = await base44.functions.invoke('getEntityRecord', {
+        entityName: 'ConfiguracaoSistema',
+        filter: filtro,
+        limit: 300,
+      });
+      const list = res?.data;
+      if (Array.isArray(list) && list.length > 0) return list;
+      // fallback via entities direct
+      const filtro2 = {};
+      if (gId) filtro2.group_id = gId;
+      if (eId) filtro2.empresa_id = eId;
+      const raw = await base44.entities.ConfiguracaoSistema.filter(filtro2, '-updated_date', 300).catch(() => []);
+      return Array.isArray(raw) ? raw : [];
     },
-    enabled: canLoadConfigs,
+    enabled: canLoad,
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async (data) => {
-      const { __before, __scope, ...payload } = data || {};
-      const freshScope = {};
-      if (grupoAtual?.id) freshScope.group_id = grupoAtual.id;
-      if (empresaAtual?.id) freshScope.empresa_id = empresaAtual.id;
-      // Usa função backend para bypass total do wrapper de entidades do layout
-      try {
-        const res = await base44.functions.invoke('getEntityRecord', {
-          entityName: 'ConfiguracaoSistema',
-          filter: { chave: payload.chave, ...freshScope },
-          limit: 1,
-        });
-        const list = res?.data;
-        const match = Array.isArray(list) ? list[0] : null;
-        if (match?.id) {
-          return base44.entities.ConfiguracaoSistema.update(match.id, { ...payload, ...freshScope });
-        }
-      } catch {}
-      // fallback: busca local
-      const freshList = await base44.entities.ConfiguracaoSistema.filter(
-        { chave: payload.chave, ...freshScope }, '-updated_date', 1
-      ).catch(() => []);
-      const match2 = Array.isArray(freshList) ? freshList[0] : null;
-      if (match2?.id) {
-        return base44.entities.ConfiguracaoSistema.update(match2.id, { ...payload, ...freshScope });
-      }
-      return base44.entities.ConfiguracaoSistema.create({ ...payload, ...freshScope });
-    },
-    onSuccess: async (res, variables) => {
-      const chave = variables?.chave;
-      // Invalidar e forçar refetch ANTES de limpar pending (novo dado já no cache)
-      await queryClient.invalidateQueries({ queryKey: ['config-global'] });
-      const fresh = await refetch();
-      // Só remove o pending depois que o dado fresco chegou
-      if (chave) {
-        const freshList = fresh?.data;
-        if (Array.isArray(freshList)) {
-          const freshRec = freshList.find(c => c.chave === chave);
-          // Se o dado do banco bater com o que salvamos, remove o pending
-          if (freshRec && typeof freshRec.ativa === 'boolean') {
-            setPendingToggles(prev => { const n = {...prev}; delete n[chave]; return n; });
-          }
-        } else {
-          setPendingToggles(prev => { const n = {...prev}; delete n[chave]; return n; });
-        }
-      }
-      toast({ title: '✅ Configuração salva!' });
-      try {
-        const me = await base44.auth.me();
-        const before = variables?.__before || null;
-        const { __before: _b, __scope: _s, ...afterClean } = variables || {};
-        // Auditoria via função padronizada (formato de automação de entidade)
-        try {
-          const eventType = before?.id ? 'update' : 'create';
-          await base44.functions.invoke('auditEntityEvents', {
-            event: {
-              type: eventType,
-              entity_name: 'ConfiguracaoSistema',
-              entity_id: res?.id || before?.id || null
-            },
-            data: res || afterClean,
-            old_data: before || null
-          });
-        } catch {}
-        // Log complementar direto
-        await base44.entities.AuditLog.create({
-          usuario: me?.full_name || me?.email || 'Usuário',
-          usuario_id: me?.id,
-          acao: 'Edição',
-          modulo: 'Sistema',
-          tipo_auditoria: 'entidade',
-          entidade: 'ConfiguracaoSistema',
-          descricao: `Alteração: ${afterClean?.chave}`,
-          dados_anteriores: before,
-          dados_novos: res || afterClean,
-          empresa_id: empresaAtual?.id || null,
-          group_id: grupoAtual?.id || null,
-          data_hora: new Date().toISOString(),
-        });
-      } catch {}
-    }
-  });
-
-  // Cada toggle usa chave simples: o valor fica em rec.valor (booleano) ou rec.ativa
-  // Estrutura de persistência: { chave: 'notif_pedido_aprovado', categoria: 'Notificacoes', ativa: true/false, ... }
+  // Retorna o registro mais específico para a chave
   const getConfig = (chave) => {
     const list = (configs || []).filter(c => c.chave === chave);
-    // Prioridade: match exato de grupo+empresa, depois só grupo, depois só empresa, depois qualquer
-    if (grupoAtual?.id && empresaAtual?.id) {
-      const exact = list.find(c => c.group_id === grupoAtual.id && c.empresa_id === empresaAtual.id);
+    if (gId && eId) {
+      const exact = list.find(c => c.group_id === gId && c.empresa_id === eId);
       if (exact) return exact;
     }
-    if (grupoAtual?.id) {
-      const byGroup = list.find(c => c.group_id === grupoAtual.id && !c.empresa_id);
-      if (byGroup) return byGroup;
+    if (gId) {
+      const byG = list.find(c => c.group_id === gId && !c.empresa_id);
+      if (byG) return byG;
     }
-    if (empresaAtual?.id) {
-      const byEmpresa = list.find(c => c.empresa_id === empresaAtual.id);
-      if (byEmpresa) return byEmpresa;
+    if (eId) {
+      const byE = list.find(c => c.empresa_id === eId);
+      if (byE) return byE;
     }
     return list[0] || null;
   };
 
-  // Lê valor booleano — usa estado optimistic local se houver pending
+  // Lê o valor do toggle: optimistic tem prioridade
   const getToggleValue = (chave) => {
-    // Estado optimistic tem prioridade enquanto mutação está em voo
-    if (chave in pendingToggles) return pendingToggles[chave];
+    if (chave in optimistic) return optimistic[chave];
     const rec = getConfig(chave);
     if (!rec) return false;
-    if (typeof rec.ativa === 'boolean') return rec.ativa;
-    return false;
+    return typeof rec.ativa === 'boolean' ? rec.ativa : false;
   };
 
-  // Salva toggle: set optimistic imediato + upsert
-  const handleSave = (chave, categoria, dados) => {
-    // Atualiza UI imediatamente (optimistic)
-    if ('ativa' in dados) {
-      setPendingToggles(prev => ({ ...prev, [chave]: dados.ativa }));
-    }
-    const before = getConfig(chave);
-    updateMutation.mutate({ chave, categoria, ...dados, __before: before });
+  const getScope = () => {
+    const scope = {};
+    if (gId) scope.group_id = gId;
+    if (eId) scope.empresa_id = eId;
+    return scope;
   };
+
+  // Salva via backend (bypass total do wrapper do layout)
+  const upsert = async (chave, categoria, dados) => {
+    const scope = getScope();
+    await base44.functions.invoke('upsertConfig', {
+      chave,
+      data: { categoria, ...dados },
+      scope,
+    });
+  };
+
+  // Toggle: optimistic → upsert → refetch → limpa optimistic
+  const handleToggle = async (chave, categoria, newValue) => {
+    if (saving[chave]) return;
+    setOptimistic(prev => ({ ...prev, [chave]: newValue }));
+    setSaving(prev => ({ ...prev, [chave]: true }));
+    try {
+      await upsert(chave, categoria, { ativa: newValue });
+      await queryClient.invalidateQueries({ queryKey: ['config-global-v2'] });
+      const fresh = await refetch();
+      const freshList = fresh?.data;
+      if (Array.isArray(freshList)) {
+        const freshRec = freshList.find(c => c.chave === chave);
+        if (freshRec && typeof freshRec.ativa === 'boolean') {
+          setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
+        }
+      }
+      toast({ title: `✅ ${newValue ? 'Ativado' : 'Desativado'} com sucesso!` });
+    } catch (err) {
+      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
+      toast({ title: '❌ Erro ao salvar', description: String(err?.message || err), variant: 'destructive' });
+    } finally {
+      setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
+    }
+  };
+
+  // Campo genérico (input/textarea)
+  const handleSaveField = async (chave, categoria, dados) => {
+    if (saving[chave]) return;
+    setSaving(prev => ({ ...prev, [chave]: true }));
+    try {
+      await upsert(chave, categoria, dados);
+      await queryClient.invalidateQueries({ queryKey: ['config-global-v2'] });
+      await refetch();
+      toast({ title: '✅ Configuração salva!' });
+    } catch (err) {
+      toast({ title: '❌ Erro ao salvar', description: String(err?.message || err), variant: 'destructive' });
+    } finally {
+      setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
+    }
+  };
+
+  const ToggleRow = ({ chave, categoria, label, desc, permId }) => (
+    <div className="flex items-center justify-between p-3 border rounded-lg">
+      <div className="flex-1 min-w-0 mr-3">
+        <p className="font-medium text-sm">{label}</p>
+        {desc && <p className="text-xs text-slate-500 mt-0.5">{desc}</p>}
+      </div>
+      <Switch
+        checked={getToggleValue(chave)}
+        disabled={!!saving[chave] || isFetching}
+        onCheckedChange={(checked) => handleToggle(chave, categoria, checked)}
+        data-permission={permId}
+      />
+    </div>
+  );
+
+  if (!canLoad) {
+    return (
+      <div className="p-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg">
+        ⚠️ Selecione uma empresa ou grupo para carregar as configurações.
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">
-          Configurações Globais do Sistema
-        </h2>
-        <p className="text-slate-600">
-          Configurações centralizadas de integrações, IA, notificações e padrões
-        </p>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900">Configurações Globais do Sistema</h2>
+          <p className="text-sm text-slate-500">Integrações, IA, notificações e segurança</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => { queryClient.invalidateQueries({ queryKey: ['config-global-v2'] }); refetch(); }}>
+          🔄 Atualizar
+        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-white border shadow-sm">
-          <TabsTrigger value="integracoes" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <Link2 className="w-4 h-4 mr-2" />
-            Integrações
-          </TabsTrigger>
-          <TabsTrigger value="fiscal" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <FileText className="w-4 h-4 mr-2" />
-            Fiscal
-          </TabsTrigger>
-          <TabsTrigger value="ia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <Sparkles className="w-4 h-4 mr-2" />
-            IA
-          </TabsTrigger>
-          <TabsTrigger value="notificacoes" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <Bell className="w-4 h-4 mr-2" />
-            Notificações
-          </TabsTrigger>
-          <TabsTrigger value="seguranca" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <Shield className="w-4 h-4 mr-2" />
-            Segurança
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="inline-flex flex-nowrap min-w-max bg-white border shadow-sm">
+            <TabsTrigger value="integracoes"><Link2 className="w-4 h-4 mr-1.5" />Integrações</TabsTrigger>
+            <TabsTrigger value="fiscal"><FileText className="w-4 h-4 mr-1.5" />Fiscal</TabsTrigger>
+            <TabsTrigger value="ia"><Sparkles className="w-4 h-4 mr-1.5" />IA</TabsTrigger>
+            <TabsTrigger value="notificacoes"><Bell className="w-4 h-4 mr-1.5" />Notificações</TabsTrigger>
+            <TabsTrigger value="seguranca"><Shield className="w-4 h-4 mr-1.5" />Segurança</TabsTrigger>
+          </TabsList>
+        </div>
 
-        {/* ABA: INTEGRAÇÕES (CONSOLIDADO) */}
-        <TabsContent value="integracoes" className="space-y-6">
+        {/* INTEGRAÇÕES */}
+        <TabsContent value="integracoes" className="space-y-4 mt-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Integrações (Consolidado)</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-slate-600">O gerenciamento completo de integrações foi consolidado na aba principal de Integrações.</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="p-3 border rounded-lg bg-white">
-                  <div className="text-xs text-slate-500 mb-1">NF-e</div>
-                  <div className="text-sm font-medium">{getConfig('integracao_nfe')?.integracao_nfe?.ativa ? 'Ativo' : 'Inativo'}</div>
-                </div>
-                <div className="p-3 border rounded-lg bg-white">
-                  <div className="text-xs text-slate-500 mb-1">Boleto/PIX</div>
-                  <div className="text-sm font-medium">{getConfig('integracao_boletos')?.integracao_boletos?.ativa ? 'Ativo' : 'Inativo'}</div>
-                </div>
-                <div className="p-3 border rounded-lg bg-white">
-                  <div className="text-xs text-slate-500 mb-1">Google Maps</div>
-                  <div className="text-sm font-medium">{getConfig('integracao_maps')?.integracao_maps?.ativa ? 'Ativo' : 'Inativo'}</div>
-                </div>
-                <div className="p-3 border rounded-lg bg-white">
-                  <div className="text-xs text-slate-500 mb-1">WhatsApp</div>
-                  <div className="text-sm font-medium">{getConfig('integracao_whatsapp')?.integracao_whatsapp?.ativa ? 'Ativo' : 'Inativo'}</div>
-                </div>
+            <CardHeader><CardTitle className="text-base">Status das Integrações</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-slate-600">Configurações completas estão em <strong>Administração do Sistema → Integrações</strong>.</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {['integracao_nfe', 'integracao_boletos', 'integracao_maps', 'integracao_whatsapp'].map((chave) => {
+                  const labels = { integracao_nfe: 'NF-e', integracao_boletos: 'Boleto/PIX', integracao_maps: 'Google Maps', integracao_whatsapp: 'WhatsApp' };
+                  const rec = getConfig(chave);
+                  const sub = rec?.[chave];
+                  const ativo = !!(sub?.ativa || sub?.api_key);
+                  return (
+                    <div key={chave} className="p-3 border rounded-lg bg-white">
+                      <div className="text-xs text-slate-500 mb-1">{labels[chave]}</div>
+                      <Badge className={ativo ? 'bg-green-100 text-green-700 border-green-200' : 'bg-slate-100 text-slate-500'}>
+                        {ativo ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="flex justify-end">
-                <Link to="/AdministracaoSistema?tab=integracoes" className="inline-flex items-center px-3 py-2 rounded-md border bg-white hover:bg-slate-50 text-sm">
-                  Abrir Gerenciamento de Integrações
-                </Link>
-              </div>
+              <Link to="/AdministracaoSistema?tab=integracoes">
+                <Button variant="outline" size="sm">Gerenciar Integrações →</Button>
+              </Link>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ABA: FISCAL */}
-        <TabsContent value="fiscal" className="space-y-6">
+        {/* FISCAL */}
+        <TabsContent value="fiscal" className="space-y-4 mt-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Configurações Fiscais Padrão</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="text-base">Configurações Fiscais Padrão</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>CFOP Padrão - Dentro do Estado</Label>
-                  <Input defaultValue="5102" placeholder="5102" />
+                  <Label>CFOP Padrão — Dentro do Estado</Label>
+                  <Input defaultValue={getConfig('fiscal_cfop_interno')?.valor || '5102'} placeholder="5102"
+                    onBlur={(e) => handleSaveField('fiscal_cfop_interno', 'Fiscal', { valor: e.target.value })} />
                 </div>
                 <div>
-                  <Label>CFOP Padrão - Fora do Estado</Label>
-                  <Input defaultValue="6102" placeholder="6102" />
+                  <Label>CFOP Padrão — Fora do Estado</Label>
+                  <Input defaultValue={getConfig('fiscal_cfop_externo')?.valor || '6102'} placeholder="6102"
+                    onBlur={(e) => handleSaveField('fiscal_cfop_externo', 'Fiscal', { valor: e.target.value })} />
                 </div>
               </div>
-
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label>Alíquota ICMS Padrão (%)</Label>
-                  <Input type="number" defaultValue="18" placeholder="18" />
+                  <Label>Alíquota ICMS (%)</Label>
+                  <Input type="number" defaultValue={getConfig('fiscal_aliq_icms')?.numero || 18} placeholder="18"
+                    onBlur={(e) => handleSaveField('fiscal_aliq_icms', 'Fiscal', { numero: Number(e.target.value) })} />
                 </div>
                 <div>
                   <Label>Alíquota PIS (%)</Label>
-                  <Input type="number" defaultValue="1.65" placeholder="1.65" />
+                  <Input type="number" defaultValue={getConfig('fiscal_aliq_pis')?.numero || 1.65} placeholder="1.65"
+                    onBlur={(e) => handleSaveField('fiscal_aliq_pis', 'Fiscal', { numero: Number(e.target.value) })} />
                 </div>
                 <div>
                   <Label>Alíquota COFINS (%)</Label>
-                  <Input type="number" defaultValue="7.6" placeholder="7.6" />
+                  <Input type="number" defaultValue={getConfig('fiscal_aliq_cofins')?.numero || 7.6} placeholder="7.6"
+                    onBlur={(e) => handleSaveField('fiscal_aliq_cofins', 'Fiscal', { numero: Number(e.target.value) })} />
                 </div>
               </div>
-
               <div>
                 <Label>Observações Padrão NF-e</Label>
-                <Textarea 
-                  placeholder="Observações que aparecerão em todas as notas..."
-                  rows={3}
-                />
-              </div>
-
-              <Button onClick={() => toast({ title: '✅ Configurações fiscais salvas!' })}>
-                Salvar Configurações Fiscais
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* ABA: IA (CONSOLIDADA) */}
-        <TabsContent value="ia" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-600" />
-                Inteligência Artificial (Consolidado)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-slate-600">Os módulos de IA foram consolidados na aba principal “IA & Otimização”.</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3 border rounded-lg bg-white">
-                  <div className="text-xs text-slate-500 mb-1">Leitura de Projetos</div>
-                  <div className="text-sm font-medium">{getConfig('ia_leitura_projetos')?.ia?.ativa ? 'Ativo' : 'Inativo'}</div>
-                </div>
-                <div className="p-3 border rounded-lg bg-white">
-                  <div className="text-xs text-slate-500 mb-1">Preditivo de Vendas</div>
-                  <div className="text-sm font-medium">{getConfig('ia_preditiva_vendas')?.ia?.ativa ? 'Ativo' : 'Inativo'}</div>
-                </div>
-                <div className="p-3 border rounded-lg bg-white">
-                  <div className="text-xs text-slate-500 mb-1">Conciliação Bancária</div>
-                  <div className="text-sm font-medium">{getConfig('ia_conciliacao')?.ia?.ativa ? 'Ativo' : 'Inativo'}</div>
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Link to={createPageUrl('AdministracaoSistema?tab=ia')} className="inline-flex items-center px-3 py-2 rounded-md border bg-white hover:bg-slate-50 text-sm">
-                  Abrir IA & Otimização
-                </Link>
+                <Textarea placeholder="Observações que aparecerão em todas as notas..." rows={2}
+                  defaultValue={getConfig('fiscal_obs_nfe')?.valor || ''}
+                  onBlur={(e) => handleSaveField('fiscal_obs_nfe', 'Fiscal', { valor: e.target.value })} />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ABA: NOTIFICAÇÕES */}
-        <TabsContent value="notificacoes" className="space-y-6">
+        {/* IA */}
+        <TabsContent value="ia" className="space-y-4 mt-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Notificações Automáticas</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">Pedido Aprovado</p>
-                    <p className="text-sm text-slate-600">Notifica cliente quando pedido for aprovado</p>
-                  </div>
-                  <Switch
-                    checked={getToggleValue('notif_pedido_aprovado')}
-                    onCheckedChange={(checked)=>handleSave('notif_pedido_aprovado','Notificacoes',{ativa: checked})}
-                    data-permission="Sistema.Configurações.editar"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">Entrega Saiu para Transporte</p>
-                    <p className="text-sm text-slate-600">Envia link de rastreamento</p>
-                  </div>
-                  <Switch
-                    checked={getToggleValue('notif_entrega_transporte')}
-                    onCheckedChange={(checked)=>handleSave('notif_entrega_transporte','Notificacoes',{ativa: checked})}
-                    data-permission="Sistema.Configurações.editar"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">Boleto Gerado</p>
-                    <p className="text-sm text-slate-600">Envia boleto/PIX por WhatsApp e e-mail</p>
-                  </div>
-                  <Switch
-                    checked={getToggleValue('notif_boleto_gerado')}
-                    onCheckedChange={(checked)=>handleSave('notif_boleto_gerado','Notificacoes',{ativa: checked})}
-                    data-permission="Sistema.Configurações.editar"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">Título Vencido</p>
-                    <p className="text-sm text-slate-600">Alerta de inadimplência</p>
-                  </div>
-                  <Switch
-                    checked={getToggleValue('notif_titulo_vencido')}
-                    onCheckedChange={(checked)=>handleSave('notif_titulo_vencido','Notificacoes',{ativa: checked})}
-                    data-permission="Sistema.Configurações.editar"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">OP Atrasada</p>
-                    <p className="text-sm text-slate-600">Alerta para gerente de produção</p>
-                  </div>
-                  <Switch
-                    checked={getToggleValue('notif_op_atrasada')}
-                    onCheckedChange={(checked)=>handleSave('notif_op_atrasada','Notificacoes',{ativa: checked})}
-                    data-permission="Sistema.Configurações.editar"
-                  />
-                </div>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Sparkles className="w-4 h-4 text-purple-600" />IA & Otimização</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-slate-600">Módulos de IA configurados em <strong>Administração do Sistema → Tecnologia, IA & Parâmetros</strong>.</p>
+              <div className="space-y-2">
+                <ToggleRow chave="ia_leitura_projetos" categoria="Sistema" label="IA Leitura de Projetos" desc="Análise automática de projetos de engenharia" permId="Sistema.IA.editar" />
+                <ToggleRow chave="ia_preditiva_vendas" categoria="Sistema" label="IA Preditiva de Vendas" desc="Previsão de demanda e churn" permId="Sistema.IA.editar" />
+                <ToggleRow chave="ia_conciliacao" categoria="Sistema" label="IA Conciliação Bancária" desc="Conciliação automática de extratos" permId="Sistema.IA.editar" />
+                <ToggleRow chave="ia_producao" categoria="Sistema" label="IA Produção" desc="Otimização de ordens de produção" permId="Sistema.IA.editar" />
               </div>
-
-              <Button className="w-full" variant="outline" onClick={() => { queryClient.invalidateQueries({ queryKey: ['config-global'] }); refetch(); }}>
-                🔄 Recarregar Estado
-              </Button>
+              <Link to={createPageUrl('AdministracaoSistema?tab=ia')}>
+                <Button variant="outline" size="sm">Abrir IA & Otimização →</Button>
+              </Link>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* ABA: SEGURANÇA */}
-        <TabsContent value="seguranca" className="space-y-6">
+        {/* NOTIFICAÇÕES */}
+        <TabsContent value="notificacoes" className="space-y-4 mt-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Segurança e Auditoria</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">Autenticação de Dois Fatores (MFA)</p>
-                    <p className="text-sm text-slate-600">Obrigatório para admins</p>
-                  </div>
-                  <Switch
-                    checked={getToggleValue('seg_mfa')}
-                    onCheckedChange={(checked)=>handleSave('seg_mfa','Seguranca',{ativa: checked})}
-                    data-permission="Sistema.Segurança.editar"
-                  />
-                </div>
+            <CardHeader><CardTitle className="text-base">Notificações Automáticas</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              <ToggleRow chave="notif_pedido_aprovado" categoria="Notificacoes" label="Pedido Aprovado" desc="Notifica cliente quando pedido for aprovado" permId="Sistema.Configurações.editar" />
+              <ToggleRow chave="notif_entrega_transporte" categoria="Notificacoes" label="Entrega Saiu para Transporte" desc="Envia link de rastreamento ao cliente" permId="Sistema.Configurações.editar" />
+              <ToggleRow chave="notif_boleto_gerado" categoria="Notificacoes" label="Boleto/PIX Gerado" desc="Envia boleto por WhatsApp e e-mail" permId="Sistema.Configurações.editar" />
+              <ToggleRow chave="notif_titulo_vencido" categoria="Notificacoes" label="Título Vencido" desc="Alerta de inadimplência" permId="Sistema.Configurações.editar" />
+              <ToggleRow chave="notif_op_atrasada" categoria="Notificacoes" label="OP Atrasada" desc="Alerta para gerente de produção" permId="Sistema.Configurações.editar" />
+              <ToggleRow chave="notif_estoque_baixo" categoria="Notificacoes" label="Estoque Baixo" desc="Alerta quando produto abaixo do mínimo" permId="Sistema.Configurações.editar" />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
+        {/* SEGURANÇA */}
+        <TabsContent value="seguranca" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Segurança e Auditoria</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <ToggleRow chave="seg_mfa" categoria="Seguranca" label="MFA — Autenticação de Dois Fatores" desc="Obrigatório para administradores" permId="Sistema.Segurança.editar" />
+                <ToggleRow chave="seg_logs_completos" categoria="Seguranca" label="Logs de Auditoria Completos" desc="Registra todas as ações críticas" permId="Sistema.Segurança.editar" />
+                <ToggleRow chave="seg_bloqueio_tentativas" categoria="Seguranca" label="Bloquear Tentativas Excessivas" desc="Bloqueia após 5 tentativas de login falhas" permId="Sistema.Segurança.editar" />
                 <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">Logs de Auditoria Completos</p>
-                    <p className="text-sm text-slate-600">Registra todas as ações críticas</p>
+                  <div className="flex-1 min-w-0 mr-3">
+                    <p className="font-medium text-sm">Timeout de Sessão (minutos)</p>
+                    <p className="text-xs text-slate-500">Logout após inatividade</p>
                   </div>
-                  <Switch
-                    checked={getToggleValue('seg_logs_completos')}
-                    onCheckedChange={(checked)=>handleSave('seg_logs_completos','Seguranca',{ativa: checked})}
-                    data-permission="Sistema.Segurança.editar"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">Sessão Automática (Timeout)</p>
-                    <p className="text-sm text-slate-600">Logout após inatividade</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Input type="number" defaultValue={getConfig('seg_timeout')?.minutos || 30} className="w-20" onBlur={(e)=>handleSave('seg_timeout','Seguranca',{minutos: Number(e.target.value)||0})} />
-                    <span className="text-sm text-slate-600">min</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">Bloquear Tentativas Excessivas</p>
-                    <p className="text-sm text-slate-600">Bloqueia após 5 tentativas falhas</p>
-                  </div>
-                  <Switch
-                    checked={getToggleValue('seg_bloqueio_tentativas')}
-                    onCheckedChange={(checked)=>handleSave('seg_bloqueio_tentativas','Seguranca',{ativa: checked})}
-                    data-permission="Sistema.Segurança.editar"
+                  <Input
+                    type="number"
+                    className="w-20"
+                    defaultValue={getConfig('seg_timeout')?.numero || 30}
+                    onBlur={(e) => handleSaveField('seg_timeout', 'Seguranca', { numero: Number(e.target.value) || 30 })}
                   />
                 </div>
               </div>
-
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <p className="font-semibold text-blue-900">Conformidade LGPD</p>
-                    <p className="text-sm text-blue-700 mt-1">
-                      Sistema configurado para conformidade com Lei Geral de Proteção de Dados
-                    </p>
-                    <div className="flex gap-2 mt-3">
-                      <Badge className="bg-green-100 text-green-700">✓ Logs Ativos</Badge>
-                      <Badge className="bg-green-100 text-green-700">✓ Dados Criptografados</Badge>
-                      <Badge className="bg-green-100 text-green-700">✓ Auditoria Completa</Badge>
-                    </div>
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+                <Shield className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-blue-900 text-sm">Conformidade LGPD</p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <Badge className="bg-green-100 text-green-700">✓ Logs Ativos</Badge>
+                    <Badge className="bg-green-100 text-green-700">✓ Dados Criptografados</Badge>
+                    <Badge className="bg-green-100 text-green-700">✓ Auditoria Completa</Badge>
                   </div>
                 </div>
               </div>
-
-              <Button className="w-full">
-                Salvar Configurações de Segurança
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>

@@ -38,11 +38,9 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
             <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> Integrações</div>
           </TabsTrigger>
         )}
-        {canApps && (
-          <TabsTrigger value="apps" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <div className="flex items-center gap-2"><Link2 className="w-4 h-4"/> Apps Externos</div>
-          </TabsTrigger>
-        )}
+        <TabsTrigger value="apps" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <div className="flex items-center gap-2"><Link2 className="w-4 h-4"/> Apps & Portais</div>
+        </TabsTrigger>
         {canAcessos && (
           <TabsTrigger value="acessos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <div className="flex items-center gap-2"><Users className="w-4 h-4"/> Gestão de Acessos</div>
@@ -55,7 +53,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
         )}
         {canIA && (
           <TabsTrigger value="ia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> Tecnologia, IA & Parâmetros</div>
+            <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> IA & Otimização</div>
           </TabsTrigger>
         )}
         {canAuditoria && (
@@ -154,7 +152,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
 
       <TabsContent value="acessos" className="mt-4">
         <ProtectedSection module="Sistema" section={["Controle de Acesso"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</div>}>
-          <div className="w-full min-w-0 overflow-x-auto">
+          <div className="w-full min-w-0">
             <GestaoAcessosIndex />
           </div>
         </ProtectedSection>
