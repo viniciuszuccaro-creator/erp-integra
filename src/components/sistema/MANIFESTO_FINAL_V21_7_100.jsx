@@ -1,0 +1,1 @@
+export default function MANIFESTO_FINAL_V21_7_100() { return null; }

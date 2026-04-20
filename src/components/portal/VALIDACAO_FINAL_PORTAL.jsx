@@ -1,0 +1,1 @@
+export default function VALIDACAO_FINAL_PORTAL() { return null; }

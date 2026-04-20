@@ -1,0 +1,1 @@
+export default function CERTIFICACAO_ORIGEM_AUTOMATICA_V21_6() { return null; }

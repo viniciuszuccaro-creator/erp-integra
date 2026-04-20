@@ -1,0 +1,1 @@
+export default function MIGRACAO_COMPONENTES_V21_6() { return null; }

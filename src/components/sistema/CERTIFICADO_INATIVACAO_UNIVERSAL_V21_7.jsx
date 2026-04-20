@@ -1,0 +1,1 @@
+export default function CERTIFICADO_INATIVACAO_UNIVERSAL_V21_7() { return null; }

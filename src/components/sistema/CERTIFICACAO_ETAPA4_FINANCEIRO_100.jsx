@@ -1,0 +1,1 @@
+export default function CERTIFICACAO_ETAPA4_FINANCEIRO_100() { return null; }

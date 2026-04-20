@@ -1,0 +1,1 @@
+export default function BOTOES_IMPRESSAO_COMPLETOS() { return null; }

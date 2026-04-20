@@ -1,0 +1,1 @@
+export default function CERTIFICADO_FORMAS_PAGAMENTO_V21_8_FINAL() { return null; }

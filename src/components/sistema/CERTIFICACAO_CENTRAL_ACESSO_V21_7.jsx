@@ -1,0 +1,1 @@
+export default function CERTIFICACAO_CENTRAL_ACESSO_V21_7() { return null; }

@@ -1,0 +1,1 @@
+export default function CERTIFICADO_CONTROLE_ACESSO_V21_7() { return null; }

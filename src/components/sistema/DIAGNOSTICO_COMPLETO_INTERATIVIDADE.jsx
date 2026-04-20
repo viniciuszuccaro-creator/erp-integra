@@ -1,0 +1,1 @@
+export default function DIAGNOSTICO_COMPLETO_INTERATIVIDADE() { return null; }

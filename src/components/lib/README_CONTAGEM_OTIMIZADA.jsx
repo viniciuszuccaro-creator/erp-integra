@@ -1,0 +1,1 @@
+export default function README_CONTAGEM_OTIMIZADA() { return null; }

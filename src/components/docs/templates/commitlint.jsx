@@ -1,1 +1,1 @@
-export default function CommitlintConfig() { return null; }
+export default function commitlint_config() { return null; }

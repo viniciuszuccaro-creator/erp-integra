@@ -1,0 +1,1 @@
+export default function CERTIFICADO_OMNICANAL_V21_5() { return null; }
