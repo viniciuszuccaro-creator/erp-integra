@@ -44,6 +44,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
             <div className="flex items-center gap-2"><Link2 className="w-4 h-4"/> Apps & Portais</div>
           </TabsTrigger>
         )}
+        {/* Nota: Apps & Portais também acessível em Cadastros Gerais → aba Apps & Portais Externos */}
         {canAcessos && (
           <TabsTrigger value="acessos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <div className="flex items-center gap-2"><Users className="w-4 h-4"/> Gestão de Acessos</div>
@@ -148,6 +149,13 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       <TabsContent value="apps" className="mt-4">
         <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito aos Apps Externos.</div>}>
           <div className="w-full space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+              <Link2 className="w-4 h-4 flex-shrink-0 text-blue-600" />
+              <span>Apps & Portais também disponíveis em <strong>Cadastros Gerais → aba Apps & Portais Externos</strong>.</span>
+              <Link to="/Cadastros?tab=apps-externos" className="ml-auto">
+                <Button size="sm" variant="outline">Abrir em Cadastros →</Button>
+              </Link>
+            </div>
             <ExternalAppsHub />
           </div>
         </ProtectedSection>
@@ -155,7 +163,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
 
       <TabsContent value="acessos" className="mt-4">
         <ProtectedSection module="Sistema" section={["Controle de Acesso"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</div>}>
-          <div className="w-full min-w-0">
+          <div className="w-full min-w-0 overflow-x-hidden">
             <GestaoAcessosIndex />
           </div>
         </ProtectedSection>

@@ -21,13 +21,13 @@ export default function ExternalAppsHub() {
   const launch = (Component, props, options) => () => openWindow(Component, { windowMode: true, ...(props || {}) }, { width: 1200, height: 720, ...(options || {}) });
 
   const items = [
-    { title: "Portal do Cliente", icon: Users, color: "text-sky-600", bg: "from-sky-50 to-sky-100", action: launch(DashboardCliente, {}, { title: "Portal do Cliente" }), desc: "Acesso do cliente aos pedidos e financeiro" },
-    { title: "Chatbot Dashboard", icon: MessageCircle, color: "text-purple-600", bg: "from-purple-50 to-purple-100", action: launch(ChatbotDashboard, {}, { title: "Chatbot Dashboard" }), desc: "Central de atendimento automatizado" },
-    { title: "App Motorista", icon: Truck, color: "text-amber-600", bg: "from-amber-50 to-amber-100", action: launch(AppEntregasMotorista, {}, { title: "Apontamento de Entregas" }), desc: "App de entrega para motoristas" },
-    { title: "Apontamento da Produção", icon: Factory, color: "text-emerald-600", bg: "from-emerald-50 to-emerald-100", action: launch(ApontamentoProducao, {}, { title: "Apontamento da Produção" }), desc: "Registro de produção no chão de fábrica" },
-    { title: "Apontamento Mobile", icon: Smartphone, color: "text-teal-600", bg: "from-teal-50 to-teal-100", action: launch(ProducaoMobile, {}, { title: "Apontamento Mobile" }), desc: "Versão mobile para produção" },
+    { title: "Portal do Cliente", icon: Users, color: "text-sky-600", bg: "from-sky-50 to-sky-100", action: launch(DashboardCliente, {}, { title: "Portal do Cliente" }), desc: "Acesso do cliente aos pedidos e financeiro", route: createPageUrl("PortalCliente") },
+    { title: "Chatbot Dashboard", icon: MessageCircle, color: "text-purple-600", bg: "from-purple-50 to-purple-100", action: launch(ChatbotDashboard, {}, { title: "Chatbot Dashboard" }), desc: "Central de atendimento automatizado", route: createPageUrl("HubAtendimento") },
+    { title: "App Motorista", icon: Truck, color: "text-amber-600", bg: "from-amber-50 to-amber-100", action: launch(AppEntregasMotorista, {}, { title: "Apontamento de Entregas" }), desc: "App de entrega para motoristas", route: createPageUrl("EntregasMobile") },
+    { title: "Apontamento da Produção", icon: Factory, color: "text-emerald-600", bg: "from-emerald-50 to-emerald-100", action: launch(ApontamentoProducao, {}, { title: "Apontamento da Produção" }), desc: "Registro de produção no chão de fábrica", route: createPageUrl("Producao") },
+    { title: "Apontamento Mobile", icon: Smartphone, color: "text-teal-600", bg: "from-teal-50 to-teal-100", action: launch(ProducaoMobile, {}, { title: "Apontamento Mobile" }), desc: "Versão mobile para produção", route: createPageUrl("ProducaoMobile") },
     { title: "Chat do Cliente", icon: MessageCircle, color: "text-indigo-600", bg: "from-indigo-50 to-indigo-100", action: launch(ChatCliente, {}, { title: "Chat do Cliente" }), desc: "Chat em tempo real com o cliente" },
-    { title: "Orçamento (Site Público)", icon: ShoppingCart, color: "text-rose-600", bg: "from-rose-50 to-rose-100", action: launch(OrcamentoSite, {}, { title: "Orçamento Site Público" }), desc: "Formulário público de orçamento" },
+    { title: "Orçamento (Site Público)", icon: ShoppingCart, color: "text-rose-600", bg: "from-rose-50 to-rose-100", action: launch(OrcamentoSite, {}, { title: "Orçamento Site Público" }), desc: "Formulário público de orçamento", route: createPageUrl("OrcamentoSite") },
   ];
 
   return (
@@ -39,23 +39,28 @@ export default function ExternalAppsHub() {
       <CardContent className="p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {items.map((it) => (
-            <button
-              key={it.title}
-              onClick={it.action}
-              className={`text-left rounded-xl border hover:shadow-lg transition-all p-4 bg-gradient-to-br ${it.bg} w-full`}
-            >
+            <div key={it.title} className={`rounded-xl border hover:shadow-lg transition-all p-4 bg-gradient-to-br ${it.bg} w-full flex flex-col gap-2`}>
               <div className="flex items-center justify-between">
                 <div className={`p-2 rounded-lg bg-white/70`}>
                   <it.icon className={`w-5 h-5 ${it.color}`} />
                 </div>
                 <ExternalLink className="w-4 h-4 text-slate-400" />
               </div>
-              <div className="mt-3">
+              <div>
                 <p className="font-semibold text-slate-900 text-sm">{it.title}</p>
                 <p className="text-xs text-slate-500 mt-0.5">{it.desc}</p>
-                <p className="text-xs text-slate-400 mt-1">Abrir em janela flutuante</p>
               </div>
-            </button>
+              <div className="flex gap-2 mt-auto pt-1 flex-wrap">
+                <button onClick={it.action} className="text-xs px-2 py-1 rounded-md bg-white/80 border border-white/60 hover:bg-white transition-colors font-medium text-slate-700">
+                  🪟 Janela
+                </button>
+                {it.route && (
+                  <Link to={it.route} className="text-xs px-2 py-1 rounded-md bg-white/80 border border-white/60 hover:bg-white transition-colors font-medium text-slate-700">
+                    📄 Página
+                  </Link>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       </CardContent>

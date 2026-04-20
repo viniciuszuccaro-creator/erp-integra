@@ -43,13 +43,15 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const { data: configs = [], refetch, isFetching } = useQuery({
     queryKey: ['config-global-v2', eId ?? 'sem', gId ?? 'sem'],
     queryFn: async () => {
-      const filter = {};
-      if (gId) filter.group_id = gId;
-      if (eId) filter.empresa_id = eId;
+      // Busca configs por $or (grupo OU empresa) para pegar todos os registros relevantes
+      const orConds = [];
+      if (gId) orConds.push({ group_id: gId });
+      if (eId) orConds.push({ empresa_id: eId });
+      const filter = orConds.length > 1 ? { $or: orConds } : (orConds[0] || {});
       const res = await base44.functions.invoke('getEntityRecord', {
         entityName: 'ConfiguracaoSistema',
         filter,
-        limit: 300,
+        limit: 500,
       });
       return Array.isArray(res?.data) ? res.data : [];
     },
@@ -112,43 +114,45 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     return res;
   };
 
-  // Toggle: optimistic → upsert → refetch com retry → confirma ou reverte
+  // Toggle: optimistic → upsert → confirma persistência → remove optimistic
   const handleToggle = async (chave, categoria, newValue) => {
     if (saving[chave]) return;
+    // Aplica imediatamente no estado optimistic
     setOptimistic(prev => ({ ...prev, [chave]: newValue }));
     setSaving(prev => ({ ...prev, [chave]: true }));
     try {
       const res = await upsert(chave, categoria, { ativa: newValue });
-      // Guarda ID imediatamente se vier no retorno
       const retId = res?.data?.id || res?.data?.record?.id;
       if (retId) idCacheRef.current[chave] = retId;
 
-      // Aguarda backend persistir (retry até 3x)
-      let realVal = newValue;
-      for (let attempt = 0; attempt < 3; attempt++) {
-        await new Promise(r => setTimeout(r, 500 + attempt * 300));
-        await queryClient.invalidateQueries({ queryKey: ['config-global-v2'] });
-        const result = await refetch();
-        const realRecs = Array.isArray(result?.data) ? result.data : configs;
-        const saved = realRecs.find(c => c.chave === chave && (
-          (!eId && !gId) ||
-          (eId && c.empresa_id === eId) ||
-          (gId && c.group_id === gId)
-        ));
-        if (saved && typeof saved.ativa === 'boolean') {
-          realVal = saved.ativa;
-          break;
-        }
-      }
+      // Aguarda propagação no backend (1 tentativa com delay curto)
+      await new Promise(r => setTimeout(r, 600));
+      await queryClient.invalidateQueries({ queryKey: ['config-global-v2'] });
+      const result = await refetch();
+      const freshRecs = Array.isArray(result?.data) ? result.data : [];
 
-      if (realVal !== newValue) {
-        setOptimistic(prev => ({ ...prev, [chave]: realVal }));
-        toast({ title: `⚠️ Sincronizado: ${realVal ? 'Ativado' : 'Desativado'}` });
+      // Busca o registro salvo com mesmo escopo
+      const saved = freshRecs.find(c => c.chave === chave && (
+        (eId && c.empresa_id === eId) ||
+        (gId && c.group_id === gId) ||
+        (!eId && !gId)
+      ));
+
+      const confirmedVal = saved && typeof saved.ativa === 'boolean' ? saved.ativa : newValue;
+
+      // Remove optimistic — o valor real vem dos dados refetched
+      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
+
+      if (confirmedVal !== newValue) {
+        // Backend divergiu: força o valor correto no optimistic temporariamente
+        setOptimistic(prev => ({ ...prev, [chave]: confirmedVal }));
+        toast({ title: `⚠️ Valor ajustado: ${confirmedVal ? 'Ativado' : 'Desativado'}` });
+        setTimeout(() => setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; }), 2000);
       } else {
-        setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
         toast({ title: `✅ ${newValue ? 'Ativado' : 'Desativado'} com sucesso!` });
       }
     } catch (err) {
+      // Reverte optimistic em caso de erro
       setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
       toast({ title: '❌ Erro ao salvar', description: String(err?.message || err), variant: 'destructive' });
     } finally {

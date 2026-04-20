@@ -56,8 +56,9 @@ Deno.serve(async (req) => {
       if (!match && scope?.group_id) {
         match = await tryFind({ chave, group_id: scope.group_id });
       }
-      // 4) Qualquer registro com essa chave
-      if (!match) {
+      // 4) Qualquer registro com essa chave — mas SOMENTE se não há scope definido
+      // (evita atualizar registro de outro grupo/empresa)
+      if (!match && !scope?.group_id && !scope?.empresa_id) {
         match = await tryFind({ chave });
       }
 
