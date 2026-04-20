@@ -53,26 +53,17 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const updateMutation = useMutation({
     mutationFn: async (data) => {
       const { __before, __scope, ...payload } = data || {};
-      const scope = { group_id: grupoAtual?.id || undefined, empresa_id: empresaAtual?.id || undefined };
-      // Mescla campo aninhado: se já existe registro, merge o campo específico
-      const match = configs.find(c =>
-        c.chave === payload.chave &&
-        ((scope.group_id ? c.group_id === scope.group_id : !c.group_id) &&
-         (scope.empresa_id ? c.empresa_id === scope.empresa_id : !c.empresa_id))
-      );
-      const finalPayload = { ...payload, ...scope };
+      // Upsert simples: busca registro existente para o mesmo chave+escopo
+      const match = configs.find(c => {
+        if (c.chave !== payload.chave) return false;
+        const gMatch = payload.group_id ? c.group_id === payload.group_id : !c.group_id;
+        const eMatch = payload.empresa_id ? c.empresa_id === payload.empresa_id : !c.empresa_id;
+        return gMatch && eMatch;
+      });
       if (match?.id) {
-        // Garantir merge do sub-objeto para não sobrescrever outros campos
-        const fieldKeys = Object.keys(finalPayload).filter(k => !['chave','categoria','group_id','empresa_id','__before','__scope'].includes(k));
-        const mergedPayload = { ...finalPayload };
-        fieldKeys.forEach(fk => {
-          if (match[fk] && typeof match[fk] === 'object' && typeof finalPayload[fk] === 'object') {
-            mergedPayload[fk] = { ...match[fk], ...finalPayload[fk] };
-          }
-        });
-        return base44.entities.ConfiguracaoSistema.update(match.id, mergedPayload);
+        return base44.entities.ConfiguracaoSistema.update(match.id, payload);
       }
-      return base44.entities.ConfiguracaoSistema.create(finalPayload);
+      return base44.entities.ConfiguracaoSistema.create(payload);
     },
     onSuccess: async (res, variables) => {
       // Recarrega todos os consumidores
@@ -115,61 +106,40 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     }
   });
 
-  // Mapeamento chave → nome do campo persistido
-  // Cada chave tem seu próprio campo raiz para evitar colisão
-  const getFieldName = (chave) => {
-    // mapa explícito: chave → campo no documento
-    const MAP = {
-      notif_pedido_aprovado: 'notificacoes',
-      notif_entrega_transporte: 'notificacoes',
-      notif_boleto_gerado: 'notificacoes',
-      notif_titulo_vencido: 'notificacoes',
-      notif_op_atrasada: 'notificacoes',
-      seg_mfa: 'seguranca',
-      seg_logs_completos: 'seguranca',
-      seg_timeout: 'seguranca',
-      seg_bloqueio_tentativas: 'seguranca',
-    };
-    return MAP[chave] || chave;
-  };
-
+  // Cada toggle usa chave simples: o valor fica em rec.valor (booleano) ou rec.ativa
+  // Estrutura de persistência: { chave: 'notif_pedido_aprovado', categoria: 'Notificacoes', ativa: true/false, ... }
   const getConfig = (chave) => {
     const list = (configs || []).filter(c => c.chave === chave);
-    // Prioridade: match exato de grupo+empresa, depois só grupo, depois qualquer
+    // Prioridade: match exato de grupo+empresa, depois só grupo, depois só empresa, depois qualquer
     if (grupoAtual?.id && empresaAtual?.id) {
       const exact = list.find(c => c.group_id === grupoAtual.id && c.empresa_id === empresaAtual.id);
       if (exact) return exact;
     }
     if (grupoAtual?.id) {
-      const byGroup = list.find(c => c.group_id === grupoAtual.id);
+      const byGroup = list.find(c => c.group_id === grupoAtual.id && !c.empresa_id);
       if (byGroup) return byGroup;
     }
     if (empresaAtual?.id) {
       const byEmpresa = list.find(c => c.empresa_id === empresaAtual.id);
       if (byEmpresa) return byEmpresa;
     }
-    return list[0] || {};
+    return list[0] || null;
   };
 
-  // Lê um valor booleano "ativa" de forma consistente
-  // Para notificacoes e seguranca o campo é um objeto { [chave_curta]: { ativa } }
+  // Lê valor booleano diretamente do campo "ativa" no registro
   const getToggleValue = (chave) => {
     const rec = getConfig(chave);
-    const fieldName = getFieldName(chave);
-    // O valor está em rec[fieldName][chave]?.ativa
-    return rec?.[fieldName]?.[chave]?.ativa === true;
+    return rec?.ativa === true;
   };
 
+  // Salva: upsert simples — { chave, categoria, ativa, group_id, empresa_id }
   const handleSave = (chave, categoria, dados) => {
     const before = getConfig(chave);
-    const fieldName = getFieldName(chave);
     const scope = { group_id: grupoAtual?.id || null, empresa_id: empresaAtual?.id || null };
-    // Mescla apenas a sub-chave correspondente dentro do campo raiz
-    const campoAtual = before?.[fieldName] || {};
     updateMutation.mutate({
       chave,
       categoria,
-      [fieldName]: { ...campoAtual, [chave]: { ...(campoAtual[chave] || {}), ...dados } },
+      ...dados,
       ...scope,
       __before: before,
     });
@@ -441,7 +411,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Logout após inatividade</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Input type="number" defaultValue={getConfig('seg_timeout')?.seguranca?.minutos || 30} className="w-20" onBlur={(e)=>handleSave('seg_timeout','Seguranca',{minutos: Number(e.target.value)||0})} />
+                    <Input type="number" defaultValue={getConfig('seg_timeout')?.minutos || 30} className="w-20" onBlur={(e)=>handleSave('seg_timeout','Seguranca',{minutos: Number(e.target.value)||0})} />
                     <span className="text-sm text-slate-600">min</span>
                   </div>
                 </div>

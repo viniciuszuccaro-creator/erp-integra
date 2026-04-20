@@ -48,45 +48,48 @@ export default function GestaoAcessosIndex() {
   }
 
   return (
-    <div className="w-full flex flex-col gap-0">
-      <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="flex flex-wrap gap-1 h-auto mb-1">
-          <TabsTrigger value="perfis" className="text-xs sm:text-sm px-2 sm:px-4">Perfis RBAC</TabsTrigger>
-          <TabsTrigger value="usuarios" className="text-xs sm:text-sm px-2 sm:px-4">Usuários</TabsTrigger>
-          <TabsTrigger value="sod" className="text-xs sm:text-sm px-2 sm:px-4">SoD</TabsTrigger>
-          <TabsTrigger value="relatorios" className="text-xs sm:text-sm px-2 sm:px-4">Relatórios</TabsTrigger>
-        </TabsList>
+    <div className="w-full h-full min-w-0 flex flex-col">
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full flex flex-col">
+        {/* TabsList responsiva: não espreme em telas menores */}
+        <div className="w-full overflow-x-auto pb-1">
+          <TabsList className="inline-flex h-auto gap-1 flex-nowrap min-w-max">
+            <TabsTrigger value="perfis" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              🔐 Perfis RBAC
+            </TabsTrigger>
+            <TabsTrigger value="usuarios" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              👤 Usuários
+            </TabsTrigger>
+            <TabsTrigger value="sod" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              ⚖️ SoD
+            </TabsTrigger>
+            <TabsTrigger value="relatorios" className="text-xs sm:text-sm px-3 py-2 whitespace-nowrap data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              📊 Relatórios
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="perfis" className="mt-3">
-          <Card className="w-full min-w-0 overflow-hidden">
-            <CardContent className="p-3 sm:p-4 w-full overflow-x-auto">
-              <CentralPerfisAcesso />
-            </CardContent>
-          </Card>
+        <TabsContent value="perfis" className="mt-3 flex-1 min-h-0">
+          <div className="w-full h-full min-w-0 overflow-x-auto">
+            <CentralPerfisAcesso />
+          </div>
         </TabsContent>
 
-        <TabsContent value="usuarios" className="mt-3">
-          <Card className="w-full min-w-0 overflow-hidden">
-            <CardContent className="p-3 sm:p-4 w-full overflow-x-auto">
-              <GestaoUsuariosAvancada />
-            </CardContent>
-          </Card>
+        <TabsContent value="usuarios" className="mt-3 flex-1 min-h-0">
+          <div className="w-full h-full min-w-0 overflow-x-auto">
+            <GestaoUsuariosAvancada />
+          </div>
         </TabsContent>
 
-        <TabsContent value="sod" className="mt-3">
-          <Card className="w-full min-w-0 overflow-hidden">
-            <CardContent className="p-3 sm:p-4">
-              <SoDChecker />
-            </CardContent>
-          </Card>
+        <TabsContent value="sod" className="mt-3 flex-1 min-h-0">
+          <div className="w-full h-full min-w-0">
+            <SoDChecker />
+          </div>
         </TabsContent>
 
-        <TabsContent value="relatorios" className="mt-3">
-          <Card className="w-full min-w-0 overflow-hidden">
-            <CardContent className="p-3 sm:p-4 w-full overflow-x-auto">
-              <RelatorioPermissoes perfis={perfis} usuarios={usuarios} empresas={empresas} />
-            </CardContent>
-          </Card>
+        <TabsContent value="relatorios" className="mt-3 flex-1 min-h-0">
+          <div className="w-full h-full min-w-0 overflow-x-auto">
+            <RelatorioPermissoes perfis={perfis} usuarios={usuarios} empresas={empresas} />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

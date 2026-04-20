@@ -7,14 +7,10 @@ import ProtectedSection from "@/components/security/ProtectedSection";
 import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configuracoes-gerais/ConfiguracoesGeraisIndex";
 import IntegracoesIndex from "@/components/administracao-sistema/IntegracoesIndex";
 
-import CentralPerfisAcesso from "@/components/sistema/CentralPerfisAcesso";
-import GestaoUsuariosAvancada from "@/components/sistema/GestaoUsuariosAvancada";
-import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChecker";
-import MonitorAcessoRealtimeSection from "@/components/administracao-sistema/seguranca-governanca/MonitorAcessoRealtimeSection";
-import GerenciadorSessoes from "@/components/sistema/GerenciadorSessoes";
 import AuditoriaLogsIndex from "@/components/administracao-sistema/auditoria-logs/AuditoriaLogsIndex";
 import SegurancaGovernancaIndex from "@/components/administracao-sistema/seguranca-governanca/SegurancaGovernancaIndex";
 import IAOtimizacaoIndex from "@/components/administracao-sistema/IAOtimizacaoIndex";
+import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acessos/GestaoAcessosIndex";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
@@ -151,28 +147,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       <TabsContent value="apps" className="mt-4">
         <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito aos Apps Externos.</div>}>
           <div className="w-full space-y-4">
-            <Card className="border-blue-200 bg-blue-50">
-              <CardContent className="p-5">
-                <div className="flex items-start gap-3">
-                  <Link2 className="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-blue-900 mb-1">Apps & Portais Externos foram consolidados</h3>
-                    <p className="text-sm text-blue-700 mb-3">
-                      Portal do Cliente, App Motorista, Chatbot Dashboard, Apontamento de Produção e Chat do Cliente estão centralizados em <strong>Cadastros Gerais → aba "Apps & Portais"</strong>.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Link to="/Cadastros?tab=apps-externos" className="inline-flex">
-                        <Button className="bg-blue-600 hover:bg-blue-700">Ir para Apps & Portais em Cadastros</Button>
-                      </Link>
-                      <Link to="/AdministracaoSistema?tab=integracoes" className="inline-flex">
-                        <Button variant="outline">Configurar Integrações</Button>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            {/* Mantém o hub aqui também para acesso rápido sem sair da tela */}
+            {/* Hub completo diretamente na aba — sem redirect desnecessário */}
             <ExternalAppsHub />
           </div>
         </ProtectedSection>
@@ -180,36 +155,8 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
 
       <TabsContent value="acessos" className="mt-4">
         <ProtectedSection module="Sistema" section={["Controle de Acesso"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</div>}>
-          <div className="w-full flex flex-col gap-4 min-w-0">
-            {/* Perfis ocupa tela cheia — componente mais completo */}
-            <Card className="w-full min-w-0 overflow-hidden">
-              <CardContent className="p-3 sm:p-4 w-full min-w-0 overflow-x-auto">
-                <h2 className="font-semibold mb-3 text-sm sm:text-base">Perfis de Acesso (RBAC) e Usuários</h2>
-                <CentralPerfisAcesso />
-              </CardContent>
-            </Card>
-            {/* Monitor + Sessões em grid responsivo */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full min-w-0">
-              <Card className="w-full min-w-0 overflow-hidden">
-                <CardContent className="p-3 sm:p-4 overflow-x-auto">
-                  <h2 className="font-semibold mb-3 text-sm sm:text-base">Monitor de Acesso em Tempo Real</h2>
-                  <MonitorAcessoRealtimeSection />
-                </CardContent>
-              </Card>
-              <Card className="w-full min-w-0 overflow-hidden">
-                <CardContent className="p-3 sm:p-4 overflow-x-auto">
-                  <h2 className="font-semibold mb-3 text-sm sm:text-base">Gestão de Sessões</h2>
-                  <GerenciadorSessoes />
-                </CardContent>
-              </Card>
-            </div>
-            {/* SoD */}
-            <Card className="w-full min-w-0 overflow-hidden">
-              <CardContent className="p-3 sm:p-4">
-                <h2 className="font-semibold mb-3 text-sm sm:text-base">Verificação SoD — Segregação de Funções</h2>
-                <SoDChecker />
-              </CardContent>
-            </Card>
+          <div className="w-full min-w-0 overflow-hidden">
+            <GestaoAcessosIndex />
           </div>
         </ProtectedSection>
       </TabsContent>
