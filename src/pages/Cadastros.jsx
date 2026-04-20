@@ -57,13 +57,15 @@ export default function Cadastros() {
       <GerenciadorJanelas />
 
       <Tabs value={abaGerenciamento} onValueChange={handleAbaChange}>
-        <TabsList className="flex flex-wrap gap-2 mb-2">
-          <TabsTrigger value="cadastros">📋 Cadastros Gerais</TabsTrigger>
-          <TabsTrigger value="apps-externos">📱 Apps & Portais Externos</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-1">
+          <TabsList className="inline-flex flex-nowrap min-w-max gap-2 mb-2">
+            <TabsTrigger value="cadastros">📋 Cadastros Gerais</TabsTrigger>
+            <TabsTrigger value="apps-externos">📱 Apps, Portais & Ambientes Externos</TabsTrigger>
+          </TabsList>
+        </div>
 
-        {/* ABA: APPS EXTERNOS */}
-        <TabsContent value="apps-externos" className="mt-6">
+        {/* ABA: APPS EXTERNOS — Fonte única para Portal do Cliente, App Motorista, Chatbot, etc. */}
+        <TabsContent value="apps-externos" className="mt-4">
           <ExternalAppsHub />
         </TabsContent>
 

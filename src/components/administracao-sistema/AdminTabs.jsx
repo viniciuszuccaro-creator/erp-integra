@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Settings, Users, Shield, FileText, Sparkles, Link2 } from "lucide-react";
+import { Settings, Users, Shield, FileText, Sparkles } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configuracoes-gerais/ConfiguracoesGeraisIndex";
@@ -14,14 +14,11 @@ import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acesso
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
-import ExternalAppsHub from "@/components/administracao-sistema/ExternalAppsHub";
 
 export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtual }) {
   const { hasPermission } = usePermissions();
   const canGerais = hasPermission('Sistema', 'Configurações', 'visualizar');
   const canIntegracoes = hasPermission('Sistema', 'Integrações', 'visualizar');
-  // canApps: apenas admin pode ver — Apps & Portais é gerenciamento interno
-  const canApps = typeof isAdmin === 'function' ? isAdmin() : !!isAdmin;
   const canAcessos = hasPermission('Sistema', 'Controle de Acesso', 'visualizar');
   const canSeguranca = hasPermission('Sistema', 'Segurança', 'visualizar');
   const canIA = hasPermission('Sistema', 'IA', 'visualizar');
@@ -39,12 +36,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
             <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> Integrações</div>
           </TabsTrigger>
         )}
-        {canApps && (
-          <TabsTrigger value="apps" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <div className="flex items-center gap-2"><Link2 className="w-4 h-4"/> Apps & Portais</div>
-          </TabsTrigger>
-        )}
-        {/* Nota: Apps & Portais também acessível em Cadastros Gerais → aba Apps & Portais Externos */}
+        {/* Apps & Portais centralizado em Cadastros Gerais → aba Apps, Portais & Ambientes Externos */}
         {canAcessos && (
           <TabsTrigger value="acessos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <div className="flex items-center gap-2"><Users className="w-4 h-4"/> Gestão de Acessos</div>
@@ -142,21 +134,6 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
             </Card>
             {/* Integrações: conectores, gateways e status central */}
             <IntegracoesIndex initialTab="gerenciamento" />
-          </div>
-        </ProtectedSection>
-      </TabsContent>
-
-      <TabsContent value="apps" className="mt-4">
-        <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito aos Apps Externos.</div>}>
-          <div className="w-full space-y-4">
-            <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-              <Link2 className="w-4 h-4 flex-shrink-0 text-blue-600" />
-              <span>Apps & Portais também disponíveis em <strong>Cadastros Gerais → aba Apps & Portais Externos</strong>.</span>
-              <Link to="/Cadastros?tab=apps-externos" className="ml-auto">
-                <Button size="sm" variant="outline">Abrir em Cadastros →</Button>
-              </Link>
-            </div>
-            <ExternalAppsHub />
           </div>
         </ProtectedSection>
       </TabsContent>

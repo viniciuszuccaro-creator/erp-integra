@@ -55,7 +55,7 @@ export default function ConfiguracoesGeraisIndex({ initialTab }) {
               <ContextoConfigBanner />
               <HerancaConfigNotice />
               <ProtectedSection module="Sistema" section={["Configurações","Gerais"]} action="visualizar" fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para Gerais.</div>}>
-                <ConfigGlobal />
+                <ConfigGlobal empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
               </ProtectedSection>
             </CardContent>
           </Card>

@@ -34,7 +34,12 @@ export default function ExternalAppsHub() {
     <Card className="w-full h-full border-2 border-slate-200">
       <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b">
         <CardTitle className="text-lg">📱 Apps, Portais & Ambientes Externos</CardTitle>
-        <p className="text-sm text-slate-500 mt-1">Portal do Cliente, App Motorista, Chatbot, Produção Mobile e Orçamento Público — tudo em um só lugar</p>
+        <p className="text-sm text-slate-500 mt-1">
+          Fonte única para todos os ambientes externos — Portal do Cliente, App Motorista, Chatbot, Produção Mobile e Orçamento Público.
+        </p>
+        <p className="text-xs text-blue-600 mt-1">
+          ℹ️ Este painel é o local definitivo. Acesse via <strong>Cadastros Gerais → Apps, Portais & Ambientes Externos</strong>.
+        </p>
       </CardHeader>
       <CardContent className="p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
