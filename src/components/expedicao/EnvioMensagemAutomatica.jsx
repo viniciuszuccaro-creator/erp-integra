@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { MessageCircle, Send, CheckCircle, AlertCircle } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { mockEnviarWhatsApp, avisoModoSimulacao } from "@/components/integracoes/MockIntegracoes";
 
 /**
@@ -15,9 +16,9 @@ import { mockEnviarWhatsApp, avisoModoSimulacao } from "@/components/integracoes
  * EM MODO SIMULAÇÃO
  */
 export default function EnvioMensagemAutomatica({ entrega, tipo = "saida_entrega" }) {
-  const [enviando, setEnviando] = useState(false);
-  const [mensagemCustom, setMensagemCustom] = useState("");
-  const [enviado, setEnviado] = useState(false);
+  const [enviando, setEnviando] = React.useState(false);
+  const [mensagemCustom, setMensagemCustom] = React.useState("");
+  const [enviado, setEnviado] = React.useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

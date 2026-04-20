@@ -9,6 +9,7 @@ import {
   CheckCircle2, Package, TrendingUp, AlertCircle, Loader2,
   Target, RefreshCw, Zap
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useUser } from "@/components/lib/UserContext";
 import { format } from "date-fns";
 
@@ -24,7 +25,7 @@ import { format } from "date-fns";
  */
 export default function DashboardClienteInterativo() {
   const { user } = useUser();
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, setAutoRefresh] = React.useState(true);
 
   const { data: cliente } = useQuery({
     queryKey: ['cliente-portal', user?.id],

@@ -124,8 +124,8 @@ export default function RomaneioImpressao({ romaneio, entregas, empresa }) {
           <tfoot>
             <tr className="bg-gray-200 print:bg-gray-300 font-bold">
               <td colSpan="6" className="border border-black p-2 text-right">TOTAIS:</td>
-              <td className="border border-black p-2 text-center">{volumesTotalSelecionado}</td>
-              <td className="border border-black p-2 text-center">{pesoTotalSelecionado.toFixed(0)}</td>
+              <td className="border border-black p-2 text-center">{entregas.reduce((s, e) => s + (e.volumes || 0), 0)}</td>
+              <td className="border border-black p-2 text-center">{entregas.reduce((s, e) => s + (e.peso_total_kg || 0), 0).toFixed(0)}</td>
               <td className="border border-black p-2"></td>
             </tr>
           </tfoot>

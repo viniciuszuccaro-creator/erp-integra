@@ -1,24 +1,2 @@
-name: ci
-on:
-  pull_request:
-    branches: [main]
-  push:
-    branches: [main]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install deps
-        run: npm ci
-      - name: Lint
-        run: npm run lint --if-present
-      - name: Build
-        run: npm run build --if-present
-      - name: Test
-        run: npm test --if-present
+// Documentation file
+export default function CiCi() { return null; }

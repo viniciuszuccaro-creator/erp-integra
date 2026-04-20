@@ -12,9 +12,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
  * SIMULADOR DE PAGAMENTO V21.8
  * IA que recomenda melhor forma com base em valor e capacidade
  */
-export default function SimuladorPagamento({ valorInicial = 1000, contexto = 'pdv' }) {
-  const [valor, setValor] = useState(valorInicial);
-  const [capacidadeMensal, setCapacidadeMensal] = useState(500);
+export default function SimuladorPagamento({ valorInicial = 1000, contexto = 'pdv', onSelecionar }) {
+  const [valor, setValor] = React.useState(valorInicial);
+  const [capacidadeMensal, setCapacidadeMensal] = React.useState(500);
+
+  const handleSelecionar = (forma) => {
+    if (onSelecionar) onSelecionar(forma);
+  };
   const { recomendarMelhorForma, sugerirParcelamentoIdeal, calcularValorFinal } = useFormasPagamento();
 
   const recomendacoes = recomendarMelhorForma(valor, contexto);

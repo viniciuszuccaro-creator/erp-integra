@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, Edit, CheckCircle2, AlertCircle, MessageCircle, Camera, Download, Search, Building2, Package } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import IconeAcessoCliente from "@/components/cadastros/IconeAcessoCliente";
 import IconeAcessoTransportadora from "@/components/cadastros/IconeAcessoTransportadora";
 import { useWindow } from '@/components/lib/useWindow';

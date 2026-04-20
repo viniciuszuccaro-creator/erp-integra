@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { CreditCard, DollarSign, Building2, CheckCircle, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 /**
  * Configuração de Cobrança (Boletos/PIX) por Empresa
@@ -18,8 +19,8 @@ export default function ConfiguracaoCobranca({ empresas, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [empresaSelecionada, setEmpresaSelecionada] = useState(null);
-  const [config, setConfig] = useState({
+  const [empresaSelecionada, setEmpresaSelecionada] = React.useState(null);
+  const [config, setConfig] = React.useState({
     ativo: false,
     provedor_cobranca: "Nenhum",
     api_url: "",

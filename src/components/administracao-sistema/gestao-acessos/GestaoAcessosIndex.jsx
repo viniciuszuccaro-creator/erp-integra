@@ -36,16 +36,16 @@ export default function GestaoAcessosIndex() {
     } catch {}
   };
 
+  // Hooks SEMPRE antes de qualquer return condicional
+  const { data: perfis = [] } = useQuery({ queryKey: ['perfis-acesso', empresaAtual?.id], queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 200), enabled: podeVer });
+  const { data: usuarios = [] } = useQuery({ queryKey: ['usuarios'], queryFn: () => base44.entities.User.list(), enabled: podeVer });
+  const { data: empresas = [] } = useQuery({ queryKey: ['empresas', empresaAtual?.id], queryFn: () => filterInContext('Empresa', {}, '-updated_date', 200), enabled: podeVer });
+
   if (!podeVer) {
     return (
       <div className="p-4 text-sm text-slate-500">Acesso restrito.</div>
     );
   }
-
-  // Carregar dados para Relatório
-  const { data: perfis = [] } = useQuery({ queryKey: ['perfis-acesso', empresaAtual?.id], queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 200) });
-  const { data: usuarios = [] } = useQuery({ queryKey: ['usuarios'], queryFn: () => base44.entities.User.list() });
-  const { data: empresas = [] } = useQuery({ queryKey: ['empresas', empresaAtual?.id], queryFn: () => filterInContext('Empresa', {}, '-updated_date', 200) });
 
   return (
     <div className="w-full min-h-0 flex flex-col">

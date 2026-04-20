@@ -16,9 +16,20 @@ import {
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
+const tiposRepresentante = [
+  { value: 'todos', label: 'Todos os Tipos' },
+  { value: 'Representante Comercial', label: 'Representante Comercial' },
+  { value: 'Construtor', label: 'Construtor' },
+  { value: 'Arquiteto', label: 'Arquiteto' },
+  { value: 'Engenheiro', label: 'Engenheiro' },
+  { value: 'Influenciador', label: 'Influenciador' },
+  { value: 'Parceiro', label: 'Parceiro' },
+  { value: 'Outro', label: 'Outro' },
+];
+
 export default function DashboardRepresentantes() {
-  const [periodoFiltro, setPeriodoFiltro] = useState("mes");
-  const [tipoFiltro, setTipoFiltro] = useState("todos");
+  const [periodoFiltro, setPeriodoFiltro] = React.useState("mes");
+  const [tipoFiltro, setTipoFiltro] = React.useState("todos");
 
   const { data: representantes = [] } = useQuery({
     queryKey: ['representantes'],
