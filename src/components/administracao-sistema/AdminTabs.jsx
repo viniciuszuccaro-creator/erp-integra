@@ -38,9 +38,11 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
             <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> Integrações</div>
           </TabsTrigger>
         )}
-        <TabsTrigger value="apps" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-          <div className="flex items-center gap-2"><Link2 className="w-4 h-4"/> Apps & Portais</div>
-        </TabsTrigger>
+        {canApps && (
+          <TabsTrigger value="apps" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <div className="flex items-center gap-2"><Link2 className="w-4 h-4"/> Apps & Portais</div>
+          </TabsTrigger>
+        )}
         {canAcessos && (
           <TabsTrigger value="acessos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <div className="flex items-center gap-2"><Users className="w-4 h-4"/> Gestão de Acessos</div>

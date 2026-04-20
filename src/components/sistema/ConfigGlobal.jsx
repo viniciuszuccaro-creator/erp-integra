@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +24,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const [activeTab, setActiveTab] = useState('integracoes');
   const [saving, setSaving] = useState({});
   const [optimistic, setOptimistic] = useState({});
+  const idCacheRef = useRef({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual } = useContextoVisual();
@@ -89,30 +90,42 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   // Salva via backend (bypass total do wrapper do layout)
   const upsert = async (chave, categoria, dados) => {
     const scope = getScope();
-    await base44.functions.invoke('upsertConfig', {
-      chave,
-      data: { categoria, ...dados },
-      scope,
-    });
+    // Se já temos o ID em cache, passa direto para update (mais rápido e confiável)
+    const cachedId = idCacheRef.current[chave];
+    const payload = cachedId
+      ? { id: cachedId, data: { chave, categoria, ...dados, ...scope } }
+      : { chave, data: { categoria, ...dados }, scope };
+    const res = await base44.functions.invoke('upsertConfig', payload);
+    // Guarda o ID retornado para próximas chamadas
+    const returnedId = res?.data?.id || res?.data?.record?.id;
+    if (returnedId) idCacheRef.current[chave] = returnedId;
+    return res;
   };
 
   // Toggle: optimistic → upsert → refetch → confirma ou reverte
   const handleToggle = async (chave, categoria, newValue) => {
     if (saving[chave]) return;
-    // Aplica optimistic imediatamente para UX fluida
     setOptimistic(prev => ({ ...prev, [chave]: newValue }));
     setSaving(prev => ({ ...prev, [chave]: true }));
     try {
-      // Salva no backend via asServiceRole (bypass total do wrapper)
-      const result = await upsert(chave, categoria, { ativa: newValue });
-      // Invalida cache e refetch para sincronizar com backend real
+      await upsert(chave, categoria, { ativa: newValue });
+      // Pequeno delay para garantir que o backend persistiu antes do refetch
+      await new Promise(r => setTimeout(r, 400));
       await queryClient.invalidateQueries({ queryKey: ['config-global-v2'] });
-      await refetch();
-      // Remove o optimistic — agora o valor real do backend governa
-      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
-      toast({ title: `✅ ${newValue ? 'Ativado' : 'Desativado'} com sucesso!` });
+      const result = await refetch();
+      // Lê o valor real do backend para confirmar
+      const realRecs = result?.data || configs;
+      const saved = (realRecs || []).find(c => c.chave === chave);
+      const realVal = saved ? (typeof saved.ativa === 'boolean' ? saved.ativa : false) : newValue;
+      // Mantém optimistic se o backend confirma; reverte se divergir
+      if (realVal !== newValue) {
+        setOptimistic(prev => ({ ...prev, [chave]: realVal }));
+        toast({ title: `⚠️ Estado sincronizado com o servidor: ${realVal ? 'Ativado' : 'Desativado'}` });
+      } else {
+        setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
+        toast({ title: `✅ ${newValue ? 'Ativado' : 'Desativado'} com sucesso!` });
+      }
     } catch (err) {
-      // Em caso de erro, reverte o optimistic para o valor anterior
       setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
       toast({ title: '❌ Erro ao salvar', description: String(err?.message || err), variant: 'destructive' });
     } finally {

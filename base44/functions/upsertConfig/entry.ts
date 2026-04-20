@@ -32,27 +32,45 @@ Deno.serve(async (req) => {
 
     // MODO 2: upsert por chave + scope
     if (chave) {
-      // Busca por chave + scope mais amplo (tenta encontrar o registro existente)
-      const filtro = { chave };
-      if (scope?.group_id) filtro.group_id = scope.group_id;
-      if (scope?.empresa_id) filtro.empresa_id = scope.empresa_id;
+      // Estratégia de busca progressiva: exato → só grupo → só empresa → só chave
+      const tryFind = async (filtro) => {
+        try { const r = await api.filter(filtro, '-updated_date', 5); return Array.isArray(r) ? r[0] || null : null; } catch { return null; }
+      };
 
-      const existing = await api.filter(filtro, '-updated_date', 5).catch(() => []);
-      const match = Array.isArray(existing) ? existing[0] : null;
+      let match = null;
+
+      // 1) Exato: chave + grupo + empresa
+      if (!match && scope?.group_id && scope?.empresa_id) {
+        match = await tryFind({ chave, group_id: scope.group_id, empresa_id: scope.empresa_id });
+      }
+      // 2) Chave + só empresa
+      if (!match && scope?.empresa_id) {
+        match = await tryFind({ chave, empresa_id: scope.empresa_id });
+      }
+      // 3) Chave + só grupo
+      if (!match && scope?.group_id) {
+        match = await tryFind({ chave, group_id: scope.group_id });
+      }
+      // 4) Qualquer registro com essa chave
+      if (!match) {
+        match = await tryFind({ chave });
+      }
 
       if (match?.id) {
-        // Atualiza o registro existente com os novos dados
-        const updated = await api.update(match.id, data);
-        return Response.json({ record: updated, mode: 'update', _ts: Date.now() });
+        // Atualiza preservando chave e scope originais do registro
+        const updatePayload = { ...data, chave };
+        if (scope?.group_id) updatePayload.group_id = scope.group_id;
+        if (scope?.empresa_id) updatePayload.empresa_id = scope.empresa_id;
+        const updated = await api.update(match.id, updatePayload);
+        return Response.json({ record: updated, mode: 'update', id: match.id, _ts: Date.now() });
       } else {
         // Cria novo registro com chave + scope + data
         const payload = { chave, ...data };
         if (scope?.group_id) payload.group_id = scope.group_id;
         if (scope?.empresa_id) payload.empresa_id = scope.empresa_id;
-        // Garante que categoria esteja presente
         if (data?.categoria) payload.categoria = data.categoria;
         const created = await api.create(payload);
-        return Response.json({ record: created, mode: 'create', _ts: Date.now() });
+        return Response.json({ record: created, mode: 'create', id: created.id, _ts: Date.now() });
       }
     }
 
