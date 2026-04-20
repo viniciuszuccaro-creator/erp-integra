@@ -54,15 +54,23 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     mutationFn: async (data) => {
       const { __before, __scope, ...payload } = data || {};
       const scope = { group_id: grupoAtual?.id || undefined, empresa_id: empresaAtual?.id || undefined };
-      const finalPayload = { ...payload, ...scope };
-      // Atualiza o registro correto dentro do escopo (grupo/empresa)
+      // Mescla campo aninhado: se já existe registro, merge o campo específico
       const match = configs.find(c =>
         c.chave === payload.chave &&
         ((scope.group_id ? c.group_id === scope.group_id : !c.group_id) &&
          (scope.empresa_id ? c.empresa_id === scope.empresa_id : !c.empresa_id))
       );
+      const finalPayload = { ...payload, ...scope };
       if (match?.id) {
-        return base44.entities.ConfiguracaoSistema.update(match.id, finalPayload);
+        // Garantir merge do sub-objeto para não sobrescrever outros campos
+        const fieldKeys = Object.keys(finalPayload).filter(k => !['chave','categoria','group_id','empresa_id','__before','__scope'].includes(k));
+        const mergedPayload = { ...finalPayload };
+        fieldKeys.forEach(fk => {
+          if (match[fk] && typeof match[fk] === 'object' && typeof finalPayload[fk] === 'object') {
+            mergedPayload[fk] = { ...match[fk], ...finalPayload[fk] };
+          }
+        });
+        return base44.entities.ConfiguracaoSistema.update(match.id, mergedPayload);
       }
       return base44.entities.ConfiguracaoSistema.create(finalPayload);
     },
@@ -107,6 +115,14 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     }
   });
 
+  // Mapeamento chave → nome do campo persistido
+  const getFieldName = (chave, categoria) => {
+    if (categoria === 'Notificacoes') return 'notificacoes';
+    if (categoria === 'Seguranca') return 'seguranca';
+    if (categoria === 'Integracoes') return 'integracao_' + (chave.split('_').slice(1).join('_') || chave);
+    return categoria.toLowerCase();
+  };
+
   const getConfig = (chave) => {
     const scope = { group_id: grupoAtual?.id || null, empresa_id: empresaAtual?.id || null };
     const list = (configs || []).filter(c => c.chave === chave);
@@ -117,21 +133,23 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     return exact || list[0] || {};
   };
 
+  // Lê um valor booleano "ativa" de forma consistente
+  const getToggleValue = (chave, categoria) => {
+    const rec = getConfig(chave);
+    const field = getFieldName(chave, categoria);
+    return rec?.[field]?.ativa === true;
+  };
+
   const handleSave = (chave, categoria, dados) => {
     const before = getConfig(chave);
-    const propName = categoria === 'Integracoes'
-      ? ('integracao_' + (chave.split('_')[1] || chave.replace(/^integracao_/, '')))
-      : categoria.toLowerCase();
-
-    // Multiempresa: exige escopo explícito para qualquer gravação
+    const fieldName = getFieldName(chave, categoria);
     const scope = { group_id: grupoAtual?.id || null, empresa_id: empresaAtual?.id || null };
-
     updateMutation.mutate({
       chave,
       categoria,
-      [propName]: dados,
+      [fieldName]: { ...(before?.[fieldName] || {}), ...dados },
       ...scope,
-      __before: before
+      __before: before,
     });
   };
 
@@ -301,10 +319,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Notifica cliente quando pedido for aprovado</p>
                   </div>
                   <Switch
-                     checked={getConfig('notif_pedido_aprovado')?.notificacoes?.ativa || false}
-                     onCheckedChange={(checked)=>handleSave('notif_pedido_aprovado','Notificacoes',{ativa: checked})}
-                     data-permission="Sistema.Configurações.editar"
-                   />
+                    checked={getToggleValue('notif_pedido_aprovado','Notificacoes')}
+                    onCheckedChange={(checked)=>handleSave('notif_pedido_aprovado','Notificacoes',{ativa: checked})}
+                    data-permission="Sistema.Configurações.editar"
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -313,10 +331,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Envia link de rastreamento</p>
                   </div>
                   <Switch
-                     checked={getConfig('notif_entrega_transporte')?.notificacoes?.ativa || false}
-                     onCheckedChange={(checked)=>handleSave('notif_entrega_transporte','Notificacoes',{ativa: checked})}
-                     data-permission="Sistema.Configurações.editar"
-                   />
+                    checked={getToggleValue('notif_entrega_transporte','Notificacoes')}
+                    onCheckedChange={(checked)=>handleSave('notif_entrega_transporte','Notificacoes',{ativa: checked})}
+                    data-permission="Sistema.Configurações.editar"
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -325,10 +343,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Envia boleto/PIX por WhatsApp e e-mail</p>
                   </div>
                   <Switch
-                     checked={getConfig('notif_boleto_gerado')?.notificacoes?.ativa || false}
-                     onCheckedChange={(checked)=>handleSave('notif_boleto_gerado','Notificacoes',{ativa: checked})}
-                     data-permission="Sistema.Configurações.editar"
-                   />
+                    checked={getToggleValue('notif_boleto_gerado','Notificacoes')}
+                    onCheckedChange={(checked)=>handleSave('notif_boleto_gerado','Notificacoes',{ativa: checked})}
+                    data-permission="Sistema.Configurações.editar"
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -337,10 +355,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Alerta de inadimplência</p>
                   </div>
                   <Switch
-                     checked={getConfig('notif_titulo_vencido')?.notificacoes?.ativa || false}
-                     onCheckedChange={(checked)=>handleSave('notif_titulo_vencido','Notificacoes',{ativa: checked})}
-                     data-permission="Sistema.Configurações.editar"
-                   />
+                    checked={getToggleValue('notif_titulo_vencido','Notificacoes')}
+                    onCheckedChange={(checked)=>handleSave('notif_titulo_vencido','Notificacoes',{ativa: checked})}
+                    data-permission="Sistema.Configurações.editar"
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -349,10 +367,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Alerta para gerente de produção</p>
                   </div>
                   <Switch
-                     checked={getConfig('notif_op_atrasada')?.notificacoes?.ativa || false}
-                     onCheckedChange={(checked)=>handleSave('notif_op_atrasada','Notificacoes',{ativa: checked})}
-                     data-permission="Sistema.Configurações.editar"
-                   />
+                    checked={getToggleValue('notif_op_atrasada','Notificacoes')}
+                    onCheckedChange={(checked)=>handleSave('notif_op_atrasada','Notificacoes',{ativa: checked})}
+                    data-permission="Sistema.Configurações.editar"
+                  />
                 </div>
               </div>
 
@@ -377,10 +395,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Obrigatório para admins</p>
                   </div>
                   <Switch
-                     checked={getConfig('seg_mfa')?.seguranca?.ativa || false}
-                     onCheckedChange={(checked)=>handleSave('seg_mfa','Seguranca',{ativa: checked})}
-                     data-permission="Sistema.Segurança.editar"
-                   />
+                    checked={getToggleValue('seg_mfa','Seguranca')}
+                    onCheckedChange={(checked)=>handleSave('seg_mfa','Seguranca',{ativa: checked})}
+                    data-permission="Sistema.Segurança.editar"
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -389,10 +407,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Registra todas as ações críticas</p>
                   </div>
                   <Switch
-                     checked={getConfig('seg_logs_completos')?.seguranca?.ativa || false}
-                     onCheckedChange={(checked)=>handleSave('seg_logs_completos','Seguranca',{ativa: checked})}
-                     data-permission="Sistema.Segurança.editar"
-                   />
+                    checked={getToggleValue('seg_logs_completos','Seguranca')}
+                    onCheckedChange={(checked)=>handleSave('seg_logs_completos','Seguranca',{ativa: checked})}
+                    data-permission="Sistema.Segurança.editar"
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-3 border rounded-lg">
@@ -412,10 +430,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Bloqueia após 5 tentativas falhas</p>
                   </div>
                   <Switch
-                     checked={getConfig('seg_bloqueio_tentativas')?.seguranca?.ativa || false}
-                     onCheckedChange={(checked)=>handleSave('seg_bloqueio_tentativas','Seguranca',{ativa: checked})}
-                     data-permission="Sistema.Segurança.editar"
-                   />
+                    checked={getToggleValue('seg_bloqueio_tentativas','Seguranca')}
+                    onCheckedChange={(checked)=>handleSave('seg_bloqueio_tentativas','Seguranca',{ativa: checked})}
+                    data-permission="Sistema.Segurança.editar"
+                  />
                 </div>
               </div>
 

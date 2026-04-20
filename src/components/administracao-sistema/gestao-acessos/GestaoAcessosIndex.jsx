@@ -48,56 +48,43 @@ export default function GestaoAcessosIndex() {
   const { data: empresas = [] } = useQuery({ queryKey: ['empresas', empresaAtual?.id], queryFn: () => filterInContext('Empresa', {}, '-updated_date', 200) });
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full">
-        <TabsList className="flex flex-wrap gap-2">
-          <TabsTrigger value="perfis">Perfis</TabsTrigger>
-          <TabsTrigger value="matriz">Matriz</TabsTrigger>
-          <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
-          <TabsTrigger value="usuarios">Usuários</TabsTrigger>
-          <TabsTrigger value="sod">SoD</TabsTrigger>
+    <div className="w-full min-h-0 flex flex-col">
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full flex flex-col min-h-0">
+        <TabsList className="flex flex-wrap gap-1 mb-1 h-auto">
+          <TabsTrigger value="perfis" className="text-xs sm:text-sm px-2 sm:px-4">Perfis RBAC</TabsTrigger>
+          <TabsTrigger value="usuarios" className="text-xs sm:text-sm px-2 sm:px-4">Usuários</TabsTrigger>
+          <TabsTrigger value="sod" className="text-xs sm:text-sm px-2 sm:px-4">SoD</TabsTrigger>
+          <TabsTrigger value="relatorios" className="text-xs sm:text-sm px-2 sm:px-4">Relatórios</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="perfis" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
+        <TabsContent value="perfis" className="mt-3 flex-1 min-h-0">
+          <Card className="w-full h-full">
+            <CardContent className="p-3 sm:p-4 overflow-x-auto">
               <CentralPerfisAcesso />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="matriz" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
-              <div className="text-center py-10 text-slate-500">
-                <Shield className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                <p>O componente `MatrizPermissoesVisual` precisa ser implementado ou alimentado com dados.</p>
-                <p className="text-sm">Verifique a implementação interna ou a fonte de dados.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="relatorios" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
-              <RelatorioPermissoes perfis={perfis} usuarios={usuarios} empresas={empresas} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="usuarios" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
+        <TabsContent value="usuarios" className="mt-3 flex-1 min-h-0">
+          <Card className="w-full h-full">
+            <CardContent className="p-3 sm:p-4 overflow-x-auto">
               <GestaoUsuariosAvancada />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="sod" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
+        <TabsContent value="sod" className="mt-3 flex-1 min-h-0">
+          <Card className="w-full h-full">
+            <CardContent className="p-3 sm:p-4">
               <SoDChecker />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="relatorios" className="mt-3 flex-1 min-h-0">
+          <Card className="w-full h-full">
+            <CardContent className="p-3 sm:p-4 overflow-x-auto">
+              <RelatorioPermissoes perfis={perfis} usuarios={usuarios} empresas={empresas} />
             </CardContent>
           </Card>
         </TabsContent>

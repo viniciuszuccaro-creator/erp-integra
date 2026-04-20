@@ -18,6 +18,7 @@ import IAOtimizacaoIndex from "@/components/administracao-sistema/IAOtimizacaoIn
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
+import ExternalAppsHub from "@/components/administracao-sistema/ExternalAppsHub";
 
 export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtual }) {
   const { hasPermission } = usePermissions();
@@ -149,19 +150,19 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
 
       <TabsContent value="apps" className="mt-4">
         <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito aos Apps Externos.</div>}>
-          <div className="w-full h-full">
+          <div className="w-full h-full space-y-4">
+            {/* Hub principal de Apps Externos (Portal Cliente, App Motorista, Chatbot, Produção Mobile) */}
+            <ExternalAppsHub />
+            {/* Atalhos para cadastros de apps externos em Cadastros Gerais */}
             <Card>
-              <CardContent className="p-4">
-                <h2 className="font-semibold mb-2">Apps/Conectores consolidados</h2>
-                <p className="text-sm text-slate-600 mb-3">Conteúdos antes duplicados agora estão centralizados. Atalhos:</p>
-                <div className="flex gap-2 flex-wrap">
-                  <Link to="/AdministracaoSistema?tab=integracoes" className="inline-flex">
-                    <Button variant="default">Integrações</Button>
-                  </Link>
-                  <Link to="/AdministracaoSistema?tab=ia" className="inline-flex">
-                    <Button variant="outline">Tecnologia, IA & Parâmetros</Button>
-                  </Link>
-                </div>
+              <CardContent className="p-4 flex flex-wrap gap-2 items-center">
+                <span className="text-sm text-slate-600 mr-2">Cadastros relacionados em:</span>
+                <Link to="/Cadastros?tab=cadastros" className="inline-flex">
+                  <Button variant="outline" size="sm">Cadastros Gerais → Bloco 6 Tecnologia</Button>
+                </Link>
+                <Link to="/AdministracaoSistema?tab=integracoes" className="inline-flex">
+                  <Button variant="outline" size="sm">Integrações</Button>
+                </Link>
               </CardContent>
             </Card>
           </div>
@@ -170,61 +171,48 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
 
       <TabsContent value="acessos" className="mt-4">
         <ProtectedSection module="Sistema" section={["Controle de Acesso"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</div>}>
-          <div className="w-full h-full space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-             {/* Painel técnico do Command Center (detalhe) */}
-             <Card className="col-span-1 xl:col-span-3">
-               <CardContent className="p-4">
-                 <h2 className="font-semibold mb-2">Command Center Técnico</h2>
-                 <div className="text-sm text-slate-600 mb-3">Consolida erros (auditError), jobs/automations, integrações e alertas de segurança.</div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-                   <div className="p-3 rounded-lg border bg-white">Erros 24h {/* agregar via AuditoriaLogsIndex filtros */}</div>
-                   <div className="p-3 rounded-lg border bg-white">Automations {/* listadas em Integrações/Jobs */}</div>
-                   <div className="p-3 rounded-lg border bg-white">Integrações {/* status em IntegracoesIndex */}</div>
-                   <div className="p-3 rounded-lg border bg-white">Segurança {/* MonitorAcessoRealtimeSection / SoDChecker */}</div>
-                 </div>
-               </CardContent>
-             </Card>
-              <Card className="col-span-1 xl:col-span-2">
+          <div className="w-full h-full flex flex-col gap-4">
+            {/* Linha 1: Usuários + Perfis — ocupam 100% e quebram para coluna em mobile */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              <Card className="w-full min-w-0">
                 <CardContent className="p-4">
                   <h2 className="font-semibold mb-3">Gestão de Usuários</h2>
-                  <GestaoUsuariosAvancada />
+                  <div className="w-full overflow-x-auto">
+                    <GestaoUsuariosAvancada />
+                  </div>
                 </CardContent>
               </Card>
-
-              <Card className="col-span-1 xl:col-span-2">
+              <Card className="w-full min-w-0">
                 <CardContent className="p-4">
-                  <h2 className="font-semibold mb-3">Perfis de Acesso</h2>
-                  <CentralPerfisAcesso />
+                  <h2 className="font-semibold mb-3">Perfis de Acesso (RBAC)</h2>
+                  <div className="w-full overflow-x-auto">
+                    <CentralPerfisAcesso />
+                  </div>
                 </CardContent>
               </Card>
-
-              <Card>
-                <CardContent className="p-4">
-                  <h2 className="font-semibold mb-3">Verificação SoD (Segregação de Funções)</h2>
-                  <SoDChecker />
-                </CardContent>
-              </Card>
-
-              <Card className="col-span-1 xl:col-span-2">
+            </div>
+            {/* Linha 2: Monitor Realtime + Sessões + SoD */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <Card className="w-full min-w-0 md:col-span-2 xl:col-span-2">
                 <CardContent className="p-4">
                   <h2 className="font-semibold mb-3">Monitoramento de Acesso em Tempo Real</h2>
                   <MonitorAcessoRealtimeSection />
                 </CardContent>
               </Card>
-
-              <Card>
+              <Card className="w-full min-w-0">
                 <CardContent className="p-4">
                   <h2 className="font-semibold mb-3">Gestão de Sessões</h2>
                   <GerenciadorSessoes />
                 </CardContent>
               </Card>
             </div>
-
-            <div className="hidden">
-              {/* Conteúdo legado agregado em um painel secundário, mantendo regras de não remoção */}
-              {/* Mantido propositalmente para preservar histórico */}
-            </div>
+            {/* Linha 3: SoD */}
+            <Card className="w-full min-w-0">
+              <CardContent className="p-4">
+                <h2 className="font-semibold mb-3">Verificação SoD — Segregação de Funções</h2>
+                <SoDChecker />
+              </CardContent>
+            </Card>
           </div>
         </ProtectedSection>
       </TabsContent>

@@ -28,6 +28,7 @@ import Bloco5Organizacional from "@/components/cadastros/blocks/Bloco5Organizaci
 import Bloco6Tecnologia from "@/components/cadastros/blocks/Bloco6Tecnologia";
 import GroupCountBadge from "@/components/cadastros/GroupCountBadge";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import ExternalAppsHub from "@/components/administracao-sistema/ExternalAppsHub";
 
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,12 +72,15 @@ export default function Cadastros() {
 
       {/* TABS: CADASTROS */}
       <Tabs value={abaGerenciamento} onValueChange={handleAbaChange}>
-        
+        <TabsList className="flex flex-wrap gap-2 mb-2">
+          <TabsTrigger value="cadastros">📋 Cadastros</TabsTrigger>
+          <TabsTrigger value="apps-externos">📱 Apps & Portais</TabsTrigger>
+        </TabsList>
 
-
-
-
-        
+        {/* ABA: APPS EXTERNOS — consolidação de Portal Cliente, App Motorista, etc. */}
+        <TabsContent value="apps-externos" className="mt-6">
+          <ExternalAppsHub />
+        </TabsContent>
 
         {/* ABA: CADASTROS */}
         <TabsContent value="cadastros" className="space-y-6 mt-6">
