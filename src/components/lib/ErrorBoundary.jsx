@@ -57,7 +57,7 @@ export default class ErrorBoundary extends React.Component {
                 Recarregar
               </button>
             </div>
-            {typeof process !== 'undefined' && process.env?.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env?.DEV && this.state.error && (
               <pre className="text-left text-xs text-slate-500 mt-4 overflow-auto max-h-40">
                 {String(this.state.error?.message || this.state.error)}
               </pre>

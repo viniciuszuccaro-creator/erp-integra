@@ -407,7 +407,7 @@ Caso contrário, sugira:
                 <span>Analisando descrição com IA...</span>
               </AlertDescription>
             </Alert>
-          )
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>

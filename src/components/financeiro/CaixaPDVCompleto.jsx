@@ -720,7 +720,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                   <Button onClick={() => {
                     setCarrinho([]);
                     setClienteSelecionado(null);
-                    setFormasPagamento([{ forma: "Dinheiro", valor: 0, parcelas: 1 }]);
+                    if (typeof setFormasPagamento === 'function') setFormasPagamento([{ forma: "Dinheiro", valor: 0, parcelas: 1 }]);
                     setDesconto(0);
                     setAcrescimo(0);
                   }} variant="outline" className="w-full">

@@ -181,7 +181,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
             Canais Configurados
           </h3>
           <ExportButton
-            data={Object.values(metricas)}
+            data={parametros.map(p => calcularMetricas(p))}
             filename="canais-origem-status"
             className="bg-green-600 hover:bg-green-700"
           >
