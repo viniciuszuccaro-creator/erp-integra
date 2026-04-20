@@ -39,20 +39,35 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
   const canLoadConfigs = Boolean(grupoAtual?.id || empresaAtual?.id);
+
+  // Query com fetch direto via função backend para evitar interceptação do wrapper do layout
   const { data: configs = [], refetch } = useQuery({
-      queryKey: ['config-global', empresaAtual?.id ?? 'sem', grupoAtual?.id ?? 'sem'],
-      queryFn: async () => {
-        const filtro = {};
-        if (grupoAtual?.id) filtro.group_id = grupoAtual.id;
-        if (empresaAtual?.id) filtro.empresa_id = empresaAtual.id;
-        const list = await base44.entities.ConfiguracaoSistema.filter(filtro, '-updated_date', 200);
-        return Array.isArray(list) ? list : [];
-      },
-      enabled: canLoadConfigs,
-      staleTime: 0,
-      gcTime: 0,
-      refetchOnMount: 'always',
-    });
+    queryKey: ['config-global', empresaAtual?.id ?? 'sem', grupoAtual?.id ?? 'sem'],
+    queryFn: async () => {
+      try {
+        const res = await base44.functions.invoke('getEntityRecord', {
+          entityName: 'ConfiguracaoSistema',
+          filter: {
+            ...(grupoAtual?.id ? { group_id: grupoAtual.id } : {}),
+            ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
+          },
+          limit: 200,
+        });
+        const list = res?.data;
+        if (Array.isArray(list)) return list;
+      } catch {}
+      // fallback direto
+      const filtro = {};
+      if (grupoAtual?.id) filtro.group_id = grupoAtual.id;
+      if (empresaAtual?.id) filtro.empresa_id = empresaAtual.id;
+      const list2 = await base44.entities.ConfiguracaoSistema.filter(filtro, '-updated_date', 200).catch(() => []);
+      return Array.isArray(list2) ? list2 : [];
+    },
+    enabled: canLoadConfigs,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+  });
 
   const updateMutation = useMutation({
     mutationFn: async (data) => {
@@ -60,23 +75,47 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       const freshScope = {};
       if (grupoAtual?.id) freshScope.group_id = grupoAtual.id;
       if (empresaAtual?.id) freshScope.empresa_id = empresaAtual.id;
-      // Busca fresca ignorando o wrapper do layout: usa filter direto sem injeção automática
+      // Usa função backend para bypass total do wrapper de entidades do layout
+      try {
+        const res = await base44.functions.invoke('getEntityRecord', {
+          entityName: 'ConfiguracaoSistema',
+          filter: { chave: payload.chave, ...freshScope },
+          limit: 1,
+        });
+        const list = res?.data;
+        const match = Array.isArray(list) ? list[0] : null;
+        if (match?.id) {
+          return base44.entities.ConfiguracaoSistema.update(match.id, { ...payload, ...freshScope });
+        }
+      } catch {}
+      // fallback: busca local
       const freshList = await base44.entities.ConfiguracaoSistema.filter(
-        { chave: payload.chave, ...freshScope }, '-updated_date', 5
+        { chave: payload.chave, ...freshScope }, '-updated_date', 1
       ).catch(() => []);
-      const match = Array.isArray(freshList) ? freshList[0] : null;
-      if (match?.id) {
-        return base44.entities.ConfiguracaoSistema.update(match.id, { ...payload, ...freshScope });
+      const match2 = Array.isArray(freshList) ? freshList[0] : null;
+      if (match2?.id) {
+        return base44.entities.ConfiguracaoSistema.update(match2.id, { ...payload, ...freshScope });
       }
       return base44.entities.ConfiguracaoSistema.create({ ...payload, ...freshScope });
     },
     onSuccess: async (res, variables) => {
-      // Limpar pending toggle para esta chave
       const chave = variables?.chave;
-      if (chave) setPendingToggles(prev => { const n = {...prev}; delete n[chave]; return n; });
-      // Invalidar e re-buscar imediatamente
+      // Invalidar e forçar refetch ANTES de limpar pending (novo dado já no cache)
       await queryClient.invalidateQueries({ queryKey: ['config-global'] });
-      await refetch();
+      const fresh = await refetch();
+      // Só remove o pending depois que o dado fresco chegou
+      if (chave) {
+        const freshList = fresh?.data;
+        if (Array.isArray(freshList)) {
+          const freshRec = freshList.find(c => c.chave === chave);
+          // Se o dado do banco bater com o que salvamos, remove o pending
+          if (freshRec && typeof freshRec.ativa === 'boolean') {
+            setPendingToggles(prev => { const n = {...prev}; delete n[chave]; return n; });
+          }
+        } else {
+          setPendingToggles(prev => { const n = {...prev}; delete n[chave]; return n; });
+        }
+      }
       toast({ title: '✅ Configuração salva!' });
       try {
         const me = await base44.auth.me();

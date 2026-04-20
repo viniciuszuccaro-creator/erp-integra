@@ -147,11 +147,6 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       <TabsContent value="apps" className="mt-4">
         <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito aos Apps Externos.</div>}>
           <div className="w-full space-y-4">
-            {/* Nota: Apps & Portais também disponível em Cadastros Gerais → aba "Apps & Portais" */}
-            <div className="p-3 bg-sky-50 border border-sky-200 rounded-lg text-sm text-sky-800 flex items-center justify-between gap-3">
-              <span>💡 Apps, Portais e ambientes externos também estão acessíveis em <strong>Cadastros Gerais → aba "Apps & Portais"</strong>.</span>
-              <Link to="/Cadastros?tab=apps-externos" className="shrink-0 text-xs px-3 py-1.5 bg-sky-600 text-white rounded-md hover:bg-sky-700">Ir para Cadastros</Link>
-            </div>
             <ExternalAppsHub />
           </div>
         </ProtectedSection>
