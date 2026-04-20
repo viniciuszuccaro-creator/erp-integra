@@ -48,7 +48,7 @@ export default function GestaoAcessosIndex() {
   }
 
   return (
-    <div className="w-full flex flex-col gap-3">
+    <div className="w-full min-w-0 flex flex-col gap-3">
       {/* Info RBAC — compacto e responsivo */}
       <div className="flex items-start gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
         <Shield className="w-4 h-4 flex-shrink-0 text-blue-600 mt-0.5" />
@@ -58,39 +58,45 @@ export default function GestaoAcessosIndex() {
         </span>
       </div>
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
-        {/* TabsList com scroll horizontal — nunca espreme */}
-        <div className="w-full overflow-x-auto scrollbar-none pb-1 -mx-0">
-          <TabsList className="inline-flex h-9 gap-1 flex-nowrap min-w-max bg-slate-100 p-1 rounded-lg">
-            <TabsTrigger value="perfis" className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full min-w-0">
+        {/* TabsList com scroll horizontal — nunca espreme em telas pequenas */}
+        <div className="w-full overflow-x-auto pb-1">
+          <TabsList className="inline-flex h-auto gap-1 flex-nowrap min-w-max bg-slate-100 p-1 rounded-lg">
+            <TabsTrigger value="perfis" className="text-xs px-2 sm:px-3 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               🔐 Perfis RBAC
             </TabsTrigger>
-            <TabsTrigger value="usuarios" className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="usuarios" className="text-xs px-2 sm:px-3 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               👤 Usuários
             </TabsTrigger>
-            <TabsTrigger value="sod" className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="sod" className="text-xs px-2 sm:px-3 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               ⚖️ SoD
             </TabsTrigger>
-            <TabsTrigger value="relatorios" className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="relatorios" className="text-xs px-2 sm:px-3 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               📊 Relatórios
             </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="perfis" className="mt-3 w-full min-w-0 overflow-x-auto">
-          <CentralPerfisAcesso />
+        <TabsContent value="perfis" className="mt-3 w-full min-w-0">
+          <div className="w-full min-w-0 overflow-x-auto">
+            <CentralPerfisAcesso />
+          </div>
         </TabsContent>
 
-        <TabsContent value="usuarios" className="mt-3 w-full min-w-0 overflow-x-auto">
-          <GestaoUsuariosAvancada />
+        <TabsContent value="usuarios" className="mt-3 w-full min-w-0">
+          <div className="w-full min-w-0 overflow-x-auto">
+            <GestaoUsuariosAvancada />
+          </div>
         </TabsContent>
 
         <TabsContent value="sod" className="mt-3 w-full min-w-0">
           <SoDChecker />
         </TabsContent>
 
-        <TabsContent value="relatorios" className="mt-3 w-full min-w-0 overflow-x-auto">
-          <RelatorioPermissoes perfis={perfis} usuarios={usuarios} empresas={empresas} />
+        <TabsContent value="relatorios" className="mt-3 w-full min-w-0">
+          <div className="w-full min-w-0 overflow-x-auto">
+            <RelatorioPermissoes perfis={perfis} usuarios={usuarios} empresas={empresas} />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

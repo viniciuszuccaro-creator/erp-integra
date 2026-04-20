@@ -32,19 +32,27 @@ Deno.serve(async (req) => {
 
     // MODO 2: upsert por chave + scope
     if (chave) {
+      // Busca por chave + scope mais amplo (tenta encontrar o registro existente)
       const filtro = { chave };
       if (scope?.group_id) filtro.group_id = scope.group_id;
       if (scope?.empresa_id) filtro.empresa_id = scope.empresa_id;
 
-      const existing = await api.filter(filtro, '-updated_date', 1).catch(() => []);
+      const existing = await api.filter(filtro, '-updated_date', 5).catch(() => []);
       const match = Array.isArray(existing) ? existing[0] : null;
 
       if (match?.id) {
+        // Atualiza o registro existente com os novos dados
         const updated = await api.update(match.id, data);
-        return Response.json({ record: updated, _ts: Date.now() });
+        return Response.json({ record: updated, mode: 'update', _ts: Date.now() });
       } else {
-        const created = await api.create({ chave, ...(scope || {}), ...data });
-        return Response.json({ record: created, _ts: Date.now() });
+        // Cria novo registro com chave + scope + data
+        const payload = { chave, ...data };
+        if (scope?.group_id) payload.group_id = scope.group_id;
+        if (scope?.empresa_id) payload.empresa_id = scope.empresa_id;
+        // Garante que categoria esteja presente
+        if (data?.categoria) payload.categoria = data.categoria;
+        const created = await api.create(payload);
+        return Response.json({ record: created, mode: 'create', _ts: Date.now() });
       }
     }
 

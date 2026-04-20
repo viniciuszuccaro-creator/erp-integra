@@ -32,26 +32,19 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const gId = grupoId || grupoAtual?.id;
   const canLoad = Boolean(gId || eId);
 
-  // Query direta via SDK asServiceRole (não passa pelo wrapper de layout)
+  // Query via getEntityRecord com asServiceRole — bypassa wrapper do layout totalmente
   const { data: configs = [], refetch, isFetching } = useQuery({
     queryKey: ['config-global-v2', eId ?? 'sem', gId ?? 'sem'],
     queryFn: async () => {
-      const filtro = {};
-      if (gId) filtro.group_id = gId;
-      if (eId) filtro.empresa_id = eId;
+      const filter = {};
+      if (gId) filter.group_id = gId;
+      if (eId) filter.empresa_id = eId;
       const res = await base44.functions.invoke('getEntityRecord', {
         entityName: 'ConfiguracaoSistema',
-        filter: filtro,
+        filter,
         limit: 300,
       });
-      const list = res?.data;
-      if (Array.isArray(list) && list.length > 0) return list;
-      // fallback via entities direct
-      const filtro2 = {};
-      if (gId) filtro2.group_id = gId;
-      if (eId) filtro2.empresa_id = eId;
-      const raw = await base44.entities.ConfiguracaoSistema.filter(filtro2, '-updated_date', 300).catch(() => []);
-      return Array.isArray(raw) ? raw : [];
+      return Array.isArray(res?.data) ? res.data : [];
     },
     enabled: canLoad,
     staleTime: 0,
@@ -103,24 +96,23 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     });
   };
 
-  // Toggle: optimistic → upsert → refetch → limpa optimistic
+  // Toggle: optimistic → upsert → refetch → confirma ou reverte
   const handleToggle = async (chave, categoria, newValue) => {
     if (saving[chave]) return;
+    // Aplica optimistic imediatamente para UX fluida
     setOptimistic(prev => ({ ...prev, [chave]: newValue }));
     setSaving(prev => ({ ...prev, [chave]: true }));
     try {
-      await upsert(chave, categoria, { ativa: newValue });
+      // Salva no backend via asServiceRole (bypass total do wrapper)
+      const result = await upsert(chave, categoria, { ativa: newValue });
+      // Invalida cache e refetch para sincronizar com backend real
       await queryClient.invalidateQueries({ queryKey: ['config-global-v2'] });
-      const fresh = await refetch();
-      const freshList = fresh?.data;
-      if (Array.isArray(freshList)) {
-        const freshRec = freshList.find(c => c.chave === chave);
-        if (freshRec && typeof freshRec.ativa === 'boolean') {
-          setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
-        }
-      }
+      await refetch();
+      // Remove o optimistic — agora o valor real do backend governa
+      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
       toast({ title: `✅ ${newValue ? 'Ativado' : 'Desativado'} com sucesso!` });
     } catch (err) {
+      // Em caso de erro, reverte o optimistic para o valor anterior
       setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
       toast({ title: '❌ Erro ao salvar', description: String(err?.message || err), variant: 'destructive' });
     } finally {
