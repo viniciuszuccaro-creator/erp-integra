@@ -32,13 +32,15 @@ import { createPageUrl } from '@/utils';
  */
 export default function ConfigGlobal({ empresaId, grupoId }) {
   const [activeTab, setActiveTab] = useState('integracoes');
+  // Estado local optimistic para os toggles — evita "volta ao anterior" após refresh
+  const [pendingToggles, setPendingToggles] = useState({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
   const canLoadConfigs = Boolean(grupoAtual?.id || empresaAtual?.id);
-  const { data: configs = [] } = useQuery({
-      queryKey: ['config-sistema', empresaAtual?.id || 'sem-empresa', grupoAtual?.id || 'sem-grupo'],
+  const { data: configs = [], refetch } = useQuery({
+      queryKey: ['config-global', empresaAtual?.id ?? 'sem', grupoAtual?.id ?? 'sem'],
       queryFn: async () => {
         const filtro = {};
         if (grupoAtual?.id) filtro.group_id = grupoAtual.id;
@@ -48,17 +50,20 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       },
       enabled: canLoadConfigs,
       staleTime: 0,
-      refetchOnMount: true,
+      gcTime: 0,
+      refetchOnMount: 'always',
     });
 
   const updateMutation = useMutation({
     mutationFn: async (data) => {
       const { __before, __scope, ...payload } = data || {};
-      // Busca FRESCA do banco para evitar usar configs stale do closure
       const freshScope = {};
       if (grupoAtual?.id) freshScope.group_id = grupoAtual.id;
       if (empresaAtual?.id) freshScope.empresa_id = empresaAtual.id;
-      const freshList = await base44.entities.ConfiguracaoSistema.filter({ chave: payload.chave, ...freshScope }, '-updated_date', 5);
+      // Busca fresca ignorando o wrapper do layout: usa filter direto sem injeção automática
+      const freshList = await base44.entities.ConfiguracaoSistema.filter(
+        { chave: payload.chave, ...freshScope }, '-updated_date', 5
+      ).catch(() => []);
       const match = Array.isArray(freshList) ? freshList[0] : null;
       if (match?.id) {
         return base44.entities.ConfiguracaoSistema.update(match.id, { ...payload, ...freshScope });
@@ -66,10 +71,13 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       return base44.entities.ConfiguracaoSistema.create({ ...payload, ...freshScope });
     },
     onSuccess: async (res, variables) => {
-      // Recarrega todos os consumidores
-      await queryClient.invalidateQueries({ queryKey: ['config-sistema'] });
-      queryClient.invalidateQueries({ queryKey: ['configuracaoSistema'] });
-      toast({ title: '✅ Configuração salva com sucesso!' });
+      // Limpar pending toggle para esta chave
+      const chave = variables?.chave;
+      if (chave) setPendingToggles(prev => { const n = {...prev}; delete n[chave]; return n; });
+      // Invalidar e re-buscar imediatamente
+      await queryClient.invalidateQueries({ queryKey: ['config-global'] });
+      await refetch();
+      toast({ title: '✅ Configuração salva!' });
       try {
         const me = await base44.auth.me();
         const before = variables?.__before || null;
@@ -126,25 +134,24 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     return list[0] || null;
   };
 
-  // Lê valor booleano — suporta campo flat "ativa" (novo) e aninhado legado
+  // Lê valor booleano — usa estado optimistic local se houver pending
   const getToggleValue = (chave) => {
+    // Estado optimistic tem prioridade enquanto mutação está em voo
+    if (chave in pendingToggles) return pendingToggles[chave];
     const rec = getConfig(chave);
     if (!rec) return false;
-    // Campo flat (novo padrão)
     if (typeof rec.ativa === 'boolean') return rec.ativa;
-    // Legado: tentativa de leitura aninhada
     return false;
   };
 
-  // Salva toggle: upsert com escopo correto — { chave, categoria, ativa, group_id, empresa_id }
+  // Salva toggle: set optimistic imediato + upsert
   const handleSave = (chave, categoria, dados) => {
+    // Atualiza UI imediatamente (optimistic)
+    if ('ativa' in dados) {
+      setPendingToggles(prev => ({ ...prev, [chave]: dados.ativa }));
+    }
     const before = getConfig(chave);
-    updateMutation.mutate({
-      chave,
-      categoria,
-      ...dados,
-      __before: before,
-    });
+    updateMutation.mutate({ chave, categoria, ...dados, __before: before });
   };
 
   return (
@@ -368,8 +375,8 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                 </div>
               </div>
 
-              <Button className="w-full" onClick={() => queryClient.invalidateQueries({ queryKey: ['config-sistema'] })}>
-                Recarregar Estado
+              <Button className="w-full" variant="outline" onClick={() => { queryClient.invalidateQueries({ queryKey: ['config-global'] }); refetch(); }}>
+                🔄 Recarregar Estado
               </Button>
             </CardContent>
           </Card>
