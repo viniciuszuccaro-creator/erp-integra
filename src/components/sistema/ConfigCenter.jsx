@@ -17,14 +17,17 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * Central de Configurações Unificada
  * Gerencia todas as configurações do sistema
  */
-export default function ConfigCenter({ empresaId }) {
+export default function ConfigCenter({ empresaId: empresaIdProp }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const empresaId = empresaIdProp || empresaAtual?.id;
 
   const { data: configsIA = [] } = useQuery({
     queryKey: ['configs-ia-geral'],
@@ -32,14 +35,18 @@ export default function ConfigCenter({ empresaId }) {
   });
 
   const { data: governanca } = useQuery({
-    queryKey: ['governanca-config', empresaId],
+    queryKey: ['governanca-config', empresaId, grupoAtual?.id],
     queryFn: async () => {
-      const configs = await base44.entities.GovernancaEmpresa.filter({
-        empresa_id: empresaId
-      });
-      return configs[0];
+      const filter = empresaId
+        ? { empresa_id: empresaId }
+        : grupoAtual?.id
+          ? { group_id: grupoAtual.id }
+          : null;
+      if (!filter) return null;
+      const configs = await base44.entities.GovernancaEmpresa.filter(filter);
+      return configs[0] || null;
     },
-    enabled: !!empresaId
+    enabled: !!(empresaId || grupoAtual?.id),
   });
 
   const [configForm, setConfigForm] = useState({
@@ -62,13 +69,22 @@ export default function ConfigCenter({ empresaId }) {
 
   const salvarConfigMutation = useMutation({
     mutationFn: async (dados) => {
+      const eId = empresaId || empresaAtual?.id;
+      const gId = grupoAtual?.id;
+      if (!eId && !gId) {
+        throw new Error('Selecione uma empresa ou grupo antes de salvar.');
+      }
+      const payload = {
+        ...(eId ? { empresa_id: eId } : {}),
+        ...(gId ? { group_id: gId } : {}),
+        ...dados,
+      };
       if (governanca) {
-        return await base44.entities.GovernancaEmpresa.update(governanca.id, dados);
+        return await base44.entities.GovernancaEmpresa.update(governanca.id, payload);
       } else {
         return await base44.entities.GovernancaEmpresa.create({
-          empresa_id: empresaId,
           nivel_conformidade: 'Básico',
-          ...dados
+          ...payload,
         });
       }
     },
