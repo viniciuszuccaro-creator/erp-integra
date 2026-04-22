@@ -82,12 +82,12 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
       const savedRecord = res?.data?.record;
 
       if (savedRecord && typeof savedRecord.ativa === 'boolean') {
-        // Confirma o valor real retornado pelo backend
-        setOptimistic(prev => ({ ...prev, [chave]: savedRecord.ativa }));
         toast.success(`${savedRecord.ativa ? '✅ Ativado' : '⭕ Desativado'} com sucesso!`);
       }
-      // Invalida para sincronizar após persistência
-      queryClient.invalidateQueries({ queryKey });
+      // Invalida para recarregar os dados ANTES de resetar optimistic
+      await queryClient.invalidateQueries({ queryKey });
+      // Remove optimistic APÓS validação completar (força UI ler do query cache)
+      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
     } catch (err) {
       // Reverte o optimistic em caso de erro
       setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
