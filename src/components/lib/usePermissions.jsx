@@ -13,7 +13,8 @@ export default function usePermissions() {
       return await base44.entities.PerfilAcesso.get(user.perfil_acesso_id);
     },
     enabled: !!(user?.perfil_acesso_id && user.perfil_acesso_id !== ""),
-    staleTime: 60000,
+    staleTime: 300000,  // 5 min — evita re-fetches que causam flicker no RBAC
+    gcTime: 600000,
     retry: 1,
     });
 

@@ -35,7 +35,7 @@ export default function GestaoUsuariosAvancada({
 }) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
-    perfil_acesso_id: usuario?.perfil_acesso_id || "",
+    perfil_acesso_id: usuario?.perfil_acesso_id || "sem-perfil",
     empresas_vinculadas: usuario?.empresas_vinculadas || [],
     restricoes_adicionais: usuario?.restricoes_adicionais || {
       pode_ver_apenas_proprios_registros: false,
@@ -51,14 +51,16 @@ export default function GestaoUsuariosAvancada({
 
   const atualizarUsuarioMutation = useMutation({
     mutationFn: async (data) => {
-      const perfilSelecionado = perfis.find(p => p.id === data.perfil_acesso_id);
+      const perfilId = data.perfil_acesso_id === "sem-perfil" ? null : data.perfil_acesso_id;
+      const perfilSelecionado = perfis.find(p => p.id === perfilId);
       const empresasNomes = empresas
         .filter(e => data.empresas_vinculadas?.includes(e.id))
         .map(e => e.nome_fantasia || e.razao_social);
 
       return await base44.entities.User.update(usuario.id, {
         ...data,
-        perfil_acesso_nome: perfilSelecionado?.nome_perfil,
+        perfil_acesso_id: perfilId,
+        perfil_acesso_nome: perfilSelecionado?.nome_perfil || null,
         empresas_vinculadas_nomes: empresasNomes
       });
     },
@@ -172,7 +174,7 @@ export default function GestaoUsuariosAvancada({
               <SelectValue placeholder="Selecionar perfil" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={null}>Sem perfil</SelectItem>
+              <SelectItem value="sem-perfil">Sem perfil</SelectItem>
               {perfis.filter(p => p.ativo !== false).map(p => (
                 <SelectItem key={p.id} value={p.id}>
                   <div className="flex items-center gap-2">

@@ -24,15 +24,24 @@ Deno.serve(async (req) => {
 
     const api = base44.asServiceRole.entities.ConfiguracaoSistema;
 
-    // MODO 1: update por ID direto
+    // MODO 1: update por ID direto — busca registro atual e faz merge para não perder dados
     if (id) {
-      // Garante que chave está no payload do update (necessário para manter consistência)
-      const updateData = { ...data };
-      if (chave && !updateData.chave) updateData.chave = chave;
+      let existing = null;
+      try { existing = await api.get(id); } catch (_) {
+        try {
+          const r = await api.filter({ id }, '-updated_date', 1);
+          existing = Array.isArray(r) ? r[0] || null : null;
+        } catch (_2) {}
+      }
+      const updateData = { ...(existing || {}), ...data };
+      if (chave) updateData.chave = chave;
       if (scope?.group_id) updateData.group_id = scope.group_id;
       if (scope?.empresa_id) updateData.empresa_id = scope.empresa_id;
+      // Remove campos internos que não devem ser re-enviados
+      delete updateData.id; delete updateData.created_date; delete updateData.updated_date;
+      delete updateData.created_by; delete updateData.created_by_id; delete updateData.is_sample;
       const updated = await api.update(id, updateData);
-      return Response.json({ record: updated, id, _ts: Date.now() });
+      return Response.json({ record: updated, mode: 'update', id, _ts: Date.now() });
     }
 
     // MODO 2: upsert por chave + scope

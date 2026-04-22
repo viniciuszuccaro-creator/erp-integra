@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,24 +8,27 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
-import { Settings, Link2, FileText, Sparkles, Bell, Shield } from 'lucide-react';
+import { toast } from 'sonner';
+import { Settings, Link2, FileText, Sparkles, Bell, Shield, RefreshCw } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
 /**
- * ConfigGlobal — Painel de configuração global do sistema.
- * Toggles persistem diretamente via upsert pelo entity SDK (asServiceRole via backend).
- * Estado optimista local para UX imediata; refetch após save confirma o real.
+ * ConfigGlobal — Painel de configuração global.
+ * Correção definitiva dos toggles:
+ * - idCache em useState (sobrevive re-renders)
+ * - optimistic separado do backend
+ * - após save, não remove optimistic até confirmar valor do backend
  */
 export default function ConfigGlobal({ empresaId, grupoId }) {
   const [activeTab, setActiveTab] = useState('integracoes');
   const [saving, setSaving] = useState({});
+  // optimistic: { chave: boolean } — sobrescreve valor do backend na UI
   const [optimistic, setOptimistic] = useState({});
-  const idCacheRef = useRef({});
-  const { toast } = useToast();
+  // idCache em state para sobreviver re-renders
+  const [idCache, setIdCache] = useState({});
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
@@ -33,15 +36,16 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const gId = grupoId || grupoAtual?.id;
   const canLoad = Boolean(gId || eId);
 
-  // Limpa optimistic e cache de IDs quando empresa/grupo mudar
+  // Limpa cache ao trocar empresa/grupo
   useEffect(() => {
     setOptimistic({});
-    idCacheRef.current = {};
+    setIdCache({});
   }, [eId, gId]);
 
-  // Query via asServiceRole direto — bypassa totalmente o wrapper do layout
+  const queryKey = ['config-global-v4', eId ?? 'sem', gId ?? 'sem'];
+
   const { data: configs = [], refetch, isFetching } = useQuery({
-    queryKey: ['config-global-v3', eId ?? 'sem', gId ?? 'sem'],
+    queryKey,
     queryFn: async () => {
       const orConds = [];
       if (gId) orConds.push({ group_id: gId });
@@ -54,12 +58,14 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
         _bust: Date.now(),
       });
       const list = Array.isArray(res?.data) ? res.data : [];
-      // Popular cache de IDs ao carregar — garante update em vez de create no toggle
-      list.forEach(rec => {
-        if (rec?.chave && rec?.id && !idCacheRef.current[rec.chave]) {
-          idCacheRef.current[rec.chave] = rec.id;
-        }
-      });
+      // Popula idCache com dados frescos
+      if (list.length > 0) {
+        setIdCache(prev => {
+          const next = { ...prev };
+          list.forEach(rec => { if (rec?.chave && rec?.id) next[rec.chave] = rec.id; });
+          return next;
+        });
+      }
       return list;
     },
     enabled: canLoad,
@@ -70,82 +76,60 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     retry: 1,
   });
 
-  // Retorna o registro mais específico para a chave (prioridade: exato > empresa > grupo > qualquer)
-  const getConfig = (chave) => {
+  const getConfig = useCallback((chave) => {
     const list = (configs || []).filter(c => c.chave === chave);
     if (!list.length) return null;
-    // 1) Exato: grupo + empresa
     if (gId && eId) {
       const exact = list.find(c => c.group_id === gId && c.empresa_id === eId);
       if (exact) return exact;
     }
-    // 2) Só empresa
-    if (eId) {
-      const byE = list.find(c => c.empresa_id === eId);
-      if (byE) return byE;
-    }
-    // 3) Só grupo
-    if (gId) {
-      const byG = list.find(c => c.group_id === gId);
-      if (byG) return byG;
-    }
+    if (eId) { const byE = list.find(c => c.empresa_id === eId); if (byE) return byE; }
+    if (gId) { const byG = list.find(c => c.group_id === gId); if (byG) return byG; }
     return list[0] || null;
-  };
+  }, [configs, gId, eId]);
 
-  // Lê o valor do toggle: optimistic tem prioridade
-  const getToggleValue = (chave) => {
+  // Lê valor: optimistic > backend > false
+  const getToggleValue = useCallback((chave) => {
     if (chave in optimistic) return optimistic[chave];
     const rec = getConfig(chave);
-    if (!rec) return false;
-    return typeof rec.ativa === 'boolean' ? rec.ativa : false;
-  };
+    return typeof rec?.ativa === 'boolean' ? rec.ativa : false;
+  }, [optimistic, getConfig]);
 
-  const getScope = () => {
+  const getScope = useCallback(() => {
     const scope = {};
     if (gId) scope.group_id = gId;
     if (eId) scope.empresa_id = eId;
     return scope;
-  };
+  }, [gId, eId]);
 
-  // Salva via backend (bypass total do wrapper do layout)
-  const upsert = async (chave, categoria, dados) => {
+  const upsert = useCallback(async (chave, categoria, dados) => {
     const scope = getScope();
-    const cachedId = idCacheRef.current[chave];
+    const cachedId = idCache[chave];
     const mergedData = { chave, categoria, ...dados };
-    // __skipContextInject: evita que o wrapper do layout injete scope indevido
     const payload = cachedId
-      ? { id: cachedId, chave, data: mergedData, scope, __skipContextInject: true }
-      : { chave, data: mergedData, scope, __skipContextInject: true };
+      ? { id: cachedId, chave, data: mergedData, scope }
+      : { chave, data: mergedData, scope };
     const res = await base44.functions.invoke('upsertConfig', payload);
     const returnedId = res?.data?.id || res?.data?.record?.id;
-    if (returnedId) idCacheRef.current[chave] = returnedId;
+    if (returnedId) {
+      setIdCache(prev => ({ ...prev, [chave]: returnedId }));
+    }
     return res;
-  };
+  }, [idCache, getScope]);
 
-  // Toggle: optimistic imediato → persiste via backend → confirma com refetch
-  const handleToggle = async (chave, categoria, newValue) => {
+  const handleToggle = useCallback(async (chave, categoria, newValue) => {
     if (saving[chave]) return;
-    // Aplica optimistic ANTES de qualquer await para UX responsiva
+    // 1. Aplica optimistic imediatamente
     setOptimistic(prev => ({ ...prev, [chave]: newValue }));
     setSaving(prev => ({ ...prev, [chave]: true }));
     try {
-      const res = await upsert(chave, categoria, { ativa: newValue });
-      // Captura ID retornado pelo upsert (tanto formato legado quanto novo)
-      const retId = res?.data?.id || res?.data?.record?.id;
-      if (retId) idCacheRef.current[chave] = retId;
-
-      // Aguarda propagação do backend
-      await new Promise(r => setTimeout(r, 800));
-      await queryClient.invalidateQueries({ queryKey: ['config-global-v3'] });
+      await upsert(chave, categoria, { ativa: newValue });
+      // 2. Invalida cache e refetch para confirmar
+      await queryClient.invalidateQueries({ queryKey });
       const result = await refetch({ cancelRefetch: false });
       const freshRecs = Array.isArray(result?.data) ? result.data : [];
 
-      // Atualiza cache de IDs com dados frescos
-      freshRecs.forEach(rec => {
-        if (rec?.chave && rec?.id) idCacheRef.current[rec.chave] = rec.id;
-      });
-
-      // Localiza o registro salvo com escopo mais específico
+      // 3. Encontra o valor real salvo no backend
       const saved =
         freshRecs.find(c => c.chave === chave && eId && gId && c.empresa_id === eId && c.group_id === gId) ||
         freshRecs.find(c => c.chave === chave && eId && c.empresa_id === eId) ||
@@ -154,51 +138,52 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
 
       const confirmedVal = (saved && typeof saved.ativa === 'boolean') ? saved.ativa : newValue;
 
-      // Remove optimistic — backend assume controle
+      // 4. Remove optimistic SOMENTE após confirmar — UI assume valor do backend
       setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
 
       if (confirmedVal !== newValue) {
-        toast({ title: `⚠️ Servidor corrigiu para: ${confirmedVal ? 'Ativado' : 'Desativado'}` });
+        toast.warning(`Servidor corrigiu para: ${confirmedVal ? 'Ativado' : 'Desativado'}`);
       } else {
-        toast({ title: `✅ ${newValue ? 'Ativado' : 'Desativado'} com sucesso!` });
+        toast.success(`${newValue ? 'Ativado' : 'Desativado'} com sucesso!`);
       }
     } catch (err) {
       // Reverte optimistic em caso de erro
       setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
-      toast({ title: '❌ Erro ao salvar', description: String(err?.message || err), variant: 'destructive' });
+      toast.error('Erro ao salvar: ' + String(err?.message || err));
     } finally {
       setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
     }
-  };
+  }, [saving, upsert, queryClient, queryKey, refetch, eId, gId]);
 
-  // Campo genérico (input/textarea)
-  const handleSaveField = async (chave, categoria, dados) => {
+  const handleSaveField = useCallback(async (chave, categoria, dados) => {
     if (saving[chave]) return;
     setSaving(prev => ({ ...prev, [chave]: true }));
     try {
       await upsert(chave, categoria, dados);
-      await queryClient.invalidateQueries({ queryKey: ['config-global-v3'] });
+      await queryClient.invalidateQueries({ queryKey });
       await refetch();
-      toast({ title: '✅ Configuração salva!' });
+      toast.success('Configuração salva!');
     } catch (err) {
-      toast({ title: '❌ Erro ao salvar', description: String(err?.message || err), variant: 'destructive' });
+      toast.error('Erro ao salvar: ' + String(err?.message || err));
     } finally {
       setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
     }
-  };
+  }, [saving, upsert, queryClient, queryKey, refetch]);
 
-  const ToggleRow = ({ chave, categoria, label, desc, permId }) => (
-    <div className="flex items-center justify-between p-3 border rounded-lg">
+  const ToggleRow = ({ chave, categoria, label, desc }) => (
+    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors">
       <div className="flex-1 min-w-0 mr-3">
         <p className="font-medium text-sm">{label}</p>
         {desc && <p className="text-xs text-slate-500 mt-0.5">{desc}</p>}
       </div>
-      <Switch
-        checked={getToggleValue(chave)}
-        disabled={!!saving[chave]}
-        onCheckedChange={(checked) => handleToggle(chave, categoria, checked)}
-        data-permission={permId}
-      />
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {saving[chave] && <RefreshCw className="w-3 h-3 text-blue-500 animate-spin" />}
+        <Switch
+          checked={getToggleValue(chave)}
+          disabled={!!saving[chave] || isFetching}
+          onCheckedChange={(checked) => handleToggle(chave, categoria, checked)}
+        />
+      </div>
     </div>
   );
 
@@ -211,14 +196,22 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 w-full">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h2 className="text-xl font-bold text-slate-900">Configurações Globais do Sistema</h2>
-          <p className="text-sm text-slate-500">Integrações, IA, notificações e segurança</p>
+          <p className="text-sm text-slate-500">
+            {eId ? `Empresa: ${empresaAtual?.nome_fantasia || eId}` : `Grupo: ${grupoAtual?.nome_do_grupo || gId}`}
+          </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => { queryClient.invalidateQueries({ queryKey: ['config-global-v3'] }); refetch(); }}>
-          🔄 Atualizar
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={isFetching}
+          onClick={() => { queryClient.invalidateQueries({ queryKey }); refetch(); }}
+        >
+          <RefreshCw className={`w-4 h-4 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+          Atualizar
         </Button>
       </div>
 
@@ -238,7 +231,9 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
           <Card>
             <CardHeader><CardTitle className="text-base">Status das Integrações</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-sm text-slate-600">Configurações completas estão em <strong>Administração do Sistema → Integrações</strong>.</p>
+              <p className="text-sm text-slate-600">
+                Configurações detalhadas em <strong>Administração → Integrações</strong>.
+              </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {['integracao_nfe', 'integracao_boletos', 'integracao_maps', 'integracao_whatsapp'].map((chave) => {
                   const labels = { integracao_nfe: 'NF-e', integracao_boletos: 'Boleto/PIX', integracao_maps: 'Google Maps', integracao_whatsapp: 'WhatsApp' };
@@ -270,37 +265,49 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>CFOP Padrão — Dentro do Estado</Label>
-                  <Input defaultValue={getConfig('fiscal_cfop_interno')?.valor || '5102'} placeholder="5102"
-                    onBlur={(e) => handleSaveField('fiscal_cfop_interno', 'Fiscal', { valor: e.target.value })} />
+                  <Input
+                    key={`cfop-int-${eId}-${gId}`}
+                    defaultValue={getConfig('fiscal_cfop_interno')?.valor || '5102'}
+                    placeholder="5102"
+                    onBlur={(e) => handleSaveField('fiscal_cfop_interno', 'Fiscal', { valor: e.target.value })}
+                  />
                 </div>
                 <div>
                   <Label>CFOP Padrão — Fora do Estado</Label>
-                  <Input defaultValue={getConfig('fiscal_cfop_externo')?.valor || '6102'} placeholder="6102"
-                    onBlur={(e) => handleSaveField('fiscal_cfop_externo', 'Fiscal', { valor: e.target.value })} />
+                  <Input
+                    key={`cfop-ext-${eId}-${gId}`}
+                    defaultValue={getConfig('fiscal_cfop_externo')?.valor || '6102'}
+                    placeholder="6102"
+                    onBlur={(e) => handleSaveField('fiscal_cfop_externo', 'Fiscal', { valor: e.target.value })}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label>Alíquota ICMS (%)</Label>
-                  <Input type="number" defaultValue={getConfig('fiscal_aliq_icms')?.numero || 18} placeholder="18"
+                  <Input type="number" key={`icms-${eId}`} defaultValue={getConfig('fiscal_aliq_icms')?.numero || 18}
                     onBlur={(e) => handleSaveField('fiscal_aliq_icms', 'Fiscal', { numero: Number(e.target.value) })} />
                 </div>
                 <div>
                   <Label>Alíquota PIS (%)</Label>
-                  <Input type="number" defaultValue={getConfig('fiscal_aliq_pis')?.numero || 1.65} placeholder="1.65"
+                  <Input type="number" key={`pis-${eId}`} defaultValue={getConfig('fiscal_aliq_pis')?.numero || 1.65}
                     onBlur={(e) => handleSaveField('fiscal_aliq_pis', 'Fiscal', { numero: Number(e.target.value) })} />
                 </div>
                 <div>
                   <Label>Alíquota COFINS (%)</Label>
-                  <Input type="number" defaultValue={getConfig('fiscal_aliq_cofins')?.numero || 7.6} placeholder="7.6"
+                  <Input type="number" key={`cofins-${eId}`} defaultValue={getConfig('fiscal_aliq_cofins')?.numero || 7.6}
                     onBlur={(e) => handleSaveField('fiscal_aliq_cofins', 'Fiscal', { numero: Number(e.target.value) })} />
                 </div>
               </div>
               <div>
                 <Label>Observações Padrão NF-e</Label>
-                <Textarea placeholder="Observações que aparecerão em todas as notas..." rows={2}
+                <Textarea
+                  key={`obs-nfe-${eId}`}
+                  placeholder="Observações que aparecerão em todas as notas..."
+                  rows={2}
                   defaultValue={getConfig('fiscal_obs_nfe')?.valor || ''}
-                  onBlur={(e) => handleSaveField('fiscal_obs_nfe', 'Fiscal', { valor: e.target.value })} />
+                  onBlur={(e) => handleSaveField('fiscal_obs_nfe', 'Fiscal', { valor: e.target.value })}
+                />
               </div>
             </CardContent>
           </Card>
@@ -309,15 +316,16 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
         {/* IA */}
         <TabsContent value="ia" className="space-y-4 mt-4">
           <Card>
-            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Sparkles className="w-4 h-4 text-purple-600" />IA & Otimização</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-600" />IA & Otimização
+              </CardTitle>
+            </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-sm text-slate-600">Módulos de IA configurados em <strong>Administração do Sistema → Tecnologia, IA & Parâmetros</strong>.</p>
-              <div className="space-y-2">
-                <ToggleRow chave="ia_leitura_projetos" categoria="Sistema" label="IA Leitura de Projetos" desc="Análise automática de projetos de engenharia" permId="Sistema.IA.editar" />
-                <ToggleRow chave="ia_preditiva_vendas" categoria="Sistema" label="IA Preditiva de Vendas" desc="Previsão de demanda e churn" permId="Sistema.IA.editar" />
-                <ToggleRow chave="ia_conciliacao" categoria="Sistema" label="IA Conciliação Bancária" desc="Conciliação automática de extratos" permId="Sistema.IA.editar" />
-                <ToggleRow chave="ia_producao" categoria="Sistema" label="IA Produção" desc="Otimização de ordens de produção" permId="Sistema.IA.editar" />
-              </div>
+              <ToggleRow chave="ia_leitura_projetos" categoria="Sistema" label="IA Leitura de Projetos" desc="Análise automática de projetos de engenharia" />
+              <ToggleRow chave="ia_preditiva_vendas" categoria="Sistema" label="IA Preditiva de Vendas" desc="Previsão de demanda e churn" />
+              <ToggleRow chave="ia_conciliacao" categoria="Sistema" label="IA Conciliação Bancária" desc="Conciliação automática de extratos" />
+              <ToggleRow chave="ia_producao" categoria="Sistema" label="IA Produção" desc="Otimização de ordens de produção" />
               <Link to={createPageUrl('AdministracaoSistema?tab=ia')}>
                 <Button variant="outline" size="sm">Abrir IA & Otimização →</Button>
               </Link>
@@ -330,12 +338,12 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
           <Card>
             <CardHeader><CardTitle className="text-base">Notificações Automáticas</CardTitle></CardHeader>
             <CardContent className="space-y-2">
-              <ToggleRow chave="notif_pedido_aprovado" categoria="Notificacoes" label="Pedido Aprovado" desc="Notifica cliente quando pedido for aprovado" permId="Sistema.Configurações.editar" />
-              <ToggleRow chave="notif_entrega_transporte" categoria="Notificacoes" label="Entrega Saiu para Transporte" desc="Envia link de rastreamento ao cliente" permId="Sistema.Configurações.editar" />
-              <ToggleRow chave="notif_boleto_gerado" categoria="Notificacoes" label="Boleto/PIX Gerado" desc="Envia boleto por WhatsApp e e-mail" permId="Sistema.Configurações.editar" />
-              <ToggleRow chave="notif_titulo_vencido" categoria="Notificacoes" label="Título Vencido" desc="Alerta de inadimplência" permId="Sistema.Configurações.editar" />
-              <ToggleRow chave="notif_op_atrasada" categoria="Notificacoes" label="OP Atrasada" desc="Alerta para gerente de produção" permId="Sistema.Configurações.editar" />
-              <ToggleRow chave="notif_estoque_baixo" categoria="Notificacoes" label="Estoque Baixo" desc="Alerta quando produto abaixo do mínimo" permId="Sistema.Configurações.editar" />
+              <ToggleRow chave="notif_pedido_aprovado" categoria="Notificacoes" label="Pedido Aprovado" desc="Notifica cliente quando pedido for aprovado" />
+              <ToggleRow chave="notif_entrega_transporte" categoria="Notificacoes" label="Entrega Saiu para Transporte" desc="Envia link de rastreamento ao cliente" />
+              <ToggleRow chave="notif_boleto_gerado" categoria="Notificacoes" label="Boleto/PIX Gerado" desc="Envia boleto por WhatsApp e e-mail" />
+              <ToggleRow chave="notif_titulo_vencido" categoria="Notificacoes" label="Título Vencido" desc="Alerta de inadimplência" />
+              <ToggleRow chave="notif_op_atrasada" categoria="Notificacoes" label="OP Atrasada" desc="Alerta para gerente de produção" />
+              <ToggleRow chave="notif_estoque_baixo" categoria="Notificacoes" label="Estoque Baixo" desc="Alerta quando produto abaixo do mínimo" />
             </CardContent>
           </Card>
         </TabsContent>
@@ -345,22 +353,21 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
           <Card>
             <CardHeader><CardTitle className="text-base">Segurança e Auditoria</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <ToggleRow chave="seg_mfa" categoria="Seguranca" label="MFA — Autenticação de Dois Fatores" desc="Obrigatório para administradores" permId="Sistema.Segurança.editar" />
-                <ToggleRow chave="seg_logs_completos" categoria="Seguranca" label="Logs de Auditoria Completos" desc="Registra todas as ações críticas" permId="Sistema.Segurança.editar" />
-                <ToggleRow chave="seg_bloqueio_tentativas" categoria="Seguranca" label="Bloquear Tentativas Excessivas" desc="Bloqueia após 5 tentativas de login falhas" permId="Sistema.Segurança.editar" />
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex-1 min-w-0 mr-3">
-                    <p className="font-medium text-sm">Timeout de Sessão (minutos)</p>
-                    <p className="text-xs text-slate-500">Logout após inatividade</p>
-                  </div>
-                  <Input
-                    type="number"
-                    className="w-20"
-                    defaultValue={getConfig('seg_timeout')?.numero || 30}
-                    onBlur={(e) => handleSaveField('seg_timeout', 'Seguranca', { numero: Number(e.target.value) || 30 })}
-                  />
+              <ToggleRow chave="seg_mfa" categoria="Seguranca" label="MFA — Autenticação de Dois Fatores" desc="Obrigatório para administradores" />
+              <ToggleRow chave="seg_logs_completos" categoria="Seguranca" label="Logs de Auditoria Completos" desc="Registra todas as ações críticas" />
+              <ToggleRow chave="seg_bloqueio_tentativas" categoria="Seguranca" label="Bloquear Tentativas Excessivas" desc="Bloqueia após 5 tentativas de login falhas" />
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50">
+                <div className="flex-1 min-w-0 mr-3">
+                  <p className="font-medium text-sm">Timeout de Sessão (minutos)</p>
+                  <p className="text-xs text-slate-500">Logout após inatividade</p>
                 </div>
+                <Input
+                  type="number"
+                  className="w-20"
+                  key={`timeout-${eId}`}
+                  defaultValue={getConfig('seg_timeout')?.numero || 30}
+                  onBlur={(e) => handleSaveField('seg_timeout', 'Seguranca', { numero: Number(e.target.value) || 30 })}
+                />
               </div>
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
                 <Shield className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
