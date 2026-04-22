@@ -4,14 +4,10 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 /**
- * Hook consolidado para gerenciar toggles de ConfiguracaoSistema.
+ * [DEPRECATED] Hook descontinuado — ConfiguracaoSistema foi removida.
+ * Mantém interface para compatibilidade com views legadas.
  * 
- * REGRAS DE ESCOPO (alinhadas com upsertConfig backend):
- *  - Se eId E gId: busca por chave + empresa_id + group_id
- *  - Se só eId: busca por chave + empresa_id (group_id é null/ausente)
- *  - Se só gId: busca por chave + group_id (empresa_id é null/ausente)
- * 
- * CRITICAL FIX: getToggleValue NÃO exige !c.group_id quando há eId+gId.
+ * TODO: Migrar para sistema de configurações simplificado.
  */
 export function useToggleConfig(empresaId, grupoId, queryKey) {
   const [saving, setSaving] = useState({});
