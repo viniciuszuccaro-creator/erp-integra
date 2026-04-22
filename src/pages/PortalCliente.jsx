@@ -3,9 +3,10 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, Package, Truck, Receipt, MessageSquare, FileText } from 'lucide-react';
+import { Loader2, Package, Truck, Receipt, MessageSquare, FileText, LayoutDashboard, Download } from 'lucide-react';
 
 import PortalHeader from '../components/portal/PortalHeader';
+import DashboardCliente from '../components/portal/DashboardCliente';
 import PedidosList from '../components/portal/PedidosList';
 import EntregasList from '../components/portal/EntregasList';
 import BoletosList from '../components/portal/BoletosList';
@@ -13,16 +14,37 @@ import ChamadosWidget from '../components/portal/ChamadosWidget';
 import OrcamentosList from '../components/portal/OrcamentosList';
 import DownloadsDocumentos from '../components/portal/DownloadsDocumentos';
 
+const TABS = [
+  { value: 'dashboard', label: 'Início', icon: LayoutDashboard },
+  { value: 'pedidos',   label: 'Pedidos',    icon: Package },
+  { value: 'entregas',  label: 'Entregas',   icon: Truck },
+  { value: 'boletos',   label: '2ª Via',     icon: Receipt },
+  { value: 'orcamentos',label: 'Orçamentos', icon: FileText },
+  { value: 'chamados',  label: 'Suporte',    icon: MessageSquare },
+  { value: 'documentos',label: 'Docs',       icon: Download },
+];
+
 export default function PortalCliente() {
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token');
+
+  const [tab, setTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get('tab');
+    return TABS.find(x => x.value === t) ? t : 'dashboard';
+  });
+
+  useEffect(() => {
+    const handler = (e) => setTab(e.detail || 'dashboard');
+    window.addEventListener('portal:setTab', handler);
+    return () => window.removeEventListener('portal:setTab', handler);
+  }, []);
 
   const { data: user } = useQuery({
     queryKey: ['me'],
     queryFn: () => base44.auth.me(),
   });
 
-  // Perfil não-cliente: renderiza mensagem, mas mantém hooks estáveis
   const isNonPortalRole = !!(user && user.role && user.role !== 'user');
 
   const { data: cliente } = useQuery({
@@ -51,17 +73,6 @@ export default function PortalCliente() {
     }
   });
 
-  // Controle da aba ativa (permite redireciono pós-aceite)
-  const [tab, setTab] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('tab') || 'pedidos';
-  });
-  useEffect(() => {
-    const handler = (e) => setTab(e.detail || 'pedidos');
-    window.addEventListener('portal:setTab', handler);
-    return () => window.removeEventListener('portal:setTab', handler);
-  }, []);
-
   if (isNonPortalRole) {
     return (
       <div className="w-full h-full p-6 flex items-center justify-center">
@@ -72,47 +83,53 @@ export default function PortalCliente() {
         </Card>
       </div>
     );
-  } else if (!cliente) {
+  }
+
+  if (!cliente) {
     return (
-      <div className="w-full h-full p-4">
-        <Card className="w-full h-full flex items-center justify-center">
-          <CardContent className="p-6 text-center">
-            <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
-            <div className="text-sm text-muted-foreground">Carregando seu portal...</div>
-          </CardContent>
-        </Card>
+      <div className="w-full h-full p-4 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-blue-600" />
+          <div className="text-sm text-muted-foreground">Carregando seu portal...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full p-4 space-y-4">
+    <div className="w-full min-h-full p-3 sm:p-4 space-y-3">
       <PortalHeader cliente={cliente} spotlight={spotlight} />
 
-      <Tabs value={tab} onValueChange={setTab} className="w-full h-full">
-        <TabsList className="grid grid-cols-6 w-full">
-          <TabsTrigger value="pedidos" className="flex items-center gap-2"><Package className="w-4 h-4" /> Pedidos</TabsTrigger>
-          <TabsTrigger value="entregas" className="flex items-center gap-2"><Truck className="w-4 h-4" /> Entregas</TabsTrigger>
-          <TabsTrigger value="boletos" className="flex items-center gap-2"><Receipt className="w-4 h-4" /> 2ª Via</TabsTrigger>
-          <TabsTrigger value="chamados" className="flex items-center gap-2"><MessageSquare className="w-4 h-4" /> Suporte</TabsTrigger>
-          <TabsTrigger value="orcamentos" className="flex items-center gap-2"><FileText className="w-4 h-4" /> Orçamentos</TabsTrigger>
-          <TabsTrigger value="documentos" className="flex items-center gap-2"><FileText className="w-4 h-4" /> Documentos</TabsTrigger>
-        </TabsList>
+      <Tabs value={tab} onValueChange={setTab} className="w-full">
+        {/* Scrollable tabs para mobile */}
+        <div className="w-full overflow-x-auto pb-1 -mx-0.5 px-0.5">
+          <TabsList className="inline-flex h-auto gap-1 flex-nowrap min-w-max bg-slate-100 p-1 rounded-lg">
+            {TABS.map(({ value, label, icon: Icon }) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className="flex items-center gap-1.5 text-xs sm:text-sm px-2.5 sm:px-4 py-2 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+              >
+                <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{label}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
-        <TabsContent value="pedidos" className="mt-4"><PedidosList cliente={cliente} /></TabsContent>
-        <TabsContent value="entregas" className="mt-4"><EntregasList cliente={cliente} /></TabsContent>
-        <TabsContent value="boletos" className="mt-4"><BoletosList cliente={cliente} /></TabsContent>
-        <TabsContent value="chamados" className="mt-4"><ChamadosWidget cliente={cliente} /></TabsContent>
-        <TabsContent value="orcamentos" className="mt-4"><OrcamentosList cliente={cliente} /></TabsContent>
-        <TabsContent value="documentos" className="mt-4"><DownloadsDocumentos clienteId={cliente.id} notasFiscais={notasFiscais} /></TabsContent>
+        <TabsContent value="dashboard"  className="mt-3"><DashboardCliente clienteId={cliente.id} /></TabsContent>
+        <TabsContent value="pedidos"    className="mt-3"><PedidosList cliente={cliente} /></TabsContent>
+        <TabsContent value="entregas"   className="mt-3"><EntregasList cliente={cliente} /></TabsContent>
+        <TabsContent value="boletos"    className="mt-3"><BoletosList cliente={cliente} /></TabsContent>
+        <TabsContent value="orcamentos" className="mt-3"><OrcamentosList cliente={cliente} /></TabsContent>
+        <TabsContent value="chamados"   className="mt-3"><ChamadosWidget cliente={cliente} /></TabsContent>
+        <TabsContent value="documentos" className="mt-3"><DownloadsDocumentos clienteId={cliente.id} notasFiscais={notasFiscais} /></TabsContent>
       </Tabs>
 
       {spotlight?.raw && (
-        <Card className="w-full">
-          <CardContent className="p-4 text-xs text-muted-foreground">
-            Acesso via link seguro ativo para {spotlight.raw.subject}. Este painel permanece funcional enquanto o link estiver válido.
-          </CardContent>
-        </Card>
+        <p className="text-center text-xs text-muted-foreground pb-2">
+          🔐 Acesso via link seguro ativo para <strong>{spotlight.raw.subject}</strong> · expira em {spotlight.exp_minutes_remaining} min
+        </p>
       )}
     </div>
   );
