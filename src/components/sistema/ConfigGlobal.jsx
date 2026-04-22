@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Settings, Link2, FileText, Sparkles, Bell, Shield, RefreshCw } from 'lucide-react';
+import { FileText, Bell, Shield, RefreshCw, CheckCircle2, AlertCircle, Link2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { Link } from 'react-router-dom';
@@ -17,17 +17,14 @@ import { createPageUrl } from '@/utils';
 
 /**
  * ConfigGlobal — Painel de configuração global.
- * Correção definitiva dos toggles:
- * - idCache em useState (sobrevive re-renders)
- * - optimistic separado do backend
- * - após save, não remove optimistic até confirmar valor do backend
+ * Consolidado: Remove abas Integrações e IA (existem em telas dedicadas).
+ * Mantém: Fiscal, Notificações, Segurança.
+ * Toggles corrigidos com optimistic UI + confirmação backend.
  */
 export default function ConfigGlobal({ empresaId, grupoId }) {
-  const [activeTab, setActiveTab] = useState('integracoes');
+  const [activeTab, setActiveTab] = useState('fiscal');
   const [saving, setSaving] = useState({});
-  // optimistic: { chave: boolean } — sobrescreve valor do backend na UI
   const [optimistic, setOptimistic] = useState({});
-  // idCache em state para sobreviver re-renders
   const [idCache, setIdCache] = useState({});
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual } = useContextoVisual();
@@ -42,7 +39,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     setIdCache({});
   }, [eId, gId]);
 
-  const queryKey = ['config-global-v4', eId ?? 'sem', gId ?? 'sem'];
+  const queryKey = ['config-global-v5', eId ?? 'sem', gId ?? 'sem'];
 
   const { data: configs = [], refetch, isFetching } = useQuery({
     queryKey,
@@ -58,7 +55,6 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
         _bust: Date.now(),
       });
       const list = Array.isArray(res?.data) ? res.data : [];
-      // Popula idCache com dados frescos
       if (list.length > 0) {
         setIdCache(prev => {
           const next = { ...prev };
@@ -124,12 +120,12 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     setSaving(prev => ({ ...prev, [chave]: true }));
     try {
       await upsert(chave, categoria, { ativa: newValue });
-      // 2. Invalida cache e refetch para confirmar
+      // 2. Invalida cache e refetch para confirmar o valor real no banco
       await queryClient.invalidateQueries({ queryKey });
       const result = await refetch({ cancelRefetch: false });
       const freshRecs = Array.isArray(result?.data) ? result.data : [];
 
-      // 3. Encontra o valor real salvo no backend
+      // 3. Encontra o valor confirmado pelo backend
       const saved =
         freshRecs.find(c => c.chave === chave && eId && gId && c.empresa_id === eId && c.group_id === gId) ||
         freshRecs.find(c => c.chave === chave && eId && c.empresa_id === eId) ||
@@ -144,7 +140,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       if (confirmedVal !== newValue) {
         toast.warning(`Servidor corrigiu para: ${confirmedVal ? 'Ativado' : 'Desativado'}`);
       } else {
-        toast.success(`${newValue ? 'Ativado' : 'Desativado'} com sucesso!`);
+        toast.success(`${newValue ? '✅ Ativado' : '⭕ Desativado'} com sucesso!`);
       }
     } catch (err) {
       // Reverte optimistic em caso de erro
@@ -162,7 +158,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       await upsert(chave, categoria, dados);
       await queryClient.invalidateQueries({ queryKey });
       await refetch();
-      toast.success('Configuração salva!');
+      toast.success('✅ Configuração salva!');
     } catch (err) {
       toast.error('Erro ao salvar: ' + String(err?.message || err));
     } finally {
@@ -170,22 +166,29 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     }
   }, [saving, upsert, queryClient, queryKey, refetch]);
 
-  const ToggleRow = ({ chave, categoria, label, desc }) => (
-    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors">
-      <div className="flex-1 min-w-0 mr-3">
-        <p className="font-medium text-sm">{label}</p>
-        {desc && <p className="text-xs text-slate-500 mt-0.5">{desc}</p>}
+  const ToggleRow = ({ chave, categoria, label, desc }) => {
+    const val = getToggleValue(chave);
+    const isSaving = !!saving[chave];
+    return (
+      <div className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${isSaving ? 'bg-blue-50 border-blue-200' : 'hover:bg-slate-50'}`}>
+        <div className="flex-1 min-w-0 mr-3">
+          <p className="font-medium text-sm">{label}</p>
+          {desc && <p className="text-xs text-slate-500 mt-0.5">{desc}</p>}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {isSaving && <RefreshCw className="w-3 h-3 text-blue-500 animate-spin" />}
+          <Badge className={val ? 'bg-green-100 text-green-700 border-green-200 text-[10px]' : 'bg-slate-100 text-slate-500 text-[10px]'}>
+            {isSaving ? 'Salvando…' : val ? 'Ativo' : 'Inativo'}
+          </Badge>
+          <Switch
+            checked={val}
+            disabled={isSaving || isFetching}
+            onCheckedChange={(checked) => handleToggle(chave, categoria, checked)}
+          />
+        </div>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {saving[chave] && <RefreshCw className="w-3 h-3 text-blue-500 animate-spin" />}
-        <Switch
-          checked={getToggleValue(chave)}
-          disabled={!!saving[chave] || isFetching}
-          onCheckedChange={(checked) => handleToggle(chave, categoria, checked)}
-        />
-      </div>
-    </div>
-  );
+    );
+  };
 
   if (!canLoad) {
     return (
@@ -197,9 +200,10 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
 
   return (
     <div className="space-y-4 w-full">
+      {/* Header com contexto e refresh */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Configurações Globais do Sistema</h2>
+          <h2 className="text-xl font-bold text-slate-900">Parâmetros Globais</h2>
           <p className="text-sm text-slate-500">
             {eId ? `Empresa: ${empresaAtual?.nome_fantasia || eId}` : `Grupo: ${grupoAtual?.nome_do_grupo || gId}`}
           </p>
@@ -211,58 +215,48 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
           onClick={() => { queryClient.invalidateQueries({ queryKey }); refetch(); }}
         >
           <RefreshCw className={`w-4 h-4 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
-          Atualizar
+          {isFetching ? 'Atualizando…' : 'Atualizar'}
         </Button>
       </div>
 
+      {/* Atalhos para telas dedicadas — evita duplicação */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Link to={createPageUrl('AdministracaoSistema?tab=integracoes')}>
+          <div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer">
+            <Link2 className="w-5 h-5 text-blue-600 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-sm text-slate-900">Integrações</p>
+              <p className="text-xs text-slate-500">NF-e, Boletos, WhatsApp, Maps, Marketplaces</p>
+            </div>
+          </div>
+        </Link>
+        <Link to={createPageUrl('AdministracaoSistema?tab=ia')}>
+          <div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors cursor-pointer">
+            <span className="text-xl">🤖</span>
+            <div>
+              <p className="font-medium text-sm text-slate-900">IA & Otimização</p>
+              <p className="text-xs text-slate-500">Modelos, toggles de IA por módulo</p>
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      {/* Abas consolidadas: apenas Fiscal, Notificações e Segurança */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <div className="overflow-x-auto">
           <TabsList className="inline-flex flex-nowrap min-w-max bg-white border shadow-sm">
-            <TabsTrigger value="integracoes"><Link2 className="w-4 h-4 mr-1.5" />Integrações</TabsTrigger>
             <TabsTrigger value="fiscal"><FileText className="w-4 h-4 mr-1.5" />Fiscal</TabsTrigger>
-            <TabsTrigger value="ia"><Sparkles className="w-4 h-4 mr-1.5" />IA</TabsTrigger>
             <TabsTrigger value="notificacoes"><Bell className="w-4 h-4 mr-1.5" />Notificações</TabsTrigger>
             <TabsTrigger value="seguranca"><Shield className="w-4 h-4 mr-1.5" />Segurança</TabsTrigger>
           </TabsList>
         </div>
 
-        {/* INTEGRAÇÕES */}
-        <TabsContent value="integracoes" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Status das Integrações</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-slate-600">
-                Configurações detalhadas em <strong>Administração → Integrações</strong>.
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {['integracao_nfe', 'integracao_boletos', 'integracao_maps', 'integracao_whatsapp'].map((chave) => {
-                  const labels = { integracao_nfe: 'NF-e', integracao_boletos: 'Boleto/PIX', integracao_maps: 'Google Maps', integracao_whatsapp: 'WhatsApp' };
-                  const rec = getConfig(chave);
-                  const sub = rec?.[chave];
-                  const ativo = !!(sub?.ativa || sub?.api_key);
-                  return (
-                    <div key={chave} className="p-3 border rounded-lg bg-white">
-                      <div className="text-xs text-slate-500 mb-1">{labels[chave]}</div>
-                      <Badge className={ativo ? 'bg-green-100 text-green-700 border-green-200' : 'bg-slate-100 text-slate-500'}>
-                        {ativo ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
-              <Link to="/AdministracaoSistema?tab=integracoes">
-                <Button variant="outline" size="sm">Gerenciar Integrações →</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         {/* FISCAL */}
         <TabsContent value="fiscal" className="space-y-4 mt-4">
           <Card>
-            <CardHeader><CardTitle className="text-base">Configurações Fiscais Padrão</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileText className="w-4 h-4" />Configurações Fiscais Padrão</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>CFOP Padrão — Dentro do Estado</Label>
                   <Input
@@ -282,7 +276,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <Label>Alíquota ICMS (%)</Label>
                   <Input type="number" key={`icms-${eId}`} defaultValue={getConfig('fiscal_aliq_icms')?.numero || 18}
@@ -309,26 +303,32 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                   onBlur={(e) => handleSaveField('fiscal_obs_nfe', 'Fiscal', { valor: e.target.value })}
                 />
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* IA */}
-        <TabsContent value="ia" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-600" />IA & Otimização
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <ToggleRow chave="ia_leitura_projetos" categoria="Sistema" label="IA Leitura de Projetos" desc="Análise automática de projetos de engenharia" />
-              <ToggleRow chave="ia_preditiva_vendas" categoria="Sistema" label="IA Preditiva de Vendas" desc="Previsão de demanda e churn" />
-              <ToggleRow chave="ia_conciliacao" categoria="Sistema" label="IA Conciliação Bancária" desc="Conciliação automática de extratos" />
-              <ToggleRow chave="ia_producao" categoria="Sistema" label="IA Produção" desc="Otimização de ordens de produção" />
-              <Link to={createPageUrl('AdministracaoSistema?tab=ia')}>
-                <Button variant="outline" size="sm">Abrir IA & Otimização →</Button>
-              </Link>
+              {/* Status fiscal */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t">
+                {[
+                  { chave: 'integracao_nfe', label: 'NF-e' },
+                  { chave: 'integracao_boletos', label: 'Boleto/PIX' },
+                  { chave: 'integracao_maps', label: 'Google Maps' },
+                  { chave: 'integracao_whatsapp', label: 'WhatsApp' },
+                ].map(({ chave, label }) => {
+                  const rec = getConfig(chave);
+                  const sub = rec?.[chave];
+                  const ativo = !!(sub?.ativa || sub?.api_key);
+                  return (
+                    <div key={chave} className="p-3 border rounded-lg bg-white">
+                      <div className="text-xs text-slate-500 mb-1">{label}</div>
+                      <div className="flex items-center gap-1">
+                        {ativo
+                          ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                          : <AlertCircle className="w-3.5 h-3.5 text-amber-500" />}
+                        <Badge className={ativo ? 'bg-green-100 text-green-700 border-green-200 text-[10px]' : 'bg-slate-100 text-slate-500 text-[10px]'}>
+                          {ativo ? 'Ativo' : 'Pendente'}
+                        </Badge>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -336,7 +336,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
         {/* NOTIFICAÇÕES */}
         <TabsContent value="notificacoes" className="space-y-4 mt-4">
           <Card>
-            <CardHeader><CardTitle className="text-base">Notificações Automáticas</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Bell className="w-4 h-4" />Notificações Automáticas</CardTitle></CardHeader>
             <CardContent className="space-y-2">
               <ToggleRow chave="notif_pedido_aprovado" categoria="Notificacoes" label="Pedido Aprovado" desc="Notifica cliente quando pedido for aprovado" />
               <ToggleRow chave="notif_entrega_transporte" categoria="Notificacoes" label="Entrega Saiu para Transporte" desc="Envia link de rastreamento ao cliente" />
@@ -351,7 +351,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
         {/* SEGURANÇA */}
         <TabsContent value="seguranca" className="space-y-4 mt-4">
           <Card>
-            <CardHeader><CardTitle className="text-base">Segurança e Auditoria</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Shield className="w-4 h-4" />Segurança e Auditoria</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <ToggleRow chave="seg_mfa" categoria="Seguranca" label="MFA — Autenticação de Dois Fatores" desc="Obrigatório para administradores" />
               <ToggleRow chave="seg_logs_completos" categoria="Seguranca" label="Logs de Auditoria Completos" desc="Registra todas as ações críticas" />

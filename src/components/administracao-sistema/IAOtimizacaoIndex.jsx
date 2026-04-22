@@ -1,20 +1,142 @@
-import React from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import IAPanel from "@/components/administracao-sistema/configuracoes-gerais/IAPanel";
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
 import HerancaConfigNotice from "@/components/administracao-sistema/common/HerancaConfigNotice";
-import { Brain, Zap } from "lucide-react";
+import { Brain, Zap, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function IAOtimizacaoIndex({ initialTab }) {
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
   const { user } = useUser();
   const [tab, setTab] = React.useState(initialTab || 'ia');
+  const [saving, setSaving] = useState({});
+  const [optimistic, setOptimistic] = useState({});
+  const [idCache, setIdCache] = useState({});
+  const queryClient = useQueryClient();
+
+  const eId = empresaAtual?.id;
+  const gId = grupoAtual?.id;
+
+  useEffect(() => {
+    setOptimistic({});
+    setIdCache({});
+  }, [eId, gId]);
+
+  const iaQueryKey = ['config-ia-toggles', eId ?? 'sem', gId ?? 'sem'];
+
+  const { data: configsToggle = [], refetch: refetchToggle, isFetching: isFetchingToggle } = useQuery({
+    queryKey: iaQueryKey,
+    queryFn: async () => {
+      const orConds = [];
+      if (gId) orConds.push({ group_id: gId });
+      if (eId) orConds.push({ empresa_id: eId });
+      const filter = orConds.length > 1 ? { $or: orConds } : (orConds[0] || {});
+      const res = await base44.functions.invoke('getEntityRecord', {
+        entityName: 'ConfiguracaoSistema',
+        filter,
+        limit: 200,
+        _bust: Date.now(),
+      });
+      const list = Array.isArray(res?.data) ? res.data : [];
+      if (list.length > 0) {
+        setIdCache(prev => {
+          const next = { ...prev };
+          list.forEach(rec => { if (rec?.chave && rec?.id) next[rec.chave] = rec.id; });
+          return next;
+        });
+      }
+      return list;
+    },
+    enabled: !!(eId || gId),
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+  });
+
+  const getConfigIA = useCallback((chave) => {
+    const list = (configsToggle || []).filter(c => c.chave === chave);
+    if (!list.length) return null;
+    if (gId && eId) { const ex = list.find(c => c.group_id === gId && c.empresa_id === eId); if (ex) return ex; }
+    if (eId) { const byE = list.find(c => c.empresa_id === eId); if (byE) return byE; }
+    if (gId) { const byG = list.find(c => c.group_id === gId); if (byG) return byG; }
+    return list[0] || null;
+  }, [configsToggle, gId, eId]);
+
+  const getToggleValue = useCallback((chave) => {
+    if (chave in optimistic) return optimistic[chave];
+    const rec = getConfigIA(chave);
+    return typeof rec?.ativa === 'boolean' ? rec.ativa : false;
+  }, [optimistic, getConfigIA]);
+
+  const handleToggle = useCallback(async (chave, newValue) => {
+    if (saving[chave]) return;
+    setOptimistic(prev => ({ ...prev, [chave]: newValue }));
+    setSaving(prev => ({ ...prev, [chave]: true }));
+    try {
+      const scope = {};
+      if (gId) scope.group_id = gId;
+      if (eId) scope.empresa_id = eId;
+      const cachedId = idCache[chave];
+      const payload = cachedId
+        ? { id: cachedId, chave, data: { chave, categoria: 'Sistema', ativa: newValue }, scope }
+        : { chave, data: { chave, categoria: 'Sistema', ativa: newValue }, scope };
+      const res = await base44.functions.invoke('upsertConfig', payload);
+      const returnedId = res?.data?.id || res?.data?.record?.id;
+      if (returnedId) setIdCache(prev => ({ ...prev, [chave]: returnedId }));
+
+      await queryClient.invalidateQueries({ queryKey: iaQueryKey });
+      const result = await refetchToggle({ cancelRefetch: false });
+      const freshRecs = Array.isArray(result?.data) ? result.data : [];
+      const saved = freshRecs.find(c => c.chave === chave && eId && c.empresa_id === eId)
+        || freshRecs.find(c => c.chave === chave && gId && c.group_id === gId)
+        || freshRecs.find(c => c.chave === chave);
+      const confirmed = (saved && typeof saved.ativa === 'boolean') ? saved.ativa : newValue;
+      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
+      if (confirmed !== newValue) {
+        toast.warning(`Servidor corrigiu para: ${confirmed ? 'Ativado' : 'Desativado'}`);
+      } else {
+        toast.success(`${newValue ? '✅ Ativado' : '⭕ Desativado'}!`);
+      }
+    } catch (err) {
+      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
+      toast.error('Erro ao salvar: ' + String(err?.message || err));
+    } finally {
+      setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
+    }
+  }, [saving, idCache, gId, eId, queryClient, iaQueryKey, refetchToggle]);
+
+  const IAToggleRow = ({ chave, label, desc }) => {
+    const val = getToggleValue(chave);
+    const isSaving = !!saving[chave];
+    return (
+      <div className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${isSaving ? 'bg-purple-50 border-purple-200' : 'hover:bg-slate-50'}`}>
+        <div className="flex-1 min-w-0 mr-3">
+          <p className="font-medium text-sm">{label}</p>
+          {desc && <p className="text-xs text-slate-500 mt-0.5">{desc}</p>}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {isSaving && <RefreshCw className="w-3 h-3 text-purple-500 animate-spin" />}
+          <Badge className={val ? 'bg-purple-100 text-purple-700 border-purple-200 text-[10px]' : 'bg-slate-100 text-slate-500 text-[10px]'}>
+            {isSaving ? 'Salvando…' : val ? 'Ativo' : 'Inativo'}
+          </Badge>
+          <Switch
+            checked={val}
+            disabled={isSaving || isFetchingToggle}
+            onCheckedChange={(checked) => handleToggle(chave, checked)}
+          />
+        </div>
+      </div>
+    );
+  };
 
   const handleTabChange = (next) => {
     setTab(next);
@@ -25,6 +147,7 @@ export default function IAOtimizacaoIndex({ initialTab }) {
         empresa_id: empresaAtual?.id || null,
         acao: 'Visualização',
         modulo: 'Sistema',
+        tipo_auditoria: 'ui',
         entidade: 'IA e Otimização',
         descricao: `Aba visualizada: ${next}`,
         data_hora: new Date().toISOString(),
@@ -60,8 +183,33 @@ export default function IAOtimizacaoIndex({ initialTab }) {
                 </div>
               </div>
 
-              <div className="col-span-full 2xl:col-span-1">
+              <div className="col-span-full 2xl:col-span-1 space-y-3">
                 <IAPanel />
+                {/* Toggles de IA por módulo — centralizados aqui (removidos do ConfigGlobal) */}
+                <Card>
+                  <CardHeader className="bg-purple-50 border-b pb-3 pt-4">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-purple-600" />
+                      Ativar/Desativar IA por Módulo
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-3 space-y-2">
+                    {(eId || gId) ? (
+                      <>
+                        <IAToggleRow chave="ia_leitura_projetos" label="IA Leitura de Projetos" desc="Análise automática de projetos de engenharia" />
+                        <IAToggleRow chave="ia_preditiva_vendas" label="IA Preditiva de Vendas" desc="Previsão de demanda e detecção de churn" />
+                        <IAToggleRow chave="ia_conciliacao" label="IA Conciliação Bancária" desc="Conciliação automática de extratos" />
+                        <IAToggleRow chave="ia_producao" label="IA Produção" desc="Otimização de ordens de produção" />
+                        <IAToggleRow chave="ia_recomendacao_produtos" label="IA Recomendação de Produtos" desc="Sugestões inteligentes no checkout" />
+                        <IAToggleRow chave="ia_anomalia_financeira" label="IA Detector de Anomalias Financeiras" desc="Detecta pagamentos suspeitos e duplicados" />
+                      </>
+                    ) : (
+                      <p className="text-xs text-amber-700 p-2 bg-amber-50 rounded border border-amber-200">
+                        ⚠️ Selecione empresa ou grupo para configurar os toggles de IA.
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
 
               <Card className="col-span-full 2xl:col-span-1">
