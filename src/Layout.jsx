@@ -336,8 +336,12 @@ function LayoutContent({ children, currentPageName }) {
         const chave = `integracoes_${empresaAtual.id}`;
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) { if (!cancelled) setIntegracoesOk(true); return; }
-        const docs = await base44.entities.ConfiguracaoSistema.filter({ chave }, undefined, 1);
-        const cfg = docs?.[0] || null;
+        const res = await base44.functions.invoke('getEntityRecord', {
+          entityName: 'ConfiguracaoSistema',
+          filter: { chave },
+          limit: 1,
+        });
+        const cfg = Array.isArray(res?.data) ? (res.data[0] || null) : null;
         const ok = !!(cfg?.integracao_nfe?.api_key && cfg?.integracao_boletos?.api_key);
         if (!cancelled) setIntegracoesOk(!!ok);
       } catch {

@@ -35,21 +35,20 @@ export default function IAOtimizacaoIndex({ initialTab }) {
         entityName: 'ConfiguracaoSistema',
         filter,
         limit: 200,
-        _bust: Date.now(),
       });
       return Array.isArray(res?.data) ? res.data : [];
     },
     enabled: !!(eId || gId),
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 30000,
+    gcTime: 60000,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
 
-  const { saving, handleToggle, getToggleValue, seedIdCache } = useToggleConfig(eId, gId, iaQueryKey);
+  const { saving, handleToggle, getToggleValue, syncWithQueryData } = useToggleConfig(eId, gId, iaQueryKey);
 
-  // Popula o cache de IDs assim que os dados chegam
-  useEffect(() => { seedIdCache(configsToggle); }, [configsToggle]);
+  // Sincroniza com dados do backend assim que chegam
+  useEffect(() => { syncWithQueryData(configsToggle); }, [configsToggle]);
 
   const IAToggleRow = ({ chave, label, desc }) => {
     const val = getToggleValue(configsToggle, chave);

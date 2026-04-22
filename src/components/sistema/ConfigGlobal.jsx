@@ -34,7 +34,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
 
   const queryClient = useQueryClient();
   const queryKey = ['config-global', eId ?? 'sem', gId ?? 'sem'];
-  const { saving, handleToggle, getToggleValue, seedIdCache } = useToggleConfig(eId, gId, queryKey);
+  const { saving, handleToggle, getToggleValue, syncWithQueryData } = useToggleConfig(eId, gId, queryKey);
 
   const { data: configs = [], refetch, isFetching } = useQuery({
     queryKey,
@@ -47,21 +47,20 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
         entityName: 'ConfiguracaoSistema',
         filter,
         limit: 500,
-        _bust: Date.now(),
       });
       const list = Array.isArray(res?.data) ? res.data : [];
       return list;
     },
     enabled: canLoad,
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,  // Força refetch quando volta para a aba
+    staleTime: 30000,
+    gcTime: 60000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
     retry: 1,
   });
 
-  // Popula o cache de IDs sempre que os dados chegam
-  useEffect(() => { seedIdCache(configs); }, [configs]);
+  // Sincroniza confirmedRef com dados retornados do backend
+  useEffect(() => { syncWithQueryData(configs); }, [configs]);
 
   const getConfig = useCallback((chave) => {
     const list = (configs || []).filter(c => c.chave === chave);

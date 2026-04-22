@@ -45,11 +45,19 @@ export default function IntegracoesIndex({ initialTab }) {
     queryKey: ["configuracaoSistema", empresaAtual?.id],
     queryFn: async () => {
       if (!empresaAtual?.id) return null;
-      const chave = `integracoes_${empresaAtual.id}`;
-      const cfgs = await base44.entities.ConfiguracaoSistema.filter({ chave }, undefined, 1);
-      return cfgs?.[0] || null;
+      try {
+        const chave = `integracoes_${empresaAtual.id}`;
+        const res = await base44.functions.invoke('getEntityRecord', {
+          entityName: 'ConfiguracaoSistema',
+          filter: { chave },
+          limit: 1,
+        });
+        const list = Array.isArray(res?.data) ? res.data : [];
+        return list[0] || null;
+      } catch (_) { return null; }
     },
     enabled: !!empresaAtual?.id,
+    staleTime: 60000,
   });
 
   const nfeOk = !!configuracao?.integracao_nfe?.api_key;
@@ -59,13 +67,16 @@ export default function IntegracoesIndex({ initialTab }) {
   const handleCriarBase = async () => {
     if (!empresaAtual?.id) return;
     const chave = `integracoes_${empresaAtual.id}`;
-    const payload = {
+    await base44.functions.invoke('upsertConfig', {
       chave,
-      categoria: 'Integracoes',
-      integracao_nfe: { provedor: null, api_url: null, api_key: null, cnpj_emitente: null, ambiente: 'homologacao' },
-      integracao_boletos: { provedor: null, api_url: null, api_key: null, customer_id_default: null, customers_map: {} }
-    };
-    await base44.entities.ConfiguracaoSistema.create(payload);
+      data: {
+        chave,
+        categoria: 'Integracoes',
+        integracao_nfe: { provedor: null, api_url: null, api_key: null, cnpj_emitente: null, ambiente: 'homologacao' },
+        integracao_boletos: { provedor: null, api_url: null, api_key: null, customer_id_default: null, customers_map: {} }
+      },
+      scope: { empresa_id: empresaAtual.id }
+    });
   };
 
   const handleTestWebhookAsaasPago = async () => {
