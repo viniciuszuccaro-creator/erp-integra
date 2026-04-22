@@ -120,14 +120,15 @@ export default function GestaoAcessosIndex() {
       )}
 
       {/* Info RBAC */}
-      <div className="flex items-start gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 w-full">
-        <Shield className="w-4 h-4 flex-shrink-0 text-blue-600 mt-0.5" />
-        <span className="leading-relaxed break-words min-w-0 flex-1">
-          <strong>RBAC granular</strong> — Perfis controlam acesso por módulo, seção e ação.
-          Admins têm acesso total. Atribua perfis na aba <em>Usuários</em>.
-          Verifique conflitos de Segregação de Funções (SoD) na aba correspondente.
-        </span>
-      </div>
+       <div className="flex items-start gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 w-full">
+         <Shield className="w-4 h-4 flex-shrink-0 text-blue-600 mt-0.5" />
+         <span className="leading-relaxed break-words min-w-0 flex-1">
+           <strong>RBAC granular + multiempresa</strong> — Perfis controlam acesso por módulo, seção e ação. 
+           Permissões propagam automaticamente entre grupo ↔ empresas. 
+           Admins têm acesso total. Atribua perfis na aba <em>Usuários</em>.
+           Verifique conflitos SoD na aba correspondente.
+         </span>
+       </div>
 
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
         <div className="w-full overflow-x-auto pb-1 -mx-1 px-1">

@@ -102,8 +102,8 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
   const getToggleValue = useCallback((configs, chave) => {
     const list = (configs || []).filter(c => c.chave === chave);
     
-    // Optimistic SOMENTE se há algo em pendência — senão lê do backend
-    if (chave in optimistic && saving[chave]) return optimistic[chave];
+    // CRÍTICO: Optimistic SOMENTE enquanto salvando — nunca após salvar completado
+    if (chave in optimistic && saving[chave] === true) return optimistic[chave];
     
     if (!list.length) return false;
     // Resolve pelo escopo EXATO — nunca fallback cross-scope
