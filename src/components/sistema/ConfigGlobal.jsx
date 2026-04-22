@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +32,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
 
   const queryClient = useQueryClient();
   const queryKey = ['config-global-v5', eId ?? 'sem', gId ?? 'sem'];
-  const { saving, handleToggle, getToggleValue } = useToggleConfig(eId, gId, queryKey);
+  const { saving, handleToggle, getToggleValue, seedIdCache } = useToggleConfig(eId, gId, queryKey);
 
   const { data: configs = [], refetch, isFetching } = useQuery({
     queryKey,
@@ -48,13 +48,6 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
         _bust: Date.now(),
       });
       const list = Array.isArray(res?.data) ? res.data : [];
-      if (list.length > 0) {
-        setIdCache(prev => {
-          const next = { ...prev };
-          list.forEach(rec => { if (rec?.chave && rec?.id) next[rec.chave] = rec.id; });
-          return next;
-        });
-      }
       return list;
     },
     enabled: canLoad,
@@ -64,6 +57,9 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     refetchOnWindowFocus: false,
     retry: 1,
   });
+
+  // Popula o cache de IDs sempre que os dados chegam
+  useEffect(() => { seedIdCache(configs); }, [configs]);
 
   const getConfig = useCallback((chave) => {
     const list = (configs || []).filter(c => c.chave === chave);

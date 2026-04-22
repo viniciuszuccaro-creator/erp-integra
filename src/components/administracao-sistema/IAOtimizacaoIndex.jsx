@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +46,10 @@ export default function IAOtimizacaoIndex({ initialTab }) {
     refetchOnWindowFocus: false,
   });
 
-  const { saving, handleToggle, getToggleValue } = useToggleConfig(eId, gId, iaQueryKey);
+  const { saving, handleToggle, getToggleValue, seedIdCache } = useToggleConfig(eId, gId, iaQueryKey);
+
+  // Popula o cache de IDs assim que os dados chegam
+  useEffect(() => { seedIdCache(configsToggle); }, [configsToggle]);
 
   const IAToggleRow = ({ chave, label, desc }) => {
     const val = getToggleValue(configsToggle, chave);
