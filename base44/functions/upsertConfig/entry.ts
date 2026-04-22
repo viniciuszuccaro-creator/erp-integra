@@ -82,11 +82,11 @@ Deno.serve(async (req) => {
     if (!match && eId && gId) {
       match = await tryFind({ chave, empresa_id: eId, group_id: gId });
     }
-    // 2) Chave + só empresa (nunca cair em grupo se empresa existe)
-    if (!match && eId && !gId) {
+    // 2) Chave + só empresa (com ou sem grupo) — quando scope tem eId
+    if (!match && eId) {
       match = await tryFind({ chave, empresa_id: eId });
     }
-    // 3) Chave + só grupo (nunca cair em empresa se grupo existe)
+    // 3) Chave + só grupo — quando scope tem gId mas não eId
     if (!match && gId && !eId) {
       match = await tryFind({ chave, group_id: gId });
     }

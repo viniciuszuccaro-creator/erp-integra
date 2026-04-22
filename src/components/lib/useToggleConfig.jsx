@@ -1,36 +1,56 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 /**
- * Hook consolidado para gerenciar toggles de configuração (Fiscal, Notificações, IA, etc).
- * CORREÇÃO CRÍTICA: seedIdCache popula o cache de IDs a partir dos dados carregados,
- * garantindo que upsert sempre atualize o registro correto em vez de criar duplicados.
+ * Hook consolidado para gerenciar toggles de ConfiguracaoSistema.
+ * 
+ * REGRAS DE ESCOPO (alinhadas com upsertConfig backend):
+ *  - Se eId E gId: busca por chave + empresa_id + group_id
+ *  - Se só eId: busca por chave + empresa_id (group_id é null/ausente)
+ *  - Se só gId: busca por chave + group_id (empresa_id é null/ausente)
+ * 
+ * CRITICAL FIX: getToggleValue NÃO exige !c.group_id quando há eId+gId.
  */
 export function useToggleConfig(empresaId, grupoId, queryKey) {
   const [saving, setSaving] = useState({});
   const [optimistic, setOptimistic] = useState({});
   const [idCache, setIdCache] = useState({});
   const queryClient = useQueryClient();
+  // Ref para evitar race condition: guarda o valor salvo durante refetch
+  const savedValueRef = useRef({});
 
   useEffect(() => {
     setOptimistic({});
     setIdCache({});
+    savedValueRef.current = {};
   }, [empresaId, grupoId]);
 
-  // Popula o idCache a partir de uma lista de registros carregados
-  // Deve ser chamado toda vez que os dados chegam do query
   const seedIdCache = useCallback((records) => {
     if (!Array.isArray(records) || records.length === 0) return;
     setIdCache(prev => {
       const next = { ...prev };
       records.forEach(rec => {
-        if (rec?.chave && rec?.id) next[rec.chave] = rec.id;
+        if (rec?.chave && rec?.id) {
+          // Usa a chave como índice — o escopo mais específico ganha
+          // Prioridade: exato (eId+gId) > só eId > só gId
+          if (!next[rec.chave]) {
+            next[rec.chave] = rec.id;
+          } else {
+            // Se já existe, sobrescreve apenas se for mais específico
+            const isExact = empresaId && grupoId
+              ? rec.empresa_id === empresaId && rec.group_id === grupoId
+              : empresaId
+                ? rec.empresa_id === empresaId
+                : rec.group_id === grupoId;
+            if (isExact) next[rec.chave] = rec.id;
+          }
+        }
       });
       return next;
     });
-  }, []);
+  }, [empresaId, grupoId]);
 
   const getScope = useCallback(() => {
     const scope = {};
@@ -39,23 +59,47 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     return scope;
   }, [grupoId, empresaId]);
 
+  const findMatchingRecord = useCallback((list, chave) => {
+    if (!Array.isArray(list)) return null;
+    const candidates = list.filter(c => c.chave === chave);
+    if (!candidates.length) return null;
+
+    if (empresaId && grupoId) {
+      // Exato: empresa + grupo
+      const exact = candidates.find(c => c.empresa_id === empresaId && c.group_id === grupoId);
+      if (exact) return exact;
+      // Fallback: só empresa (sem grupo)
+      const byE = candidates.find(c => c.empresa_id === empresaId && !c.group_id);
+      if (byE) return byE;
+      // Fallback: só grupo
+      const byG = candidates.find(c => c.group_id === grupoId && !c.empresa_id);
+      if (byG) return byG;
+      return candidates[0];
+    }
+    if (empresaId) {
+      const byE = candidates.find(c => c.empresa_id === empresaId);
+      if (byE) return byE;
+      return null;
+    }
+    if (grupoId) {
+      const byG = candidates.find(c => c.group_id === grupoId);
+      if (byG) return byG;
+      return null;
+    }
+    return candidates[0] || null;
+  }, [empresaId, grupoId]);
+
   const upsert = useCallback(async (chave, categoria, dados) => {
     const scope = getScope();
-    // Busca o id do cache local OU tenta buscar diretamente nos dados do query
-    const cachedId = idCache[chave];
-    // Se não há cache, tenta encontrar pelo queryData
-    let resolvedId = cachedId;
+
+    // Busca ID no cache
+    let resolvedId = idCache[chave];
+
+    // Se não tem no cache, busca no query data
     if (!resolvedId) {
       const queryData = queryClient.getQueryData(queryKey);
-      const list = Array.isArray(queryData) ? queryData : [];
-      const found = list.find(c => {
-        if (c.chave !== chave) return false;
-        if (empresaId && grupoId) return c.empresa_id === empresaId && c.group_id === grupoId;
-        if (empresaId) return c.empresa_id === empresaId;
-        if (grupoId) return c.group_id === grupoId;
-        return true;
-      });
-      resolvedId = found?.id || null;
+      const match = findMatchingRecord(Array.isArray(queryData) ? queryData : [], chave);
+      resolvedId = match?.id || null;
       if (resolvedId) setIdCache(prev => ({ ...prev, [chave]: resolvedId }));
     }
 
@@ -70,60 +114,56 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
       setIdCache(prev => ({ ...prev, [chave]: returnedId }));
     }
     return res;
-  }, [idCache, getScope, queryClient, queryKey, empresaId, grupoId]);
+  }, [idCache, getScope, queryClient, queryKey, findMatchingRecord]);
 
   const handleToggle = useCallback(async (chave, categoria, newValue) => {
     if (saving[chave]) return;
-    // Optimistic update imediato para UI responsiva
+
+    // Salva o novo valor na ref ANTES do optimistic
+    savedValueRef.current[chave] = newValue;
     setOptimistic(prev => ({ ...prev, [chave]: newValue }));
     setSaving(prev => ({ ...prev, [chave]: true }));
+
     try {
       const res = await upsert(chave, categoria, { ativa: newValue });
       const savedRecord = res?.data?.record;
+      const confirmedValue = savedRecord?.ativa;
 
-      if (savedRecord && typeof savedRecord.ativa === 'boolean') {
-        toast.success(`${savedRecord.ativa ? '✅ Ativado' : '⭕ Desativado'} com sucesso!`);
+      // Toast baseado no valor CONFIRMADO pelo backend
+      if (typeof confirmedValue === 'boolean') {
+        toast.success(`${confirmedValue ? '✅ Ativado' : '⭕ Desativado'} com sucesso!`);
+        // Atualiza ref com valor confirmado
+        savedValueRef.current[chave] = confirmedValue;
+      } else {
+        toast.success('✅ Configuração salva!');
       }
-      // Invalida IMEDIATAMENTE para garantir que próximas leituras pegam dados frescos do servidor
+
+      // Invalida e refetch — após isso o optimistic é removido
       await queryClient.invalidateQueries({ queryKey });
-      // Força refresh do query sem cache — garante que próximo getToggleValue lê do servidor
-      await queryClient.refetchQueries({ queryKey });
-      // Remove optimistic APÓS refresh completar (força UI ler do query cache atualizado)
-      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
+      await queryClient.refetchQueries({ queryKey, exact: true });
+
     } catch (err) {
-      // Reverte o optimistic em caso de erro
+      // Reverte optimistic e ref
+      delete savedValueRef.current[chave];
       setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
       toast.error('Erro ao salvar: ' + String(err?.message || err));
     } finally {
       setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
+      // Remove optimistic DEPOIS que saving virou false — UI lê do backend
+      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
     }
   }, [saving, upsert, queryClient, queryKey]);
 
   const getToggleValue = useCallback((configs, chave) => {
-    const list = (configs || []).filter(c => c.chave === chave);
-    
-    // CRÍTICO: Optimistic SOMENTE enquanto salvando — nunca após salvar completado
-    if (chave in optimistic && saving[chave] === true) return optimistic[chave];
-    
-    if (!list.length) return false;
-    // Resolve pelo escopo EXATO — nunca fallback cross-scope
-    if (grupoId && empresaId) {
-      const exact = list.find(c => c.group_id === grupoId && c.empresa_id === empresaId);
-      if (exact && typeof exact.ativa === 'boolean') return exact.ativa;
-      return false;
-    }
-    if (empresaId) {
-      const byE = list.find(c => c.empresa_id === empresaId && !c.group_id);
-      if (byE && typeof byE.ativa === 'boolean') return byE.ativa;
-      return false;
-    }
-    if (grupoId) {
-      const byG = list.find(c => c.group_id === grupoId && !c.empresa_id);
-      if (byG && typeof byG.ativa === 'boolean') return byG.ativa;
-      return false;
-    }
+    // Enquanto salvando: mostra optimistic
+    if (saving[chave] === true && chave in optimistic) return optimistic[chave];
+
+    // Busca no backend data
+    const match = findMatchingRecord(configs, chave);
+    if (match && typeof match.ativa === 'boolean') return match.ativa;
+
     return false;
-  }, [optimistic, saving, grupoId, empresaId]);
+  }, [optimistic, saving, findMatchingRecord]);
 
   return {
     saving,
