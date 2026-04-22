@@ -39,19 +39,20 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     idCacheRef.current = {};
   }, [eId, gId]);
 
-  // Query via getEntityRecord com asServiceRole — bypassa wrapper do layout totalmente
+  // Query via asServiceRole direto — bypassa totalmente o wrapper do layout
   const { data: configs = [], refetch, isFetching } = useQuery({
-    queryKey: ['config-global-v2', eId ?? 'sem', gId ?? 'sem'],
+    queryKey: ['config-global-v3', eId ?? 'sem', gId ?? 'sem'],
     queryFn: async () => {
-      // Busca configs por $or (grupo OU empresa) para pegar todos os registros relevantes
       const orConds = [];
       if (gId) orConds.push({ group_id: gId });
       if (eId) orConds.push({ empresa_id: eId });
       const filter = orConds.length > 1 ? { $or: orConds } : (orConds[0] || {});
+      // Usa upsertConfig em modo leitura via getEntityRecord (asServiceRole bypassa wrapper)
       const res = await base44.functions.invoke('getEntityRecord', {
         entityName: 'ConfiguracaoSistema',
         filter,
         limit: 500,
+        _bust: Date.now(), // cache bust para garantir dados frescos
       });
       return Array.isArray(res?.data) ? res.data : [];
     },
@@ -60,6 +61,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     gcTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   // Retorna o registro mais específico para a chave (prioridade: exato > empresa > grupo > qualquer)
@@ -114,10 +116,9 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     return res;
   };
 
-  // Toggle: optimistic → upsert → confirma persistência → remove optimistic
+  // Toggle: optimistic imediato → persiste via backend → confirma com refetch
   const handleToggle = async (chave, categoria, newValue) => {
     if (saving[chave]) return;
-    // Aplica imediatamente no estado optimistic
     setOptimistic(prev => ({ ...prev, [chave]: newValue }));
     setSaving(prev => ({ ...prev, [chave]: true }));
     try {
@@ -125,34 +126,33 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       const retId = res?.data?.id || res?.data?.record?.id;
       if (retId) idCacheRef.current[chave] = retId;
 
-      // Aguarda propagação no backend (1 tentativa com delay curto)
-      await new Promise(r => setTimeout(r, 600));
-      await queryClient.invalidateQueries({ queryKey: ['config-global-v2'] });
+      // Aguarda backend propagar (750ms é suficiente para a maioria dos casos)
+      await new Promise(r => setTimeout(r, 750));
+      await queryClient.invalidateQueries({ queryKey: ['config-global-v3'] });
       const result = await refetch();
       const freshRecs = Array.isArray(result?.data) ? result.data : [];
 
-      // Busca o registro salvo com mesmo escopo
-      const saved = freshRecs.find(c => c.chave === chave && (
-        (eId && c.empresa_id === eId) ||
-        (gId && c.group_id === gId) ||
-        (!eId && !gId)
-      ));
+      // Localiza registro com escopo mais específico possível
+      const saved =
+        freshRecs.find(c => c.chave === chave && eId && gId && c.empresa_id === eId && c.group_id === gId) ||
+        freshRecs.find(c => c.chave === chave && eId && c.empresa_id === eId) ||
+        freshRecs.find(c => c.chave === chave && gId && c.group_id === gId) ||
+        freshRecs.find(c => c.chave === chave);
 
       const confirmedVal = saved && typeof saved.ativa === 'boolean' ? saved.ativa : newValue;
 
-      // Remove optimistic — o valor real vem dos dados refetched
+      // Remove optimistic — dados do backend assumem controle
       setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
 
       if (confirmedVal !== newValue) {
-        // Backend divergiu: força o valor correto no optimistic temporariamente
+        // Backend retornou valor diferente — mostra o valor real
         setOptimistic(prev => ({ ...prev, [chave]: confirmedVal }));
-        toast({ title: `⚠️ Valor ajustado: ${confirmedVal ? 'Ativado' : 'Desativado'}` });
-        setTimeout(() => setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; }), 2000);
+        toast({ title: `⚠️ Valor corrigido pelo servidor: ${confirmedVal ? 'Ativado' : 'Desativado'}` });
+        setTimeout(() => setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; }), 3000);
       } else {
         toast({ title: `✅ ${newValue ? 'Ativado' : 'Desativado'} com sucesso!` });
       }
     } catch (err) {
-      // Reverte optimistic em caso de erro
       setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
       toast({ title: '❌ Erro ao salvar', description: String(err?.message || err), variant: 'destructive' });
     } finally {
@@ -206,7 +206,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
           <h2 className="text-xl font-bold text-slate-900">Configurações Globais do Sistema</h2>
           <p className="text-sm text-slate-500">Integrações, IA, notificações e segurança</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => { queryClient.invalidateQueries({ queryKey: ['config-global-v2'] }); refetch(); }}>
+        <Button variant="outline" size="sm" onClick={() => { queryClient.invalidateQueries({ queryKey: ['config-global-v3'] }); refetch(); }}>
           🔄 Atualizar
         </Button>
       </div>

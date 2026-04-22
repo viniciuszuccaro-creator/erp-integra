@@ -1,17 +1,14 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Settings, Users, Shield, FileText, Sparkles } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configuracoes-gerais/ConfiguracoesGeraisIndex";
 import IntegracoesIndex from "@/components/administracao-sistema/IntegracoesIndex";
-
 import AuditoriaLogsIndex from "@/components/administracao-sistema/auditoria-logs/AuditoriaLogsIndex";
 import SegurancaGovernancaIndex from "@/components/administracao-sistema/seguranca-governanca/SegurancaGovernancaIndex";
 import IAOtimizacaoIndex from "@/components/administracao-sistema/IAOtimizacaoIndex";
 import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acessos/GestaoAcessosIndex";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 
@@ -23,6 +20,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
   const canSeguranca = hasPermission('Sistema', 'Segurança', 'visualizar');
   const canIA = hasPermission('Sistema', 'IA', 'visualizar');
   const canAuditoria = hasPermission('Sistema', 'Auditoria', 'visualizar');
+
   return (
     <Tabs defaultValue={initialTab} className="w-full h-full">
       <TabsList className="flex flex-wrap gap-2">
@@ -36,7 +34,6 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
             <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> Integrações</div>
           </TabsTrigger>
         )}
-        {/* Apps & Portais centralizado em Cadastros Gerais → aba Apps, Portais & Ambientes Externos */}
         {canAcessos && (
           <TabsTrigger value="acessos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <div className="flex items-center gap-2"><Users className="w-4 h-4"/> Gestão de Acessos</div>
@@ -59,11 +56,13 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
         )}
       </TabsList>
 
+      {/* PARÂMETROS GERAIS */}
       <TabsContent value="gerais" className="mt-4">
         <ProtectedSection module="Sistema" section={["Configurações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Configurações.</div>}>
-          <div className="w-full h-full">
+          <div className="w-full h-full space-y-4">
             <ConfiguracoesGeraisIndex initialTab="global" />
-            <div className="mt-4 space-y-3">
+            {/* Ferramentas de admin — seed e backfill multiempresa */}
+            <div className="space-y-3">
               <div className="flex items-center justify-between bg-white/80 border rounded-lg p-4">
                 <div>
                   <div className="font-medium text-slate-900">Seed leve de dados (smoke test)</div>
@@ -84,7 +83,6 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
                   Executar seed leve
                 </Button>
               </div>
-
               <div className="flex items-center justify-between bg-white/80 border rounded-lg p-4">
                 <div>
                   <div className="font-medium text-slate-900">Backfill Multiempresa (seguro)</div>
@@ -118,34 +116,25 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
         </ProtectedSection>
       </TabsContent>
 
+      {/* INTEGRAÇÕES — sem card redundante, direto no componente */}
       <TabsContent value="integracoes" className="mt-4">
         <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Integrações.</div>}>
-          <div className="w-full h-full space-y-4">
-            <Card>
-              <CardContent className="p-4">
-                <h2 className="font-semibold mb-1">Consolidação aplicada</h2>
-                <p className="text-sm text-slate-600 mb-3">APIs Externas, Webhooks e Chatbot Intents agora residem em “Tecnologia, IA & Parâmetros”.</p>
-                <div className="flex gap-2">
-                  <Link to="/AdministracaoSistema?tab=ia" className="inline-flex">
-                    <Button variant="default">Abrir Tecnologia, IA & Parâmetros</Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-            {/* Integrações: conectores, gateways e status central */}
+          <div className="w-full h-full">
             <IntegracoesIndex initialTab="gerenciamento" />
           </div>
         </ProtectedSection>
       </TabsContent>
 
+      {/* GESTÃO DE ACESSOS */}
       <TabsContent value="acessos" className="mt-4">
         <ProtectedSection module="Sistema" section={["Controle de Acesso"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</div>}>
-          <div className="w-full min-w-0 overflow-x-hidden">
+          <div className="w-full overflow-hidden">
             <GestaoAcessosIndex />
           </div>
         </ProtectedSection>
       </TabsContent>
 
+      {/* AUDITORIA */}
       <TabsContent value="auditoria" className="mt-4">
         <ProtectedSection module="Sistema" section={["Auditoria"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Auditoria.</div>}>
           <div className="w-full h-full">
@@ -154,6 +143,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
         </ProtectedSection>
       </TabsContent>
 
+      {/* SEGURANÇA — apenas admins */}
       {(typeof isAdmin === 'function' ? isAdmin() : !!isAdmin) && (
         <TabsContent value="seguranca" className="mt-4">
           <ProtectedSection module="Sistema" section={["Segurança"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Segurança.</div>}>
@@ -164,6 +154,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
         </TabsContent>
       )}
 
+      {/* IA & OTIMIZAÇÃO */}
       <TabsContent value="ia" className="mt-4">
         <ProtectedSection module="Sistema" section={["Configurações","IA"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à IA.</div>}>
           <div className="w-full h-full">
