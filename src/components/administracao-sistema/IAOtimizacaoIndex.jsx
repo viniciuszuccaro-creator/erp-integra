@@ -12,27 +12,19 @@ import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useToggleConfig } from "@/components/lib/useToggleConfig";
 
 export default function IAOtimizacaoIndex({ initialTab }) {
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const { user } = useUser();
   const [tab, setTab] = React.useState(initialTab || 'ia');
-  const [saving, setSaving] = useState({});
-  const [optimistic, setOptimistic] = useState({});
-  const [idCache, setIdCache] = useState({});
-  const queryClient = useQueryClient();
 
   const eId = empresaAtual?.id;
   const gId = grupoAtual?.id;
 
-  useEffect(() => {
-    setOptimistic({});
-    setIdCache({});
-  }, [eId, gId]);
-
   const iaQueryKey = ['config-ia-toggles', eId ?? 'sem', gId ?? 'sem'];
 
-  const { data: configsToggle = [], refetch: refetchToggle, isFetching: isFetchingToggle } = useQuery({
+  const { data: configsToggle = [], isFetching: isFetchingToggle } = useQuery({
     queryKey: iaQueryKey,
     queryFn: async () => {
       const orConds = [];
@@ -45,15 +37,7 @@ export default function IAOtimizacaoIndex({ initialTab }) {
         limit: 200,
         _bust: Date.now(),
       });
-      const list = Array.isArray(res?.data) ? res.data : [];
-      if (list.length > 0) {
-        setIdCache(prev => {
-          const next = { ...prev };
-          list.forEach(rec => { if (rec?.chave && rec?.id) next[rec.chave] = rec.id; });
-          return next;
-        });
-      }
-      return list;
+      return Array.isArray(res?.data) ? res.data : [];
     },
     enabled: !!(eId || gId),
     staleTime: 0,
@@ -62,60 +46,10 @@ export default function IAOtimizacaoIndex({ initialTab }) {
     refetchOnWindowFocus: false,
   });
 
-  const getConfigIA = useCallback((chave) => {
-    const list = (configsToggle || []).filter(c => c.chave === chave);
-    if (!list.length) return null;
-    if (gId && eId) { const ex = list.find(c => c.group_id === gId && c.empresa_id === eId); if (ex) return ex; }
-    if (eId) { const byE = list.find(c => c.empresa_id === eId); if (byE) return byE; }
-    if (gId) { const byG = list.find(c => c.group_id === gId); if (byG) return byG; }
-    return list[0] || null;
-  }, [configsToggle, gId, eId]);
-
-  const getToggleValue = useCallback((chave) => {
-    if (chave in optimistic) return optimistic[chave];
-    const rec = getConfigIA(chave);
-    return typeof rec?.ativa === 'boolean' ? rec.ativa : false;
-  }, [optimistic, getConfigIA]);
-
-  const handleToggle = useCallback(async (chave, newValue) => {
-    if (saving[chave]) return;
-    setOptimistic(prev => ({ ...prev, [chave]: newValue }));
-    setSaving(prev => ({ ...prev, [chave]: true }));
-    try {
-      const scope = {};
-      if (gId) scope.group_id = gId;
-      if (eId) scope.empresa_id = eId;
-      const cachedId = idCache[chave];
-      const payload = cachedId
-        ? { id: cachedId, chave, data: { chave, categoria: 'Sistema', ativa: newValue }, scope }
-        : { chave, data: { chave, categoria: 'Sistema', ativa: newValue }, scope };
-      const res = await base44.functions.invoke('upsertConfig', payload);
-      const returnedId = res?.data?.id || res?.data?.record?.id;
-      if (returnedId) setIdCache(prev => ({ ...prev, [chave]: returnedId }));
-
-      await queryClient.invalidateQueries({ queryKey: iaQueryKey });
-      const result = await refetchToggle({ cancelRefetch: false });
-      const freshRecs = Array.isArray(result?.data) ? result.data : [];
-      const saved = freshRecs.find(c => c.chave === chave && eId && c.empresa_id === eId)
-        || freshRecs.find(c => c.chave === chave && gId && c.group_id === gId)
-        || freshRecs.find(c => c.chave === chave);
-      const confirmed = (saved && typeof saved.ativa === 'boolean') ? saved.ativa : newValue;
-      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
-      if (confirmed !== newValue) {
-        toast.warning(`Servidor corrigiu para: ${confirmed ? 'Ativado' : 'Desativado'}`);
-      } else {
-        toast.success(`${newValue ? '✅ Ativado' : '⭕ Desativado'}!`);
-      }
-    } catch (err) {
-      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
-      toast.error('Erro ao salvar: ' + String(err?.message || err));
-    } finally {
-      setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
-    }
-  }, [saving, idCache, gId, eId, queryClient, iaQueryKey, refetchToggle]);
+  const { saving, handleToggle, getToggleValue } = useToggleConfig(eId, gId, iaQueryKey);
 
   const IAToggleRow = ({ chave, label, desc }) => {
-    const val = getToggleValue(chave);
+    const val = getToggleValue(configsToggle, chave);
     const isSaving = !!saving[chave];
     return (
       <div className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${isSaving ? 'bg-purple-50 border-purple-200' : 'hover:bg-slate-50'}`}>
@@ -131,7 +65,7 @@ export default function IAOtimizacaoIndex({ initialTab }) {
           <Switch
             checked={val}
             disabled={isSaving || isFetchingToggle}
-            onCheckedChange={(checked) => handleToggle(chave, checked)}
+            onCheckedChange={(checked) => handleToggle(chave, 'Sistema', checked)}
           />
         </div>
       </div>

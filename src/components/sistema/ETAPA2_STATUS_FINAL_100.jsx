@@ -1,1 +1,0 @@
-export default function ETAPA2_STATUS_FINAL_100() { return null; }

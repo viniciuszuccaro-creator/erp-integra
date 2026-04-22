@@ -1,1 +1,0 @@
-export default function ETAPA2_SEGURANCA_MULTIEMPRESA_V22() { return null; }

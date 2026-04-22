@@ -1,1 +1,1 @@
-export default function commitlint_config() { return null; }
+module.exports = { extends: ['@commitlint/config-conventional'] };

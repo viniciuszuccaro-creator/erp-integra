@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { useToggleConfig } from '@/components/lib/useToggleConfig';
 
 /**
  * ConfigGlobal — Painel de configuração global.
@@ -23,23 +24,15 @@ import { createPageUrl } from '@/utils';
  */
 export default function ConfigGlobal({ empresaId, grupoId }) {
   const [activeTab, setActiveTab] = useState('fiscal');
-  const [saving, setSaving] = useState({});
-  const [optimistic, setOptimistic] = useState({});
-  const [idCache, setIdCache] = useState({});
-  const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
   const eId = empresaId || empresaAtual?.id;
   const gId = grupoId || grupoAtual?.id;
   const canLoad = Boolean(gId || eId);
 
-  // Limpa cache ao trocar empresa/grupo
-  useEffect(() => {
-    setOptimistic({});
-    setIdCache({});
-  }, [eId, gId]);
-
+  const queryClient = useQueryClient();
   const queryKey = ['config-global-v5', eId ?? 'sem', gId ?? 'sem'];
+  const { saving, handleToggle, getToggleValue } = useToggleConfig(eId, gId, queryKey);
 
   const { data: configs = [], refetch, isFetching } = useQuery({
     queryKey,
@@ -84,90 +77,23 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     return list[0] || null;
   }, [configs, gId, eId]);
 
-  // Lê valor: optimistic > backend > false
-  const getToggleValue = useCallback((chave) => {
-    if (chave in optimistic) return optimistic[chave];
-    const rec = getConfig(chave);
-    return typeof rec?.ativa === 'boolean' ? rec.ativa : false;
-  }, [optimistic, getConfig]);
-
-  const getScope = useCallback(() => {
-    const scope = {};
-    if (gId) scope.group_id = gId;
-    if (eId) scope.empresa_id = eId;
-    return scope;
-  }, [gId, eId]);
-
-  const upsert = useCallback(async (chave, categoria, dados) => {
-    const scope = getScope();
-    const cachedId = idCache[chave];
-    const mergedData = { chave, categoria, ...dados };
-    const payload = cachedId
-      ? { id: cachedId, chave, data: mergedData, scope }
-      : { chave, data: mergedData, scope };
-    const res = await base44.functions.invoke('upsertConfig', payload);
-    const returnedId = res?.data?.id || res?.data?.record?.id;
-    if (returnedId) {
-      setIdCache(prev => ({ ...prev, [chave]: returnedId }));
-    }
-    return res;
-  }, [idCache, getScope]);
-
-  const handleToggle = useCallback(async (chave, categoria, newValue) => {
-    if (saving[chave]) return;
-    // 1. Aplica optimistic imediatamente
-    setOptimistic(prev => ({ ...prev, [chave]: newValue }));
-    setSaving(prev => ({ ...prev, [chave]: true }));
-    try {
-      await upsert(chave, categoria, { ativa: newValue });
-      // 2. Invalida cache e refetch para confirmar o valor real no banco
-      await queryClient.invalidateQueries({ queryKey });
-      const result = await refetch({ cancelRefetch: false });
-      const freshRecs = Array.isArray(result?.data) ? result.data : [];
-
-      // 3. Encontra o valor confirmado pelo backend
-      const saved =
-        freshRecs.find(c => c.chave === chave && eId && gId && c.empresa_id === eId && c.group_id === gId) ||
-        freshRecs.find(c => c.chave === chave && eId && c.empresa_id === eId) ||
-        freshRecs.find(c => c.chave === chave && gId && c.group_id === gId) ||
-        freshRecs.find(c => c.chave === chave);
-
-      const confirmedVal = (saved && typeof saved.ativa === 'boolean') ? saved.ativa : newValue;
-
-      // 4. Remove optimistic SOMENTE após confirmar — UI assume valor do backend
-      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
-
-      if (confirmedVal !== newValue) {
-        toast.warning(`Servidor corrigiu para: ${confirmedVal ? 'Ativado' : 'Desativado'}`);
-      } else {
-        toast.success(`${newValue ? '✅ Ativado' : '⭕ Desativado'} com sucesso!`);
-      }
-    } catch (err) {
-      // Reverte optimistic em caso de erro
-      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
-      toast.error('Erro ao salvar: ' + String(err?.message || err));
-    } finally {
-      setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
-    }
-  }, [saving, upsert, queryClient, queryKey, refetch, eId, gId]);
-
   const handleSaveField = useCallback(async (chave, categoria, dados) => {
     if (saving[chave]) return;
-    setSaving(prev => ({ ...prev, [chave]: true }));
-    try {
-      await upsert(chave, categoria, dados);
+    // Usa handleToggle para manter consistência
+    // Para campos não-toggle, passamos ativa=false para indicar que não é um toggle
+    const iToggleRes = await base44.functions.invoke('upsertConfig', {
+      chave,
+      data: { chave, categoria, ...dados },
+      scope: { ...(gId && { group_id: gId }), ...(eId && { empresa_id: eId }) }
+    });
+    if (iToggleRes?.data?.record) {
       await queryClient.invalidateQueries({ queryKey });
-      await refetch();
       toast.success('✅ Configuração salva!');
-    } catch (err) {
-      toast.error('Erro ao salvar: ' + String(err?.message || err));
-    } finally {
-      setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
     }
-  }, [saving, upsert, queryClient, queryKey, refetch]);
+  }, [saving, queryClient, queryKey, gId, eId]);
 
   const ToggleRow = ({ chave, categoria, label, desc }) => {
-    const val = getToggleValue(chave);
+    const val = getToggleValue(configs, chave);
     const isSaving = !!saving[chave];
     return (
       <div className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${isSaving ? 'bg-blue-50 border-blue-200' : 'hover:bg-slate-50'}`}>

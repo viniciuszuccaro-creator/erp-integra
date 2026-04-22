@@ -1,1 +1,0 @@
-export default function FASE1_Resumo_Global() { return null; }
