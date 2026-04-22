@@ -73,16 +73,19 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
       const savedRecord = res?.data?.record;
       // Confirma com valor do backend se disponível, senão mantém newValue
       const confirmedValue = typeof savedRecord?.ativa === 'boolean' ? savedRecord.ativa : newValue;
+      // Mantém confirmedRef com o valor salvo — NÃO apaga aqui
+      // Só será apagado pelo syncWithQueryData quando o refetch confirmar
       confirmedRef.current[chave] = confirmedValue;
       forceRender(n => n + 1);
 
       toast.success(confirmedValue ? '✅ Ativado com sucesso!' : '⭕ Desativado com sucesso!');
 
-      // Invalida query para sincronizar, mas o confirmedRef já mantém o valor correto
+      // Remove stale e força refetch imediato para sincronizar o cache
+      queryClient.removeQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey });
 
     } catch (err) {
-      // Reverte ao valor anterior (desconhecido — lê do query cache)
+      // Reverte ao valor anterior
       delete confirmedRef.current[chave];
       forceRender(n => n + 1);
       toast.error('Erro ao salvar: ' + String(err?.message || err));
@@ -103,15 +106,19 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
   }, [findMatchingRecord]);
 
   // Quando a query refetch retornar, limpar os confirmed que já estão sincronizados
+  // Só limpa se o valor do servidor CONFIRMAR o valor que foi salvo
+  // Garante que stale data não apague prematuramente o estado local
   const syncWithQueryData = useCallback((configs) => {
-    if (!Array.isArray(configs)) return;
+    if (!Array.isArray(configs) || configs.length === 0) return;
     let changed = false;
     Object.keys(confirmedRef.current).forEach(chave => {
       const match = findMatchingRecord(configs, chave);
+      // Só limpa se o backend já retornou o valor confirmado
       if (match && typeof match.ativa === 'boolean' && match.ativa === confirmedRef.current[chave]) {
         delete confirmedRef.current[chave];
         changed = true;
       }
+      // Se não encontrou registro (toggle acabou de ser criado), mantém o confirmed
     });
     if (changed) forceRender(n => n + 1);
   }, [findMatchingRecord]);

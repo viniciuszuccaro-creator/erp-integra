@@ -52,7 +52,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       return list;
     },
     enabled: canLoad,
-    staleTime: 30000,
+    staleTime: 0,
     gcTime: 60000,
     refetchOnMount: true,
     refetchOnWindowFocus: false,

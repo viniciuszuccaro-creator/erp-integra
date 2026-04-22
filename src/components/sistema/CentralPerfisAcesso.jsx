@@ -6,20 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import {
-  Shield, Users, Building2, CheckCircle, XCircle, Plus, Edit, Search, Settings,
-  Eye, Pencil, Trash2, AlertTriangle, RefreshCw, UserPlus,
-  Key, CheckSquare, LayoutDashboard, ShoppingCart, DollarSign,
+  Shield, Users, CheckCircle, XCircle, Plus, Edit, Search,
+  Eye, Pencil, Trash2, AlertTriangle, RefreshCw,
+  CheckSquare, LayoutDashboard, ShoppingCart, DollarSign,
   Package, Truck, Factory, UserCircle, FileText, BarChart3, Download,
   MessageCircle, Briefcase, Calendar, Info
 } from "lucide-react";
@@ -56,13 +53,9 @@ const ACOES = [
 const COR_CLASS = { blue: "text-blue-600", green: "text-green-600", emerald: "text-emerald-600", purple: "text-purple-600", orange: "text-orange-600", cyan: "text-cyan-600", indigo: "text-indigo-600", pink: "text-pink-600", slate: "text-slate-600", red: "text-red-600", violet: "text-violet-600", amber: "text-amber-600", teal: "text-teal-600", sky: "text-sky-600", gray: "text-gray-600" };
 
 export default function CentralPerfisAcesso() {
-  const [activeTab, setActiveTab] = useState("perfis");
   const [perfilAberto, setPerfilAberto] = useState(null);
   const [usuarioAberto, setUsuarioAberto] = useState(null);
   const [busca, setBusca] = useState("");
-  const [showEmpresas, setShowEmpresas] = useState(true);
-  const [showGrupos, setShowGrupos] = useState(true);
-  const [showAcoes, setShowAcoes] = useState(true);
   const [modulosExpandidos, setModulosExpandidos] = useState([]);
   const [formPerfil, setFormPerfil] = useState({ nome_perfil: "", descricao: "", nivel_perfil: "Operacional", permissoes: {}, ativo: true });
 
@@ -72,8 +65,6 @@ export default function CentralPerfisAcesso() {
 
   const { data: perfis = [] } = useQuery({ queryKey: ['perfis-acesso'], queryFn: () => base44.entities.PerfilAcesso.list() });
   const { data: usuarios = [] } = useQuery({ queryKey: ['usuarios'], queryFn: () => base44.entities.User.list() });
-  const { data: empresas = [] } = useQuery({ queryKey: ['empresas'], queryFn: () => base44.entities.Empresa.list() });
-  const { data: grupos = [] } = useQuery({ queryKey: ['grupos'], queryFn: () => base44.entities.GrupoEmpresarial.list() });
 
   const salvarPerfilMutation = useMutation({
     mutationFn: async (data) => {
@@ -103,16 +94,7 @@ export default function CentralPerfisAcesso() {
     onError: (error) => toast.error("❌ Erro: " + error.message),
   });
 
-  const atualizarUsuarioMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
-      queryClient.invalidateQueries({ queryKey: ['usuarios-gestao'] });
-      queryClient.invalidateQueries({ queryKey: ['perfil-acesso'] });
-      toast.success("✅ Usuário atualizado!");
-    },
-    onError: (error) => toast.error("❌ Erro: " + error.message),
-  });
+
 
   const resetForm = () => setFormPerfil({ nome_perfil: "", descricao: "", nivel_perfil: "Operacional", permissoes: {}, ativo: true });
 
@@ -169,31 +151,6 @@ export default function CentralPerfisAcesso() {
     setFormPerfil({ nome_perfil: perfil.nome_perfil || "", descricao: perfil.descricao || "", nivel_perfil: perfil.nivel_perfil || "Operacional", permissoes: perfil.permissoes || {}, ativo: perfil.ativo !== false });
   };
 
-  const handleVincularEmpresa = (usuario, empresaId, acao) => {
-    const atuais = usuario.empresas_vinculadas || [];
-    let novos;
-    if (acao === 'adicionar') {
-      if (atuais.some(v => v.empresa_id === empresaId)) { toast.error("Empresa já vinculada"); return; }
-      novos = [...atuais, { empresa_id: empresaId, ativo: true, nivel_acesso: 'Operacional', data_vinculo: new Date().toISOString() }];
-    } else {
-      novos = atuais.filter(v => v.empresa_id !== empresaId);
-    }
-    const nomes = novos.map(v => { const e = empresas.find(x => x.id === v.empresa_id); return e?.nome_fantasia || e?.razao_social || v.empresa_id; });
-    atualizarUsuarioMutation.mutate({ id: usuario.id, data: { empresas_vinculadas: novos, empresas_vinculadas_nomes: nomes } });
-  };
-
-  const handleVincularGrupo = (usuario, grupoId, acao) => {
-    const atuais = usuario.grupos_vinculados || [];
-    let novos;
-    if (acao === 'adicionar') {
-      if (atuais.some(v => v.grupo_id === grupoId)) { toast.error("Grupo já vinculado"); return; }
-      novos = [...atuais, { grupo_id: grupoId, ativo: true, data_vinculo: new Date().toISOString() }];
-    } else {
-      novos = atuais.filter(v => v.grupo_id !== grupoId);
-    }
-    atualizarUsuarioMutation.mutate({ id: usuario.id, data: { grupos_vinculados: novos, pode_operar_em_grupo: novos.length > 0 } });
-  };
-
   const stats = useMemo(() => {
     const totalUsuarios = usuarios.length;
     const usuariosComPerfil = usuarios.filter(u => u.perfil_acesso_id).length;
@@ -203,45 +160,29 @@ export default function CentralPerfisAcesso() {
   }, [perfis, usuarios]);
 
   const perfisFiltrados = perfis.filter(p => !busca || p.nome_perfil?.toLowerCase().includes(busca.toLowerCase()));
-  const usuariosFiltrados = usuarios.filter(u => !busca || u.full_name?.toLowerCase().includes(busca.toLowerCase()) || u.email?.toLowerCase().includes(busca.toLowerCase()));
 
   return (
     <div className="w-full space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-3 p-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl text-white">
-        <div className="flex items-center gap-3">
-          <Shield className="w-8 h-8" />
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <Shield className="w-5 h-5 text-blue-600" />
           <div>
-            <h2 className="text-xl font-bold">Central de Perfis de Acesso</h2>
-            <p className="text-blue-100 text-xs">Controle Granular Total • RBAC completo</p>
+            <h3 className="font-bold text-slate-900">Perfis de Acesso RBAC</h3>
+            <p className="text-slate-500 text-xs">Defina permissões granulares por módulo, seção e ação</p>
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Badge className="bg-white/20 px-3 py-1">{stats.totalPerfis} Perfis</Badge>
-          <Badge className="bg-white/20 px-3 py-1">{stats.totalUsuarios} Usuários</Badge>
-          <Badge className={`px-3 py-1 ${stats.cobertura >= 80 ? 'bg-green-500/80' : 'bg-orange-500/80'}`}>{stats.cobertura}% Cobertura</Badge>
+          <Badge className="bg-blue-100 text-blue-700 px-3 py-1">{stats.totalPerfis} Perfis</Badge>
+          <Badge className={`px-3 py-1 ${stats.cobertura >= 80 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{stats.cobertura}% Cobertura</Badge>
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Card className="bg-blue-500 text-white"><CardContent className="p-3"><p className="text-2xl font-bold">{stats.totalPerfis}</p><p className="text-xs opacity-90">Perfis</p></CardContent></Card>
-        <Card className="bg-green-500 text-white"><CardContent className="p-3"><p className="text-2xl font-bold">{stats.usuariosComPerfil}</p><p className="text-xs opacity-90">Com Perfil</p></CardContent></Card>
-        <Card className={`${stats.usuariosSemPerfil > 0 ? 'bg-orange-500' : 'bg-emerald-500'} text-white`}><CardContent className="p-3"><p className="text-2xl font-bold">{stats.usuariosSemPerfil}</p><p className="text-xs opacity-90">Sem Perfil</p></CardContent></Card>
-        <Card className="bg-indigo-500 text-white"><CardContent className="p-3"><p className="text-2xl font-bold">{stats.cobertura}%</p><p className="text-xs opacity-90">Cobertura RBAC</p><Progress value={stats.cobertura} className="mt-1 h-1 bg-indigo-400" /></CardContent></Card>
       </div>
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-        <Input placeholder="Buscar perfis ou usuários..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-10" />
+        <Input placeholder="Buscar perfis..." value={busca} onChange={(e) => setBusca(e.target.value)} className="pl-10" />
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full grid grid-cols-3">
-          <TabsTrigger value="perfis"><Shield className="w-4 h-4 mr-1" />Perfis</TabsTrigger>
-          <TabsTrigger value="usuarios"><Users className="w-4 h-4 mr-1" />Usuários</TabsTrigger>
-          <TabsTrigger value="empresas"><Building2 className="w-4 h-4 mr-1" />Empresas</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="perfis" className="space-y-3 mt-3">
+      <div className="space-y-3">
           <div className="flex justify-end">
             <Button onClick={() => { resetForm(); setPerfilAberto({ novo: true }); }} className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />Novo Perfil
@@ -290,87 +231,7 @@ export default function CentralPerfisAcesso() {
             })}
           </div>
           {perfisFiltrados.length === 0 && <div className="text-center py-8 text-slate-500"><Shield className="w-12 h-12 mx-auto mb-2 opacity-30" /><p className="text-sm">Nenhum perfil encontrado</p></div>}
-        </TabsContent>
-
-        <TabsContent value="usuarios" className="mt-3">
-          <Card>
-            <CardContent className="p-0">
-              <div className="flex items-center gap-4 p-3 border-b bg-slate-50 text-sm flex-wrap">
-                <label className="flex items-center gap-1 cursor-pointer"><Checkbox checked={showEmpresas} onCheckedChange={setShowEmpresas} />Empresas</label>
-                <label className="flex items-center gap-1 cursor-pointer"><Checkbox checked={showGrupos} onCheckedChange={setShowGrupos} />Grupos</label>
-                <label className="flex items-center gap-1 cursor-pointer"><Checkbox checked={showAcoes} onCheckedChange={setShowAcoes} />Ações</label>
-              </div>
-              <div className="overflow-x-auto">
-                <Table className="min-w-[700px]">
-                  <TableHeader><TableRow className="bg-slate-50">
-                    <TableHead>Usuário</TableHead><TableHead>E-mail</TableHead><TableHead>Perfil</TableHead>
-                    {showEmpresas && <TableHead>Emp.</TableHead>}
-                    {showGrupos && <TableHead>Grupos</TableHead>}
-                    {showAcoes && <TableHead>Ações</TableHead>}
-                  </TableRow></TableHeader>
-                  <TableBody>
-                    {usuariosFiltrados.map(u => (
-                      <TableRow key={u.id}>
-                        <TableCell className="font-medium text-sm max-w-[150px]">
-                          <TooltipProvider><Tooltip><TooltipTrigger asChild><span className="truncate block max-w-[150px]">{u.full_name}</span></TooltipTrigger><TooltipContent>{u.full_name}</TooltipContent></Tooltip></TooltipProvider>
-                        </TableCell>
-                        <TableCell className="text-xs text-slate-600 max-w-[180px]">
-                          <TooltipProvider><Tooltip><TooltipTrigger asChild><span className="truncate block max-w-[180px]">{u.email}</span></TooltipTrigger><TooltipContent>{u.email}</TooltipContent></Tooltip></TooltipProvider>
-                        </TableCell>
-                        <TableCell>
-                         <Select value={u.perfil_acesso_id || "sem-perfil"} onValueChange={(v) => {
-                           const p = perfis.find(x => x.id === v);
-                           atualizarUsuarioMutation.mutate({ id: u.id, data: { perfil_acesso_id: v === "sem-perfil" ? null : v, perfil_acesso_nome: v === "sem-perfil" ? null : (p?.nome_perfil || null) } });
-                         }}>
-                            <SelectTrigger className="w-[160px] h-7 text-xs"><SelectValue placeholder="Sem perfil" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="sem-perfil">Sem perfil</SelectItem>
-                              {perfis.filter(p => p.ativo !== false).map(p => (<SelectItem key={p.id} value={p.id}>{p.nome_perfil}</SelectItem>))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        {showEmpresas && <TableCell><div className="flex items-center gap-1"><Badge className="bg-purple-100 text-purple-700 text-xs">{(u.empresas_vinculadas || []).filter(v => v.ativo).length}</Badge><Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => setUsuarioAberto(u)}><Settings className="w-3 h-3" /></Button></div></TableCell>}
-                        {showGrupos && <TableCell><Badge className="bg-blue-100 text-blue-700 text-xs">{(u.grupos_vinculados || []).filter(v => v.ativo).length}</Badge></TableCell>}
-                        {showAcoes && <TableCell><Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setUsuarioAberto(u)}><Key className="w-3 h-3 mr-1" />Config</Button></TableCell>}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="empresas" className="mt-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader className="bg-purple-50 border-b pb-3"><CardTitle className="text-sm flex items-center gap-2"><Building2 className="w-4 h-4 text-purple-600" />Empresas ({empresas.length})</CardTitle></CardHeader>
-              <CardContent className="p-3 max-h-72 overflow-y-auto space-y-1">
-                {empresas.map(e => {
-                  const n = usuarios.filter(u => u.empresas_vinculadas?.some(v => v.empresa_id === e.id && v.ativo)).length;
-                  return (<div key={e.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50 text-sm"><div><p className="font-medium">{e.nome_fantasia || e.razao_social}</p><Badge className="bg-purple-100 text-purple-700 text-xs">{n} usuários</Badge></div><Badge className={e.status === 'Ativa' ? 'bg-green-100 text-green-700 text-xs' : 'bg-gray-100 text-xs'}>{e.status}</Badge></div>);
-                })}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="bg-blue-50 border-b pb-3"><CardTitle className="text-sm flex items-center gap-2"><Users className="w-4 h-4 text-blue-600" />Grupos ({grupos.length})</CardTitle></CardHeader>
-              <CardContent className="p-3 max-h-72 overflow-y-auto space-y-1">
-                {grupos.map(g => {
-                  const n = usuarios.filter(u => u.grupos_vinculados?.some(v => v.grupo_id === g.id && v.ativo)).length;
-                  return (<div key={g.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50 text-sm"><div><p className="font-medium">{g.nome_do_grupo}</p><Badge className="bg-blue-100 text-blue-700 text-xs">{n} usuários</Badge></div><Badge className={g.status === 'Ativo' ? 'bg-green-100 text-green-700 text-xs' : 'bg-gray-100 text-xs'}>{g.status}</Badge></div>);
-                })}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      {stats.usuariosSemPerfil > 0 && (
-        <Alert className="border-orange-300 bg-orange-50">
-          <AlertTriangle className="w-4 h-4 text-orange-600" />
-          <AlertDescription><strong>{stats.usuariosSemPerfil} usuários sem perfil.</strong> Configure em "Usuários".</AlertDescription>
-        </Alert>
-      )}
+      </div>
 
       {/* MODAL: CRIAR/EDITAR PERFIL */}
       {perfilAberto && (
@@ -485,58 +346,6 @@ export default function CentralPerfisAcesso() {
         </div>
       )}
 
-      {/* MODAL: CONFIGURAR USUÁRIO */}
-      {usuarioAberto && (
-        <div className="fixed inset-2 sm:inset-4 z-[9999999] bg-white shadow-2xl flex flex-col rounded-xl border overflow-hidden">
-          <div className="bg-green-50 border-b p-4 flex items-center justify-between sticky top-0">
-            <div className="flex items-center gap-2"><UserPlus className="w-5 h-5 text-green-600" /><h3 className="font-bold text-sm">Configurar: {usuarioAberto.full_name}</h3></div>
-            <Button variant="ghost" size="sm" onClick={() => setUsuarioAberto(null)}>✕</Button>
-          </div>
-          <div className="flex-1 overflow-auto p-4 space-y-4">
-            <div>
-              <Label className="font-bold mb-2 block">Perfil de Acesso</Label>
-              <Select value={usuarioAberto.perfil_acesso_id || "sem-perfil"} onValueChange={(v) => {
-                const p = perfis.find(x => x.id === v);
-                atualizarUsuarioMutation.mutate({ id: usuarioAberto.id, data: { perfil_acesso_id: v === "sem-perfil" ? null : v, perfil_acesso_nome: v === "sem-perfil" ? null : p?.nome_perfil } });
-                setUsuarioAberto({ ...usuarioAberto, perfil_acesso_id: v === "sem-perfil" ? null : v });
-              }}>
-                <SelectTrigger><SelectValue placeholder="Selecione um perfil" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sem-perfil">Sem perfil</SelectItem>
-                  {perfis.filter(p => p.ativo !== false).map(p => (<SelectItem key={p.id} value={p.id}><span className="flex items-center gap-2"><Shield className="w-3 h-3" />{p.nome_perfil} <Badge variant="outline" className="text-xs">{p.nivel_perfil}</Badge></span></SelectItem>))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="font-bold mb-2 flex items-center gap-2"><Building2 className="w-4 h-4 text-purple-600" />Empresas Vinculadas</Label>
-              <Card className="border-purple-200"><CardContent className="p-3 space-y-2 max-h-56 overflow-y-auto">
-                {empresas.length > 0 ? empresas.map(e => {
-                  const vinc = usuarioAberto.empresas_vinculadas?.some(v => v.empresa_id === e.id && v.ativo) || false;
-                  return (<div key={e.id} className="flex items-center justify-between p-2 border rounded hover:bg-slate-50 text-sm">
-                    <div className="flex items-center gap-2"><Checkbox checked={vinc} onCheckedChange={(c) => { handleVincularEmpresa(usuarioAberto, e.id, c ? 'adicionar' : 'remover'); const n = c ? [...(usuarioAberto.empresas_vinculadas || []), { empresa_id: e.id, ativo: true }] : (usuarioAberto.empresas_vinculadas || []).filter(v => v.empresa_id !== e.id); setUsuarioAberto({ ...usuarioAberto, empresas_vinculadas: n }); }} /><div><p className="font-medium text-xs">{e.nome_fantasia || e.razao_social}</p><p className="text-xs text-slate-400">{e.cnpj}</p></div></div>
-                    <Badge className={vinc ? 'bg-green-100 text-green-700 text-xs' : 'bg-slate-100 text-xs'}>{vinc ? 'Vinculado' : 'Sem acesso'}</Badge>
-                  </div>);
-                }) : <p className="text-center text-slate-500 py-3 text-sm">Nenhuma empresa cadastrada</p>}
-              </CardContent></Card>
-            </div>
-            <div>
-              <Label className="font-bold mb-2 flex items-center gap-2"><Users className="w-4 h-4 text-blue-600" />Grupos Empresariais</Label>
-              <Card className="border-blue-200"><CardContent className="p-3 space-y-2 max-h-56 overflow-y-auto">
-                {grupos.length > 0 ? grupos.map(g => {
-                  const vinc = usuarioAberto.grupos_vinculados?.some(v => v.grupo_id === g.id && v.ativo) || false;
-                  return (<div key={g.id} className="flex items-center justify-between p-2 border rounded hover:bg-slate-50 text-sm">
-                    <div className="flex items-center gap-2"><Checkbox checked={vinc} onCheckedChange={(c) => { handleVincularGrupo(usuarioAberto, g.id, c ? 'adicionar' : 'remover'); const n = c ? [...(usuarioAberto.grupos_vinculados || []), { grupo_id: g.id, ativo: true }] : (usuarioAberto.grupos_vinculados || []).filter(v => v.grupo_id !== g.id); setUsuarioAberto({ ...usuarioAberto, grupos_vinculados: n, pode_operar_em_grupo: n.length > 0 }); }} /><div><p className="font-medium text-xs">{g.nome_do_grupo}</p><p className="text-xs text-slate-400">{empresas.filter(e => e.group_id === g.id).length} empresas</p></div></div>
-                    <Badge className={vinc ? 'bg-blue-100 text-blue-700 text-xs' : 'bg-slate-100 text-xs'}>{vinc ? 'Vinculado' : 'Sem acesso'}</Badge>
-                  </div>);
-                }) : <p className="text-center text-slate-500 py-3 text-sm">Nenhum grupo cadastrado</p>}
-              </CardContent></Card>
-            </div>
-          </div>
-          <div className="p-4 border-t bg-slate-50 sticky bottom-0">
-            <Button onClick={() => setUsuarioAberto(null)} className="w-full bg-green-600 hover:bg-green-700"><CheckCircle className="w-4 h-4 mr-2" />Concluir</Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -39,7 +39,7 @@ export default function IAOtimizacaoIndex({ initialTab }) {
       return Array.isArray(res?.data) ? res.data : [];
     },
     enabled: !!(eId || gId),
-    staleTime: 30000,
+    staleTime: 0,
     gcTime: 60000,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
