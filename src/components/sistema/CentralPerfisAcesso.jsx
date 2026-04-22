@@ -18,7 +18,7 @@ import {
   Eye, Pencil, Trash2, AlertTriangle, RefreshCw,
   CheckSquare, LayoutDashboard, ShoppingCart, DollarSign,
   Package, Truck, Factory, UserCircle, FileText, BarChart3, Download,
-  MessageCircle, Briefcase, Calendar, Info
+  MessageCircle, Briefcase, Calendar, Info, Settings
 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
