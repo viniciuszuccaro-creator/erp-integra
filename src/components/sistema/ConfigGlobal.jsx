@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { FileText, Bell, Shield, RefreshCw, CheckCircle2, AlertCircle, Link2 } from 'lucide-react';
+// Shield mantido para uso em atalho de Integrações
 import { Textarea } from '@/components/ui/textarea';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { Link } from 'react-router-dom';
@@ -165,13 +166,12 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
 
       {/* Abas consolidadas: apenas Fiscal, Notificações e Segurança */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="overflow-x-auto">
-          <TabsList className="inline-flex flex-nowrap min-w-max bg-white border shadow-sm">
-            <TabsTrigger value="fiscal"><FileText className="w-4 h-4 mr-1.5" />Fiscal</TabsTrigger>
-            <TabsTrigger value="notificacoes"><Bell className="w-4 h-4 mr-1.5" />Notificações</TabsTrigger>
-            <TabsTrigger value="seguranca"><Shield className="w-4 h-4 mr-1.5" />Segurança</TabsTrigger>
-          </TabsList>
-        </div>
+         <div className="overflow-x-auto">
+           <TabsList className="inline-flex flex-nowrap min-w-max bg-white border shadow-sm">
+             <TabsTrigger value="fiscal"><FileText className="w-4 h-4 mr-1.5" />Fiscal</TabsTrigger>
+             <TabsTrigger value="notificacoes"><Bell className="w-4 h-4 mr-1.5" />Notificações</TabsTrigger>
+           </TabsList>
+         </div>
 
         {/* FISCAL */}
         <TabsContent value="fiscal" className="space-y-4 mt-4">
@@ -270,41 +270,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
           </Card>
         </TabsContent>
 
-        {/* SEGURANÇA */}
-        <TabsContent value="seguranca" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Shield className="w-4 h-4" />Segurança e Auditoria</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <ToggleRow chave="seg_mfa" categoria="Seguranca" label="MFA — Autenticação de Dois Fatores" desc="Obrigatório para administradores" />
-              <ToggleRow chave="seg_logs_completos" categoria="Seguranca" label="Logs de Auditoria Completos" desc="Registra todas as ações críticas" />
-              <ToggleRow chave="seg_bloqueio_tentativas" categoria="Seguranca" label="Bloquear Tentativas Excessivas" desc="Bloqueia após 5 tentativas de login falhas" />
-              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50">
-                <div className="flex-1 min-w-0 mr-3">
-                  <p className="font-medium text-sm">Timeout de Sessão (minutos)</p>
-                  <p className="text-xs text-slate-500">Logout após inatividade</p>
-                </div>
-                <Input
-                  type="number"
-                  className="w-20"
-                  key={`timeout-${eId}`}
-                  defaultValue={getConfig('seg_timeout')?.numero || 30}
-                  onBlur={(e) => handleSaveField('seg_timeout', 'Seguranca', { numero: Number(e.target.value) || 30 })}
-                />
-              </div>
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
-                <Shield className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold text-blue-900 text-sm">Conformidade LGPD</p>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <Badge className="bg-green-100 text-green-700">✓ Logs Ativos</Badge>
-                    <Badge className="bg-green-100 text-green-700">✓ Dados Criptografados</Badge>
-                    <Badge className="bg-green-100 text-green-700">✓ Auditoria Completa</Badge>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+
       </Tabs>
     </div>
   );

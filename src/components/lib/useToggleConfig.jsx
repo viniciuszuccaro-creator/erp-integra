@@ -102,20 +102,20 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     if (chave in optimistic) return optimistic[chave];
     const list = (configs || []).filter(c => c.chave === chave);
     if (!list.length) return false;
-    // Resolve pelo escopo mais específico primeiro
+    // Resolve pelo escopo mais específico primeiro (nunca por ordem)
     if (grupoId && empresaId) {
       const exact = list.find(c => c.group_id === grupoId && c.empresa_id === empresaId);
-      if (exact) return typeof exact.ativa === 'boolean' ? exact.ativa : false;
+      if (exact && typeof exact.ativa === 'boolean') return exact.ativa;
     }
     if (empresaId) {
-      const byE = list.find(c => c.empresa_id === empresaId);
-      if (byE) return typeof byE.ativa === 'boolean' ? byE.ativa : false;
+      const byE = list.find(c => c.empresa_id === empresaId && !c.group_id);
+      if (byE && typeof byE.ativa === 'boolean') return byE.ativa;
     }
     if (grupoId) {
-      const byG = list.find(c => c.group_id === grupoId);
-      if (byG) return typeof byG.ativa === 'boolean' ? byG.ativa : false;
+      const byG = list.find(c => c.group_id === grupoId && !c.empresa_id);
+      if (byG && typeof byG.ativa === 'boolean') return byG.ativa;
     }
-    return typeof list[0]?.ativa === 'boolean' ? list[0].ativa : false;
+    return false;
   }, [optimistic, grupoId, empresaId]);
 
   return {

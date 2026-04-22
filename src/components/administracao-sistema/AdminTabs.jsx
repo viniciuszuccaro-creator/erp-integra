@@ -63,10 +63,10 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
         )}
       </TabsList>
 
-      {/* PARÂMETROS GERAIS */}
+      {/* PARÂMETROS GERAIS — Consolidado */}
       <TabsContent value="gerais" className="mt-4">
         <ProtectedSection module="Sistema" section={["Configurações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Configurações.</div>}>
-          <div className="w-full h-full">
+          <div className="w-full h-full overflow-auto">
             <ConfiguracoesGeraisIndex initialTab="global" />
           </div>
         </ProtectedSection>

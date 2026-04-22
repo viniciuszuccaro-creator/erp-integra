@@ -10,6 +10,7 @@
  *  - { chave, data, scope }         → upsert por chave+scope
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+// upsertConfig v2 — escopo exato, sem fallback cross-scope, auditoria completa
 
 Deno.serve(async (req) => {
   try {
@@ -77,16 +78,16 @@ Deno.serve(async (req) => {
 
     let match = null;
 
-    // 1) Exato: chave + empresa + grupo
+    // 1) Exato: chave + empresa + grupo (mais específico)
     if (!match && eId && gId) {
       match = await tryFind({ chave, empresa_id: eId, group_id: gId });
     }
-    // 2) Chave + só empresa
-    if (!match && eId) {
+    // 2) Chave + só empresa (nunca cair em grupo se empresa existe)
+    if (!match && eId && !gId) {
       match = await tryFind({ chave, empresa_id: eId });
     }
-    // 3) Chave + só grupo
-    if (!match && gId) {
+    // 3) Chave + só grupo (nunca cair em empresa se grupo existe)
+    if (!match && gId && !eId) {
       match = await tryFind({ chave, group_id: gId });
     }
     // 4) Fallback: qualquer registro com essa chave (apenas quando sem scope)
@@ -96,6 +97,7 @@ Deno.serve(async (req) => {
 
     if (match?.id) {
       // ATUALIZA — merge dos campos existentes com os novos, nunca perde dados
+      // AUDITORIA: Log em AuditLog
       const SYSTEM_FIELDS = new Set(['id','created_date','updated_date','created_by','created_by_id','is_sample']);
       const updatePayload = {};
       for (const [k, v] of Object.entries(match)) {
@@ -108,11 +110,31 @@ Deno.serve(async (req) => {
       updatePayload.chave = chave;
       if (data.categoria) updatePayload.categoria = data.categoria;
       else if (match.categoria) updatePayload.categoria = match.categoria;
-      // Mantém scope
-      if (eId) updatePayload.empresa_id = eId;
-      if (gId) updatePayload.group_id = gId;
+      // Mantém scope (nunca sobrescreve)
+      if (!updatePayload.empresa_id && eId) updatePayload.empresa_id = eId;
+      if (!updatePayload.group_id && gId) updatePayload.group_id = gId;
 
       const updated = await api.update(match.id, updatePayload);
+      
+      // Log de auditoria da alteração
+      try {
+        await base44.asServiceRole.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Sistema',
+          usuario_id: user?.id || null,
+          empresa_id: eId || null,
+          group_id: gId || null,
+          acao: 'Edição',
+          modulo: 'Sistema',
+          tipo_auditoria: 'entidade',
+          entidade: 'ConfiguracaoSistema',
+          registro_id: match.id,
+          descricao: `Configuração ${chave} atualizada`,
+          dados_anteriores: match,
+          dados_novos: updated,
+          data_hora: new Date().toISOString(),
+        });
+      } catch (_) {}
+
       return Response.json({ record: updated, id: updated.id || match.id, mode: 'update', _ts: Date.now() });
     } else {
       // CRIA novo registro
@@ -121,6 +143,25 @@ Deno.serve(async (req) => {
       if (gId) createPayload.group_id = gId;
 
       const created = await api.create(createPayload);
+      
+      // Log de auditoria da criação
+      try {
+        await base44.asServiceRole.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Sistema',
+          usuario_id: user?.id || null,
+          empresa_id: eId || null,
+          group_id: gId || null,
+          acao: 'Criação',
+          modulo: 'Sistema',
+          tipo_auditoria: 'entidade',
+          entidade: 'ConfiguracaoSistema',
+          registro_id: created.id,
+          descricao: `Configuração ${chave} criada`,
+          dados_novos: created,
+          data_hora: new Date().toISOString(),
+        });
+      } catch (_) {}
+
       return Response.json({ record: created, id: created.id, mode: 'create', _ts: Date.now() });
     }
 
