@@ -105,7 +105,12 @@ export default function CentralPerfisAcesso() {
 
   const atualizarUsuarioMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.User.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['usuarios'] }); toast.success("✅ Usuário atualizado!"); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      queryClient.invalidateQueries({ queryKey: ['usuarios-gestao'] });
+      queryClient.invalidateQueries({ queryKey: ['perfil-acesso'] });
+      toast.success("✅ Usuário atualizado!");
+    },
     onError: (error) => toast.error("❌ Erro: " + error.message),
   });
 
@@ -313,11 +318,10 @@ export default function CentralPerfisAcesso() {
                           <TooltipProvider><Tooltip><TooltipTrigger asChild><span className="truncate block max-w-[180px]">{u.email}</span></TooltipTrigger><TooltipContent>{u.email}</TooltipContent></Tooltip></TooltipProvider>
                         </TableCell>
                         <TableCell>
-                          <Select value={u.perfil_acesso_id || "sem-perfil"} onValueChange={(v) => {
-                            if (v === "sem-perfil") return;
-                            const p = perfis.find(x => x.id === v);
-                            atualizarUsuarioMutation.mutate({ id: u.id, data: { perfil_acesso_id: v, perfil_acesso_nome: p?.nome_perfil || null } });
-                          }}>
+                         <Select value={u.perfil_acesso_id || "sem-perfil"} onValueChange={(v) => {
+                           const p = perfis.find(x => x.id === v);
+                           atualizarUsuarioMutation.mutate({ id: u.id, data: { perfil_acesso_id: v === "sem-perfil" ? null : v, perfil_acesso_nome: v === "sem-perfil" ? null : (p?.nome_perfil || null) } });
+                         }}>
                             <SelectTrigger className="w-[160px] h-7 text-xs"><SelectValue placeholder="Sem perfil" /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="sem-perfil">Sem perfil</SelectItem>

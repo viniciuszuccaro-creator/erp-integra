@@ -12,7 +12,9 @@ export default function usePermissions() {
       if (!user?.perfil_acesso_id) return null;
       return await base44.entities.PerfilAcesso.get(user.perfil_acesso_id);
     },
-    enabled: !!user?.perfil_acesso_id
+    enabled: !!(user?.perfil_acesso_id && user.perfil_acesso_id !== ""),
+    staleTime: 60000,
+    retry: 1,
     });
 
     // Normalização e aliases (HÍBRIDO: melhor opção sem quebrar legado)

@@ -1,6 +1,6 @@
 import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Settings, Users, Shield, FileText, Sparkles } from "lucide-react";
+import { Settings, Users, Shield, FileText, Sparkles, Wrench } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configuracoes-gerais/ConfiguracoesGeraisIndex";
@@ -11,9 +11,11 @@ import IAOtimizacaoIndex from "@/components/administracao-sistema/IAOtimizacaoIn
 import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acessos/GestaoAcessosIndex";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtual }) {
   const { hasPermission } = usePermissions();
+  const isAdminUser = typeof isAdmin === 'function' ? isAdmin() : !!isAdmin;
   const canGerais = hasPermission('Sistema', 'Configurações', 'visualizar');
   const canIntegracoes = hasPermission('Sistema', 'Integrações', 'visualizar');
   const canAcessos = hasPermission('Sistema', 'Controle de Acesso', 'visualizar');
@@ -54,64 +56,18 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
             <div className="flex items-center gap-2"><FileText className="w-4 h-4"/> Auditoria e Logs</div>
           </TabsTrigger>
         )}
+        {isAdminUser && (
+          <TabsTrigger value="ferramentas" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
+            <div className="flex items-center gap-2"><Wrench className="w-4 h-4"/> Ferramentas</div>
+          </TabsTrigger>
+        )}
       </TabsList>
 
       {/* PARÂMETROS GERAIS */}
       <TabsContent value="gerais" className="mt-4">
         <ProtectedSection module="Sistema" section={["Configurações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Configurações.</div>}>
-          <div className="w-full h-full space-y-4">
+          <div className="w-full h-full">
             <ConfiguracoesGeraisIndex initialTab="global" />
-            {/* Ferramentas de admin — seed e backfill multiempresa */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between bg-white/80 border rounded-lg p-4">
-                <div>
-                  <div className="font-medium text-slate-900">Seed leve de dados (smoke test)</div>
-                  <div className="text-xs text-slate-500">Cria alguns clientes, produtos e colaboradores com multiempresa atual.</div>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={async () => {
-                    const payload = {
-                      counts: { clientes: 5, produtos: 10, colaboradores: 5 },
-                      group_id: grupoAtual?.id || null,
-                      empresa_id: empresaAtual?.id || null,
-                    };
-                    const res = await base44.functions.invoke('seedData', payload);
-                    console.log('seedData:', res?.data);
-                  }}
-                >
-                  Executar seed leve
-                </Button>
-              </div>
-              <div className="flex items-center justify-between bg-white/80 border rounded-lg p-4">
-                <div>
-                  <div className="font-medium text-slate-900">Backfill Multiempresa (seguro)</div>
-                  <div className="text-xs text-slate-500">Dry‑run valida e lista correções de group_id/empresa_id; aplicar executa somente casos inequívocos.</div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={async () => {
-                      const res = await base44.functions.invoke('backfillGroupEmpresa', { dryRun: true, apply: false, limitPerEntity: 1000 });
-                      console.log('backfill dry-run:', res?.data);
-                    }}
-                  >
-                    Dry‑run
-                  </Button>
-                  <Button
-                    className="bg-blue-600 hover:bg-blue-700"
-                    onClick={async () => {
-                      const ok = confirm('Aplicar correções de multiempresa (apenas quando inequívocas)?');
-                      if (!ok) return;
-                      const res = await base44.functions.invoke('backfillGroupEmpresa', { dryRun: false, apply: true, limitPerEntity: 1000 });
-                      console.log('backfill apply:', res?.data);
-                    }}
-                  >
-                    Aplicar
-                  </Button>
-                </div>
-              </div>
-            </div>
           </div>
         </ProtectedSection>
       </TabsContent>
@@ -144,13 +100,70 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       </TabsContent>
 
       {/* SEGURANÇA — apenas admins */}
-      {(typeof isAdmin === 'function' ? isAdmin() : !!isAdmin) && (
+      {isAdminUser && (
         <TabsContent value="seguranca" className="mt-4">
           <ProtectedSection module="Sistema" section={["Segurança"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Segurança.</div>}>
             <div className="w-full h-full">
               <SegurancaGovernancaIndex />
             </div>
           </ProtectedSection>
+        </TabsContent>
+      )}
+
+      {/* FERRAMENTAS — apenas admins, consolidadas aqui */}
+      {isAdminUser && (
+        <TabsContent value="ferramentas" className="mt-4">
+          <div className="w-full space-y-4">
+            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm text-orange-800">
+              ⚠️ <strong>Ferramentas administrativas</strong> — Use com cautela. Estas operações afetam dados reais do banco.
+            </div>
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <h3 className="font-semibold text-slate-900">Seed de Dados (Teste)</h3>
+                <p className="text-xs text-slate-500">Cria clientes, produtos e colaboradores de teste com contexto multiempresa atual.</p>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    const res = await base44.functions.invoke('seedData', {
+                      counts: { clientes: 5, produtos: 10, colaboradores: 5 },
+                      group_id: grupoAtual?.id || null,
+                      empresa_id: empresaAtual?.id || null,
+                    });
+                    alert('Seed concluído: ' + JSON.stringify(res?.data?.summary || res?.data, null, 2));
+                  }}
+                >
+                  Executar Seed Leve
+                </Button>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <h3 className="font-semibold text-slate-900">Backfill Multiempresa</h3>
+                <p className="text-xs text-slate-500">Dry-run valida e lista correções de group_id/empresa_id; Aplicar executa somente casos inequívocos.</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      const res = await base44.functions.invoke('backfillGroupEmpresa', { dryRun: true, apply: false, limitPerEntity: 1000 });
+                      alert('Dry-run: ' + JSON.stringify(res?.data?.summary || res?.data, null, 2));
+                    }}
+                  >
+                    Dry-run (visualizar)
+                  </Button>
+                  <Button
+                    className="bg-orange-600 hover:bg-orange-700"
+                    onClick={async () => {
+                      if (!confirm('Aplicar correções de multiempresa? (apenas casos inequívocos)')) return;
+                      const res = await base44.functions.invoke('backfillGroupEmpresa', { dryRun: false, apply: true, limitPerEntity: 1000 });
+                      alert('Aplicado: ' + JSON.stringify(res?.data?.summary || res?.data, null, 2));
+                    }}
+                  >
+                    Aplicar Correções
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       )}
 

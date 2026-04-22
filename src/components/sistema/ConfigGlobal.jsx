@@ -47,14 +47,20 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       if (gId) orConds.push({ group_id: gId });
       if (eId) orConds.push({ empresa_id: eId });
       const filter = orConds.length > 1 ? { $or: orConds } : (orConds[0] || {});
-      // Usa upsertConfig em modo leitura via getEntityRecord (asServiceRole bypassa wrapper)
       const res = await base44.functions.invoke('getEntityRecord', {
         entityName: 'ConfiguracaoSistema',
         filter,
         limit: 500,
-        _bust: Date.now(), // cache bust para garantir dados frescos
+        _bust: Date.now(),
       });
-      return Array.isArray(res?.data) ? res.data : [];
+      const list = Array.isArray(res?.data) ? res.data : [];
+      // Popular cache de IDs ao carregar — garante update em vez de create no toggle
+      list.forEach(rec => {
+        if (rec?.chave && rec?.id && !idCacheRef.current[rec.chave]) {
+          idCacheRef.current[rec.chave] = rec.id;
+        }
+      });
+      return list;
     },
     enabled: canLoad,
     staleTime: 0,
@@ -105,11 +111,11 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const upsert = async (chave, categoria, dados) => {
     const scope = getScope();
     const cachedId = idCacheRef.current[chave];
-    // Sempre inclui chave e categoria para garantir consistência no update/create
     const mergedData = { chave, categoria, ...dados };
+    // __skipContextInject: evita que o wrapper do layout injete scope indevido
     const payload = cachedId
-      ? { id: cachedId, chave, data: mergedData, scope }
-      : { chave, data: mergedData, scope };
+      ? { id: cachedId, chave, data: mergedData, scope, __skipContextInject: true }
+      : { chave, data: mergedData, scope, __skipContextInject: true };
     const res = await base44.functions.invoke('upsertConfig', payload);
     const returnedId = res?.data?.id || res?.data?.record?.id;
     if (returnedId) idCacheRef.current[chave] = returnedId;
@@ -119,40 +125,45 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   // Toggle: optimistic imediato → persiste via backend → confirma com refetch
   const handleToggle = async (chave, categoria, newValue) => {
     if (saving[chave]) return;
+    // Aplica optimistic ANTES de qualquer await para UX responsiva
     setOptimistic(prev => ({ ...prev, [chave]: newValue }));
     setSaving(prev => ({ ...prev, [chave]: true }));
     try {
       const res = await upsert(chave, categoria, { ativa: newValue });
+      // Captura ID retornado pelo upsert (tanto formato legado quanto novo)
       const retId = res?.data?.id || res?.data?.record?.id;
       if (retId) idCacheRef.current[chave] = retId;
 
-      // Aguarda backend propagar (750ms é suficiente para a maioria dos casos)
-      await new Promise(r => setTimeout(r, 750));
+      // Aguarda propagação do backend
+      await new Promise(r => setTimeout(r, 800));
       await queryClient.invalidateQueries({ queryKey: ['config-global-v3'] });
-      const result = await refetch();
+      const result = await refetch({ cancelRefetch: false });
       const freshRecs = Array.isArray(result?.data) ? result.data : [];
 
-      // Localiza registro com escopo mais específico possível
+      // Atualiza cache de IDs com dados frescos
+      freshRecs.forEach(rec => {
+        if (rec?.chave && rec?.id) idCacheRef.current[rec.chave] = rec.id;
+      });
+
+      // Localiza o registro salvo com escopo mais específico
       const saved =
         freshRecs.find(c => c.chave === chave && eId && gId && c.empresa_id === eId && c.group_id === gId) ||
         freshRecs.find(c => c.chave === chave && eId && c.empresa_id === eId) ||
         freshRecs.find(c => c.chave === chave && gId && c.group_id === gId) ||
         freshRecs.find(c => c.chave === chave);
 
-      const confirmedVal = saved && typeof saved.ativa === 'boolean' ? saved.ativa : newValue;
+      const confirmedVal = (saved && typeof saved.ativa === 'boolean') ? saved.ativa : newValue;
 
-      // Remove optimistic — dados do backend assumem controle
+      // Remove optimistic — backend assume controle
       setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
 
       if (confirmedVal !== newValue) {
-        // Backend retornou valor diferente — mostra o valor real
-        setOptimistic(prev => ({ ...prev, [chave]: confirmedVal }));
-        toast({ title: `⚠️ Valor corrigido pelo servidor: ${confirmedVal ? 'Ativado' : 'Desativado'}` });
-        setTimeout(() => setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; }), 3000);
+        toast({ title: `⚠️ Servidor corrigiu para: ${confirmedVal ? 'Ativado' : 'Desativado'}` });
       } else {
         toast({ title: `✅ ${newValue ? 'Ativado' : 'Desativado'} com sucesso!` });
       }
     } catch (err) {
+      // Reverte optimistic em caso de erro
       setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
       toast({ title: '❌ Erro ao salvar', description: String(err?.message || err), variant: 'destructive' });
     } finally {

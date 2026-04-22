@@ -64,6 +64,8 @@ export default function GestaoUsuariosAvancada({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      queryClient.invalidateQueries({ queryKey: ['usuarios-gestao'] });
+      queryClient.invalidateQueries({ queryKey: ['perfil-acesso'] });
       toast.success("Usuário atualizado com sucesso!");
       if (onSuccess) onSuccess();
       if (onClose) onClose();

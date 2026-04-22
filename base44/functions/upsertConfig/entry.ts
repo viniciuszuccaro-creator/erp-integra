@@ -63,8 +63,9 @@ Deno.serve(async (req) => {
       }
 
       if (match?.id) {
-        // Atualiza preservando chave e scope originais do registro
+        // Atualiza preservando chave, categoria e scope — nunca sobrescreve com undefined
         const updatePayload = { ...data, chave };
+        if (!updatePayload.categoria && match.categoria) updatePayload.categoria = match.categoria;
         if (scope?.group_id) updatePayload.group_id = scope.group_id;
         if (scope?.empresa_id) updatePayload.empresa_id = scope.empresa_id;
         const updated = await api.update(match.id, updatePayload);
