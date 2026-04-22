@@ -100,15 +100,16 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
   }, [saving, upsert, queryClient, queryKey]);
 
   const getToggleValue = useCallback((configs, chave) => {
-    // Optimistic sempre tem prioridade (usuário acabou de clicar)
-    if (chave in optimistic) return optimistic[chave];
     const list = (configs || []).filter(c => c.chave === chave);
+    
+    // Optimistic SOMENTE se há algo em pendência — senão lê do backend
+    if (chave in optimistic && saving[chave]) return optimistic[chave];
+    
     if (!list.length) return false;
     // Resolve pelo escopo EXATO — nunca fallback cross-scope
     if (grupoId && empresaId) {
       const exact = list.find(c => c.group_id === grupoId && c.empresa_id === empresaId);
       if (exact && typeof exact.ativa === 'boolean') return exact.ativa;
-      // Se não encontra exato (grupo+empresa), não procura em outras escopos
       return false;
     }
     if (empresaId) {
@@ -122,7 +123,7 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
       return false;
     }
     return false;
-  }, [optimistic, grupoId, empresaId]);
+  }, [optimistic, saving, grupoId, empresaId]);
 
   return {
     saving,

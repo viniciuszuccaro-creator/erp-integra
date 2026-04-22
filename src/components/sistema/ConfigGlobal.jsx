@@ -25,6 +25,7 @@ import { useToggleConfig } from '@/components/lib/useToggleConfig';
  */
 export default function ConfigGlobal({ empresaId, grupoId }) {
   const [activeTab, setActiveTab] = useState('fiscal');
+  const [savingField, setSavingField] = useState({});
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
   const eId = empresaId || empresaAtual?.id;
@@ -75,19 +76,24 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   }, [configs, gId, eId]);
 
   const handleSaveField = useCallback(async (chave, categoria, dados) => {
-    if (saving[chave]) return;
-    // Usa handleToggle para manter consistência
-    // Para campos não-toggle, passamos ativa=false para indicar que não é um toggle
-    const iToggleRes = await base44.functions.invoke('upsertConfig', {
-      chave,
-      data: { chave, categoria, ...dados },
-      scope: { ...(gId && { group_id: gId }), ...(eId && { empresa_id: eId }) }
-    });
-    if (iToggleRes?.data?.record) {
+    if (savingField[chave]) return;
+    setSavingField(prev => ({ ...prev, [chave]: true }));
+    try {
+      const scope = { ...(gId && { group_id: gId }), ...(eId && { empresa_id: eId }) };
+      await base44.functions.invoke('upsertConfig', {
+        chave,
+        data: { chave, categoria, ...dados },
+        scope
+      });
       await queryClient.invalidateQueries({ queryKey });
+      await queryClient.refetchQueries({ queryKey });
       toast.success('✅ Configuração salva!');
+    } catch (err) {
+      toast.error('Erro: ' + String(err?.message || err));
+    } finally {
+      setSavingField(prev => { const n = { ...prev }; delete n[chave]; return n; });
     }
-  }, [saving, queryClient, queryKey, gId, eId]);
+  }, [savingField, queryClient, queryKey, gId, eId]);
 
   const ToggleRow = ({ chave, categoria, label, desc }) => {
     const val = getToggleValue(configs, chave);
