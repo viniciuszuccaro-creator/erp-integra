@@ -1,16 +1,14 @@
 import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 import usePermissions from "@/components/lib/usePermissions";
 import CentralPerfisAcesso from "@/components/sistema/CentralPerfisAcesso";
-// import MatrizPermissoesVisual from "@/components/sistema/MatrizPermissoesVisual";
 import RelatorioPermissoes from "@/components/sistema/RelatorioPermissoes";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useUser } from "@/components/lib/UserContext";
 import { useQuery } from "@tanstack/react-query";
-import GestaoUsuariosAvancada from "@/components/sistema/GestaoUsuariosAvancada";
 import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChecker";
+import UsuariosTab from "@/components/administracao-sistema/gestao-acessos/UsuariosTab";
 import { Shield } from "lucide-react";
 
 export default function GestaoAcessosIndex() {
@@ -39,7 +37,7 @@ export default function GestaoAcessosIndex() {
   // Hooks SEMPRE antes de qualquer return condicional
   const { data: perfis = [] } = useQuery({ queryKey: ['perfis-acesso', empresaAtual?.id], queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 200), enabled: podeVer });
   const { data: usuarios = [] } = useQuery({ queryKey: ['usuarios'], queryFn: () => base44.entities.User.list(), enabled: podeVer });
-  const { data: empresas = [] } = useQuery({ queryKey: ['empresas', empresaAtual?.id], queryFn: () => filterInContext('Empresa', {}, '-updated_date', 200), enabled: podeVer });
+  const { data: empresas = [] } = useQuery({ queryKey: ['empresas-ga', empresaAtual?.id], queryFn: () => base44.entities.Empresa.list(), enabled: podeVer });
 
   if (!podeVer) {
     return (
@@ -48,7 +46,7 @@ export default function GestaoAcessosIndex() {
   }
 
   return (
-    <div className="w-full flex flex-col gap-3 overflow-hidden">
+    <div className="w-full flex flex-col gap-3 min-h-0">
       {/* Info RBAC banner — responsivo e sem quebra de layout */}
       <div className="flex items-start gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 w-full box-border">
         <Shield className="w-4 h-4 flex-shrink-0 text-blue-600 mt-0.5" />
@@ -84,8 +82,8 @@ export default function GestaoAcessosIndex() {
         </TabsContent>
 
         <TabsContent value="usuarios" className="mt-3 w-full">
-          <div className="w-full overflow-x-auto">
-            <GestaoUsuariosAvancada />
+          <div className="w-full">
+            <UsuariosTab />
           </div>
         </TabsContent>
 

@@ -18,7 +18,7 @@ export default function AdministracaoSistema() {
   const tabMap = {
     gerais: 'gerais', parametros: 'gerais', 'parametros-gerais': 'gerais',
     integracoes: 'integracoes', connectors: 'integracoes',
-    apps: 'apps', 'apps-externos': 'apps',
+    apps: 'integracoes', 'apps-externos': 'integracoes',
     acessos: 'acessos', usuarios: 'acessos', 'controle-acesso': 'acessos',
     seguranca: 'seguranca', governanca: 'seguranca',
     ia: 'ia', tecnologia: 'ia', 'tecnologia-ia-parametros': 'ia', apis: 'ia', webhooks: 'ia', 'chatbot-intents': 'ia',

@@ -166,7 +166,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     setSaving(prev => ({ ...prev, [chave]: true }));
     try {
       await upsert(chave, categoria, dados);
-      await queryClient.invalidateQueries({ queryKey: ['config-global-v2'] });
+      await queryClient.invalidateQueries({ queryKey: ['config-global-v3'] });
       await refetch();
       toast({ title: '✅ Configuração salva!' });
     } catch (err) {
@@ -184,7 +184,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       </div>
       <Switch
         checked={getToggleValue(chave)}
-        disabled={!!saving[chave] || isFetching}
+        disabled={!!saving[chave]}
         onCheckedChange={(checked) => handleToggle(chave, categoria, checked)}
         data-permission={permId}
       />
