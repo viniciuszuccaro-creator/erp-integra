@@ -84,9 +84,11 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
       if (savedRecord && typeof savedRecord.ativa === 'boolean') {
         toast.success(`${savedRecord.ativa ? '✅ Ativado' : '⭕ Desativado'} com sucesso!`);
       }
-      // Invalida para recarregar os dados ANTES de resetar optimistic
+      // Invalida IMEDIATAMENTE para garantir que próximas leituras pegam dados frescos do servidor
       await queryClient.invalidateQueries({ queryKey });
-      // Remove optimistic APÓS validação completar (força UI ler do query cache)
+      // Força refresh do query sem cache — garante que próximo getToggleValue lê do servidor
+      await queryClient.refetchQueries({ queryKey });
+      // Remove optimistic APÓS refresh completar (força UI ler do query cache atualizado)
       setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
     } catch (err) {
       // Reverte o optimistic em caso de erro
@@ -102,18 +104,22 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     if (chave in optimistic) return optimistic[chave];
     const list = (configs || []).filter(c => c.chave === chave);
     if (!list.length) return false;
-    // Resolve pelo escopo mais específico primeiro (nunca por ordem)
+    // Resolve pelo escopo EXATO — nunca fallback cross-scope
     if (grupoId && empresaId) {
       const exact = list.find(c => c.group_id === grupoId && c.empresa_id === empresaId);
       if (exact && typeof exact.ativa === 'boolean') return exact.ativa;
+      // Se não encontra exato (grupo+empresa), não procura em outras escopos
+      return false;
     }
     if (empresaId) {
       const byE = list.find(c => c.empresa_id === empresaId && !c.group_id);
       if (byE && typeof byE.ativa === 'boolean') return byE.ativa;
+      return false;
     }
     if (grupoId) {
       const byG = list.find(c => c.group_id === grupoId && !c.empresa_id);
       if (byG && typeof byG.ativa === 'boolean') return byG.ativa;
+      return false;
     }
     return false;
   }, [optimistic, grupoId, empresaId]);

@@ -32,7 +32,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const canLoad = Boolean(gId || eId);
 
   const queryClient = useQueryClient();
-  const queryKey = ['config-global-v5', eId ?? 'sem', gId ?? 'sem'];
+  const queryKey = ['config-global', eId ?? 'sem', gId ?? 'sem'];
   const { saving, handleToggle, getToggleValue, seedIdCache } = useToggleConfig(eId, gId, queryKey);
 
   const { data: configs = [], refetch, isFetching } = useQuery({
@@ -55,7 +55,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: 'always',
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,  // Força refetch quando volta para a aba
     retry: 1,
   });
 
