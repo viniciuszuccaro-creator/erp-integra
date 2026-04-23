@@ -990,10 +990,12 @@ function LayoutContent({ children, currentPageName }) {
             }
           }
 
-          // Injetar contexto multiempresa em TODAS as chamadas de função (Regra-Mãe 5a) + sanitização preventiva
+          // Injetar contexto multiempresa em chamadas de função — NÃO injeta em funções que já têm scope explícito
+          // (upsertConfig, getEntityRecord e similares passam scope próprio e não devem ser contaminados)
+          const SKIP_AUTO_SCOPE = new Set(['upsertConfig', 'getEntityRecord', 'entityGuard', 'entityListSorted', 'propagateGroupConfigs', 'auditError', 'deployAudit', 'piiEncryptor', 'portalToken']);
           try {
             const ctx = getScope ? getScope() : {};
-            if (params && typeof params === 'object' && !Array.isArray(params)) {
+            if (!SKIP_AUTO_SCOPE.has(functionName) && params && typeof params === 'object' && !Array.isArray(params)) {
               params = { ...params };
               if (ctx?.group_id && (params.group_id === undefined || params.group_id === null)) params.group_id = ctx.group_id;
               // aceitar alias empresaId, mas padronizar empresa_id
@@ -1005,10 +1007,12 @@ function LayoutContent({ children, currentPageName }) {
           try { params = sanitizeOnWrite(params); } catch (_) {}
 
           // De-duplicação + retry com backoff para 429/500
+          // upsertConfig e outras escritas NUNCA são deduplicadas (cada chamada é uma mutação distinta)
+          const SKIP_DEDUP = new Set(['upsertConfig', 'applyInventoryAdjustments', 'applyOrderStockMovements', 'nfeActions', 'emitirBoleto', 'adminInviteUser']);
           base44.functions.__inflight = base44.functions.__inflight || new Map();
           const serialize = (o)=>{try{return JSON.stringify(o, Object.keys(o||{}).sort())}catch{ return JSON.stringify(o||{})}};
           const key = `${functionName}:${serialize(params || {})}`;
-          if (base44.functions.__inflight.has(key)) {
+          if (!SKIP_DEDUP.has(functionName) && base44.functions.__inflight.has(key)) {
             return await base44.functions.__inflight.get(key);
           }
           const exec = async () => {
@@ -1030,7 +1034,7 @@ function LayoutContent({ children, currentPageName }) {
           };
           const startedAt = Date.now();
           const p = exec().finally(() => base44.functions.__inflight.delete(key));
-          base44.functions.__inflight.set(key, p);
+          if (!SKIP_DEDUP.has(functionName)) base44.functions.__inflight.set(key, p);
           const result = await p;
 
           // Telemetria de latência (auditoria de performance > 1500ms)

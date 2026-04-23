@@ -110,15 +110,29 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     setSavingField(prev => ({ ...prev, [chave]: true }));
     try {
       const scope = { ...(gId && { group_id: gId }), ...(eId && { empresa_id: eId }) };
-      await base44.functions.invoke('upsertConfig', {
-        chave,
-        data: { chave, categoria, ...dados },
-        scope
-      });
-      // Força reload dos dados do servidor e limpa otimismo
-      queryClient.removeQueries({ queryKey, exact: true });
-      await refetch();
-      setOptimisticMap(prev => { const n = { ...prev }; delete n[chave]; return n; });
+      // Invoca upsertConfig passando scope explícito (o wrapper do layout não sobrescreve params já definidos)
+      await base44.functions.invoke('upsertConfig', { chave, data: { chave, categoria, ...dados }, scope });
+      // Aguarda backend propagar (evita race condition de leitura antes da escrita confirmar)
+      await new Promise(r => setTimeout(r, 400));
+      // Invalida e refetch
+      await queryClient.invalidateQueries({ queryKey, exact: true });
+      const freshData = await refetch();
+      // Confirma valor do banco — se bateu com otimismo, remove otimismo; senão mantém do banco
+      if ('ativa' in dados) {
+        const rows = Array.isArray(freshData?.data) ? freshData.data : [];
+        const match = rows.find(c => c.chave === chave && (
+          (eId && c.empresa_id === eId) || (gId && c.group_id === gId) || (!c.empresa_id && !c.group_id)
+        ));
+        // Sempre remove o otimismo após confirmar — o banco agora tem o valor certo
+        setOptimisticMap(prev => { const n = { ...prev }; delete n[chave]; return n; });
+        // Verificação de consistência: se banco retornou valor diferente, avisa
+        if (match && typeof match.ativa === 'boolean' && match.ativa !== dados.ativa) {
+          toast.warning(`⚠️ Valor salvo (${match.ativa}) difere do esperado (${dados.ativa}). Tente novamente.`);
+          return;
+        }
+      } else {
+        setOptimisticMap(prev => { const n = { ...prev }; delete n[chave]; return n; });
+      }
       toast.success('✅ Configuração salva!');
     } catch (err) {
       // Reverte otimismo em caso de erro
