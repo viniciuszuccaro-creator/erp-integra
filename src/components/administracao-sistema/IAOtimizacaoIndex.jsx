@@ -40,15 +40,17 @@ export default function IAOtimizacaoIndex({ initialTab }) {
     },
     enabled: !!(eId || gId),
     staleTime: 0,
-    gcTime: 60000,
+    gcTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
 
   const { saving, handleToggle, getToggleValue, syncWithQueryData } = useToggleConfig(eId, gId, iaQueryKey);
 
-  // Sincroniza com dados do backend assim que chegam
-  useEffect(() => { syncWithQueryData(configsToggle); }, [configsToggle]);
+  // Sincroniza com dados do backend após refetch
+  useEffect(() => {
+    if (configsToggle.length > 0) syncWithQueryData(configsToggle);
+  }, [configsToggle, syncWithQueryData]);
 
   const IAToggleRow = ({ chave, label, desc }) => {
     const val = getToggleValue(configsToggle, chave);

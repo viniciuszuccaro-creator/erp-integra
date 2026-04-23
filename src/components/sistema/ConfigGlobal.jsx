@@ -53,14 +53,16 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     },
     enabled: canLoad,
     staleTime: 0,
-    gcTime: 60000,
+    gcTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
     retry: 1,
   });
 
-  // Sincroniza confirmedRef com dados retornados do backend
-  useEffect(() => { syncWithQueryData(configs); }, [configs]);
+  // Sincroniza com dados retornados do backend após refetch
+  useEffect(() => {
+    if (configs.length > 0) syncWithQueryData(configs);
+  }, [configs, syncWithQueryData]);
 
   const getConfig = useCallback((chave) => {
     const list = (configs || []).filter(c => c.chave === chave);
@@ -84,8 +86,8 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
         data: { chave, categoria, ...dados },
         scope
       });
-      await queryClient.invalidateQueries({ queryKey });
-      await queryClient.refetchQueries({ queryKey });
+      queryClient.removeQueries({ queryKey, exact: true });
+      await queryClient.refetchQueries({ queryKey, exact: true });
       toast.success('✅ Configuração salva!');
     } catch (err) {
       toast.error('Erro: ' + String(err?.message || err));
