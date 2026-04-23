@@ -4,21 +4,15 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
 /**
- * useToggleConfig v6 — Fix definitivo dos toggles.
- *
- * Problema raiz: syncWithQueryData apagava o estado otimístico antes do backend confirmar.
- * Solução:
- * - Estado local (optimisticMap) NUNCA é limpo por syncWithQueryData
- * - syncWithQueryData é NO-OP: apenas retrocompatibilidade
- * - Após salvar, faz refetch e usa o valor real do backend (removendo otimístico)
- * - Chama API de entidade diretamente (bypassa wrapper de invoke do layout)
+ * useToggleConfig v7 — Usa upsertConfig (backend function) para salvar toggles.
+ * Isso garante que o valor seja persistido corretamente, bypassa o wrapper do layout
+ * e usa a função backend que já tem lógica de upsert por escopo.
  */
 export function useToggleConfig(empresaId, grupoId, queryKey) {
   const [saving, setSaving] = useState({});
-  // optimisticMap: { [chave]: boolean } — valor local enquanto salva
   const [optimisticMap, setOptimisticMap] = useState({});
   const queryClient = useQueryClient();
-  const pendingRef = useRef({}); // evita duplo clique
+  const pendingRef = useRef({});
 
   // Reset ao trocar empresa/grupo
   useEffect(() => {
@@ -37,7 +31,6 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     if (!Array.isArray(list)) return null;
     const candidates = list.filter(c => c.chave === chave);
     if (!candidates.length) return null;
-
     if (empresaId && grupoId) {
       const exact = candidates.find(c => c.empresa_id === empresaId && c.group_id === grupoId);
       if (exact) return exact;
@@ -62,84 +55,51 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
       return;
     }
 
-    // 1. Aplica otimisticamente na UI imediatamente
+    // 1. Otimismo imediato na UI
     pendingRef.current[chave] = true;
     setSaving(prev => ({ ...prev, [chave]: true }));
     setOptimisticMap(prev => ({ ...prev, [chave]: newValue }));
 
     try {
-      // Usa asServiceRole para bypass do wrapper de intercepção do layout
-      const api = base44.asServiceRole?.entities?.ConfiguracaoSistema
-        ?? base44.entities.ConfiguracaoSistema;
+      // 2. Salva via backend function (bypassa wrapper do layout)
+      const res = await base44.functions.invoke('upsertConfig', {
+        chave,
+        data: { chave, categoria: categoria || 'Sistema', ativa: newValue },
+        scope,
+      });
 
-      // 2. Busca registro existente (escopo exato → fallback grupo)
-      let existing = null;
+      const backendValue = typeof res?.data?.record?.ativa === 'boolean'
+        ? res.data.record.ativa
+        : newValue;
+
+      // 3. Invalida e refaz o cache para pegar o novo valor
       try {
-        const f1 = { chave, ...(scope.empresa_id ? { empresa_id: scope.empresa_id } : {}), ...(scope.group_id ? { group_id: scope.group_id } : {}) };
-        const rows = await api.filter(f1, '-updated_date', 5);
-        existing = Array.isArray(rows) ? (rows[0] || null) : null;
-        if (!existing && scope.group_id && scope.empresa_id) {
-          const rows2 = await api.filter({ chave, group_id: scope.group_id }, '-updated_date', 5);
-          existing = Array.isArray(rows2) ? (rows2[0] || null) : null;
+        if (queryKey) {
+          queryClient.removeQueries({ queryKey, exact: true });
+          await queryClient.refetchQueries({ queryKey, exact: true });
         }
       } catch (_) {}
 
-      let savedRecord;
-      if (existing?.id) {
-        savedRecord = await api.update(existing.id, {
-          ...existing,
-          chave,
-          categoria: categoria || existing.categoria || 'Sistema',
-          ativa: newValue,
-          ...(scope.empresa_id && { empresa_id: scope.empresa_id }),
-          ...(scope.group_id && { group_id: scope.group_id }),
-        });
-      } else {
-        savedRecord = await api.create({
-          chave,
-          categoria: categoria || 'Sistema',
-          ativa: newValue,
-          ...(scope.empresa_id && { empresa_id: scope.empresa_id }),
-          ...(scope.group_id && { group_id: scope.group_id }),
-        });
-      }
-
-      // 3. Usa valor confirmado pelo backend
-      const backendValue = typeof savedRecord?.ativa === 'boolean' ? savedRecord.ativa : newValue;
-
-      // 4. Refetch do cache para atualizar dados do servidor
-      try {
-        queryClient.removeQueries({ queryKey, exact: true });
-        await queryClient.refetchQueries({ queryKey, exact: true });
-      } catch (_) {}
-
-      // 5. Após refetch, remove otimístico (o dado real do servidor já está no cache)
-      setOptimisticMap(prev => {
-        const next = { ...prev };
-        // Mantém o valor confirmado se por algum motivo o refetch demorar
-        next[chave] = backendValue;
-        return next;
-      });
-
-      // 6. Após um tick, remove o otimístico (o cache já tem o valor real)
+      // 4. Atualiza otimístico com valor confirmado, depois limpa
+      setOptimisticMap(prev => ({ ...prev, [chave]: backendValue }));
       setTimeout(() => {
         setOptimisticMap(prev => {
           const next = { ...prev };
           delete next[chave];
           return next;
         });
-      }, 500);
+      }, 600);
 
       toast.success(backendValue ? '✅ Ativado com sucesso!' : '⭕ Desativado com sucesso!');
 
     } catch (err) {
-      // Reverte UI para o valor do backend/cache
+      // Reverte UI
       setOptimisticMap(prev => {
         const next = { ...prev };
         delete next[chave];
         return next;
       });
-      toast.error('Erro ao salvar configuração: ' + String(err?.message || err));
+      toast.error('Erro ao salvar: ' + String(err?.message || err));
     } finally {
       setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
       delete pendingRef.current[chave];
@@ -147,20 +107,16 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
   }, [saving, getScope, queryClient, queryKey]);
 
   const getToggleValue = useCallback((configs, chave) => {
-    // Prioridade 1: valor otimístico local (enquanto salva ou logo após)
+    // Prioridade 1: valor otimístico local
     if (chave in optimisticMap) return optimisticMap[chave];
-
     // Prioridade 2: valor do cache/backend
     const match = findMatchingRecord(configs, chave);
     if (match && typeof match.ativa === 'boolean') return match.ativa;
-
     return false;
   }, [optimisticMap, findMatchingRecord]);
 
-  // NO-OP: mantido apenas para retrocompatibilidade (não apaga mais o otimístico)
-  const syncWithQueryData = useCallback((_configs) => {
-    // Intencional: não faz nada. O estado é gerenciado por handleToggle e pelo timeout acima.
-  }, []);
+  // NO-OP: retrocompatibilidade
+  const syncWithQueryData = useCallback((_configs) => {}, []);
 
   return {
     saving,
