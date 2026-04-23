@@ -50,8 +50,6 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     if (saving[chave] || pendingRef.current[chave]) return;
 
     const scope = getScope();
-    // Permite salvar mesmo sem empresa/grupo (configuração global)
-    // Apenas avisa sem bloquear
 
     // 1. Otimismo imediato na UI
     pendingRef.current[chave] = true;
@@ -59,7 +57,7 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     setOptimisticMap(prev => ({ ...prev, [chave]: newValue }));
 
     try {
-      // 2. Salva via backend function (bypassa wrapper do layout)
+      // 2. Salva via backend function (upsertConfig)
       const res = await base44.functions.invoke('upsertConfig', {
         chave,
         data: { chave, categoria: categoria || 'Sistema', ativa: newValue },
@@ -70,31 +68,30 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
         ? res.data.record.ativa
         : newValue;
 
-      // 3. Invalida e refaz o cache para pegar o novo valor
+      // 3. Invalida query cache e recarrega dados do servidor
       if (queryKey) {
         try {
-          queryClient.invalidateQueries({ queryKey, exact: true });
+          await queryClient.invalidateQueries({ queryKey, exact: true });
           await queryClient.refetchQueries({ queryKey, exact: true, stale: true });
         } catch (_) {}
       }
 
-      // 4. Limpa otimístico após sucesso confirmado
+      // 4. Limpa otimístico após sucesso
       setOptimisticMap(prev => {
         const next = { ...prev };
         delete next[chave];
         return next;
       });
 
-      toast.success(backendValue ? '✅ Ativado com sucesso!' : '⭕ Desativado com sucesso!');
-
+      return true; // Sucesso
     } catch (err) {
-      // Reverte UI
+      // Reverte UI em caso de erro
       setOptimisticMap(prev => {
         const next = { ...prev };
         delete next[chave];
         return next;
       });
-      toast.error('Erro ao salvar: ' + String(err?.message || err));
+      throw err;
     } finally {
       setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
       delete pendingRef.current[chave];

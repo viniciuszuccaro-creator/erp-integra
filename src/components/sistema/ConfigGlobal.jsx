@@ -88,24 +88,25 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   }, [configs, gId, eId]);
 
   const handleSaveField = useCallback(async (chave, categoria, dados) => {
-    if (savingField[chave]) return;
-    setSavingField(prev => ({ ...prev, [chave]: true }));
-    try {
-      const scope = { ...(gId && { group_id: gId }), ...(eId && { empresa_id: eId }) };
-      await base44.functions.invoke('upsertConfig', {
-        chave,
-        data: { chave, categoria, ...dados },
-        scope
-      });
-      queryClient.removeQueries({ queryKey, exact: true });
-      await queryClient.refetchQueries({ queryKey, exact: true });
-      toast.success('✅ Configuração salva!');
-    } catch (err) {
-      toast.error('Erro: ' + String(err?.message || err));
-    } finally {
-      setSavingField(prev => { const n = { ...prev }; delete n[chave]; return n; });
-    }
-  }, [savingField, queryClient, queryKey, gId, eId]);
+   if (savingField[chave]) return;
+   setSavingField(prev => ({ ...prev, [chave]: true }));
+   try {
+     const scope = { ...(gId && { group_id: gId }), ...(eId && { empresa_id: eId }) };
+     await base44.functions.invoke('upsertConfig', {
+       chave,
+       data: { chave, categoria, ...dados },
+       scope
+     });
+     // Invalidar query para forçar reload dos dados
+     queryClient.removeQueries({ queryKey, exact: true });
+     await refetch();
+     toast.success('✅ Configuração salva!');
+   } catch (err) {
+     toast.error('Erro: ' + String(err?.message || err));
+   } finally {
+     setSavingField(prev => { const n = { ...prev }; delete n[chave]; return n; });
+   }
+  }, [savingField, queryClient, queryKey, gId, eId, refetch]);
 
   const ToggleRow = ({ chave, categoria, label, desc }) => {
     const val = getToggleValue(configs, chave);
@@ -124,7 +125,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
           <Switch
             checked={val}
             disabled={isSaving || isFetching}
-            onCheckedChange={(checked) => handleToggle(chave, categoria, checked)}
+            onCheckedChange={(checked) => handleSaveField(chave, categoria, { ativa: checked })}
           />
         </div>
       </div>
