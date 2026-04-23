@@ -27,21 +27,21 @@ export default function IAOtimizacaoIndex({ initialTab }) {
   const { data: configsToggle = [], isFetching: isFetchingToggle } = useQuery({
     queryKey: iaQueryKey,
     queryFn: async () => {
+      const api = base44.asServiceRole?.entities?.ConfiguracaoSistema
+        ?? base44.entities.ConfiguracaoSistema;
       const orConds = [];
       if (gId) orConds.push({ group_id: gId });
       if (eId) orConds.push({ empresa_id: eId });
       const filter = orConds.length > 1 ? { $or: orConds } : (orConds[0] || {});
-      const res = await base44.functions.invoke('getEntityRecord', {
-        entityName: 'ConfiguracaoSistema',
-        filter,
-        limit: 200,
-      });
-      return Array.isArray(res?.data) ? res.data : [];
+      try {
+        const rows = await api.filter(filter, '-updated_date', 200);
+        return Array.isArray(rows) ? rows : [];
+      } catch (_) { return []; }
     },
     enabled: !!(eId || gId),
     staleTime: 0,
     gcTime: 0,
-    refetchOnMount: true,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: false,
   });
 
