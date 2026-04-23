@@ -10,10 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Search, UserCog, Mail, Shield, Building2 } from "lucide-react";
 import GestaoUsuariosAvancada from "@/components/sistema/GestaoUsuariosAvancada";
+import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 
 export default function UsuariosTab() {
   const { filterInContext, empresaAtual } = useContextoVisual();
+  const { hasPermission, isAdmin } = usePermissions();
+  const podeConvidar = isAdmin() || hasPermission('Sistema', 'Controle de Acesso', 'criar');
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
@@ -73,9 +76,11 @@ export default function UsuariosTab() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={handleInvite} className="bg-blue-600 hover:bg-blue-700">
-          <UserCog className="w-4 h-4 mr-2" />Convidar Usuário
-        </Button>
+        {podeConvidar && (
+          <Button onClick={handleInvite} className="bg-blue-600 hover:bg-blue-700">
+            <UserCog className="w-4 h-4 mr-2" />Convidar Usuário
+          </Button>
+        )}
       </div>
 
       {/* Lista */}

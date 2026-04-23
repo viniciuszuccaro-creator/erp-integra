@@ -9,13 +9,10 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { FileText, Bell, Shield, RefreshCw, CheckCircle2, AlertCircle, Link2 } from 'lucide-react';
-// Shield mantido para uso em atalho de Integrações
+import { FileText, Bell, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
-import { useToggleConfig } from '@/components/lib/useToggleConfig';
+// getToggleValue implementado localmente com optimisticMap unificado
 
 /**
  * ConfigGlobal — Painel de configuração global.
@@ -26,15 +23,17 @@ import { useToggleConfig } from '@/components/lib/useToggleConfig';
 export default function ConfigGlobal({ empresaId, grupoId }) {
   const [activeTab, setActiveTab] = useState('fiscal');
   const [savingField, setSavingField] = useState({});
+  const [optimisticMap, setOptimisticMap] = useState({});
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
   const eId = empresaId || empresaAtual?.id;
   const gId = grupoId || grupoAtual?.id;
-  const canLoad = true; // carrega sempre — inclui registros globais sem empresa
 
   const queryClient = useQueryClient();
   const queryKey = ['config-global', eId ?? 'sem', gId ?? 'sem'];
-  const { saving, handleToggle, getToggleValue, syncWithQueryData } = useToggleConfig(eId, gId, queryKey);
+
+  // Reset otimismo ao trocar empresa/grupo
+  React.useEffect(() => { setOptimisticMap({}); }, [eId, gId]);
 
   const { data: configs = [], refetch, isFetching } = useQuery({
     queryKey,
@@ -72,6 +71,20 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
 
   // syncWithQueryData é NO-OP v6 — não precisa mais ser chamado aqui
 
+  // getToggleValue — lê otimismo local primeiro, depois banco
+  const getToggleValue = useCallback((chave) => {
+    if (chave in optimisticMap) return optimisticMap[chave];
+    const list = (configs || []).filter(c => c.chave === chave);
+    if (!list.length) return false;
+    let match = null;
+    if (gId && eId) match = list.find(c => c.group_id === gId && c.empresa_id === eId);
+    if (!match && eId) match = list.find(c => c.empresa_id === eId);
+    if (!match && gId) match = list.find(c => c.group_id === gId);
+    if (!match) match = list.find(c => !c.empresa_id && !c.group_id);
+    if (!match) match = list[0];
+    return typeof match?.ativa === 'boolean' ? match.ativa : false;
+  }, [configs, optimisticMap, eId, gId]);
+
   const getConfig = useCallback((chave) => {
     const list = (configs || []).filter(c => c.chave === chave);
     if (!list.length) return null;
@@ -88,29 +101,44 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   }, [configs, gId, eId]);
 
   const handleSaveField = useCallback(async (chave, categoria, dados) => {
-   if (savingField[chave]) return;
-   setSavingField(prev => ({ ...prev, [chave]: true }));
-   try {
-     const scope = { ...(gId && { group_id: gId }), ...(eId && { empresa_id: eId }) };
-     await base44.functions.invoke('upsertConfig', {
-       chave,
-       data: { chave, categoria, ...dados },
-       scope
-     });
-     // Invalidar query para forçar reload dos dados
-     queryClient.removeQueries({ queryKey, exact: true });
-     await refetch();
-     toast.success('✅ Configuração salva!');
-   } catch (err) {
-     toast.error('Erro: ' + String(err?.message || err));
-   } finally {
-     setSavingField(prev => { const n = { ...prev }; delete n[chave]; return n; });
-   }
-  }, [savingField, queryClient, queryKey, gId, eId, refetch]);
+    if (savingField[chave]) return;
+    // Otimismo imediato para toggles booleanos (ativa)
+    const prevOptimistic = optimisticMap[chave];
+    if ('ativa' in dados) {
+      setOptimisticMap(prev => ({ ...prev, [chave]: dados.ativa }));
+    }
+    setSavingField(prev => ({ ...prev, [chave]: true }));
+    try {
+      const scope = { ...(gId && { group_id: gId }), ...(eId && { empresa_id: eId }) };
+      await base44.functions.invoke('upsertConfig', {
+        chave,
+        data: { chave, categoria, ...dados },
+        scope
+      });
+      // Força reload dos dados do servidor e limpa otimismo
+      queryClient.removeQueries({ queryKey, exact: true });
+      await refetch();
+      setOptimisticMap(prev => { const n = { ...prev }; delete n[chave]; return n; });
+      toast.success('✅ Configuração salva!');
+    } catch (err) {
+      // Reverte otimismo em caso de erro
+      if ('ativa' in dados) {
+        setOptimisticMap(prev => {
+          const n = { ...prev };
+          if (prevOptimistic !== undefined) n[chave] = prevOptimistic;
+          else delete n[chave];
+          return n;
+        });
+      }
+      toast.error('Erro ao salvar: ' + String(err?.message || err));
+    } finally {
+      setSavingField(prev => { const n = { ...prev }; delete n[chave]; return n; });
+    }
+  }, [savingField, optimisticMap, queryClient, queryKey, gId, eId, refetch]);
 
   const ToggleRow = ({ chave, categoria, label, desc }) => {
-    const val = getToggleValue(configs, chave);
-    const isSaving = !!saving[chave];
+    const val = getToggleValue(chave);
+    const isSaving = !!savingField[chave];
     return (
       <div className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${isSaving ? 'bg-blue-50 border-blue-200' : 'hover:bg-slate-50'}`}>
         <div className="flex-1 min-w-0 mr-3">
