@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,10 +60,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     retry: 1,
   });
 
-  // Sincroniza com dados retornados do backend após refetch
-  useEffect(() => {
-    if (configs.length > 0) syncWithQueryData(configs);
-  }, [configs, syncWithQueryData]);
+  // syncWithQueryData é NO-OP v6 — não precisa mais ser chamado aqui
 
   const getConfig = useCallback((chave) => {
     const list = (configs || []).filter(c => c.chave === chave);

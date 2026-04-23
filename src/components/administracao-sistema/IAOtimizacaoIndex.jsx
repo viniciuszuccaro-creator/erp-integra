@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -45,12 +45,8 @@ export default function IAOtimizacaoIndex({ initialTab }) {
     refetchOnWindowFocus: false,
   });
 
-  const { saving, handleToggle, getToggleValue, syncWithQueryData } = useToggleConfig(eId, gId, iaQueryKey);
-
-  // Sincroniza com dados do backend após refetch
-  useEffect(() => {
-    if (configsToggle.length > 0) syncWithQueryData(configsToggle);
-  }, [configsToggle, syncWithQueryData]);
+  const { saving, handleToggle, getToggleValue } = useToggleConfig(eId, gId, iaQueryKey);
+  // syncWithQueryData removido: NO-OP no v6 (toggles mantêm estado correto via optimisticMap)
 
   const IAToggleRow = ({ chave, label, desc }) => {
     const val = getToggleValue(configsToggle, chave);
