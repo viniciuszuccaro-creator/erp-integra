@@ -81,7 +81,7 @@ export default function ProtectedSection({
   }, [isLoading, allowed, modulo, section, action, empresaAtual?.id, grupoAtual?.id]);
 
   useEffect(() => {
-    if (isLoading) return; // não audita durante carregamento
+    if (isLoading) return;
     if (allowedFinal === false && !loggedRef.current) {
       loggedRef.current = true;
       try {
@@ -92,10 +92,12 @@ export default function ProtectedSection({
           empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
           acao: 'Bloqueio',
           modulo: modulo || 'Sistema',
+          tipo_auditoria: 'seguranca',
           entidade: section || 'Seção',
-          descricao: `Acesso negado (${action})`,
+          descricao: `Acesso negado: ${modulo}.${section}.${action}`,
+          data_hora: new Date().toISOString(),
         });
-      } catch {}
+      } catch (_) {}
     }
   }, [isLoading, allowedFinal, action, modulo, section, user?.id, empresaAtual?.id]);
 

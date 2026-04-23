@@ -61,12 +61,12 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
       }
     },
     enabled: true, // sempre carrega, mesmo sem empresa selecionada
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    retry: 2,
+    staleTime: 10000,
+    gcTime: 30000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: 'stale',
+    retry: 1,
   });
 
   // syncWithQueryData é NO-OP v6 — não precisa mais ser chamado aqui

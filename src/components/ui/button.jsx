@@ -52,22 +52,21 @@ const Button = React.forwardRef(({ className, variant, size, asChild = false, ..
   if ('data-sensitive' in passProps) delete passProps['data-sensitive'];
 
   if (perm && !isAllowed) {
-          // Placeholder visual quando sem permissão (desabilitado com tooltip + auditoria)
-          return (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  className={cn(buttonVariants({ variant: "outline", size })) + " pointer-events-none opacity-50 cursor-not-allowed"}
-                  aria-disabled="true"
-                  type="button"
-                >
-                  Acesso negado
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Acesso negado • ação auditada</TooltipContent>
-            </Tooltip>
-          );
-        }
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            className={cn(buttonVariants({ variant: "outline", size }), "pointer-events-none opacity-50 cursor-not-allowed")}
+            aria-disabled="true"
+            type="button"
+          >
+            Acesso negado
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>Acesso negado • ação auditada</TooltipContent>
+      </Tooltip>
+    );
+  }
 
   return (
     <Comp

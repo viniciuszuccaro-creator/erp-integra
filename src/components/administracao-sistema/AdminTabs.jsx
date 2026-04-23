@@ -46,11 +46,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
             <div className="flex items-center gap-2"><Shield className="w-4 h-4"/> Segurança & Governança</div>
           </TabsTrigger>
         )}
-        {canIA && (
-          <TabsTrigger value="ia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> IA & Otimização</div>
-          </TabsTrigger>
-        )}
+
         {canAuditoria && (
           <TabsTrigger value="auditoria" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <div className="flex items-center gap-2"><FileText className="w-4 h-4"/> Auditoria e Logs</div>
@@ -167,14 +163,6 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
         </TabsContent>
       )}
 
-      {/* IA & OTIMIZAÇÃO */}
-      <TabsContent value="ia" className="mt-4">
-        <ProtectedSection module="Sistema" section={["Configurações","IA"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à IA.</div>}>
-          <div className="w-full h-full">
-            <IAOtimizacaoIndex initialTab="ia" />
-          </div>
-        </ProtectedSection>
-      </TabsContent>
     </Tabs>
   );
 }
