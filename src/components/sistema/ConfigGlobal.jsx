@@ -30,7 +30,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
 
   const eId = empresaId || empresaAtual?.id;
   const gId = grupoId || grupoAtual?.id;
-  const canLoad = Boolean(gId || eId);
+  const canLoad = true; // carrega sempre — inclui registros globais sem empresa
 
   const queryClient = useQueryClient();
   const queryKey = ['config-global', eId ?? 'sem', gId ?? 'sem'];
@@ -39,19 +39,29 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const { data: configs = [], refetch, isFetching } = useQuery({
     queryKey,
     queryFn: async () => {
-      const api = base44.entities.ConfiguracaoSistema;
-      const orConds = [];
-      if (gId) orConds.push({ group_id: gId });
-      if (eId) orConds.push({ empresa_id: eId });
-      const filter = orConds.length > 1 ? { $or: orConds } : (orConds[0] || {});
+      // Usa função backend para bypassar o wrapper do layout (que injeta filtros de empresa)
+      // e lê diretamente pelo escopo correto (group_id e/ou empresa_id)
       try {
-        const rows = await api.filter(filter, '-updated_date', 500);
-        return Array.isArray(rows) ? rows : [];
+        const res = await base44.functions.invoke('getEntityRecord', {
+          entityName: 'ConfiguracaoSistema',
+          filter: (() => {
+            const orConds = [];
+            if (gId) orConds.push({ group_id: gId });
+            if (eId) orConds.push({ empresa_id: eId });
+            // Inclui também registros sem empresa (globais/legados)
+            orConds.push({ empresa_id: null, group_id: null });
+            return orConds.length > 1 ? { $or: orConds } : (orConds[0] || {});
+          })(),
+          limit: 500,
+          sort: '-updated_date',
+        });
+        const rows = Array.isArray(res?.data) ? res.data : [];
+        return rows;
       } catch (_) {
         return [];
       }
     },
-    enabled: canLoad,
+    enabled: true, // sempre carrega, mesmo sem empresa selecionada
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: 'always',
@@ -65,13 +75,16 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const getConfig = useCallback((chave) => {
     const list = (configs || []).filter(c => c.chave === chave);
     if (!list.length) return null;
+    // Prioridade: exato > só empresa > só grupo > global (sem escopo)
     if (gId && eId) {
       const exact = list.find(c => c.group_id === gId && c.empresa_id === eId);
       if (exact) return exact;
     }
     if (eId) { const byE = list.find(c => c.empresa_id === eId); if (byE) return byE; }
     if (gId) { const byG = list.find(c => c.group_id === gId); if (byG) return byG; }
-    return list[0] || null;
+    // Fallback: registro global sem empresa/grupo
+    const global = list.find(c => !c.empresa_id && !c.group_id);
+    return global || list[0] || null;
   }, [configs, gId, eId]);
 
   const handleSaveField = useCallback(async (chave, categoria, dados) => {
@@ -118,13 +131,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     );
   };
 
-  if (!canLoad) {
-    return (
-      <div className="p-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg">
-        ⚠️ Selecione uma empresa ou grupo para carregar as configurações.
-      </div>
-    );
-  }
+  // canLoad sempre true — exibe aviso sem bloquear tela
 
   return (
     <div className="space-y-4 w-full">

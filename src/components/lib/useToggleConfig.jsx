@@ -50,10 +50,8 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     if (saving[chave] || pendingRef.current[chave]) return;
 
     const scope = getScope();
-    if (!scope.empresa_id && !scope.group_id) {
-      toast.error('Selecione uma empresa ou grupo antes de salvar.');
-      return;
-    }
+    // Permite salvar mesmo sem empresa/grupo (configuração global)
+    // Apenas avisa sem bloquear
 
     // 1. Otimismo imediato na UI
     pendingRef.current[chave] = true;
@@ -104,11 +102,16 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
   }, [saving, getScope, queryClient, queryKey]);
 
   const getToggleValue = useCallback((configs, chave) => {
-    // Prioridade 1: valor otimístico local
+    // Prioridade 1: valor otimístico local (imediato após clique)
     if (chave in optimisticMap) return optimisticMap[chave];
-    // Prioridade 2: valor do cache/backend
+    // Prioridade 2: valor persistido — busca por escopo ou global
     const match = findMatchingRecord(configs, chave);
     if (match && typeof match.ativa === 'boolean') return match.ativa;
+    // Prioridade 3: fallback global (registros sem empresa/grupo)
+    if (Array.isArray(configs)) {
+      const global = configs.find(c => c.chave === chave && !c.empresa_id && !c.group_id);
+      if (global && typeof global.ativa === 'boolean') return global.ativa;
+    }
     return false;
   }, [optimisticMap, findMatchingRecord]);
 
