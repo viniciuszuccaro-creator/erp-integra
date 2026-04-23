@@ -39,8 +39,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const { data: configs = [], refetch, isFetching } = useQuery({
     queryKey,
     queryFn: async () => {
-      const api = base44.asServiceRole?.entities?.ConfiguracaoSistema
-        ?? base44.entities.ConfiguracaoSistema;
+      const api = base44.entities.ConfiguracaoSistema;
       const orConds = [];
       if (gId) orConds.push({ group_id: gId });
       if (eId) orConds.push({ empresa_id: eId });
@@ -56,8 +55,9 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: 'always',
-    refetchOnWindowFocus: false,
-    retry: 1,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    retry: 2,
   });
 
   // syncWithQueryData é NO-OP v6 — não precisa mais ser chamado aqui

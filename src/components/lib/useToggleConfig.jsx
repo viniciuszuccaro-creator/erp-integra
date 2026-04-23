@@ -73,22 +73,19 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
         : newValue;
 
       // 3. Invalida e refaz o cache para pegar o novo valor
-      try {
-        if (queryKey) {
-          queryClient.removeQueries({ queryKey, exact: true });
-          await queryClient.refetchQueries({ queryKey, exact: true });
-        }
-      } catch (_) {}
+      if (queryKey) {
+        try {
+          queryClient.invalidateQueries({ queryKey, exact: true });
+          await queryClient.refetchQueries({ queryKey, exact: true, stale: true });
+        } catch (_) {}
+      }
 
-      // 4. Atualiza otimístico com valor confirmado, depois limpa
-      setOptimisticMap(prev => ({ ...prev, [chave]: backendValue }));
-      setTimeout(() => {
-        setOptimisticMap(prev => {
-          const next = { ...prev };
-          delete next[chave];
-          return next;
-        });
-      }, 600);
+      // 4. Limpa otimístico após sucesso confirmado
+      setOptimisticMap(prev => {
+        const next = { ...prev };
+        delete next[chave];
+        return next;
+      });
 
       toast.success(backendValue ? '✅ Ativado com sucesso!' : '⭕ Desativado com sucesso!');
 
