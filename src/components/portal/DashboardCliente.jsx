@@ -4,14 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  ShoppingCart, DollarSign, Package, TrendingUp, Clock, CheckCircle2, AlertCircle, FileText, Truck, Calendar,
-  ShoppingBag, MapPin, Loader2, Upload, MessageSquare, Download
-} from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  ShoppingCart, DollarSign, FileText, Truck, ShoppingBag,
+  MapPin, Loader2, Upload, MessageSquare, Download, AlertCircle
+} from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
 import { Link } from "react-router-dom";
-import { createPageUrl } from '@/utils';
 
 /**
  * Dashboard do Portal do Cliente
@@ -304,28 +303,28 @@ export default function DashboardCliente({ clienteId: propClienteId, adminMode =
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Link to={createPageUrl('PortalCliente') + '?tab=orcamentos'}>
+            <Link to={'/PortalCliente?tab=orcamentos'}>
               <Button variant="outline" className="w-full">
                 <FileText className="w-4 h-4 mr-2" />
                 Aprovar Orçamentos
               </Button>
             </Link>
             
-            <Link to={createPageUrl('PortalCliente') + '?tab=projetos'}>
+            <Link to={'/PortalCliente?tab=orcamentos'}>
               <Button variant="outline" className="w-full">
                 <Upload className="w-4 h-4 mr-2" />
                 Enviar Projeto
               </Button>
             </Link>
 
-            <Link to={createPageUrl('PortalCliente') + '?tab=chamados'}>
+            <Link to={'/PortalCliente?tab=chamados'}>
               <Button variant="outline" className="w-full">
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Abrir Chamado
               </Button>
             </Link>
 
-            <Link to={createPageUrl('PortalCliente') + '?tab=documentos'}>
+            <Link to={'/PortalCliente?tab=documentos'}>
               <Button variant="outline" className="w-full">
                 <Download className="w-4 h-4 mr-2" />
                 Baixar Documentos
