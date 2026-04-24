@@ -178,10 +178,11 @@ export default function DocsCenter() {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  const queryNormalized = query.toLowerCase().trim();
   const filtered = DOCS.filter(d =>
-    d.title.toLowerCase().includes(query.toLowerCase()) ||
-    d.group.toLowerCase().includes(query.toLowerCase()) ||
-    d.content.toLowerCase().includes(query.toLowerCase())
+    d.title.toLowerCase().includes(queryNormalized) ||
+    d.group.toLowerCase().includes(queryNormalized) ||
+    d.content.toLowerCase().includes(queryNormalized)
   );
 
   const current = filtered[selectedIndex] || filtered[0] || DOCS[0];

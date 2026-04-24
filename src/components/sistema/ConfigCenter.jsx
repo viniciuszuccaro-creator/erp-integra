@@ -3,10 +3,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { Settings, Sparkles, Cloud, Key, CheckCircle } from 'lucide-react';
+import { useToggleConfig } from '@/components/lib/useToggleConfig';
+import ToggleRow from '@/components/sistema/ToggleRow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
@@ -22,18 +23,12 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
   const gId = grupoAtual?.id;
   const canLoad = Boolean(eId || gId);
 
-  const [saving, setSaving] = useState({});
-  const [optimistic, setOptimistic] = useState({});
-  const idCacheRef = useRef({});
-
-  useEffect(() => {
-    setOptimistic({});
-    idCacheRef.current = {};
-  }, [eId, gId]);
+  const queryKey = ['config-center-v2', eId ?? 'sem', gId ?? 'sem'];
+  const { saving, handleToggle, getToggleValue } = useToggleConfig(eId, gId, queryKey);
 
   // Carrega configs via getEntityRecord (asServiceRole, bypassa wrapper)
   const { data: configs = [], refetch, isFetching } = useQuery({
-    queryKey: ['config-center-v2', eId ?? 'sem', gId ?? 'sem'],
+    queryKey,
     queryFn: async () => {
       const orConds = [];
       if (gId) orConds.push({ group_id: gId });
@@ -68,63 +63,7 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
     return list[0];
   };
 
-  const getToggle = (chave) => {
-    if (chave in optimistic) return optimistic[chave];
-    const rec = getConfig(chave);
-    return typeof rec?.ativa === 'boolean' ? rec.ativa : false;
-  };
 
-  const getScope = () => {
-    const s = {};
-    if (gId) s.group_id = gId;
-    if (eId) s.empresa_id = eId;
-    return s;
-  };
-
-  const handleToggle = async (chave, categoria, newValue) => {
-    if (saving[chave]) return;
-    setOptimistic(prev => ({ ...prev, [chave]: newValue }));
-    setSaving(prev => ({ ...prev, [chave]: true }));
-    try {
-      const cachedId = idCacheRef.current[chave];
-      const payload = cachedId
-        ? { id: cachedId, chave, data: { chave, categoria, ativa: newValue }, scope: getScope() }
-        : { chave, data: { chave, categoria, ativa: newValue }, scope: getScope() };
-      const res = await base44.functions.invoke('upsertConfig', payload);
-      const retId = res?.data?.id || res?.data?.record?.id;
-      if (retId) idCacheRef.current[chave] = retId;
-
-      await new Promise(r => setTimeout(r, 600));
-      await queryClient.invalidateQueries({ queryKey: ['config-center-v2'] });
-      const result = await refetch();
-      const freshRecs = Array.isArray(result?.data) ? result.data : [];
-      const saved = freshRecs.find(c => c.chave === chave && eId && c.empresa_id === eId)
-        || freshRecs.find(c => c.chave === chave && gId && c.group_id === gId)
-        || freshRecs.find(c => c.chave === chave);
-      const confirmed = saved && typeof saved.ativa === 'boolean' ? saved.ativa : newValue;
-      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
-      toast({ title: `✅ ${confirmed ? 'Ativado' : 'Desativado'} com sucesso!` });
-    } catch (err) {
-      setOptimistic(prev => { const n = { ...prev }; delete n[chave]; return n; });
-      toast({ title: '❌ Erro ao salvar', description: String(err?.message || err), variant: 'destructive' });
-    } finally {
-      setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
-    }
-  };
-
-  const ToggleRow = ({ chave, categoria, label, desc }) => (
-    <div className="flex items-center justify-between p-4 border rounded-lg">
-      <div className="flex-1">
-        <p className="font-semibold">{label}</p>
-        {desc && <p className="text-sm text-slate-600">{desc}</p>}
-      </div>
-      <Switch
-        checked={getToggle(chave)}
-        disabled={!!saving[chave] || isFetching}
-        onCheckedChange={(v) => handleToggle(chave, categoria, v)}
-      />
-    </div>
-  );
 
   if (!canLoad) {
     return (
@@ -172,10 +111,10 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
               <CardTitle className="text-base">Configurações de Segurança</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <ToggleRow chave="cc_auditoria_automatica" categoria="Seguranca" label="Auditoria Automática" desc="Registra todas as ações dos usuários automaticamente" />
-              <ToggleRow chave="cc_ia_seguranca_ativa" categoria="Seguranca" label="IA de Segurança" desc="Detecta anomalias e comportamentos suspeitos" />
-              <ToggleRow chave="cc_exigir_mfa" categoria="Seguranca" label="Autenticação de Dois Fatores (MFA)" desc="Exige verificação adicional no login" />
-              <ToggleRow chave="cc_bloquear_ips_suspeitos" categoria="Seguranca" label="Bloquear IPs Suspeitos" desc="Bloqueia automaticamente IPs com comportamento anômalo" />
+              <ToggleRow configs={configs} chave="cc_auditoria_automatica" categoria="Seguranca" label="Auditoria Automática" desc="Registra todas as ações dos usuários automaticamente" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
+              <ToggleRow configs={configs} chave="cc_ia_seguranca_ativa" categoria="Seguranca" label="IA de Segurança" desc="Detecta anomalias e comportamentos suspeitos" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
+              <ToggleRow configs={configs} chave="cc_exigir_mfa" categoria="Seguranca" label="Autenticação de Dois Fatores (MFA)" desc="Exige verificação adicional no login" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
+              <ToggleRow configs={configs} chave="cc_bloquear_ips_suspeitos" categoria="Seguranca" label="Bloquear IPs Suspeitos" desc="Bloqueia automaticamente IPs com comportamento anômalo" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
             </CardContent>
           </Card>
         </TabsContent>
@@ -189,10 +128,10 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <ToggleRow chave="cc_ia_preditiva_vendas" categoria="Sistema" label="IA Preditiva de Vendas" desc="Previsão de demanda e churn de clientes" />
-              <ToggleRow chave="cc_ia_conciliacao" categoria="Sistema" label="IA Conciliação Bancária" desc="Conciliação automática de extratos" />
-              <ToggleRow chave="cc_ia_producao" categoria="Sistema" label="IA Produção" desc="Otimização de ordens de produção" />
-              <ToggleRow chave="cc_ia_leitura_projetos" categoria="Sistema" label="IA Leitura de Projetos" desc="Análise automática de projetos de engenharia" />
+              <ToggleRow configs={configs} chave="cc_ia_preditiva_vendas" categoria="Sistema" label="IA Preditiva de Vendas" desc="Previsão de demanda e churn de clientes" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
+              <ToggleRow configs={configs} chave="cc_ia_conciliacao" categoria="Sistema" label="IA Conciliação Bancária" desc="Conciliação automática de extratos" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
+              <ToggleRow configs={configs} chave="cc_ia_producao" categoria="Sistema" label="IA Produção" desc="Otimização de ordens de produção" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
+              <ToggleRow configs={configs} chave="cc_ia_leitura_projetos" categoria="Sistema" label="IA Leitura de Projetos" desc="Análise automática de projetos de engenharia" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
 
               {Object.keys(modulosIA).length > 0 && (
                 <div className="mt-4 space-y-3">
@@ -226,8 +165,8 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
               <CardTitle className="text-base">Backup e Retenção de Dados</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <ToggleRow chave="cc_backup_automatico" categoria="Sistema" label="Backup Automático Diário" desc="Backup incremental de todas as entidades" />
-              <ToggleRow chave="cc_criptografia_dados" categoria="Seguranca" label="Criptografia de Dados Sensíveis" desc="Criptografa CPF, CNPJ e salários (AES-256)" />
+              <ToggleRow configs={configs} chave="cc_backup_automatico" categoria="Sistema" label="Backup Automático Diário" desc="Backup incremental de todas as entidades" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
+              <ToggleRow configs={configs} chave="cc_criptografia_dados" categoria="Seguranca" label="Criptografia de Dados Sensíveis" desc="Criptografa CPF, CNPJ e salários (AES-256)" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
 
               {getConfig('cc_backup_automatico')?.updated_date && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
