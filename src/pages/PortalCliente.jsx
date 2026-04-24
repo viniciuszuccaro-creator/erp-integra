@@ -47,7 +47,7 @@ export default function PortalCliente() {
 
   const isNonPortalRole = !!(user && user.role && user.role !== 'user');
 
-  const { data: cliente } = useQuery({
+  const { data: cliente, isLoading: carregandoCliente } = useQuery({
     queryKey: ['cliente-portal', user?.id],
     enabled: !!user?.id && !isNonPortalRole,
     queryFn: async () => {
@@ -85,13 +85,28 @@ export default function PortalCliente() {
     );
   }
 
-  if (!cliente) {
+  if (carregandoCliente) {
     return (
       <div className="w-full h-full p-4 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-blue-600" />
           <div className="text-sm text-muted-foreground">Carregando seu portal...</div>
         </div>
+      </div>
+    );
+  }
+
+  if (!cliente) {
+    return (
+      <div className="w-full h-full p-6 flex items-center justify-center">
+        <Card className="max-w-lg w-full">
+          <CardContent className="p-6 text-center space-y-2">
+            <div className="text-lg font-semibold text-slate-900">Portal indisponível</div>
+            <div className="text-sm text-muted-foreground">
+              Seu usuário ainda não está vinculado a um cliente no portal.
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
