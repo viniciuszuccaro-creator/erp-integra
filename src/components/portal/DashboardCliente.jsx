@@ -78,13 +78,6 @@ export default function DashboardCliente({ clienteId: propClienteId, adminMode =
     enabled: !!cliente
   });
 
-  const { data: notasFiscais = [] } = useQuery({
-    queryKey: ['minhas-nfes', cliente?.id],
-    queryFn: () => base44.entities.NotaFiscal.filter({ 
-      cliente_fornecedor_id: cliente?.id 
-    }, '-data_emissao', 30),
-    enabled: !!cliente
-  });
 
   const { data: chamados = [] } = useQuery({
     queryKey: ['meus-chamados', cliente?.id],
@@ -310,7 +303,7 @@ export default function DashboardCliente({ clienteId: propClienteId, adminMode =
               </Button>
             </Link>
             
-            <Link to={'/PortalCliente?tab=orcamentos'}>
+            <Link to={'/PortalCliente?tab=documentos'}>
               <Button variant="outline" className="w-full">
                 <Upload className="w-4 h-4 mr-2" />
                 Enviar Projeto
