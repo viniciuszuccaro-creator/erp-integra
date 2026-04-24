@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { FileText, Bell, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import { FileText, Bell, RefreshCw, CheckCircle2, AlertCircle, Shield } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 // getToggleValue implementado localmente com optimisticMap unificado
@@ -34,6 +34,20 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
 
   // Reset otimismo ao trocar empresa/grupo
   React.useEffect(() => { setOptimisticMap({}); }, [eId, gId]);
+
+  // Subscription em tempo real: atualiza quando outro usuário/aba salva uma config
+  React.useEffect(() => {
+    const unsub = base44.entities.ConfiguracaoSistema.subscribe((evt) => {
+      if (evt.type === 'create' || evt.type === 'update') {
+        const d = evt.data || {};
+        const relevante = (eId && d.empresa_id === eId) || (gId && d.group_id === gId) || (!d.empresa_id && !d.group_id);
+        if (relevante) {
+          queryClient.invalidateQueries({ queryKey, exact: true });
+        }
+      }
+    });
+    return () => { if (typeof unsub === 'function') unsub(); };
+  }, [eId, gId, queryClient, queryKey]);
 
   const { data: configs = [], refetch, isFetching } = useQuery({
     queryKey,
@@ -206,6 +220,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
            <TabsList className="inline-flex flex-nowrap min-w-max bg-white border shadow-sm">
              <TabsTrigger value="fiscal"><FileText className="w-4 h-4 mr-1.5" />Fiscal</TabsTrigger>
              <TabsTrigger value="notificacoes"><Bell className="w-4 h-4 mr-1.5" />Notificações</TabsTrigger>
+             <TabsTrigger value="seguranca"><Shield className="w-4 h-4 mr-1.5" />Segurança</TabsTrigger>
            </TabsList>
          </div>
 
@@ -306,6 +321,21 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
           </Card>
         </TabsContent>
 
+
+        {/* SEGURANÇA — toggles rápidos persistidos no banco */}
+        <TabsContent value="seguranca" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Shield className="w-4 h-4" />Segurança & Acesso</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              <ToggleRow chave="seg_login_duplo_fator" categoria="Seguranca" label="Autenticação em Dois Fatores (MFA)" desc="Exige código adicional no login" />
+              <ToggleRow chave="seg_bloquear_ip_suspeito" categoria="Seguranca" label="Bloqueio de IP Suspeito" desc="Bloqueia IPs com muitas tentativas falhas" />
+              <ToggleRow chave="seg_sessao_unica" categoria="Seguranca" label="Sessão Única por Usuário" desc="Impede múltiplos logins simultâneos" />
+              <ToggleRow chave="seg_auditoria_detalhada" categoria="Seguranca" label="Auditoria Detalhada de Ações" desc="Registra todas as operações no AuditLog" />
+              <ToggleRow chave="seg_notif_novo_dispositivo" categoria="Seguranca" label="Notificar Novo Dispositivo" desc="Alerta o usuário ao logar em novo dispositivo" />
+              <ToggleRow chave="seg_lgpd_anonimizacao" categoria="Seguranca" label="Anonimização LGPD Automática" desc="Anonimiza dados de clientes inativos após 2 anos" />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
       </Tabs>
     </div>

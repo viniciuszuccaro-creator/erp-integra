@@ -46,7 +46,19 @@ export default function IAOtimizacaoIndex({ initialTab }) {
   });
 
   const { saving, handleToggle, getToggleValue } = useToggleConfig(eId, gId, iaQueryKey);
-  // syncWithQueryData removido: NO-OP no v6 (toggles mantêm estado correto via optimisticMap)
+  const queryClient = useQueryClient();
+
+  // Subscription em tempo real: refetch quando ConfiguracaoSistema muda em outro contexto
+  React.useEffect(() => {
+    const unsub = base44.entities.ConfiguracaoSistema.subscribe((evt) => {
+      if (evt.type === 'create' || evt.type === 'update') {
+        const d = evt.data || {};
+        const relevante = (eId && d.empresa_id === eId) || (gId && d.group_id === gId);
+        if (relevante) queryClient.invalidateQueries({ queryKey: iaQueryKey, exact: true });
+      }
+    });
+    return () => { if (typeof unsub === 'function') unsub(); };
+  }, [eId, gId]);
 
   const IAToggleRow = ({ chave, label, desc }) => {
     const val = getToggleValue(configsToggle, chave);
