@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import IAPanel from "@/components/administracao-sistema/configuracoes-gerais/IAPanel";
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
 import HerancaConfigNotice from "@/components/administracao-sistema/common/HerancaConfigNotice";
@@ -11,8 +10,8 @@ import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { useToggleConfig } from "@/components/lib/useToggleConfig";
+import ToggleRow from "@/components/sistema/ToggleRow";
 
 export default function IAOtimizacaoIndex({ initialTab }) {
   const { empresaAtual, grupoAtual } = useContextoVisual();
@@ -60,29 +59,21 @@ export default function IAOtimizacaoIndex({ initialTab }) {
     return () => { if (typeof unsub === 'function') unsub(); };
   }, [eId, gId]);
 
-  const IAToggleRow = ({ chave, label, desc }) => {
-    const val = getToggleValue(configsToggle, chave);
-    const isSaving = !!saving[chave];
-    return (
-      <div className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${isSaving ? 'bg-purple-50 border-purple-200' : 'hover:bg-slate-50'}`}>
-        <div className="flex-1 min-w-0 mr-3">
-          <p className="font-medium text-sm">{label}</p>
-          {desc && <p className="text-xs text-slate-500 mt-0.5">{desc}</p>}
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {isSaving && <RefreshCw className="w-3 h-3 text-purple-500 animate-spin" />}
-          <Badge className={val ? 'bg-purple-100 text-purple-700 border-purple-200 text-[10px]' : 'bg-slate-100 text-slate-500 text-[10px]'}>
-            {isSaving ? 'Salvando…' : val ? 'Ativo' : 'Inativo'}
-          </Badge>
-          <Switch
-            checked={val}
-            disabled={isSaving || isFetchingToggle}
-            onCheckedChange={(checked) => handleToggle(chave, 'Sistema', checked)}
-          />
-        </div>
-      </div>
-    );
-  };
+  // IAToggleRow agora usa o ToggleRow compartilhado com accentColor purple
+  const IAToggleRow = ({ chave, label, desc }) => (
+    <ToggleRow
+      configs={configsToggle}
+      chave={chave}
+      categoria="Sistema"
+      label={label}
+      desc={desc}
+      saving={saving}
+      isFetching={isFetchingToggle}
+      onToggle={handleToggle}
+      getToggleValue={getToggleValue}
+      accentColor="purple"
+    />
+  );
 
   const handleTabChange = (next) => {
     setTab(next);

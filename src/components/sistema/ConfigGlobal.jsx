@@ -1,29 +1,26 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { FileText, Bell, RefreshCw, CheckCircle2, AlertCircle, Shield } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
-// getToggleValue implementado localmente com optimisticMap unificado
+import { useToggleConfig } from '@/components/lib/useToggleConfig';
+import ToggleRow from '@/components/sistema/ToggleRow';
 
 /**
  * ConfigGlobal — Painel de configuração global.
- * Consolidado: Remove abas Integrações e IA (existem em telas dedicadas).
- * Mantém: Fiscal, Notificações, Segurança.
- * Toggles corrigidos com optimistic UI + confirmação backend.
+ * Tabs: Fiscal, Notificações, Segurança.
+ * Toggles unificados via useToggleConfig (optimistic UI + persistência no banco).
  */
 export default function ConfigGlobal({ empresaId, grupoId }) {
   const [activeTab, setActiveTab] = useState('fiscal');
-  const [savingField, setSavingField] = useState({});
-  const [optimisticMap, setOptimisticMap] = useState({});
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
   const eId = empresaId || empresaAtual?.id;
@@ -32,167 +29,75 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
   const queryClient = useQueryClient();
   const queryKey = ['config-global', eId ?? 'sem', gId ?? 'sem'];
 
-  // Reset otimismo ao trocar empresa/grupo
-  React.useEffect(() => { setOptimisticMap({}); }, [eId, gId]);
+  const { data: configs = [], refetch, isFetching } = useQuery({
+    queryKey,
+    queryFn: async () => {
+      try {
+        const orConds = [];
+        if (gId) orConds.push({ group_id: gId });
+        if (eId) orConds.push({ empresa_id: eId });
+        orConds.push({ empresa_id: null, group_id: null });
+        const res = await base44.functions.invoke('getEntityRecord', {
+          entityName: 'ConfiguracaoSistema',
+          filter: orConds.length > 1 ? { $or: orConds } : (orConds[0] || {}),
+          limit: 500,
+          sort: '-updated_date',
+        });
+        return Array.isArray(res?.data) ? res.data : [];
+      } catch (_) { return []; }
+    },
+    enabled: true,
+    staleTime: 0,
+    gcTime: 30000,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
 
-  // Subscription em tempo real: atualiza quando outro usuário/aba salva uma config
+  // Subscription em tempo real
   React.useEffect(() => {
     const unsub = base44.entities.ConfiguracaoSistema.subscribe((evt) => {
       if (evt.type === 'create' || evt.type === 'update') {
         const d = evt.data || {};
         const relevante = (eId && d.empresa_id === eId) || (gId && d.group_id === gId) || (!d.empresa_id && !d.group_id);
-        if (relevante) {
-          queryClient.invalidateQueries({ queryKey, exact: true });
-        }
+        if (relevante) queryClient.invalidateQueries({ queryKey, exact: true });
       }
     });
     return () => { if (typeof unsub === 'function') unsub(); };
-  }, [eId, gId, queryClient, queryKey]);
+  }, [eId, gId]);
 
-  const { data: configs = [], refetch, isFetching } = useQuery({
-    queryKey,
-    queryFn: async () => {
-      // Usa função backend para bypassar o wrapper do layout (que injeta filtros de empresa)
-      // e lê diretamente pelo escopo correto (group_id e/ou empresa_id)
-      try {
-        const res = await base44.functions.invoke('getEntityRecord', {
-          entityName: 'ConfiguracaoSistema',
-          filter: (() => {
-            const orConds = [];
-            if (gId) orConds.push({ group_id: gId });
-            if (eId) orConds.push({ empresa_id: eId });
-            // Inclui também registros sem empresa (globais/legados)
-            orConds.push({ empresa_id: null, group_id: null });
-            return orConds.length > 1 ? { $or: orConds } : (orConds[0] || {});
-          })(),
-          limit: 500,
-          sort: '-updated_date',
-        });
-        const rows = Array.isArray(res?.data) ? res.data : [];
-        return rows;
-      } catch (_) {
-        return [];
-      }
-    },
-    enabled: true, // sempre carrega, mesmo sem empresa selecionada
-    staleTime: 0,
-    gcTime: 30000,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: 'stale',
-    retry: 1,
-  });
+  // Hook unificado de toggles
+  const { saving, handleToggle, getToggleValue } = useToggleConfig(eId, gId, queryKey);
 
-  // syncWithQueryData é NO-OP v6 — não precisa mais ser chamado aqui
-
-  // getToggleValue — lê otimismo local primeiro, depois banco
-  const getToggleValue = useCallback((chave) => {
-    if (chave in optimisticMap) return optimisticMap[chave];
-    const list = (configs || []).filter(c => c.chave === chave);
-    if (!list.length) return false;
-    let match = null;
-    if (gId && eId) match = list.find(c => c.group_id === gId && c.empresa_id === eId);
-    if (!match && eId) match = list.find(c => c.empresa_id === eId);
-    if (!match && gId) match = list.find(c => c.group_id === gId);
-    if (!match) match = list.find(c => !c.empresa_id && !c.group_id);
-    if (!match) match = list[0];
-    return typeof match?.ativa === 'boolean' ? match.ativa : false;
-  }, [configs, optimisticMap, eId, gId]);
-
+  // Valores de campo de texto (não-toggle)
   const getConfig = useCallback((chave) => {
     const list = (configs || []).filter(c => c.chave === chave);
     if (!list.length) return null;
-    // Prioridade: exato > só empresa > só grupo > global (sem escopo)
-    if (gId && eId) {
-      const exact = list.find(c => c.group_id === gId && c.empresa_id === eId);
-      if (exact) return exact;
-    }
-    if (eId) { const byE = list.find(c => c.empresa_id === eId); if (byE) return byE; }
-    if (gId) { const byG = list.find(c => c.group_id === gId); if (byG) return byG; }
-    // Fallback: registro global sem empresa/grupo
-    const global = list.find(c => !c.empresa_id && !c.group_id);
-    return global || list[0] || null;
+    if (gId && eId) { const e = list.find(c => c.group_id === gId && c.empresa_id === eId); if (e) return e; }
+    if (eId) { const e = list.find(c => c.empresa_id === eId); if (e) return e; }
+    if (gId) { const e = list.find(c => c.group_id === gId); if (e) return e; }
+    return list.find(c => !c.empresa_id && !c.group_id) || list[0] || null;
   }, [configs, gId, eId]);
 
+  const [savingField, setSavingField] = useState({});
   const handleSaveField = useCallback(async (chave, categoria, dados) => {
     if (savingField[chave]) return;
-    // Otimismo imediato para toggles booleanos (ativa)
-    const prevOptimistic = optimisticMap[chave];
-    if ('ativa' in dados) {
-      setOptimisticMap(prev => ({ ...prev, [chave]: dados.ativa }));
-    }
     setSavingField(prev => ({ ...prev, [chave]: true }));
     try {
       const scope = { ...(gId && { group_id: gId }), ...(eId && { empresa_id: eId }) };
-      // Invoca upsertConfig passando scope explícito (o wrapper do layout não sobrescreve params já definidos)
       await base44.functions.invoke('upsertConfig', { chave, data: { chave, categoria, ...dados }, scope });
-      // Aguarda backend propagar (evita race condition de leitura antes da escrita confirmar)
-      await new Promise(r => setTimeout(r, 400));
-      // Invalida e refetch
       await queryClient.invalidateQueries({ queryKey, exact: true });
-      const freshData = await refetch();
-      // Confirma valor do banco — se bateu com otimismo, remove otimismo; senão mantém do banco
-      if ('ativa' in dados) {
-        const rows = Array.isArray(freshData?.data) ? freshData.data : [];
-        const match = rows.find(c => c.chave === chave && (
-          (eId && c.empresa_id === eId) || (gId && c.group_id === gId) || (!c.empresa_id && !c.group_id)
-        ));
-        // Sempre remove o otimismo após confirmar — o banco agora tem o valor certo
-        setOptimisticMap(prev => { const n = { ...prev }; delete n[chave]; return n; });
-        // Verificação de consistência: se banco retornou valor diferente, avisa
-        if (match && typeof match.ativa === 'boolean' && match.ativa !== dados.ativa) {
-          toast.warning(`⚠️ Valor salvo (${match.ativa}) difere do esperado (${dados.ativa}). Tente novamente.`);
-          return;
-        }
-      } else {
-        setOptimisticMap(prev => { const n = { ...prev }; delete n[chave]; return n; });
-      }
+      await refetch();
       toast.success('✅ Configuração salva!');
     } catch (err) {
-      // Reverte otimismo em caso de erro
-      if ('ativa' in dados) {
-        setOptimisticMap(prev => {
-          const n = { ...prev };
-          if (prevOptimistic !== undefined) n[chave] = prevOptimistic;
-          else delete n[chave];
-          return n;
-        });
-      }
       toast.error('Erro ao salvar: ' + String(err?.message || err));
     } finally {
       setSavingField(prev => { const n = { ...prev }; delete n[chave]; return n; });
     }
-  }, [savingField, optimisticMap, queryClient, queryKey, gId, eId, refetch]);
-
-  const ToggleRow = ({ chave, categoria, label, desc }) => {
-    const val = getToggleValue(chave);
-    const isSaving = !!savingField[chave];
-    return (
-      <div className={`flex items-center justify-between p-3 border rounded-lg transition-colors ${isSaving ? 'bg-blue-50 border-blue-200' : 'hover:bg-slate-50'}`}>
-        <div className="flex-1 min-w-0 mr-3">
-          <p className="font-medium text-sm">{label}</p>
-          {desc && <p className="text-xs text-slate-500 mt-0.5">{desc}</p>}
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {isSaving && <RefreshCw className="w-3 h-3 text-blue-500 animate-spin" />}
-          <Badge className={val ? 'bg-green-100 text-green-700 border-green-200 text-[10px]' : 'bg-slate-100 text-slate-500 text-[10px]'}>
-            {isSaving ? 'Salvando…' : val ? 'Ativo' : 'Inativo'}
-          </Badge>
-          <Switch
-            checked={val}
-            disabled={isSaving || isFetching}
-            onCheckedChange={(checked) => handleSaveField(chave, categoria, { ativa: checked })}
-          />
-        </div>
-      </div>
-    );
-  };
-
-  // canLoad sempre true — exibe aviso sem bloquear tela
+  }, [savingField, queryClient, queryKey, gId, eId, refetch]);
 
   return (
     <div className="space-y-4 w-full">
-      {/* Header com contexto e refresh */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h2 className="text-xl font-bold text-slate-900">Parâmetros Globais</h2>
@@ -200,29 +105,21 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
             {eId ? `Empresa: ${empresaAtual?.nome_fantasia || eId}` : `Grupo: ${grupoAtual?.nome_do_grupo || gId}`}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={isFetching}
-          onClick={() => { queryClient.invalidateQueries({ queryKey }); refetch(); }}
-        >
+        <Button variant="outline" size="sm" disabled={isFetching}
+          onClick={() => { queryClient.invalidateQueries({ queryKey }); refetch(); }}>
           <RefreshCw className={`w-4 h-4 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
           {isFetching ? 'Atualizando…' : 'Atualizar'}
         </Button>
       </div>
 
-      {/* Atalhos para telas dedicadas — REMOVIDOS: Integrações já estão em aba separada em AdminTabs */}
-      {/* Mantém referência rápida via link, mas não duplica abas */}
-
-      {/* Abas consolidadas: apenas Fiscal, Notificações e Segurança */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-         <div className="overflow-x-auto">
-           <TabsList className="inline-flex flex-nowrap min-w-max bg-white border shadow-sm">
-             <TabsTrigger value="fiscal"><FileText className="w-4 h-4 mr-1.5" />Fiscal</TabsTrigger>
-             <TabsTrigger value="notificacoes"><Bell className="w-4 h-4 mr-1.5" />Notificações</TabsTrigger>
-             <TabsTrigger value="seguranca"><Shield className="w-4 h-4 mr-1.5" />Segurança</TabsTrigger>
-           </TabsList>
-         </div>
+        <div className="overflow-x-auto">
+          <TabsList className="inline-flex flex-nowrap min-w-max bg-white border shadow-sm">
+            <TabsTrigger value="fiscal"><FileText className="w-4 h-4 mr-1.5" />Fiscal</TabsTrigger>
+            <TabsTrigger value="notificacoes"><Bell className="w-4 h-4 mr-1.5" />Notificações</TabsTrigger>
+            <TabsTrigger value="seguranca"><Shield className="w-4 h-4 mr-1.5" />Segurança</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* FISCAL */}
         <TabsContent value="fiscal" className="space-y-4 mt-4">
@@ -232,21 +129,13 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>CFOP Padrão — Dentro do Estado</Label>
-                  <Input
-                    key={`cfop-int-${eId}-${gId}`}
-                    defaultValue={getConfig('fiscal_cfop_interno')?.valor || '5102'}
-                    placeholder="5102"
-                    onBlur={(e) => handleSaveField('fiscal_cfop_interno', 'Fiscal', { valor: e.target.value })}
-                  />
+                  <Input key={`cfop-int-${eId}-${gId}`} defaultValue={getConfig('fiscal_cfop_interno')?.valor || '5102'}
+                    placeholder="5102" onBlur={(e) => handleSaveField('fiscal_cfop_interno', 'Fiscal', { valor: e.target.value })} />
                 </div>
                 <div>
                   <Label>CFOP Padrão — Fora do Estado</Label>
-                  <Input
-                    key={`cfop-ext-${eId}-${gId}`}
-                    defaultValue={getConfig('fiscal_cfop_externo')?.valor || '6102'}
-                    placeholder="6102"
-                    onBlur={(e) => handleSaveField('fiscal_cfop_externo', 'Fiscal', { valor: e.target.value })}
-                  />
+                  <Input key={`cfop-ext-${eId}-${gId}`} defaultValue={getConfig('fiscal_cfop_externo')?.valor || '6102'}
+                    placeholder="6102" onBlur={(e) => handleSaveField('fiscal_cfop_externo', 'Fiscal', { valor: e.target.value })} />
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -268,15 +157,11 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
               </div>
               <div>
                 <Label>Observações Padrão NF-e</Label>
-                <Textarea
-                  key={`obs-nfe-${eId}`}
-                  placeholder="Observações que aparecerão em todas as notas..."
-                  rows={2}
+                <Textarea key={`obs-nfe-${eId}`} placeholder="Observações que aparecerão em todas as notas..." rows={2}
                   defaultValue={getConfig('fiscal_obs_nfe')?.valor || ''}
-                  onBlur={(e) => handleSaveField('fiscal_obs_nfe', 'Fiscal', { valor: e.target.value })}
-                />
+                  onBlur={(e) => handleSaveField('fiscal_obs_nfe', 'Fiscal', { valor: e.target.value })} />
               </div>
-              {/* Status fiscal */}
+              {/* Status rápido das integrações */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t">
                 {[
                   { chave: 'integracao_nfe', label: 'NF-e' },
@@ -291,9 +176,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
                     <div key={chave} className="p-3 border rounded-lg bg-white">
                       <div className="text-xs text-slate-500 mb-1">{label}</div>
                       <div className="flex items-center gap-1">
-                        {ativo
-                          ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                          : <AlertCircle className="w-3.5 h-3.5 text-amber-500" />}
+                        {ativo ? <CheckCircle2 className="w-3.5 h-3.5 text-green-600" /> : <AlertCircle className="w-3.5 h-3.5 text-amber-500" />}
                         <Badge className={ativo ? 'bg-green-100 text-green-700 border-green-200 text-[10px]' : 'bg-slate-100 text-slate-500 text-[10px]'}>
                           {ativo ? 'Ativo' : 'Pendente'}
                         </Badge>
@@ -311,32 +194,30 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
           <Card>
             <CardHeader><CardTitle className="text-base flex items-center gap-2"><Bell className="w-4 h-4" />Notificações Automáticas</CardTitle></CardHeader>
             <CardContent className="space-y-2">
-              <ToggleRow chave="notif_pedido_aprovado" categoria="Notificacoes" label="Pedido Aprovado" desc="Notifica cliente quando pedido for aprovado" />
-              <ToggleRow chave="notif_entrega_transporte" categoria="Notificacoes" label="Entrega Saiu para Transporte" desc="Envia link de rastreamento ao cliente" />
-              <ToggleRow chave="notif_boleto_gerado" categoria="Notificacoes" label="Boleto/PIX Gerado" desc="Envia boleto por WhatsApp e e-mail" />
-              <ToggleRow chave="notif_titulo_vencido" categoria="Notificacoes" label="Título Vencido" desc="Alerta de inadimplência" />
-              <ToggleRow chave="notif_op_atrasada" categoria="Notificacoes" label="OP Atrasada" desc="Alerta para gerente de produção" />
-              <ToggleRow chave="notif_estoque_baixo" categoria="Notificacoes" label="Estoque Baixo" desc="Alerta quando produto abaixo do mínimo" />
+              <ToggleRow configs={configs} chave="notif_pedido_aprovado" categoria="Notificacoes" label="Pedido Aprovado" desc="Notifica cliente quando pedido for aprovado" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
+              <ToggleRow configs={configs} chave="notif_entrega_transporte" categoria="Notificacoes" label="Entrega Saiu para Transporte" desc="Envia link de rastreamento ao cliente" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
+              <ToggleRow configs={configs} chave="notif_boleto_gerado" categoria="Notificacoes" label="Boleto/PIX Gerado" desc="Envia boleto por WhatsApp e e-mail" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
+              <ToggleRow configs={configs} chave="notif_titulo_vencido" categoria="Notificacoes" label="Título Vencido" desc="Alerta de inadimplência" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
+              <ToggleRow configs={configs} chave="notif_op_atrasada" categoria="Notificacoes" label="OP Atrasada" desc="Alerta para gerente de produção" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
+              <ToggleRow configs={configs} chave="notif_estoque_baixo" categoria="Notificacoes" label="Estoque Baixo" desc="Alerta quando produto abaixo do mínimo" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
             </CardContent>
           </Card>
         </TabsContent>
 
-
-        {/* SEGURANÇA — toggles rápidos persistidos no banco */}
+        {/* SEGURANÇA */}
         <TabsContent value="seguranca" className="space-y-4 mt-4">
           <Card>
             <CardHeader><CardTitle className="text-base flex items-center gap-2"><Shield className="w-4 h-4" />Segurança & Acesso</CardTitle></CardHeader>
             <CardContent className="space-y-2">
-              <ToggleRow chave="seg_login_duplo_fator" categoria="Seguranca" label="Autenticação em Dois Fatores (MFA)" desc="Exige código adicional no login" />
-              <ToggleRow chave="seg_bloquear_ip_suspeito" categoria="Seguranca" label="Bloqueio de IP Suspeito" desc="Bloqueia IPs com muitas tentativas falhas" />
-              <ToggleRow chave="seg_sessao_unica" categoria="Seguranca" label="Sessão Única por Usuário" desc="Impede múltiplos logins simultâneos" />
-              <ToggleRow chave="seg_auditoria_detalhada" categoria="Seguranca" label="Auditoria Detalhada de Ações" desc="Registra todas as operações no AuditLog" />
-              <ToggleRow chave="seg_notif_novo_dispositivo" categoria="Seguranca" label="Notificar Novo Dispositivo" desc="Alerta o usuário ao logar em novo dispositivo" />
-              <ToggleRow chave="seg_lgpd_anonimizacao" categoria="Seguranca" label="Anonimização LGPD Automática" desc="Anonimiza dados de clientes inativos após 2 anos" />
+              <ToggleRow configs={configs} chave="seg_login_duplo_fator" categoria="Seguranca" label="Autenticação em Dois Fatores (MFA)" desc="Exige código adicional no login" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
+              <ToggleRow configs={configs} chave="seg_bloquear_ip_suspeito" categoria="Seguranca" label="Bloqueio de IP Suspeito" desc="Bloqueia IPs com muitas tentativas falhas" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
+              <ToggleRow configs={configs} chave="seg_sessao_unica" categoria="Seguranca" label="Sessão Única por Usuário" desc="Impede múltiplos logins simultâneos" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
+              <ToggleRow configs={configs} chave="seg_auditoria_detalhada" categoria="Seguranca" label="Auditoria Detalhada de Ações" desc="Registra todas as operações no AuditLog" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
+              <ToggleRow configs={configs} chave="seg_notif_novo_dispositivo" categoria="Seguranca" label="Notificar Novo Dispositivo" desc="Alerta o usuário ao logar em novo dispositivo" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
+              <ToggleRow configs={configs} chave="seg_lgpd_anonimizacao" categoria="Seguranca" label="Anonimização LGPD Automática" desc="Anonimiza dados de clientes inativos após 2 anos" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
             </CardContent>
           </Card>
         </TabsContent>
-
       </Tabs>
     </div>
   );
