@@ -1,22 +1,24 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { toast } from 'sonner';
 
 /**
- * useToggleConfig v7 — Usa upsertConfig (backend function) para salvar toggles.
- * Isso garante que o valor seja persistido corretamente, bypassa o wrapper do layout
- * e usa a função backend que já tem lógica de upsert por escopo.
+ * useToggleConfig v9 — Salva via upsertConfig e mantém confirmedMap
+ * para não perder o valor confirmado pelo banco após invalidate/refetch.
  */
 export function useToggleConfig(empresaId, grupoId, queryKey) {
   const [saving, setSaving] = useState({});
+  // optimisticMap: valor durante o request (antes de confirmar)
   const [optimisticMap, setOptimisticMap] = useState({});
+  // confirmedMap: valor confirmado pelo backend (sobrescreve dados da query enquanto não há novo fetch limpo)
+  const [confirmedMap, setConfirmedMap] = useState({});
   const queryClient = useQueryClient();
   const pendingRef = useRef({});
 
   // Reset ao trocar empresa/grupo
   useEffect(() => {
     setOptimisticMap({});
+    setConfirmedMap({});
     pendingRef.current = {};
   }, [empresaId, grupoId]);
 
@@ -51,13 +53,13 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
 
     const scope = getScope();
 
-    // 1. Otimismo imediato na UI
+    // 1. Otimismo imediato
     pendingRef.current[chave] = true;
     setSaving(prev => ({ ...prev, [chave]: true }));
     setOptimisticMap(prev => ({ ...prev, [chave]: newValue }));
 
     try {
-      // 2. Salva via backend function (upsertConfig)
+      // 2. Salva via backend
       const res = await base44.functions.invoke('upsertConfig', {
         chave,
         data: { chave, categoria: categoria || 'Sistema', ativa: newValue },
@@ -68,24 +70,17 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
         ? res.data.record.ativa
         : newValue;
 
-      // 3. Invalida query cache e recarrega dados do servidor
+      // 3. Grava no confirmedMap — persiste mesmo após invalidate/refetch
+      setConfirmedMap(prev => ({ ...prev, [chave]: backendValue }));
+
+      // 4. Invalida cache (sem aguardar — não bloqueia a UI)
       if (queryKey) {
-        try {
-          await queryClient.invalidateQueries({ queryKey, exact: true });
-          await queryClient.refetchQueries({ queryKey, exact: true, stale: true });
-        } catch (_) {}
+        queryClient.invalidateQueries({ queryKey, exact: true }).catch(() => {});
       }
 
-      // 4. Limpa otimístico após sucesso
-      setOptimisticMap(prev => {
-        const next = { ...prev };
-        delete next[chave];
-        return next;
-      });
-
-      return true; // Sucesso
+      return true;
     } catch (err) {
-      // Reverte UI em caso de erro
+      // Reverte otimístico em caso de erro
       setOptimisticMap(prev => {
         const next = { ...prev };
         delete next[chave];
@@ -93,27 +88,32 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
       });
       throw err;
     } finally {
+      // 5. Limpa otimístico (confirmedMap já tem o valor correto)
+      setOptimisticMap(prev => {
+        const next = { ...prev };
+        delete next[chave];
+        return next;
+      });
       setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
       delete pendingRef.current[chave];
     }
   }, [saving, getScope, queryClient, queryKey]);
 
   const getToggleValue = useCallback((configs, chave) => {
-    // Prioridade 1: valor otimístico local (imediato após clique)
+    // Prioridade 1: valor otimístico local (clique imediato)
     if (chave in optimisticMap) return optimisticMap[chave];
-    // Prioridade 2: valor persistido — busca por escopo ou global
+    // Prioridade 2: valor confirmado pelo backend (após salvar, antes do refetch)
+    if (chave in confirmedMap) return confirmedMap[chave];
+    // Prioridade 3: valor da query (banco)
     const match = findMatchingRecord(configs, chave);
     if (match && typeof match.ativa === 'boolean') return match.ativa;
-    // Prioridade 3: fallback global (registros sem empresa/grupo)
+    // Prioridade 4: fallback global
     if (Array.isArray(configs)) {
       const global = configs.find(c => c.chave === chave && !c.empresa_id && !c.group_id);
       if (global && typeof global.ativa === 'boolean') return global.ativa;
     }
     return false;
-  }, [optimisticMap, findMatchingRecord]);
-
-  // NO-OP: retrocompatibilidade
-  const syncWithQueryData = useCallback((_configs) => {}, []);
+  }, [optimisticMap, confirmedMap, findMatchingRecord]);
 
   return {
     saving,
@@ -121,6 +121,6 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     handleToggle,
     getToggleValue,
     seedIdCache: () => {},
-    syncWithQueryData,
+    syncWithQueryData: () => {},
   };
 }
