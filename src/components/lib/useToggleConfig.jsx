@@ -53,13 +53,11 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
 
     const scope = getScope();
 
-    // 1. Otimismo imediato
     pendingRef.current[chave] = true;
     setSaving(prev => ({ ...prev, [chave]: true }));
     setOptimisticMap(prev => ({ ...prev, [chave]: newValue }));
 
     try {
-      // 2. Salva via backend
       const res = await base44.functions.invoke('upsertConfig', {
         chave,
         data: { chave, categoria: categoria || 'Sistema', ativa: newValue },
@@ -70,17 +68,15 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
         ? res.data.record.ativa
         : newValue;
 
-      // 3. Grava no confirmedMap — persiste mesmo após invalidate/refetch
       setConfirmedMap(prev => ({ ...prev, [chave]: backendValue }));
 
-      // 4. Invalida cache (sem aguardar — não bloqueia a UI)
       if (queryKey) {
-        queryClient.invalidateQueries({ queryKey, exact: true }).catch(() => {});
+        await queryClient.invalidateQueries({ queryKey, exact: true });
+        await queryClient.refetchQueries({ queryKey, exact: true });
       }
 
       return true;
     } catch (err) {
-      // Reverte otimístico em caso de erro
       setOptimisticMap(prev => {
         const next = { ...prev };
         delete next[chave];
@@ -88,7 +84,6 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
       });
       throw err;
     } finally {
-      // 5. Limpa otimístico (confirmedMap já tem o valor correto)
       setOptimisticMap(prev => {
         const next = { ...prev };
         delete next[chave];

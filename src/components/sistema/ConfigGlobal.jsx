@@ -34,14 +34,15 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
     queryFn: async () => {
       try {
         const orConds = [];
-        if (gId) orConds.push({ group_id: gId });
+        if (gId && eId) orConds.push({ group_id: gId, empresa_id: eId });
         if (eId) orConds.push({ empresa_id: eId });
+        if (gId) orConds.push({ group_id: gId });
         orConds.push({ empresa_id: null, group_id: null });
         const res = await base44.functions.invoke('getEntityRecord', {
           entityName: 'ConfiguracaoSistema',
           filter: orConds.length > 1 ? { $or: orConds } : (orConds[0] || {}),
           limit: 500,
-          sort: '-updated_date',
+          sortField: '-updated_date',
         });
         return Array.isArray(res?.data) ? res.data : [];
       } catch (_) { return []; }

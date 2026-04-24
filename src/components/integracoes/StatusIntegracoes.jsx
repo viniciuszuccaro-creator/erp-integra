@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -102,7 +102,7 @@ function IntegrationConfigButtons({ integracao, empresaId }) {
       <Button
         size="sm"
         onClick={handleConfigurar}
-        className={`flex-1 bg-${integracao.cor}-600 hover:bg-${integracao.cor}-700`}
+        className="flex-1"
       >
         <Settings className="w-4 h-4 mr-1" />
         Configurar
@@ -231,9 +231,9 @@ export default function StatusIntegracoes({ empresaId }) {
             <Card key={integracao.id} className={`border-2 ${
               configurado ? 'border-green-300' : 'border-orange-300'
             }`}>
-              <CardHeader className={`bg-${integracao.cor}-50 border-b`}>
+              <CardHeader className="border-b bg-slate-50">
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Icon className={`w-5 h-5 text-${integracao.cor}-600`} />
+                  <Icon className="w-5 h-5 text-slate-700" />
                   {integracao.titulo}
                 </CardTitle>
                 <p className="text-xs text-slate-600 mt-1">{integracao.descricao}</p>

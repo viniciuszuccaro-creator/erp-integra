@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,15 +26,18 @@ export default function IAOtimizacaoIndex({ initialTab }) {
   const { data: configsToggle = [], isFetching: isFetchingToggle } = useQuery({
     queryKey: iaQueryKey,
     queryFn: async () => {
-      const api = base44.asServiceRole?.entities?.ConfiguracaoSistema
-        ?? base44.entities.ConfiguracaoSistema;
       const orConds = [];
-      if (gId) orConds.push({ group_id: gId });
+      if (gId && eId) orConds.push({ group_id: gId, empresa_id: eId });
       if (eId) orConds.push({ empresa_id: eId });
-      const filter = orConds.length > 1 ? { $or: orConds } : (orConds[0] || {});
+      if (gId) orConds.push({ group_id: gId });
       try {
-        const rows = await api.filter(filter, '-updated_date', 200);
-        return Array.isArray(rows) ? rows : [];
+        const res = await base44.functions.invoke('getEntityRecord', {
+          entityName: 'ConfiguracaoSistema',
+          filter: orConds.length > 1 ? { $or: orConds } : (orConds[0] || {}),
+          limit: 200,
+          sortField: '-updated_date',
+        });
+        return Array.isArray(res?.data) ? res.data : [];
       } catch (_) { return []; }
     },
     enabled: !!(eId || gId),
