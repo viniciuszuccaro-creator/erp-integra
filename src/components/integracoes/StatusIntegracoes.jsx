@@ -112,13 +112,13 @@ function IntegrationConfigButtons({ integracao, empresaId }) {
 }
 
 export default function StatusIntegracoes({ empresaId }) {
-  const [verificandoNFe, setVerificandoNFe] = React.useState(false);
-  const [verificandoBoleto, setVerificandoBoleto] = React.useState(false);
-  const [verificandoWhatsApp, setVerificandoWhatsApp] = React.useState(false);
+  const [verificandoNFe, setVerificandoNFe] = useState(false);
+  const [verificandoBoleto, setVerificandoBoleto] = useState(false);
+  const [verificandoWhatsApp, setVerificandoWhatsApp] = useState(false);
 
-  const [statusNFe, setStatusNFe] = React.useState(null);
-  const [statusBoleto, setStatusBoleto] = React.useState(null);
-  const [statusWhatsApp, setStatusWhatsApp] = React.useState(null);
+  const [statusNFe, setStatusNFe] = useState(null);
+  const [statusBoleto, setStatusBoleto] = useState(null);
+  const [statusWhatsApp, setStatusWhatsApp] = useState(null);
 
   // Verificar NFe
   const handleVerificarNFe = async () => {
@@ -159,7 +159,7 @@ export default function StatusIntegracoes({ empresaId }) {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (empresaId) {
       handleVerificarNFe();
       handleVerificarBoleto();

@@ -204,26 +204,10 @@ export default function Documentacao() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger value="visao-geral">Visão Geral</TabsTrigger>
-          <TabsTrigger value="padroes">
-            <GitBranch className="w-4 h-4 mr-2" />
-            Padrões Técnicos V22
-          </TabsTrigger>
-          <TabsTrigger value="blocos">
-            <Database className="w-4 h-4 mr-2" />
-            Cadastros (6 Blocos)
-          </TabsTrigger>
-          <TabsTrigger value="criticas">
-            <AlertTriangle className="w-4 h-4 mr-2 text-orange-600" />
-            Etapas Concluídas
-          </TabsTrigger>
           <TabsTrigger value="roadmap">
             <Rocket className="w-4 h-4 mr-2" />
             Roadmap v4.0
           </TabsTrigger>
-          <TabsTrigger value="modulos">Módulos</TabsTrigger>
-          <TabsTrigger value="entidades">Entidades</TabsTrigger>
-          <TabsTrigger value="ia">Inteligência Artificial</TabsTrigger>
-          <TabsTrigger value="integracao">Integrações</TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao-geral">
@@ -232,7 +216,7 @@ export default function Documentacao() {
               <CardTitle>ERP Zuccaro V22.1 — Sistema Completo e Estável</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
                   <p className="text-3xl font-bold text-blue-600">70+</p>
                   <p className="text-sm text-slate-600">Entidades</p>
@@ -250,8 +234,20 @@ export default function Documentacao() {
                   <p className="text-sm text-slate-600">Módulos IA</p>
                 </div>
               </div>
+              <Alert className="border-green-300 bg-green-50">
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                <AlertDescription>
+                  Documentação estabilizada para evitar o loop de arquivos inválidos no build.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="roadmap">
+          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+            <RoadmapFuturo />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>
