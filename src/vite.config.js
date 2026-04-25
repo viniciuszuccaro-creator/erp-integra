@@ -3,13 +3,13 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 function blockDocumentationInSrc() {
-  const blockedNamePattern = /(^|\/)(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report)([^/]*)$/i;
+  const blockedNamePattern = /(^|\/)(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report)([^/]*)$/i;
   const blockedExtPattern = /\.(md|json|config)$/i;
   const blockedKnownExtPattern = /\.(js|jsx|ts|tsx|css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|bmp|avif)$/i;
-  const blockedNoExtensionPattern = /(^|\/)(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)([^/.]*)$/i;
+  const blockedNoExtensionPattern = /(^|\/)(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)([^/.]*)$/i;
   const blockedGeneratedCodePattern = /\.(md|json|config)\.(js|jsx|ts|tsx)$/i;
   const blockedInsideComponentsPattern = /\/src\/components\/.*(\.(md|json|config)|\/[^/.]+$)/i;
-  const blockedDocLikeInComponentsPattern = /\/src\/components\/.*\/(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)[^/]*\.(js|jsx|ts|tsx|md|json|config)$/i;
+  const blockedDocLikeInComponentsPattern = /\/src\/components\/.*\/(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)[^/]*\.(js|jsx|ts|tsx|md|json|config)$/i;
 
   const isBlockedPath = (input = '') => {
     const normalized = input.replace(/\\/g, '/');
@@ -75,6 +75,7 @@ export default defineConfig({
       '**/src/components/**/ETAPA*',
       '**/src/components/**/FASE*',
       '**/src/components/**/PROVA*',
+      '**/src/components/**/SISTEMA*',
       '**/src/components/**/MIGRACAO*',
       '**/src/components/**/BLOQUEIO*',
       '**/src/components/**/DEBUG*',
@@ -101,6 +102,7 @@ export default defineConfig({
         '**/src/components/**/*.config.*',
         '**/src/components/**/README*',
         '**/src/components/**/CERTIFICADO*',
+        '**/src/components/**/CERTIFICACAO*',
         '**/src/components/**/MANIFESTO*',
         '**/src/components/**/STATUS*',
         '**/src/components/**/VALIDACAO*',
@@ -108,6 +110,7 @@ export default defineConfig({
         '**/src/components/**/ETAPA*',
         '**/src/components/**/FASE*',
         '**/src/components/**/PROVA*',
+        '**/src/components/**/SISTEMA*',
         '**/src/components/**/MIGRACAO*',
         '**/src/components/**/BLOQUEIO*',
         '**/src/components/**/DEBUG*',
