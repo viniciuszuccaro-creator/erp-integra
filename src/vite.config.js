@@ -5,6 +5,7 @@ import path from 'path';
 function blockDocumentation() {
   const blockedNamePattern = /(^|\/)(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report)([^/]*)$/i;
   const blockedExtPattern = /\.(md|json|config)$/i;
+  const blockedKeywordPattern = /(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|BLOQUEIO|INTEGRACAO|DIAGNOSTICO|CORRECAO)/i;
   const blockedRootSrcPattern = /(^|\/)src\/.*(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report|\.md|\.json|\.config)([^/]*)$/i;
   const blockedKnownExtPattern = /\.(js|jsx|ts|tsx|css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|bmp|avif)$/i;
   const blockedNoExtensionPattern = /(^|\/)(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)([^/.]*)$/i;
@@ -18,6 +19,7 @@ function blockDocumentation() {
     const relativeFromSrc = normalized.split('/src/')[1] || normalized.split('src/')[1] || '';
     const hasNoExtension = relativeFromSrc.length > 0 && !blockedKnownExtPattern.test(relativeFromSrc) && !/\.[a-z0-9]+$/i.test(relativeFromSrc);
     const looksBlocked = blockedExtPattern.test(normalized)
+      || blockedKeywordPattern.test(relativeFromSrc)
       || blockedRootSrcPattern.test(normalized)
       || blockedNamePattern.test(normalized)
       || blockedNoExtensionPattern.test(normalized)
@@ -45,6 +47,7 @@ function blockDocumentation() {
       };
       server.watcher.on('add', blockFile);
       server.watcher.on('change', blockFile);
+      server.watcher.on('unlink', blockFile);
     },
     resolveId(source) {
       if (isBlockedPath(source)) {
