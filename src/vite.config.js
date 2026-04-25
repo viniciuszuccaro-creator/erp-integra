@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 function blockDocumentationInSrc() {
-  const blockedNamePattern = /(^|\/)(README|CERTIFICADO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)([^/]*)$/i;
+  const blockedNamePattern = /(^|\/)(README|CERTIFICADO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report)([^/]*)$/i;
   const blockedExtPattern = /\.(md|json|config)$/i;
   const blockedKnownExtPattern = /\.(js|jsx|ts|tsx|css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|bmp|avif)$/i;
   const blockedNoExtensionPattern = /(^|\/)(README|CERTIFICADO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)([^/.]*)$/i;
@@ -103,6 +103,8 @@ export default defineConfig({
         '**/src/components/**/ROADMAP*',
         '**/src/components/**/GUIA*',
         '**/src/components/**/DOC*',
+        '**/src/components/**/UnidadesDeMedida*',
+        '**/src/components/**/rhf_zod_report*',
         '**/src/components/**/*.md',
         '**/src/components/**/*.json',
         '**/src/components/**/*.config',
