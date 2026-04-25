@@ -8,13 +8,13 @@ function blockDocumentationInSrc() {
   const blockedKnownExtPattern = /\.(js|jsx|ts|tsx|css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|bmp|avif)$/i;
   const blockedNoExtensionPattern = /(^|\/)(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)([^/.]*)$/i;
   const blockedGeneratedCodePattern = /\.(md|json|config)\.(js|jsx|ts|tsx)$/i;
-  const blockedInsideComponentsPattern = /\/src\/components\/.*(\.(md|json|config)|\/[^/.]+$)/i;
-  const blockedDocLikeInComponentsPattern = /\/src\/components\/.*\/(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)[^/]*\.(js|jsx|ts|tsx|md|json|config)$/i;
+  const blockedInsideComponentsPattern = /\/src\/(components|docs|reports)\/.*(\.(md|json|config)|\/[^/.]+$)/i;
+  const blockedDocLikeInComponentsPattern = /\/src\/(components|docs|reports)\/.*\/(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report)[^/]*\.(js|jsx|ts|tsx|md|json|config)$/i;
 
   const isBlockedPath = (input = '') => {
     const normalized = input.replace(/\\/g, '/');
-    const isInSrcComponents = normalized.includes('/src/components/') || normalized.includes('src/components/');
-    const relativeFromComponents = normalized.split('/src/components/')[1] || normalized.split('src/components/')[1] || '';
+    const isInSrcComponents = normalized.includes('/src/components/') || normalized.includes('src/components/') || normalized.includes('/src/docs/') || normalized.includes('src/docs/') || normalized.includes('/src/reports/') || normalized.includes('src/reports/');
+    const relativeFromComponents = normalized.split('/src/components/')[1] || normalized.split('src/components/')[1] || normalized.split('/src/docs/')[1] || normalized.split('src/docs/')[1] || normalized.split('/src/reports/')[1] || normalized.split('src/reports/')[1] || '';
     const hasNoExtension = relativeFromComponents.length > 0 && !blockedKnownExtPattern.test(relativeFromComponents) && !/\.[a-z0-9]+$/i.test(relativeFromComponents);
     const looksBlocked = blockedExtPattern.test(normalized)
       || blockedNamePattern.test(normalized)
@@ -88,6 +88,38 @@ export default defineConfig({
       '**/src/components/**/DOC*',
       '**/src/components/**/UnidadesDeMedida*',
       '**/src/components/**/rhf_zod_report*',
+      '**/src/docs/**/*.md',
+      '**/src/docs/**/*.json',
+      '**/src/docs/**/*.config',
+      '**/src/docs/**/README*',
+      '**/src/docs/**/CERTIFICADO*',
+      '**/src/docs/**/CERTIFICACAO*',
+      '**/src/docs/**/MANIFESTO*',
+      '**/src/docs/**/STATUS*',
+      '**/src/docs/**/VALIDACAO*',
+      '**/src/docs/**/CHECKLIST*',
+      '**/src/docs/**/ETAPA*',
+      '**/src/docs/**/FASE*',
+      '**/src/docs/**/PROVA*',
+      '**/src/docs/**/SISTEMA*',
+      '**/src/docs/**/UnidadesDeMedida*',
+      '**/src/docs/**/rhf_zod_report*',
+      '**/src/reports/**/*.md',
+      '**/src/reports/**/*.json',
+      '**/src/reports/**/*.config',
+      '**/src/reports/**/README*',
+      '**/src/reports/**/CERTIFICADO*',
+      '**/src/reports/**/CERTIFICACAO*',
+      '**/src/reports/**/MANIFESTO*',
+      '**/src/reports/**/STATUS*',
+      '**/src/reports/**/VALIDACAO*',
+      '**/src/reports/**/CHECKLIST*',
+      '**/src/reports/**/ETAPA*',
+      '**/src/reports/**/FASE*',
+      '**/src/reports/**/PROVA*',
+      '**/src/reports/**/SISTEMA*',
+      '**/src/reports/**/UnidadesDeMedida*',
+      '**/src/reports/**/rhf_zod_report*',
       '**/src/components/**/[^/.]*',
     ],
   },
@@ -123,6 +155,38 @@ export default defineConfig({
         '**/src/components/**/DOC*',
         '**/src/components/**/UnidadesDeMedida*',
         '**/src/components/**/rhf_zod_report*',
+        '**/src/docs/**/*.md',
+        '**/src/docs/**/*.json',
+        '**/src/docs/**/*.config',
+        '**/src/docs/**/README*',
+        '**/src/docs/**/CERTIFICADO*',
+        '**/src/docs/**/CERTIFICACAO*',
+        '**/src/docs/**/MANIFESTO*',
+        '**/src/docs/**/STATUS*',
+        '**/src/docs/**/VALIDACAO*',
+        '**/src/docs/**/CHECKLIST*',
+        '**/src/docs/**/ETAPA*',
+        '**/src/docs/**/FASE*',
+        '**/src/docs/**/PROVA*',
+        '**/src/docs/**/SISTEMA*',
+        '**/src/docs/**/UnidadesDeMedida*',
+        '**/src/docs/**/rhf_zod_report*',
+        '**/src/reports/**/*.md',
+        '**/src/reports/**/*.json',
+        '**/src/reports/**/*.config',
+        '**/src/reports/**/README*',
+        '**/src/reports/**/CERTIFICADO*',
+        '**/src/reports/**/CERTIFICACAO*',
+        '**/src/reports/**/MANIFESTO*',
+        '**/src/reports/**/STATUS*',
+        '**/src/reports/**/VALIDACAO*',
+        '**/src/reports/**/CHECKLIST*',
+        '**/src/reports/**/ETAPA*',
+        '**/src/reports/**/FASE*',
+        '**/src/reports/**/PROVA*',
+        '**/src/reports/**/SISTEMA*',
+        '**/src/reports/**/UnidadesDeMedida*',
+        '**/src/reports/**/rhf_zod_report*',
         '**/src/components/**/*.md',
         '**/src/components/**/*.json',
         '**/src/components/**/*.config',
