@@ -34,12 +34,17 @@ function blockDocumentation() {
     name: 'block-documentation',
     enforce: 'pre',
     configureServer(server) {
-      server.watcher.on('add', (filePath) => {
-        if (isBlockedPath(filePath)) {
-          console.log('🚫 BLOQUEADO criação de arquivo de documentação em src/');
-          try { server.watcher.unwatch(filePath); } catch {}
-        }
-      });
+      const blockFile = async (filePath) => {
+        if (!isBlockedPath(filePath)) return;
+        console.log('🚫 BLOQUEADO criação de arquivo de documentação em src/');
+        try { server.watcher.unwatch(filePath); } catch {}
+        try {
+          const fs = await import('node:fs');
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        } catch {}
+      };
+      server.watcher.on('add', blockFile);
+      server.watcher.on('change', blockFile);
     },
     resolveId(source) {
       if (isBlockedPath(source)) {
