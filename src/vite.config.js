@@ -10,7 +10,7 @@ function blockDocumentation() {
   const blockedNoExtensionPattern = /(^|\/)(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)([^/.]*)$/i;
   const blockedGeneratedCodePattern = /\.(md|json|config)\.(js|jsx|ts|tsx)$/i;
   const blockedInsideComponentsPattern = /\/src\/(components|docs|reports)\/.*(\.(md|json|config)|\/[^/.]+$)/i;
-  const blockedDocLikeInComponentsPattern = /\/src\/(components|docs|reports)\/.*\/(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report)[^/]*\.(js|jsx|ts|tsx|md|json|config)$/i;
+  const blockedDocLikeInSrcPattern = /\/src\/.*\/(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report)[^/]*\.(js|jsx|ts|tsx|md|json|config)$/i;
 
   const isBlockedPath = (input = '') => {
     const normalized = input.replace(/\\/g, '/');
@@ -23,7 +23,7 @@ function blockDocumentation() {
       || blockedNoExtensionPattern.test(normalized)
       || blockedGeneratedCodePattern.test(normalized)
       || blockedInsideComponentsPattern.test(normalized)
-      || blockedDocLikeInComponentsPattern.test(normalized)
+      || blockedDocLikeInSrcPattern.test(normalized)
       || hasNoExtension
       || (/(^|\/)[^/.]+\.jsx$/i.test(normalized) && blockedNamePattern.test(normalized.replace(/\.jsx$/i, '')));
 
@@ -99,6 +99,10 @@ export default defineConfig({
       '**/src/**/DOC*',
       '**/src/**/UnidadesDeMedida*',
       '**/src/**/rhf_zod_report*',
+      '**/src/**/*.jsx',
+      '**/src/**/*.md.*',
+      '**/src/**/*.json.*',
+      '**/src/**/*.config.*',
       '**/*.md.*',
       '**/*.json.*',
       '**/*.config.*',
@@ -189,6 +193,10 @@ export default defineConfig({
         '**/src/**/DOC*',
         '**/src/**/UnidadesDeMedida*',
         '**/src/**/rhf_zod_report*',
+        '**/src/**/*.jsx',
+        '**/src/**/*.md.*',
+        '**/src/**/*.json.*',
+        '**/src/**/*.config.*',
         '**/src/components/**/*.md',
         '**/src/components/**/*.json',
         '**/src/components/**/*.config',
