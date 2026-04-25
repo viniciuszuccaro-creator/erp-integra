@@ -5,6 +5,7 @@ import path from 'path';
 function blockDocumentationInSrc() {
   const blockedNamePattern = /(^|\/)(README|CERTIFICADO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)([^/]*)$/i;
   const blockedExtPattern = /\.(md|json|config)$/i;
+  const blockedKnownExtPattern = /\.(js|jsx|ts|tsx|css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|bmp|avif)$/i;
   const blockedNoExtensionPattern = /(^|\/)(README|CERTIFICADO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)([^/.]*)$/i;
   const blockedGeneratedCodePattern = /\.(md|json|config)\.(js|jsx|ts|tsx)$/i;
   const blockedInsideComponentsPattern = /\/src\/components\/.*(\.(md|json|config)|\/[^/.]+$)/i;
@@ -14,7 +15,7 @@ function blockDocumentationInSrc() {
     const normalized = input.replace(/\\/g, '/');
     const isInSrcComponents = normalized.includes('/src/components/') || normalized.includes('src/components/');
     const relativeFromComponents = normalized.split('/src/components/')[1] || normalized.split('src/components/')[1] || '';
-    const hasNoExtension = relativeFromComponents.length > 0 && !/\.[a-z0-9]+$/i.test(relativeFromComponents);
+    const hasNoExtension = relativeFromComponents.length > 0 && !blockedKnownExtPattern.test(relativeFromComponents) && !/\.[a-z0-9]+$/i.test(relativeFromComponents);
     const looksBlocked = blockedExtPattern.test(normalized)
       || blockedNamePattern.test(normalized)
       || blockedNoExtensionPattern.test(normalized)
@@ -105,6 +106,9 @@ export default defineConfig({
         '**/src/components/**/*.md',
         '**/src/components/**/*.json',
         '**/src/components/**/*.config',
+        '**/src/components/**/*.md.*',
+        '**/src/components/**/*.json.*',
+        '**/src/components/**/*.config.*',
         '**/src/components/**/[^/.]*',
       ],
     },
