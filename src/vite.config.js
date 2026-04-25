@@ -33,6 +33,13 @@ function blockDocumentationInSrc() {
   return {
     name: 'block-documentation-in-src',
     enforce: 'pre',
+    configureServer(server) {
+      server.watcher.on('add', (filePath) => {
+        if (isBlockedPath(filePath)) {
+          console.log('🚫 BLOQUEADO criação de arquivo de documentação em src/');
+        }
+      });
+    },
     resolveId(source) {
       if (isBlockedPath(source)) {
         return '\0blocked-doc-file';
@@ -57,6 +64,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'src'),
     },
+    extensions: ['.ts', '.tsx', '.js', '.jsx'],
   },
   assetsInclude: () => false,
   optimizeDeps: {
