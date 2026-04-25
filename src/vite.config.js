@@ -31,7 +31,7 @@ function blockDocumentationInSrc() {
   };
 
   return {
-    name: 'block-documentation-in-src',
+    name: 'block-documentation',
     enforce: 'pre',
     configureServer(server) {
       server.watcher.on('add', (filePath) => {
