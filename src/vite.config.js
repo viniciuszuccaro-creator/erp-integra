@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
-function blockDocumentationInSrc() {
+function blockDocumentation() {
   const blockedNamePattern = /(^|\/)(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report)([^/]*)$/i;
   const blockedExtPattern = /\.(md|json|config)$/i;
   const blockedRootSrcPattern = /(^|\/)src\/.*(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report|\.md|\.json|\.config)([^/]*)$/i;
@@ -59,7 +59,7 @@ function blockDocumentationInSrc() {
 }
 
 export default defineConfig({
-  plugins: [react(), blockDocumentationInSrc()],
+  plugins: [react(), blockDocumentation()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
