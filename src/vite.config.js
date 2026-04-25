@@ -5,6 +5,7 @@ import path from 'path';
 function blockDocumentationInSrc() {
   const blockedNamePattern = /(^|\/)(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report)([^/]*)$/i;
   const blockedExtPattern = /\.(md|json|config)$/i;
+  const blockedRootSrcPattern = /(^|\/)src\/.*(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report|\.md|\.json|\.config)([^/]*)$/i;
   const blockedKnownExtPattern = /\.(js|jsx|ts|tsx|css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|bmp|avif)$/i;
   const blockedNoExtensionPattern = /(^|\/)(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)([^/.]*)$/i;
   const blockedGeneratedCodePattern = /\.(md|json|config)\.(js|jsx|ts|tsx)$/i;
@@ -17,6 +18,7 @@ function blockDocumentationInSrc() {
     const relativeFromComponents = normalized.split('/src/components/')[1] || normalized.split('src/components/')[1] || normalized.split('/src/docs/')[1] || normalized.split('src/docs/')[1] || normalized.split('/src/reports/')[1] || normalized.split('src/reports/')[1] || '';
     const hasNoExtension = relativeFromComponents.length > 0 && !blockedKnownExtPattern.test(relativeFromComponents) && !/\.[a-z0-9]+$/i.test(relativeFromComponents);
     const looksBlocked = blockedExtPattern.test(normalized)
+      || blockedRootSrcPattern.test(normalized)
       || blockedNamePattern.test(normalized)
       || blockedNoExtensionPattern.test(normalized)
       || blockedGeneratedCodePattern.test(normalized)
@@ -62,6 +64,32 @@ export default defineConfig({
       '**/*.md',
       '**/*.json',
       '**/*.config',
+      '**/src/**/*.md',
+      '**/src/**/*.json',
+      '**/src/**/*.config',
+      '**/src/**/README*',
+      '**/src/**/CERTIFICADO*',
+      '**/src/**/CERTIFICACAO*',
+      '**/src/**/MANIFESTO*',
+      '**/src/**/STATUS*',
+      '**/src/**/VALIDACAO*',
+      '**/src/**/CHECKLIST*',
+      '**/src/**/ETAPA*',
+      '**/src/**/FASE*',
+      '**/src/**/PROVA*',
+      '**/src/**/SISTEMA*',
+      '**/src/**/MIGRACAO*',
+      '**/src/**/BLOQUEIO*',
+      '**/src/**/DEBUG*',
+      '**/src/**/DIAGNOSTICO*',
+      '**/src/**/INTEGRACAO*',
+      '**/src/**/RESUMO*',
+      '**/src/**/CHANGELOG*',
+      '**/src/**/ROADMAP*',
+      '**/src/**/GUIA*',
+      '**/src/**/DOC*',
+      '**/src/**/UnidadesDeMedida*',
+      '**/src/**/rhf_zod_report*',
       '**/*.md.*',
       '**/*.json.*',
       '**/*.config.*',
@@ -126,6 +154,32 @@ export default defineConfig({
   server: {
     watch: {
       ignored: [
+        '**/src/**/*.md',
+        '**/src/**/*.json',
+        '**/src/**/*.config',
+        '**/src/**/README*',
+        '**/src/**/CERTIFICADO*',
+        '**/src/**/CERTIFICACAO*',
+        '**/src/**/MANIFESTO*',
+        '**/src/**/STATUS*',
+        '**/src/**/VALIDACAO*',
+        '**/src/**/CHECKLIST*',
+        '**/src/**/ETAPA*',
+        '**/src/**/FASE*',
+        '**/src/**/PROVA*',
+        '**/src/**/SISTEMA*',
+        '**/src/**/MIGRACAO*',
+        '**/src/**/BLOQUEIO*',
+        '**/src/**/DEBUG*',
+        '**/src/**/DIAGNOSTICO*',
+        '**/src/**/INTEGRACAO*',
+        '**/src/**/RESUMO*',
+        '**/src/**/CHANGELOG*',
+        '**/src/**/ROADMAP*',
+        '**/src/**/GUIA*',
+        '**/src/**/DOC*',
+        '**/src/**/UnidadesDeMedida*',
+        '**/src/**/rhf_zod_report*',
         '**/src/components/**/*.md',
         '**/src/components/**/*.json',
         '**/src/components/**/*.config',
