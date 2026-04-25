@@ -8,6 +8,7 @@ function blockDocumentationInSrc() {
   const blockedNoExtensionPattern = /(^|\/)(README|CERTIFICADO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)([^/.]*)$/i;
   const blockedGeneratedCodePattern = /\.(md|json|config)\.(js|jsx|ts|tsx)$/i;
   const blockedInsideComponentsPattern = /\/src\/components\/.*(\.(md|json|config)|\/[^/.]+$)/i;
+  const blockedDocLikeInComponentsPattern = /\/src\/components\/.*\/(README|CERTIFICADO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?)[^/]*\.(js|jsx|ts|tsx|md|json|config)$/i;
 
   const isBlockedPath = (input = '') => {
     const normalized = input.replace(/\\/g, '/');
@@ -19,6 +20,7 @@ function blockDocumentationInSrc() {
       || blockedNoExtensionPattern.test(normalized)
       || blockedGeneratedCodePattern.test(normalized)
       || blockedInsideComponentsPattern.test(normalized)
+      || blockedDocLikeInComponentsPattern.test(normalized)
       || hasNoExtension
       || (/(^|\/)[^/.]+\.jsx$/i.test(normalized) && blockedNamePattern.test(normalized.replace(/\.jsx$/i, '')));
 
@@ -81,6 +83,10 @@ export default defineConfig({
         '**/src/components/**/*.md.*',
         '**/src/components/**/*.json.*',
         '**/src/components/**/*.config.*',
+        '**/src/components/**/*.js',
+        '**/src/components/**/*.jsx',
+        '**/src/components/**/*.ts',
+        '**/src/components/**/*.tsx',
         '**/src/components/**/README*',
         '**/src/components/**/CERTIFICADO*',
         '**/src/components/**/MANIFESTO*',
