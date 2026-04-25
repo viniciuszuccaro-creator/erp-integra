@@ -53,15 +53,24 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
-  assetsInclude: (file) => {
-    const normalized = String(file || '').replace(/\\/g, '/');
-    if (normalized.includes('/src/components/')) {
-      return false;
-    }
-    return false;
-  },
+  assetsInclude: () => false,
   optimizeDeps: {
-    exclude: ['**/*.md', '**/*.json', '**/*.config'],
+    exclude: [
+      '**/*.md',
+      '**/*.json',
+      '**/*.config',
+      '**/*.md.*',
+      '**/*.json.*',
+      '**/*.config.*',
+      '**/src/components/**/README*',
+      '**/src/components/**/CERTIFICADO*',
+      '**/src/components/**/MANIFESTO*',
+      '**/src/components/**/STATUS*',
+      '**/src/components/**/VALIDACAO*',
+      '**/src/components/**/CHECKLIST*',
+      '**/src/components/**/ETAPA*',
+      '**/src/components/**/FASE*',
+    ],
   },
   server: {
     watch: {
