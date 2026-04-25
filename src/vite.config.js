@@ -14,9 +14,9 @@ function blockDocumentation() {
 
   const isBlockedPath = (input = '') => {
     const normalized = input.replace(/\\/g, '/');
-    const isInSrcComponents = normalized.includes('/src/components/') || normalized.includes('src/components/') || normalized.includes('/src/docs/') || normalized.includes('src/docs/') || normalized.includes('/src/reports/') || normalized.includes('src/reports/');
-    const relativeFromComponents = normalized.split('/src/components/')[1] || normalized.split('src/components/')[1] || normalized.split('/src/docs/')[1] || normalized.split('src/docs/')[1] || normalized.split('/src/reports/')[1] || normalized.split('src/reports/')[1] || '';
-    const hasNoExtension = relativeFromComponents.length > 0 && !blockedKnownExtPattern.test(relativeFromComponents) && !/\.[a-z0-9]+$/i.test(relativeFromComponents);
+    const isInSrc = normalized.includes('/src/') || normalized.includes('src/');
+    const relativeFromSrc = normalized.split('/src/')[1] || normalized.split('src/')[1] || '';
+    const hasNoExtension = relativeFromSrc.length > 0 && !blockedKnownExtPattern.test(relativeFromSrc) && !/\.[a-z0-9]+$/i.test(relativeFromSrc);
     const looksBlocked = blockedExtPattern.test(normalized)
       || blockedRootSrcPattern.test(normalized)
       || blockedNamePattern.test(normalized)
@@ -27,7 +27,7 @@ function blockDocumentation() {
       || hasNoExtension
       || (/(^|\/)[^/.]+\.jsx$/i.test(normalized) && blockedNamePattern.test(normalized.replace(/\.jsx$/i, '')));
 
-    return isInSrcComponents && looksBlocked;
+    return isInSrc && looksBlocked;
   };
 
   return {
@@ -37,6 +37,7 @@ function blockDocumentation() {
       server.watcher.on('add', (filePath) => {
         if (isBlockedPath(filePath)) {
           console.log('🚫 BLOQUEADO criação de arquivo de documentação em src/');
+          try { server.watcher.unwatch(filePath); } catch {}
         }
       });
     },
