@@ -4,6 +4,9 @@ import ConfigGlobal from "@/components/sistema/ConfigGlobal";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
 import HerancaConfigNotice from "@/components/administracao-sistema/common/HerancaConfigNotice";
+import Fase1AdminStatus from "@/components/administracao-sistema/fase1/Fase1AdminStatus";
+import InventarioControlesCard from "@/components/administracao-sistema/fase1/InventarioControlesCard";
+import MapaTogglesCard from "@/components/administracao-sistema/fase1/MapaTogglesCard";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
@@ -20,6 +23,11 @@ export default function ConfiguracoesGeraisIndex() {
         <CardContent className="p-4 space-y-3">
           <ContextoConfigBanner />
           <HerancaConfigNotice />
+          <Fase1AdminStatus />
+          <div className="grid gap-4 xl:grid-cols-2">
+            <InventarioControlesCard />
+            <MapaTogglesCard />
+          </div>
           <ProtectedSection
             module="Sistema"
             section={["Configurações", "Gerais"]}

@@ -2,6 +2,32 @@ import { useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
+function buildConfigCandidates({ categoria, chave, empresaId, grupoId }) {
+  const baseFilter = {};
+  if (categoria) baseFilter.categoria = categoria;
+  if (chave) baseFilter.chave = chave;
+
+  const candidates = [];
+  if (empresaId && grupoId) candidates.push({ ...baseFilter, empresa_id: empresaId, group_id: grupoId, __nivel: 1 });
+  if (empresaId) candidates.push({ ...baseFilter, empresa_id: empresaId, __nivel: 2 });
+  if (grupoId) candidates.push({ ...baseFilter, group_id: grupoId, __nivel: 3 });
+  candidates.push({ ...baseFilter, __nivel: 4 });
+  return candidates;
+}
+
+function pickBestConfig(list = [], { empresaId, grupoId }) {
+  if (!Array.isArray(list) || list.length === 0) return null;
+  const scored = list.map((item) => {
+    let score = 4;
+    if (empresaId && grupoId && item?.empresa_id === empresaId && item?.group_id === grupoId) score = 1;
+    else if (empresaId && item?.empresa_id === empresaId) score = 2;
+    else if (grupoId && item?.group_id === grupoId) score = 3;
+    return { item, score };
+  });
+  scored.sort((a, b) => a.score - b.score);
+  return scored[0]?.item || null;
+}
+
 /**
  * Hook de acesso centralizado às configurações do sistema
  * - Busca por categoria + chave (primeiro registro mais recente)
@@ -16,22 +42,15 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
     queryFn: async () => {
       const authed = await base44.auth.isAuthenticated();
       if (!authed) return null;
-      const orConds = [];
-      const baseFilter = {};
-      if (categoria) baseFilter.categoria = categoria;
-      if (chave) baseFilter.chave = chave;
-      if (empresaId && grupoId) orConds.push({ ...baseFilter, empresa_id: empresaId, group_id: grupoId });
-      if (empresaId) orConds.push({ ...baseFilter, empresa_id: empresaId });
-      if (grupoId) orConds.push({ ...baseFilter, group_id: grupoId });
-      orConds.push(baseFilter);
+      const candidates = buildConfigCandidates({ categoria, chave, empresaId, grupoId });
       const res = await base44.functions.invoke('getEntityRecord', {
         entityName: 'ConfiguracaoSistema',
-        filter: orConds.length > 1 ? { $or: orConds } : baseFilter,
-        limit: 20,
+        filter: candidates.length > 1 ? { $or: candidates.map(({ __nivel, ...rest }) => rest) } : candidates[0],
+        limit: 50,
         sortField: '-updated_date'
       });
       const list = Array.isArray(res?.data) ? res.data : [];
-      return list[0] || null;
+      return pickBestConfig(list, { empresaId, grupoId });
     },
     staleTime: 60_000,
   });
@@ -90,12 +109,30 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
     return fallback;
   }, [data]);
 
+  const resolver = useCallback((localChave, localCategoria = categoria) => {
+    if (!localChave) return null;
+    return base44.functions.invoke('getEntityRecord', {
+      entityName: 'ConfiguracaoSistema',
+      filter: {
+        $or: buildConfigCandidates({
+          categoria: localCategoria,
+          chave: localChave,
+          empresaId,
+          grupoId,
+        }).map(({ __nivel, ...rest }) => rest)
+      },
+      limit: 50,
+      sortField: '-updated_date'
+    }).then((res) => pickBestConfig(Array.isArray(res?.data) ? res.data : [], { empresaId, grupoId }));
+  }, [categoria, empresaId, grupoId]);
+
   return {
     config: data,
     isLoading,
     error,
     get,
     ativo,
+    resolver,
     setConfig: (patch) => setMutation.mutate(patch),
     isSaving: setMutation.isPending,
   };
