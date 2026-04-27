@@ -1009,7 +1009,7 @@ function LayoutContent({ children, currentPageName }) {
               params = { ...params };
               if (ctx?.group_id && (params.group_id === undefined || params.group_id === null)) params.group_id = ctx.group_id;
               // aceitar alias empresaId, mas padronizar empresa_id
-              const hasEmpresa = !(params.empresa_id === undefined || params.empresa_id === null) || !(params.empresaId === undefined || params.empresaId === null);
+              const hasEmpresa = params.empresa_id != null || params.empresaId != null;
               if (ctx?.empresa_id && !hasEmpresa) params.empresa_id = ctx.empresa_id;
             }
           } catch (_) {}
@@ -1173,7 +1173,7 @@ function LayoutContent({ children, currentPageName }) {
       document.removeEventListener('click', handlerClick, true);
       document.removeEventListener('change', handlerChange, true);
     };
-  }, [user?.id, empresaAtual?.id, moduleName]);
+  }, [user?.id, empresaAtual?.id, moduleName, isAuthed]);
 
   const handleIAEstoque = async () => {
           try {
@@ -1318,7 +1318,7 @@ function LayoutContent({ children, currentPageName }) {
                       });
       }
     } catch (e) {}
-  }, [moduleName, currentPageName, user?.id, empresaAtual?.id]);
+  }, [moduleName, currentPageName, user?.id, empresaAtual?.id, isAuthed]);
 
 
 
