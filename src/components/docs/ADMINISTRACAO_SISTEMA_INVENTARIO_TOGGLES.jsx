@@ -1,4 +1,4 @@
-# Inventário — Administração do Sistema
+export default `# Inventário — Administração do Sistema
 
 ## Abas principais
 - `gerais` → `ConfiguracoesGeraisIndex` → `ConfigGlobal`
@@ -117,4 +117,4 @@
 1. Padronizar leitura por helper único para frontend e backend.
 2. Auditar consumo real das chaves sem vínculo confirmado.
 3. Mapear botões por RBAC, escopo, estado desabilitado e auditoria.
-4. Validar por fluxo: Segurança, IA, Integrações, Cadastros, Financeiro, Comercial, Estoque, Produção e Expedição.
+4. Validar por fluxo: Segurança, IA, Integrações, Cadastros, Financeiro, Comercial, Estoque, Produção e Expedição.`;
