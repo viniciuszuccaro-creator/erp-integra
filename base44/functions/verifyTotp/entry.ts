@@ -4,6 +4,23 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 // Payload: { module?:string, section?:string|string[], empresa_id?:string, group_id?:string, code:string }
 // Retorna { ok:true } quando válido (janela de 5min, aceita janela anterior).
 
+async function isConfigEnabled(base44, { chave, empresa_id = null, group_id = null, aliases = [], fallback = false }) {
+  const keys = [chave, ...aliases].filter(Boolean);
+  const configs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, '-updated_date', 300).catch(() => []);
+  const matches = configs.filter((c) => keys.includes(c?.chave));
+  const ranked = matches.map((item) => {
+    let score = 4;
+    if (empresa_id && group_id && item?.empresa_id === empresa_id && item?.group_id === group_id) score = 1;
+    else if (empresa_id && item?.empresa_id === empresa_id) score = 2;
+    else if (group_id && item?.group_id === group_id) score = 3;
+    else if (!item?.empresa_id && !item?.group_id) score = 4;
+    return { item, score };
+  }).sort((a, b) => a.score - b.score);
+  const config = ranked[0]?.item || null;
+  if (!config) return fallback;
+  return typeof config.ativa === 'boolean' ? config.ativa : fallback;
+}
+
 function to6(buf) {
   const v = new Uint8Array(buf); let a = 0; for (let i = 0; i < v.length; i++) a = (a * 33 + v[i]) >>> 0; return String(a % 1000000).padStart(6, '0');
 }
@@ -29,8 +46,13 @@ Deno.serve(async (req) => {
     const empresaId = body?.empresa_id || '';
     const groupId = body?.group_id || '';
 
-    const configs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, '-updated_date', 200);
-    const isEnabled = configs.some((c) => ['seg_login_duplo_fator', 'cc_exigir_mfa'].includes(c?.chave) && c?.ativa === true && ((body?.empresa_id && c?.empresa_id === body.empresa_id) || (body?.group_id && c?.group_id === body.group_id) || (!c?.empresa_id && !c?.group_id)));
+    const isEnabled = await isConfigEnabled(base44, {
+      chave: 'seg_login_duplo_fator',
+      aliases: ['cc_exigir_mfa'],
+      empresa_id: body?.empresa_id || null,
+      group_id: body?.group_id || null,
+      fallback: false,
+    });
     if (!isEnabled) {
       return Response.json({ ok: true, skipped: true, reason: 'mfa_disabled' });
     }

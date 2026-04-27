@@ -4,6 +4,23 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 // Payload: { entity_name: 'Cliente'|'Colaborador', id: string, action?: 'encrypt'|'decrypt', fields?: string[] }
 // Notes: Admin-safe by default; user-scoped allowed but updates run as service role after auth.
 
+async function isConfigEnabled(base44, { chave, empresa_id = null, group_id = null, aliases = [], fallback = false }) {
+  const keys = [chave, ...aliases].filter(Boolean);
+  const configs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, '-updated_date', 300).catch(() => []);
+  const matches = configs.filter((c) => keys.includes(c?.chave));
+  const ranked = matches.map((item) => {
+    let score = 4;
+    if (empresa_id && group_id && item?.empresa_id === empresa_id && item?.group_id === group_id) score = 1;
+    else if (empresa_id && item?.empresa_id === empresa_id) score = 2;
+    else if (group_id && item?.group_id === group_id) score = 3;
+    else if (!item?.empresa_id && !item?.group_id) score = 4;
+    return { item, score };
+  }).sort((a, b) => a.score - b.score);
+  const config = ranked[0]?.item || null;
+  if (!config) return fallback;
+  return typeof config.ativa === 'boolean' ? config.ativa : fallback;
+}
+
 function b64encode(buf) { return btoa(String.fromCharCode(...new Uint8Array(buf))); }
 function b64decode(str) { const bin = atob(str); const arr = new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i); return arr.buffer; }
 
@@ -56,13 +73,15 @@ Deno.serve(async (req) => {
     // RBAC soft-guard via existing guard (best-effort)
     try { await base44.functions.invoke('entityGuard', { module: 'Sistema', section: 'Seguranca', action: 'executar', function_name: 'piiEncryptor' }); } catch {}
 
-    try {
-      const cfgRes = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ chave: 'cc_criptografia_dados' }, '-updated_date', 1);
-      const cfg = Array.isArray(cfgRes) ? (cfgRes[0] || null) : null;
-      if (cfg && cfg.ativa === false) {
-        return Response.json({ ok: true, skipped: true, reason: 'encryption_disabled_by_config' });
-      }
-    } catch (_) {}
+    const encryptionEnabled = await isConfigEnabled(base44, {
+      chave: 'cc_criptografia_dados',
+      empresa_id: body?.empresa_id || null,
+      group_id: body?.group_id || null,
+      fallback: true,
+    });
+    if (!encryptionEnabled) {
+      return Response.json({ ok: true, skipped: true, reason: 'encryption_disabled_by_config' });
+    }
 
     const key = await getKey();
     const rec = await base44.asServiceRole.entities[entity].get(id);

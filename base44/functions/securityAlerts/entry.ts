@@ -2,6 +2,23 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 // Agregado de alertas de segurança com envio de e-mail para administradores
 // Heurísticas simples: alto volume de Exclusões, alterações em perfis, bloqueios de acesso em curto período
+async function isConfigEnabled(base44, { chave, empresa_id = null, group_id = null, aliases = [], fallback = false }) {
+  const keys = [chave, ...aliases].filter(Boolean);
+  const configs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, '-updated_date', 300).catch(() => []);
+  const matches = configs.filter((c) => keys.includes(c?.chave));
+  const ranked = matches.map((item) => {
+    let score = 4;
+    if (empresa_id && group_id && item?.empresa_id === empresa_id && item?.group_id === group_id) score = 1;
+    else if (empresa_id && item?.empresa_id === empresa_id) score = 2;
+    else if (group_id && item?.group_id === group_id) score = 3;
+    else if (!item?.empresa_id && !item?.group_id) score = 4;
+    return { item, score };
+  }).sort((a, b) => a.score - b.score);
+  const config = ranked[0]?.item || null;
+  if (!config) return fallback;
+  return typeof config.ativa === 'boolean' ? config.ativa : fallback;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -16,8 +33,13 @@ Deno.serve(async (req) => {
     try { payload = await req.json(); } catch { payload = {}; }
     const filtros = payload?.filtros || {};
 
-    const configs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, '-updated_date', 200).catch(() => []);
-    const iaSegurancaAtiva = configs.some((c) => ['cc_ia_seguranca_ativa', 'seg_ia_seguranca'].includes(c?.chave) && c?.ativa === true && ((filtros?.empresa_id && c?.empresa_id === filtros.empresa_id) || (filtros?.group_id && c?.group_id === filtros.group_id) || (!c?.empresa_id && !c?.group_id)));
+    const iaSegurancaAtiva = await isConfigEnabled(base44, {
+      chave: 'cc_ia_seguranca_ativa',
+      aliases: ['seg_ia_seguranca'],
+      empresa_id: filtros?.empresa_id || null,
+      group_id: filtros?.group_id || null,
+      fallback: false,
+    });
     if (!iaSegurancaAtiva) {
       return Response.json({ ok: true, message: 'IA de segurança desativada' });
     }
