@@ -20,13 +20,14 @@ Deno.serve(async (req) => {
     }
 
     // Rate limit por IP
+    let requestIp = 'unknown';
     try {
-      const ip = (req.headers.get('x-forwarded-for') || 'unknown').split(',')[0].trim();
+      requestIp = (req.headers.get('x-forwarded-for') || 'unknown').split(',')[0].trim();
       const now = Date.now();
-      const list = __RL.get(ip) || [];
+      const list = __RL.get(requestIp) || [];
       const kept = list.filter((t) => now - t < __WINDOW_MS);
       kept.push(now);
-      __RL.set(ip, kept);
+      __RL.set(requestIp, kept);
       if (kept.length > __MAX_REQ) {
         return Response.json({ allowed: false, error: 'rate_limited' }, { status: 429 });
       }
@@ -93,6 +94,19 @@ Deno.serve(async (req) => {
     const moduleName = normalizeModule(body?.module || 'Sistema');
     const section = body?.section || null;
     const desired = normalize(body?.action || 'visualizar');
+
+    let securityConfigs = [];
+    try {
+      securityConfigs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, '-updated_date', 200);
+    } catch {}
+    const hasFlag = (...keys) => securityConfigs.some((c) => keys.includes(c?.chave) && c?.ativa === true && ((body?.empresa_id && c?.empresa_id === body.empresa_id) || (body?.group_id && c?.group_id === body.group_id) || (!c?.empresa_id && !c?.group_id)));
+
+    if (hasFlag('seg_bloquear_ip_suspeito', 'cc_bloquear_ips_suspeitos')) {
+      const ipHits = __RL.get(requestIp) || [];
+      if (ipHits.length > Math.floor(__MAX_REQ * 0.7)) {
+        return Response.json({ allowed: false, error: 'suspicious_ip_blocked' }, { status: 403 });
+      }
+    }
 
     // Proteção de entidades críticas
     const targetEntity = body?.entity_name;

@@ -19,6 +19,9 @@ Deno.serve(async (req) => {
     const stack = body?.stack || null;
     const metadata = body?.metadata || null;
 
+    const configs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, '-updated_date', 200).catch(() => []);
+    const detailedAudit = configs.some((c) => ['seg_auditoria_detalhada', 'cc_auditoria_automatica'].includes(c?.chave) && c?.ativa === true && ((empresa_id && c?.empresa_id === empresa_id) || (group_id && c?.group_id === group_id) || (!c?.empresa_id && !c?.group_id)));
+
     await base44.asServiceRole.entities.AuditLog.create({
       usuario: user.full_name || user.email || 'Usuário',
       usuario_id: user.id,
@@ -28,7 +31,7 @@ Deno.serve(async (req) => {
       tipo_auditoria: 'sistema',
       entidade: page || 'ReactQuery/UI',
       descricao: message,
-      dados_novos: { stack, metadata, group_id, page },
+      dados_novos: detailedAudit ? { stack, metadata, group_id, page } : { group_id, page },
       data_hora: new Date().toISOString(),
     });
 

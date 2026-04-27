@@ -29,9 +29,24 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     return scope;
   }, [grupoId, empresaId]);
 
+  const getAliasKeys = useCallback((chave) => {
+    const aliasMap = {
+      seg_login_duplo_fator: ['seg_login_duplo_fator', 'cc_exigir_mfa'],
+      cc_exigir_mfa: ['cc_exigir_mfa', 'seg_login_duplo_fator'],
+      seg_bloquear_ip_suspeito: ['seg_bloquear_ip_suspeito', 'cc_bloquear_ips_suspeitos'],
+      cc_bloquear_ips_suspeitos: ['cc_bloquear_ips_suspeitos', 'seg_bloquear_ip_suspeito'],
+      seg_auditoria_detalhada: ['seg_auditoria_detalhada', 'cc_auditoria_automatica'],
+      cc_auditoria_automatica: ['cc_auditoria_automatica', 'seg_auditoria_detalhada'],
+      cc_ia_seguranca_ativa: ['cc_ia_seguranca_ativa', 'seg_ia_seguranca'],
+      seg_ia_seguranca: ['seg_ia_seguranca', 'cc_ia_seguranca_ativa'],
+    };
+    return aliasMap[chave] || [chave];
+  }, []);
+
   const findMatchingRecord = useCallback((list, chave) => {
     if (!Array.isArray(list)) return null;
-    const candidates = list.filter(c => c.chave === chave);
+    const aliases = getAliasKeys(chave);
+    const candidates = list.filter(c => aliases.includes(c.chave));
     if (!candidates.length) return null;
     if (empresaId && grupoId) {
       const exact = candidates.find(c => c.empresa_id === empresaId && c.group_id === grupoId);
@@ -46,7 +61,7 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
       if (byG) return byG;
     }
     return candidates[0] || null;
-  }, [empresaId, grupoId]);
+  }, [empresaId, grupoId, getAliasKeys]);
 
   const handleToggle = useCallback(async (chave, categoria, newValue) => {
     if (saving[chave] || pendingRef.current[chave]) return;

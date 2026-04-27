@@ -29,6 +29,12 @@ Deno.serve(async (req) => {
     const empresaId = body?.empresa_id || '';
     const groupId = body?.group_id || '';
 
+    const configs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, '-updated_date', 200);
+    const isEnabled = configs.some((c) => ['seg_login_duplo_fator', 'cc_exigir_mfa'].includes(c?.chave) && c?.ativa === true && ((body?.empresa_id && c?.empresa_id === body.empresa_id) || (body?.group_id && c?.group_id === body.group_id) || (!c?.empresa_id && !c?.group_id)));
+    if (!isEnabled) {
+      return Response.json({ ok: true, skipped: true, reason: 'mfa_disabled' });
+    }
+
     const secret = Deno.env.get('BACKUP_ENCRYPTION_KEY') || Deno.env.get('DEPLOY_AUDIT_TOKEN') || 'b44_fallback_secret';
     const step = Math.floor(Date.now() / (5 * 60 * 1000));
     const expected = await makeCode(secret, user.id, moduleName, section, empresaId, groupId, step);

@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
-import { sendEmail } from './_lib/notificationUtils.js';
 
 // Agregado de alertas de segurança com envio de e-mail para administradores
 // Heurísticas simples: alto volume de Exclusões, alterações em perfis, bloqueios de acesso em curto período
@@ -16,6 +15,12 @@ Deno.serve(async (req) => {
     let payload = {};
     try { payload = await req.json(); } catch { payload = {}; }
     const filtros = payload?.filtros || {};
+
+    const configs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, '-updated_date', 200).catch(() => []);
+    const iaSegurancaAtiva = configs.some((c) => ['cc_ia_seguranca_ativa', 'seg_ia_seguranca'].includes(c?.chave) && c?.ativa === true && ((filtros?.empresa_id && c?.empresa_id === filtros.empresa_id) || (filtros?.group_id && c?.group_id === filtros.group_id) || (!c?.empresa_id && !c?.group_id)));
+    if (!iaSegurancaAtiva) {
+      return Response.json({ ok: true, message: 'IA de segurança desativada' });
+    }
 
     const WINDOW_MIN = 15;
     const now = new Date();
@@ -119,8 +124,8 @@ Deno.serve(async (req) => {
         `Total de eventos analisados: ${recent.length}`
       ].join('\n');
 
-      // Enviar e-mail para cada admin (via helper)
-      await Promise.all(toList.map((to) => sendEmail(base44, to, subject, body)));
+      // Enviar e-mail para cada admin
+      await Promise.all(toList.map((to) => base44.asServiceRole.integrations.Core.SendEmail({ to, subject, body })));
     }
 
     // Slack (opcional) - tenta Webhook primeiro; se ausente, tenta App Connector 'slackbot'
