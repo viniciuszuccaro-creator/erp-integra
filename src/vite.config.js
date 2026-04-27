@@ -1,13 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function blockDocumentation() {
-  const blockedNamePattern = /(^|\/)(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report)([^/]*)$/i;
-  const blockedExtPattern = /\.(md|json|config)$/i;
+  const blockedNamePattern = /(^|\/)(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|CORRECAO|UnidadesDeMedida|rhf_zod_report)([^/]*)$/i;
+  const blockedExtPattern = /\.(md|json|config|md\.jsx)$/i;
   const blockedKeywordPattern = /(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|BLOQUEIO|INTEGRACAO|DIAGNOSTICO|CORRECAO)/i;
   const blockedRootSrcPattern = /(^|\/)src\/.*(README|CERTIFICADO|CERTIFICACAO|MANIFESTO|STATUS|VALIDACAO|CHECKLIST|ETAPA|FASE|PROVA|SISTEMA|MIGRACAO|BLOQUEIO|DEBUG|DIAGNOSTICO|INTEGRACAO|RESUMO|CHANGELOG|ROADMAP|GUIA|DOCS?|UnidadesDeMedida|rhf_zod_report|\.md|\.json|\.config)([^/]*)$/i;
   const blockedKnownExtPattern = /\.(js|jsx|ts|tsx|css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|bmp|avif)$/i;
@@ -51,6 +48,7 @@ function blockDocumentation() {
       server.watcher.on('add', blockFile);
       server.watcher.on('change', blockFile);
       server.watcher.on('unlink', blockFile);
+      server.watcher.on('addDir', blockFile);
     },
     resolveId(source) {
       if (isBlockedPath(source)) {
@@ -112,6 +110,7 @@ export default defineConfig({
         '**/src/**/DEBUG*',
         '**/src/**/DIAGNOSTICO*',
         '**/src/**/INTEGRACAO*',
+        '**/src/**/CORRECAO*',
         '**/src/**/RESUMO*',
         '**/src/**/CHANGELOG*',
         '**/src/**/ROADMAP*',
@@ -145,6 +144,7 @@ export default defineConfig({
         '**/src/components/**/DEBUG*',
         '**/src/components/**/DIAGNOSTICO*',
         '**/src/components/**/INTEGRACAO*',
+        '**/src/components/**/CORRECAO*',
         '**/src/components/**/RESUMO*',
         '**/src/components/**/CHANGELOG*',
         '**/src/components/**/ROADMAP*',
@@ -192,6 +192,7 @@ export default defineConfig({
         '**/src/components/**/*.config.*',
         '**/src/components/**/[^/.]*',
         '**/src/components/**',
+        '**/src/**/*.md.jsx',
         '**/src/**/CORRECAO*',
         '**/src/**/DIAGNOSTICO*',
         '**/src/**/INTEGRACAO*',
