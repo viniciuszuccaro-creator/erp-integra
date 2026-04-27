@@ -63,7 +63,8 @@ export default function GlobalContextStamp() {
           return o.filter(merged, order, limit);
         };
       }
-...
+
+      // list -> direciona para filter com contexto quando possível
       if (o.list) {
         api.list = async (order, limit) => {
           const ctx = getFiltroContexto?.() || {};

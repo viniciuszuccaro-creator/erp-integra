@@ -1222,7 +1222,7 @@ function LayoutContent({ children, currentPageName }) {
     } else {
       setTimeout(run, 1500);
     }
-  }, [empresaAtual?.id, grupoAtual?.id, contexto, isAuthed];
+  }, [empresaAtual?.id, grupoAtual?.id, contexto, isAuthed]);
 
   // Fase 3: Limpeza do IDB expirado no idle (uma vez por sessão)
   useEffect(() => {
