@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
@@ -85,11 +85,17 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
     };
   }, [data]);
 
+  const ativo = useCallback((fallback = false) => {
+    if (typeof data?.ativa === 'boolean') return data.ativa;
+    return fallback;
+  }, [data]);
+
   return {
     config: data,
     isLoading,
     error,
     get,
+    ativo,
     setConfig: (patch) => setMutation.mutate(patch),
     isSaving: setMutation.isPending,
   };

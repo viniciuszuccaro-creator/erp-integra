@@ -113,6 +113,31 @@ export default `# Inventário — Administração do Sistema
 - `IntegracoesIndex > Testar webhook Asaas` → `functions/legacyIntegrationsMirror`
 - `IntegracoesIndex > Simular NF-e autorizada` → `functions/legacyIntegrationsMirror`
 
+## Botões, ações e estados obrigatórios
+- Todo botão crítico deve passar por `entityGuard` direta ou indiretamente.
+- Toda ação sensível deve respeitar RBAC, contexto empresa/grupo e auditoria.
+- Toda ação precisa expor feedback visual: carregando, sucesso, erro ou bloqueio.
+- Todo módulo deve consultar configuração antes de executar funções sensíveis/IA.
+
+## Cobertura já conectada
+- `seg_auditoria_detalhada` / `cc_auditoria_automatica` → `functions/auditError`
+- `seg_login_duplo_fator` / `cc_exigir_mfa` → `functions/verifyTotp`
+- `seg_bloquear_ip_suspeito` / `cc_bloquear_ips_suspeitos` → `functions/entityGuard`
+- `cc_ia_seguranca_ativa` / `seg_ia_seguranca` → `functions/securityAlerts`
+- `cc_backup_automatico` → `functions/autoBackup`
+- `cc_criptografia_dados` → `functions/piiEncryptor`
+
+## Fluxo recomendado de fechamento
+1. Administração do Sistema
+2. Segurança e IA
+3. Integrações
+4. Cadastros
+5. Financeiro
+6. Comercial
+7. Estoque
+8. Produção
+9. Expedição
+
 ## Próximos passos recomendados
 1. Padronizar leitura por helper único para frontend e backend.
 2. Auditar consumo real das chaves sem vínculo confirmado.
