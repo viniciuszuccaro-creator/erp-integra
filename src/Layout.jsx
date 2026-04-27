@@ -339,7 +339,7 @@ function LayoutContent({ children, currentPageName }) {
     let cancelled = false;
     (async () => {
       try {
-        if (!empresaAtual?.id) { if (!cancelled) setIntegracoesOk(true); return; }
+        if (!isAuthed || !empresaAtual?.id) { if (!cancelled) setIntegracoesOk(true); return; }
         // Apenas perfis com permissão de Sistema visualizam alerta
         const allowed = hasPermission('Sistema', null, 'ver');
         if (!allowed) { if (!cancelled) setIntegracoesOk(true); return; }
@@ -359,7 +359,7 @@ function LayoutContent({ children, currentPageName }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [empresaAtual?.id]);
+  }, [empresaAtual?.id, isAuthed]);
 
   // PWA-lite: injeta manifest em runtime e tenta registrar service worker (se disponível)
   useEffect(() => {
@@ -1202,7 +1202,7 @@ function LayoutContent({ children, currentPageName }) {
 
   // Idle prefetch common datasets (multiempresa-aware)
   useEffect(() => {
-    const can = (contexto === 'grupo') || !!empresaAtual?.id;
+    const can = isAuthed && ((contexto === 'grupo') || !!empresaAtual?.id);
     if (!can) return;
     const run = () => {
       try {
@@ -1222,7 +1222,7 @@ function LayoutContent({ children, currentPageName }) {
     } else {
       setTimeout(run, 1500);
     }
-  }, [empresaAtual?.id, grupoAtual?.id, contexto]);
+  }, [empresaAtual?.id, grupoAtual?.id, contexto, isAuthed];
 
   // Fase 3: Limpeza do IDB expirado no idle (uma vez por sessão)
   useEffect(() => {
@@ -1331,16 +1331,12 @@ function LayoutContent({ children, currentPageName }) {
     publico: itemsFiltrados.filter(item => item.group === "publico"),
   };
 
-  if (isMobilePage) {
-    return (
-      <>
-        {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
-        <div className="w-full h-full min-h-screen">{children}</div>
-      </>
-    );
-  }
-
-  return (
+  const content = isMobilePage ? (
+    <>
+      {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
+      <div className="w-full h-full min-h-screen">{children}</div>
+    </>
+  ) : (
     <SidebarProvider>
       {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
       
@@ -1547,8 +1543,10 @@ function LayoutContent({ children, currentPageName }) {
         <MinimizedWindowsBar />
         </div>
         </SidebarProvider>
-        );
-        }
+  );
+
+  return content;
+}
 
 
 export default function Layout({ children, currentPageName }) {
