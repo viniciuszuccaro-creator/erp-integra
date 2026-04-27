@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 // Cache / dedupe global para entityGuard (TTL 120s)
 const __guardCache = (typeof window !== 'undefined' ? (window.__entityGuardCache || (window.__entityGuardCache = new Map())) : new Map());
 const __guardInflight = (typeof window !== 'undefined' ? (window.__entityGuardInflight || (window.__entityGuardInflight = new Map())) : new Map());
+const __guardCooldown = (typeof window !== 'undefined' ? (window.__entityGuardCooldown || (window.__entityGuardCooldown = new Map())) : new Map());
 const GUARD_TTL_MS = 120_000;
+const GUARD_COOLDOWN_MS = 30_000;
 const getGuardKey = (module, section, action, empresaId, groupId) => `${module || '-'}|${section || '-'}|${action || '-'}|${empresaId || '-'}|${groupId || '-'}`;
 
 export default function ProtectedSection({
@@ -28,6 +30,7 @@ export default function ProtectedSection({
   const [openDenied, setOpenDenied] = useState(false);
   const [requestingAccess, setRequestingAccess] = useState(false);
   const [requestedAccess, setRequestedAccess] = useState(false);
+  const [requestError, setRequestError] = useState("");
 
   // Sempre manter a mesma ordem de hooks entre renders
   const allowed = !isLoading && hasPermission(modulo, section, action);
@@ -47,6 +50,11 @@ export default function ProtectedSection({
 
     // Valor otimista para não bloquear UI
     setAllowedFinal(allowed);
+
+    const cooldownUntil = __guardCooldown.get(key);
+    if (cooldownUntil && cooldownUntil > Date.now()) {
+      return;
+    }
 
     if (__guardInflight.has(key)) {
       __guardInflight.get(key)
@@ -71,9 +79,13 @@ export default function ProtectedSection({
     p.then(({ data }) => {
       const backendAllowed = data?.allowed === true;
       __guardCache.set(key, { allowed: backendAllowed, ts: Date.now() });
+      __guardCooldown.delete(key);
       setAllowedFinal(backendAllowed && allowed);
     }).catch((err) => {
-      // fallback em 429/erro
+      const status = err?.response?.status || err?.status;
+      if (status === 429 || status >= 500) {
+        __guardCooldown.set(key, Date.now() + GUARD_COOLDOWN_MS);
+      }
       setAllowedFinal(allowed);
     }).finally(() => {
       __guardInflight.delete(key);
@@ -136,6 +148,11 @@ export default function ProtectedSection({
                 Pedido de acesso enviado para aprovação.
               </div>
             )}
+            {requestError && (
+              <div className="text-xs text-amber-600 mt-2">
+                {requestError}
+              </div>
+            )}
             <DialogFooter>
               <Button
                 variant="default"
@@ -143,6 +160,7 @@ export default function ProtectedSection({
                 onClick={async () => {
                   try {
                     setRequestingAccess(true);
+                    setRequestError("");
                     await base44.functions.invoke('solicitacoesAprovacao', {
                       module: modulo || 'Sistema',
                       section,
@@ -151,6 +169,9 @@ export default function ProtectedSection({
                       group_id: grupoAtual?.id || null,
                     });
                     setRequestedAccess(true);
+                  } catch (err) {
+                    const status = err?.response?.status || err?.status;
+                    setRequestError(status === 429 ? 'Muitas tentativas agora. Tente novamente em instantes.' : 'Não foi possível enviar a solicitação agora.');
                   } finally {
                     setRequestingAccess(false);
                   }
