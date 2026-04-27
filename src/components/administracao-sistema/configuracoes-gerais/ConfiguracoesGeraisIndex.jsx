@@ -9,6 +9,7 @@ import InventarioControlesCard from "@/components/administracao-sistema/fase1/In
 import MapaTogglesCard from "@/components/administracao-sistema/fase1/MapaTogglesCard";
 import Plano100StatusCard from "@/components/administracao-sistema/fase1/Plano100StatusCard";
 import ToggleMapCard from "@/components/administracao-sistema/fase1/ToggleMapCard";
+import CoberturaFluxosCard from "@/components/administracao-sistema/fase1/CoberturaFluxosCard";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
@@ -32,6 +33,7 @@ export default function ConfiguracoesGeraisIndex() {
             <MapaTogglesCard />
           </div>
           <ToggleMapCard />
+          <CoberturaFluxosCard />
           <ProtectedSection
             module="Sistema"
             section={["Configurações", "Gerais"]}
