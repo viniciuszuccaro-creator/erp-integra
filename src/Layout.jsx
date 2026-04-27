@@ -1115,7 +1115,7 @@ function LayoutContent({ children, currentPageName }) {
       })();
     } catch (_) {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, user?.id, empresaAtual?.id, moduleName, isAuthed];
+  }, [location.pathname, user?.id, empresaAtual?.id, moduleName, isAuthed]);
   useEffect(() => {
             if (!user || !isAuthed) return;
             if (AUDIT_BUSINESS_ONLY) return;
