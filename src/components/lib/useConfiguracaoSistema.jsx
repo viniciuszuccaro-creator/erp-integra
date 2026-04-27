@@ -14,6 +14,8 @@ export default function useConfiguracaoSistema({ categoria, chave } = {}) {
   const { data, isLoading, error } = useQuery({
     queryKey: ["configuracaoSistema", categoria || "*", chave || "*"],
     queryFn: async () => {
+      const authed = await base44.auth.isAuthenticated();
+      if (!authed) return null;
       const filtro = {};
       if (categoria) filtro.categoria = categoria;
       if (chave) filtro.chave = chave;

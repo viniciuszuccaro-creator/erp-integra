@@ -61,6 +61,8 @@ export function usePrefetchModuleData() {
         queryKey: qKey,
         queryFn: async () => {
           try {
+            const authed = await base44.auth.isAuthenticated();
+            if (!authed) return [];
             const res = await base44.functions.invoke('entityListSorted', {
               entityName,
               filter: ctxFilter,

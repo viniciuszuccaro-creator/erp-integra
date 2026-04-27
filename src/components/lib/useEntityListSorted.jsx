@@ -109,6 +109,8 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
       }
 
       const exec = async () => {
+        const authed = await base44.auth.isAuthenticated();
+        if (!authed) return [];
         // Serializa por entidade para evitar bursts concorrentes
         if (__elsEntityBusy.get(entityName) === true) {
           const startWait = Date.now();

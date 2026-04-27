@@ -40,6 +40,8 @@ export default function EmpresaSwitcher() {
   const { data: gruposDisponiveis = [] } = useQuery({
     queryKey: ['grupos-usuario', user?.id],
     queryFn: async () => {
+      const authed = await base44.auth.isAuthenticated();
+      if (!authed) return [];
       if (!user?.grupos_vinculados || user.grupos_vinculados.length === 0) {
         return [];
       }
@@ -62,6 +64,8 @@ export default function EmpresaSwitcher() {
   const { data: empresasDisponiveis = [] } = useQuery({
     queryKey: ['empresas-usuario', user?.id],
     queryFn: async () => {
+      const authed = await base44.auth.isAuthenticated();
+      if (!authed) return [];
       // Se admin, listar todas as empresas ativas
       if (user?.role === 'admin') {
         const todasEmpresas = await base44.entities.Empresa.list();

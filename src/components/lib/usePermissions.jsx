@@ -10,6 +10,8 @@ export default function usePermissions() {
     queryKey: ['perfil-acesso', user?.perfil_acesso_id],
     queryFn: async () => {
       if (!user?.perfil_acesso_id) return null;
+      const authed = await base44.auth.isAuthenticated();
+      if (!authed) return null;
       return await base44.entities.PerfilAcesso.get(user.perfil_acesso_id);
     },
     enabled: !!(user?.perfil_acesso_id && user.perfil_acesso_id !== ""),

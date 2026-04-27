@@ -29,8 +29,13 @@ export function useContextoVisual() {
 
   const { data: empresas = [], isLoading: loadingEmpresas } = useQuery({
     queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryFn: async () => {
+      const authed = await base44.auth.isAuthenticated();
+      if (!authed) return [];
+      return base44.entities.Empresa.list();
+    },
     staleTime: 300000,
+    enabled: !!user,
   });
 
   const [empresaAtualId, setEmpresaAtualId] = useState(null);
@@ -429,13 +434,15 @@ export function useContextoVisual() {
                      sortDirection = last?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc';
                    }
 
+                   const authed = await base44.auth.isAuthenticated();
+                   if (!authed) return [];
                    const res = await base44.functions.invoke('entityListSorted', {
-                     entityName,
-                     filter: filtro,
-                     sortField,
-                     sortDirection,
-                     limit: limit || 100,
-                   });
+                       entityName,
+                       filter: filtro,
+                       sortField,
+                       sortDirection,
+                       limit: limit || 100,
+                     });
                    return Array.isArray(res?.data) ? res.data : [];
                  };
 

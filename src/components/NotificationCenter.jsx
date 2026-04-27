@@ -22,8 +22,9 @@ export default function NotificationCenter() {
   const { data: notificacoes = [], refetch } = useQuery({
     queryKey: ['notificacoes', empresaAtual?.id],
     queryFn: async () => {
+      const authed = await base44.auth.isAuthenticated();
+      if (!authed) return [];
       const user = await base44.auth.me();
-      // Preferir filtro no servidor para respeitar multiempresa
       const filtroSrv = (!estaNoGrupo && empresaAtual) ? { empresa_id: empresaAtual.id } : {};
       const todas = await base44.entities.Notificacao.filter(filtroSrv, '-created_date', 100);
       const visiveis = todas.filter(n => !n.arquivada && (!n.destinatario_email || n.destinatario_email === user.email));
