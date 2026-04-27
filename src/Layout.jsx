@@ -1093,7 +1093,7 @@ function LayoutContent({ children, currentPageName }) {
 
   // Auditoria de navegação entre páginas
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isAuthed) return;
     try {
       (async () => {
         try {
@@ -1115,7 +1115,7 @@ function LayoutContent({ children, currentPageName }) {
       })();
     } catch (_) {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, user?.id, empresaAtual?.id, moduleName]);
+  }, [location.pathname, user?.id, empresaAtual?.id, moduleName, isAuthed];
   useEffect(() => {
             if (!user || !isAuthed) return;
             if (AUDIT_BUSINESS_ONLY) return;
@@ -1291,7 +1291,7 @@ function LayoutContent({ children, currentPageName }) {
     "Recursos Humanos": "RH",
   };
 
-  const itemsFiltrados = navigationItems.filter(item => {
+  const itemsFiltrados = !isAuthed ? [] : navigationItems.filter(item => {
     if (item.adminOnly && user?.role !== 'admin') return false;
     const mod = titleToModule[item.title];
     if (!mod) return true; // itens públicos ou informativos continuam visíveis
@@ -1299,7 +1299,7 @@ function LayoutContent({ children, currentPageName }) {
   });
 
   useEffect(() => {
-    if (!moduleName || !isAuthed) return;
+    if (!moduleName || !isAuthed || !user) return;
     const key = `audit_block_${moduleName}`;
     try {
       const allowed = hasPermission(moduleName, null, 'ver');
@@ -1474,17 +1474,17 @@ function LayoutContent({ children, currentPageName }) {
                 <AcoesRapidasGlobal />
 
                 <NotificationCenter />
-                {hasPermission('Estoque', null, 'visualizar') && (
+                {isAuthed && hasPermission('Estoque', null, 'visualizar') && (
                   <button onClick={handleIAEstoque} className="px-2 py-1 rounded-lg hover:bg-slate-100 text-sm text-slate-600 hidden lg:inline" title="Previsões de Estoque (IA)">
                     IA Estoque
                   </button>
                 )}
-                {hasPermission('Financeiro', null, 'visualizar') && (
+                {isAuthed && hasPermission('Financeiro', null, 'visualizar') && (
                   <button onClick={handleIAFinanceiro} className="px-2 py-1 rounded-lg hover:bg-slate-100 text-sm text-slate-600 hidden lg:inline" title="Anomalias Financeiras (IA)">
                     IA Financeiro
                   </button>
                 )}
-                {hasPermission('Comercial', null, 'visualizar') && (
+                {isAuthed && hasPermission('Comercial', null, 'visualizar') && (
                   <Link to={createPageUrl('Comercial')} className="px-2 py-1 rounded-lg hover:bg-slate-100 text-sm text-slate-600 hidden lg:inline" title="Funil e KPIs Comerciais">
                     Funil/KPIs
                   </Link>
@@ -1507,7 +1507,7 @@ function LayoutContent({ children, currentPageName }) {
                 Selecione uma empresa para carregar os dados. O acesso está bloqueado sem empresa selecionada.
               </div>
               )}
-              {!integracoesOk && hasPermission('Sistema', null, 'ver') && (
+              {isAuthed && !integracoesOk && hasPermission('Sistema', null, 'ver') && (
               <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
                 Integrações fiscais pendentes nesta empresa. <Link to={createPageUrl("AdministracaoSistema?tab=integracoes")} className="underline">Configurar agora</Link>.
               </div>
