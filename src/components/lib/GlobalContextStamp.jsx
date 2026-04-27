@@ -9,10 +9,10 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * - Não altera UI e não renderiza nada
  */
 export default function GlobalContextStamp() {
-  const { getFiltroContexto, carimbarContexto, contexto, empresaAtual, grupoAtual } = useContextoVisual();
+  const { getFiltroContexto, carimbarContexto, contexto, empresaAtual, grupoAtual, authChecked, isAuthenticated } = useContextoVisual();
 
   useEffect(() => {
-    if (!base44?.entities) return;
+    if (!base44?.entities || !authChecked || !isAuthenticated) return;
     const root = base44.entities;
     if (root.__patched_multiempresa) return; // evita patch duplicado
 
@@ -91,7 +91,7 @@ export default function GlobalContextStamp() {
     } catch (_) {}
 
     // sem cleanup (mantém patch durante a sessão)
-  }, [contexto, empresaAtual?.id, grupoAtual?.id]);
+  }, [contexto, empresaAtual?.id, grupoAtual?.id, authChecked, isAuthenticated]);
 
   return null;
 }

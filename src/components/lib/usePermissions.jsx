@@ -1,9 +1,11 @@
 import { useUser } from "./UserContext";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function usePermissions() {
   const { user, isLoading: loadingUser } = useUser();
+  const { authChecked, isAuthenticated } = useContextoVisual();
 
   // Buscar perfil de acesso completo
   const { data: perfilAcesso, isLoading: loadingPerfil } = useQuery({
@@ -14,7 +16,7 @@ export default function usePermissions() {
       if (!authed) return null;
       return await base44.entities.PerfilAcesso.get(user.perfil_acesso_id);
     },
-    enabled: !!(user?.perfil_acesso_id && user.perfil_acesso_id !== ""),
+    enabled: authChecked && isAuthenticated && !!(user?.perfil_acesso_id && user.perfil_acesso_id !== ""),
     staleTime: 300000,  // 5 min — evita re-fetches que causam flicker no RBAC
     gcTime: 600000,
     retry: 1,

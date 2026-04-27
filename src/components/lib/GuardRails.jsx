@@ -8,19 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function GuardRails({ children, currentPageName }) {
   const { user } = useUser();
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, authChecked, isAuthenticated } = useContextoVisual();
   const [auth, setAuth] = React.useState(false);
   const [booted, setBooted] = React.useState(false);
 
   React.useEffect(() => {
-    let mounted = true;
-    base44.auth.isAuthenticated().then((ok) => {
-      if (!mounted) return;
-      setAuth(!!ok);
-      setBooted(true);
-    });
-    return () => { mounted = false; };
-  }, []);
+    if (!authChecked) return;
+    setAuth(!!isAuthenticated);
+    setBooted(true);
+  }, [authChecked, isAuthenticated]);
 
   // Loading state until auth/context determined
   if (!booted) {
