@@ -13,6 +13,14 @@ export function UserProvider({ children }) {
     
     const loadUser = async () => {
       try {
+        const authed = await base44.auth.isAuthenticated();
+        if (!authed) {
+          if (mounted) {
+            setUser(null);
+            setError(null);
+          }
+          return;
+        }
         const currentUser = await base44.auth.me();
         if (mounted) {
           setUser(currentUser);
@@ -40,6 +48,12 @@ export function UserProvider({ children }) {
 
   const refreshUser = async () => {
     try {
+      const authed = await base44.auth.isAuthenticated();
+      if (!authed) {
+        setUser(null);
+        setError(null);
+        return;
+      }
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       setError(null);

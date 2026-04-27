@@ -7,6 +7,8 @@ export default function useEntityContextInfo(entityName) {
     queryKey: ["schema", entityName],
     queryFn: async () => {
       try {
+        const authed = await base44.auth.isAuthenticated();
+        if (!authed) return null;
         const fn = base44.entities?.[entityName]?.schema;
         if (typeof fn === "function") return await fn();
       } catch {}

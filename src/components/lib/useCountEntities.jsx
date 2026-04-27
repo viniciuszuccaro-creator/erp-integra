@@ -153,6 +153,8 @@ export function useCountEntities(entityName, filter = {}, options = {}) {
   const { data: count = 0, isLoading, error, refetch } = useQuery({
     queryKey: [entityName, 'count', stableKey(finalFilter), empresaId || null, groupId || null],
     queryFn: async () => {
+      const authed = await base44.auth.isAuthenticated();
+      if (!authed) return 0;
       // cooldown anti-429
       const cd = cooldown.get(entityName) || 0;
       if (Date.now() < cd) {

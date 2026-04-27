@@ -21,6 +21,11 @@ export function useContextoGrupoEmpresa() {
 
   const carregarContextoInicial = async () => {
     try {
+      const authed = await base44.auth.isAuthenticated();
+      if (!authed) {
+        setUser(null);
+        return;
+      }
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
@@ -155,6 +160,8 @@ export function useContextoGrupoEmpresa() {
     queryKey: ['empresas-grupo', grupoAtual?.id],
     queryFn: async () => {
       if (!grupoAtual?.id) return [];
+      const authed = await base44.auth.isAuthenticated();
+      if (!authed) return [];
       return await base44.entities.Empresa.filter({
         grupo_id: grupoAtual.id,
         status: 'Ativa'

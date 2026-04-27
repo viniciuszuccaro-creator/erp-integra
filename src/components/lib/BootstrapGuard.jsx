@@ -13,6 +13,8 @@ export default function BootstrapGuard({ children }) {
     queryKey: ["ia-config"],
     queryFn: async () => {
       try {
+        const authed = await base44.auth.isAuthenticated();
+        if (!authed) return [];
         return await base44.entities.IAConfig.list();
       } catch (e) {
         logUIIssue({ component: "BootstrapGuard", issue: "Falha ao carregar IAConfig", severity: "error", meta: { error: String(e?.message || e) } });
@@ -20,6 +22,7 @@ export default function BootstrapGuard({ children }) {
       }
     },
     initialData: [],
+    enabled: !!user,
   });
 
   React.useEffect(() => {
