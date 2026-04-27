@@ -7,6 +7,8 @@ import HerancaConfigNotice from "@/components/administracao-sistema/common/Heran
 import Fase1AdminStatus from "@/components/administracao-sistema/fase1/Fase1AdminStatus";
 import InventarioControlesCard from "@/components/administracao-sistema/fase1/InventarioControlesCard";
 import MapaTogglesCard from "@/components/administracao-sistema/fase1/MapaTogglesCard";
+import Plano100StatusCard from "@/components/administracao-sistema/fase1/Plano100StatusCard";
+import ToggleMapCard from "@/components/administracao-sistema/fase1/ToggleMapCard";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
@@ -24,10 +26,12 @@ export default function ConfiguracoesGeraisIndex() {
           <ContextoConfigBanner />
           <HerancaConfigNotice />
           <Fase1AdminStatus />
+          <Plano100StatusCard />
           <div className="grid gap-4 xl:grid-cols-2">
             <InventarioControlesCard />
             <MapaTogglesCard />
           </div>
+          <ToggleMapCard />
           <ProtectedSection
             module="Sistema"
             section={["Configurações", "Gerais"]}

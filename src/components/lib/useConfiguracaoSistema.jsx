@@ -34,7 +34,7 @@ function pickBestConfig(list = [], { empresaId, grupoId }) {
  * - Exposição segura (get/set) com cache via React Query
  * - Mantém simplicidade e não cria novos módulos: integra-se ao fluxo existente
  */
-export default function useConfiguracaoSistema({ categoria, chave, empresaId, grupoId } = {}) {
+export default function useConfiguracaoSistema({ categoria, chave, empresaId, grupoId, aliases = [] } = {}) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -42,15 +42,18 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
     queryFn: async () => {
       const authed = await base44.auth.isAuthenticated();
       if (!authed) return null;
-      const candidates = buildConfigCandidates({ categoria, chave, empresaId, grupoId });
+      const keys = [chave, ...(Array.isArray(aliases) ? aliases : [])].filter(Boolean);
+      const scopedFilters = keys.flatMap((configKey) => {
+        return buildConfigCandidates({ categoria, chave: configKey, empresaId, grupoId }).map(({ __nivel, ...rest }) => rest);
+      });
       const res = await base44.functions.invoke('getEntityRecord', {
         entityName: 'ConfiguracaoSistema',
-        filter: candidates.length > 1 ? { $or: candidates.map(({ __nivel, ...rest }) => rest) } : candidates[0],
-        limit: 50,
+        filter: scopedFilters.length > 1 ? { $or: scopedFilters } : scopedFilters[0],
+        limit: 100,
         sortField: '-updated_date'
       });
       const list = Array.isArray(res?.data) ? res.data : [];
-      return pickBestConfig(list, { empresaId, grupoId });
+      return pickBestConfig(list.filter((item) => keys.includes(item?.chave)), { empresaId, grupoId });
     },
     staleTime: 60_000,
   });
@@ -124,7 +127,7 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
       limit: 50,
       sortField: '-updated_date'
     }).then((res) => pickBestConfig(Array.isArray(res?.data) ? res.data : [], { empresaId, grupoId }));
-  }, [categoria, empresaId, grupoId]);
+  }, [categoria, empresaId, grupoId, JSON.stringify(aliases)]);
 
   return {
     config: data,
@@ -132,6 +135,7 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
     error,
     get,
     ativo,
+    isEnabled: ativo,
     resolver,
     setConfig: (patch) => setMutation.mutate(patch),
     isSaving: setMutation.isPending,
