@@ -35,7 +35,10 @@ export function usePrefetchModuleData() {
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
-  const prefetch = useCallback((moduleTitle) => {
+  const prefetch = useCallback(async (moduleTitle) => {
+    const authed = await base44.auth.isAuthenticated();
+    if (!authed) return;
+
     const specs = MODULE_PREFETCH[moduleTitle];
     if (!specs || !specs.length) return;
 

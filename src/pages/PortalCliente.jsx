@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -25,6 +26,7 @@ const TABS = [
 ];
 
 export default function PortalCliente() {
+  const { isAuthenticated, isLoadingAuth, navigateToLogin } = useAuth();
   const urlParams = new URLSearchParams(window.location.search);
   const token = urlParams.get('token');
 
@@ -42,6 +44,7 @@ export default function PortalCliente() {
 
   const { data: user } = useQuery({
     queryKey: ['me'],
+    enabled: !!isAuthenticated,
     queryFn: () => base44.auth.me(),
   });
 
@@ -64,7 +67,7 @@ export default function PortalCliente() {
 
   const { data: spotlight } = useQuery({
     queryKey: ['portal-token', token],
-    enabled: !!token,
+    enabled: !!token && !!isAuthenticated,
     queryFn: async () => {
       const res = await base44.functions.invoke('portalToken', { action: 'validate', token });
       const exp = res?.data?.exp;
@@ -72,6 +75,31 @@ export default function PortalCliente() {
       return { raw: res?.data, exp_minutes_remaining: expMin };
     }
   });
+
+  if (isLoadingAuth) {
+    return (
+      <div className="w-full h-full p-4 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3 text-blue-600" />
+          <div className="text-sm text-muted-foreground">Verificando acesso...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="w-full h-full p-6 flex items-center justify-center">
+        <Card className="max-w-lg w-full">
+          <CardContent className="p-6 text-center space-y-3">
+            <div className="text-lg font-semibold text-slate-900">Faça login para acessar o portal</div>
+            <div className="text-sm text-muted-foreground">Seu acesso precisa ser autenticado antes de carregar os dados.</div>
+            <button onClick={() => navigateToLogin()} className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">Entrar</button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isNonPortalRole) {
     return (

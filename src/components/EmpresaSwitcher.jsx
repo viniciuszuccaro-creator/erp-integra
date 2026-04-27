@@ -116,7 +116,10 @@ export default function EmpresaSwitcher() {
     );
   }
 
-  const handleSelecaoContexto = (value) => {
+  const handleSelecaoContexto = async (value) => {
+    const authed = await base44.auth.isAuthenticated();
+    if (!authed) return;
+
     const [tipo, id] = value.split(':');
     
     if (tipo === 'grupo') {
