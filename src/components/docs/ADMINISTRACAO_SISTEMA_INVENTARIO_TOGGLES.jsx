@@ -1,4 +1,4 @@
-export default `# Inventário — Administração do Sistema
+export default String.raw`# Inventário — Administração do Sistema
 
 ## Abas principais
 - `gerais` → `ConfiguracoesGeraisIndex` → `ConfigGlobal`
