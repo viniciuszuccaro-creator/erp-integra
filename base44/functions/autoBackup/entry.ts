@@ -41,6 +41,14 @@ Deno.serve(async (req) => {
     let body = {}; try { body = await req.json(); } catch { body = {}; }
     const filtros = body?.filtros || {};
 
+    try {
+      const cfgRes = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ chave: 'cc_backup_automatico', ...(filtros?.empresa_id ? { empresa_id: filtros.empresa_id } : {}), ...(filtros?.group_id ? { group_id: filtros.group_id } : {}) }, '-updated_date', 1);
+      const cfg = Array.isArray(cfgRes) ? (cfgRes[0] || null) : null;
+      if (cfg && cfg.ativa === false) {
+        return Response.json({ ok: true, skipped: true, reason: 'backup_disabled_by_config' });
+      }
+    } catch (_) {}
+
     // Entidades principais (multiempresa aplicada via filtros opcionais)
     const where = (extra = {}) => ({ ...(filtros?.empresa_id ? { empresa_id: filtros.empresa_id } : {}), ...(filtros?.group_id ? { group_id: filtros.group_id } : {}), ...extra });
 

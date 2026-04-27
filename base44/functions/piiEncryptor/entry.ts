@@ -56,6 +56,14 @@ Deno.serve(async (req) => {
     // RBAC soft-guard via existing guard (best-effort)
     try { await base44.functions.invoke('entityGuard', { module: 'Sistema', section: 'Seguranca', action: 'executar', function_name: 'piiEncryptor' }); } catch {}
 
+    try {
+      const cfgRes = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ chave: 'cc_criptografia_dados' }, '-updated_date', 1);
+      const cfg = Array.isArray(cfgRes) ? (cfgRes[0] || null) : null;
+      if (cfg && cfg.ativa === false) {
+        return Response.json({ ok: true, skipped: true, reason: 'encryption_disabled_by_config' });
+      }
+    } catch (_) {}
+
     const key = await getKey();
     const rec = await base44.asServiceRole.entities[entity].get(id);
     if (!rec) return Response.json({ error: 'Record not found' }, { status: 404 });

@@ -8,30 +8,45 @@ import { base44 } from "@/api/base44Client";
  * - Exposição segura (get/set) com cache via React Query
  * - Mantém simplicidade e não cria novos módulos: integra-se ao fluxo existente
  */
-export default function useConfiguracaoSistema({ categoria, chave } = {}) {
+export default function useConfiguracaoSistema({ categoria, chave, empresaId, grupoId } = {}) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["configuracaoSistema", categoria || "*", chave || "*"],
+    queryKey: ["configuracaoSistema", categoria || "*", chave || "*", empresaId || "sem-empresa", grupoId || "sem-grupo"],
     queryFn: async () => {
       const authed = await base44.auth.isAuthenticated();
       if (!authed) return null;
-      const filtro = {};
-      if (categoria) filtro.categoria = categoria;
-      if (chave) filtro.chave = chave;
-      const list = await base44.entities.ConfiguracaoSistema.filter(filtro, "-updated_date", 1);
-      return Array.isArray(list) && list.length ? list[0] : null;
+      const orConds = [];
+      const baseFilter = {};
+      if (categoria) baseFilter.categoria = categoria;
+      if (chave) baseFilter.chave = chave;
+      if (empresaId && grupoId) orConds.push({ ...baseFilter, empresa_id: empresaId, group_id: grupoId });
+      if (empresaId) orConds.push({ ...baseFilter, empresa_id: empresaId });
+      if (grupoId) orConds.push({ ...baseFilter, group_id: grupoId });
+      orConds.push(baseFilter);
+      const res = await base44.functions.invoke('getEntityRecord', {
+        entityName: 'ConfiguracaoSistema',
+        filter: orConds.length > 1 ? { $or: orConds } : baseFilter,
+        limit: 20,
+        sortField: '-updated_date'
+      });
+      const list = Array.isArray(res?.data) ? res.data : [];
+      return list[0] || null;
     },
     staleTime: 60_000,
   });
 
   const setMutation = useMutation({
     mutationFn: async (payload) => {
-      if (!data?.id) {
-        const novo = { categoria: categoria || "Sistema", chave: chave || "default", ...payload };
-        return base44.entities.ConfiguracaoSistema.create(novo);
-      }
-      return base44.entities.ConfiguracaoSistema.update(data.id, payload);
+      return base44.functions.invoke('upsertConfig', {
+        id: data?.id,
+        chave: chave || payload?.chave || "default",
+        data: { categoria: categoria || "Sistema", ...payload },
+        scope: {
+          ...(grupoId ? { group_id: grupoId } : {}),
+          ...(empresaId ? { empresa_id: empresaId } : {})
+        }
+      });
     },
     onSuccess: async (res, variables) => {
       // Invalida todos os consumidores conhecidos
