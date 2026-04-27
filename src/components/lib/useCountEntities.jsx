@@ -121,7 +121,7 @@ function enqueue(reqKey, entityName, filter) {
  * Retrocompatível com a interface anterior.
  */
 export function useCountEntities(entityName, filter = {}, options = {}) {
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, authChecked, isAuthenticated } = useContextoVisual();
   const { cache, cooldown } = getHelpers();
 
   // Monta filtro com contexto multiempresa quando não explicitado
@@ -174,7 +174,7 @@ export function useCountEntities(entityName, filter = {}, options = {}) {
     refetchOnReconnect: false,
     retry: 2,
     retryDelay: (i) => Math.min(1000 * 2 ** i, 5000),
-    enabled: (options.enabled ?? true) && !!entityName && (!!empresaId || !!groupId),
+    enabled: (options.enabled ?? true) && authChecked && isAuthenticated && !!entityName && (!!empresaId || !!groupId),
     placeholderData: (prev) => {
       if (prev !== undefined) return prev;
       const cached = cache.get(reqKey);

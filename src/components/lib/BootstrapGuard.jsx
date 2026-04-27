@@ -7,7 +7,7 @@ import { logUIIssue } from "@/components/lib/uiAudit";
 
 export default function BootstrapGuard({ children }) {
   const { user, isLoading: loadingUser } = useUser();
-  const { empresaAtual, isLoading: loadingCtx } = useContextoVisual();
+  const { empresaAtual, isLoading: loadingCtx, authChecked, isAuthenticated } = useContextoVisual();
 
   const { data: iaConfigs, isLoading: loadingIA } = useQuery({
     queryKey: ["ia-config"],
@@ -22,7 +22,7 @@ export default function BootstrapGuard({ children }) {
       }
     },
     initialData: [],
-    enabled: !!user && !!empresaAtual,
+    enabled: authChecked && isAuthenticated && !!user && !!empresaAtual,
   });
 
   React.useEffect(() => {
@@ -31,7 +31,7 @@ export default function BootstrapGuard({ children }) {
     }
   }, [loadingIA, iaConfigs?.length]);
 
-  const booting = loadingUser || loadingIA || loadingCtx;
+  const booting = loadingUser || loadingCtx || (authChecked && isAuthenticated && !!user && !!empresaAtual && loadingIA);
 
   if (booting) {
     return (

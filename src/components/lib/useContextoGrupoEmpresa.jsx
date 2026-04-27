@@ -14,6 +14,7 @@ export function useContextoGrupoEmpresa() {
   const [grupoAtual, setGrupoAtual] = useState(null);
   const [empresaAtual, setEmpresaAtual] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -24,6 +25,7 @@ export function useContextoGrupoEmpresa() {
     try {
       const authed = await base44.auth.isAuthenticated();
       if (!authed) {
+        setIsAuthenticated(false);
         setUser(null);
         setGrupoAtual(null);
         setEmpresaAtual(null);
@@ -31,6 +33,7 @@ export function useContextoGrupoEmpresa() {
         return;
       }
       const currentUser = await base44.auth.me();
+      setIsAuthenticated(true);
       setUser(currentUser);
 
       // Detecta contexto: prioridade user.contexto_atual, senão localStorage
@@ -65,6 +68,7 @@ export function useContextoGrupoEmpresa() {
       }
       setAuthChecked(true);
     } catch (error) {
+      setIsAuthenticated(false);
       console.error("Erro ao carregar contexto:", error);
       setAuthChecked(true);
     }
@@ -335,7 +339,9 @@ export function useContextoGrupoEmpresa() {
     ratearDocumento,
     sincronizarBaixaParaEmpresas,
     sincronizarBaixaParaGrupo,
-    isLoading: !authChecked
+    isLoading: !authChecked,
+    authChecked,
+    isAuthenticated
   };
 }
 
