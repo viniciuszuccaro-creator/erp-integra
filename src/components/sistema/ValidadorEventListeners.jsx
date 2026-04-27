@@ -18,7 +18,7 @@ export default function ValidadorEventListeners() {
 
     try {
       // Escanear listeners no document
-      const docListeners = getEventListeners?.(document) || {};
+      const docListeners = (window.getEventListeners?.(document)) || {};
       Object.entries(docListeners).forEach(([eventType, handlers]) => {
         if (handlers.length > 0) {
           found.push({
@@ -34,7 +34,7 @@ export default function ValidadorEventListeners() {
       });
 
       // Escanear listeners no window
-      const winListeners = getEventListeners?.(window) || {};
+      const winListeners = (window.getEventListeners?.(window)) || {};
       Object.entries(winListeners).forEach(([eventType, handlers]) => {
         if (handlers.length > 0) {
           found.push({
@@ -52,7 +52,7 @@ export default function ValidadorEventListeners() {
       // Escanear inputs ativos
       const inputs = document.querySelectorAll('input, textarea');
       inputs.forEach((input, idx) => {
-        const inputListeners = getEventListeners?.(input) || {};
+        const inputListeners = (window.getEventListeners?.(input)) || {};
         const relevantEvents = ['input', 'change', 'keydown', 'keyup', 'mousedown', 'click'];
         relevantEvents.forEach(eventType => {
           if (inputListeners[eventType]?.length > 0) {

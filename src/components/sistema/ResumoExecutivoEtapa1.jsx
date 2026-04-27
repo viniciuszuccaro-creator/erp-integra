@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Shield, Zap, Eye, Lock, Activity } from 'lucide-react';
+import { CheckCircle, Shield, Zap, Eye, Lock, Activity, Trophy } from 'lucide-react';
 
 /**
  * V22.0 ETAPA 1 - Resumo Executivo
