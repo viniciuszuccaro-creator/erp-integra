@@ -15,6 +15,7 @@ export function useContextoGrupoEmpresa() {
   const [empresaAtual, setEmpresaAtual] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [contextoCarregado, setContextoCarregado] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -29,6 +30,7 @@ export function useContextoGrupoEmpresa() {
         setUser(null);
         setGrupoAtual(null);
         setEmpresaAtual(null);
+        setContextoCarregado(true);
         setAuthChecked(true);
         return;
       }
@@ -66,10 +68,12 @@ export function useContextoGrupoEmpresa() {
           if (empresas[0]) setEmpresaAtual(empresas[0]);
         }
       }
+      setContextoCarregado(true);
       setAuthChecked(true);
     } catch (error) {
       setIsAuthenticated(false);
       console.error("Erro ao carregar contexto:", error);
+      setContextoCarregado(true);
       setAuthChecked(true);
     }
   };
@@ -177,7 +181,7 @@ export function useContextoGrupoEmpresa() {
         status: 'Ativa'
       });
     },
-    enabled: authChecked && !!user && !!grupoAtual && contexto === 'grupo',
+    enabled: authChecked && contextoCarregado && !!user && !!grupoAtual && contexto === 'grupo',
   });
 
   const obterPoliticaPadrao = async (tipoDocumento) => {
@@ -341,7 +345,8 @@ export function useContextoGrupoEmpresa() {
     sincronizarBaixaParaGrupo,
     isLoading: !authChecked,
     authChecked,
-    isAuthenticated
+    isAuthenticated,
+    contextoCarregado
   };
 }
 

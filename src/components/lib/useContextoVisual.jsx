@@ -19,7 +19,10 @@ export function useContextoVisual() {
     empresaAtual: empresaContexto,
     empresasDoGrupo: empresasDoGrupoContexto,
     estaNoGrupo: estaNoGrupoContexto,
-    estaEmEmpresa
+    estaEmEmpresa,
+    authChecked,
+    isAuthenticated,
+    contextoCarregado
   } = useContextoGrupoEmpresa();
 
   // Sincroniza o contexto local com o contexto real (grupo/empresa)
@@ -35,7 +38,7 @@ export function useContextoVisual() {
       return base44.entities.Empresa.list();
     },
     staleTime: 300000,
-    enabled: !!user,
+    enabled: authChecked && isAuthenticated && contextoCarregado && !!user,
   });
 
   const [empresaAtualId, setEmpresaAtualId] = useState(null);
@@ -453,6 +456,9 @@ export function useContextoVisual() {
     estaNoGrupo: contexto === 'grupo',
     grupoAtual,
     isLoading: loadingUser || loadingEmpresas,
+    authChecked,
+    isAuthenticated,
+    contextoCarregado,
     filtrarPorContexto,
     getFiltroContexto,
     carimbarContexto,
