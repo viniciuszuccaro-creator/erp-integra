@@ -45,17 +45,13 @@ export default function EmpresaSwitcher() {
       if (!user?.grupos_vinculados || user.grupos_vinculados.length === 0) {
         return [];
       }
-      
-      const grupos = [];
-      for (const vinculo of user.grupos_vinculados) {
-        if (vinculo.ativo) {
-          const grupo = await base44.entities.GrupoEmpresarial.get(vinculo.grupo_id);
-          if (grupo && grupo.status === 'Ativo') {
-            grupos.push(grupo);
-          }
-        }
-      }
-      return grupos;
+
+      const grupos = await Promise.all(
+        user.grupos_vinculados
+          .filter((vinculo) => vinculo.ativo)
+          .map((vinculo) => base44.entities.GrupoEmpresarial.get(vinculo.grupo_id).catch(() => null))
+      );
+      return grupos.filter((grupo) => grupo && grupo.status === 'Ativo');
     },
     enabled: !!user,
   });
@@ -88,9 +84,7 @@ export default function EmpresaSwitcher() {
                   nivel_acesso: vinculo.nivel_acesso || 'Operacional'
                 });
               }
-            } catch (error) {
-              console.warn(`Empresa ${vinculo.empresa_id} não encontrada:`, error);
-            }
+            } catch (_) {}
           }
         }
         return empresas;

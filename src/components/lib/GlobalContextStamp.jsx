@@ -58,7 +58,9 @@ export default function GlobalContextStamp() {
 
       // filter
       if (o.filter) {
-        api.filter = (criterios = {}, order, limit) => {
+        api.filter = async (criterios = {}, order, limit) => {
+          const authed = await base44.auth.isAuthenticated();
+          if (!authed) return [];
           const merged = { ...criterios, ...getFiltroContexto?.() };
           return o.filter(merged, order, limit);
         };
@@ -66,7 +68,9 @@ export default function GlobalContextStamp() {
 
       // list -> direciona para filter com contexto quando possível
       if (o.list) {
-        api.list = (order, limit) => {
+        api.list = async (order, limit) => {
+          const authed = await base44.auth.isAuthenticated();
+          if (!authed) return [];
           const ctx = getFiltroContexto?.() || {};
           if (o.filter && ctx && (ctx.group_id || ctx.empresa_id)) {
             return o.filter(ctx, order, limit);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, useRef, Suspense } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
@@ -147,6 +147,15 @@ function LayoutContent({ children, currentPageName }) {
         const { prefetch: prefetchModule } = usePrefetchModuleData();
         const AUDIT_BUSINESS_ONLY = true;
         const queryClient = useQueryClient();
+        const [isAuthed, setIsAuthed] = React.useState(false);
+
+        React.useEffect(() => {
+          let mounted = true;
+          base44.auth.isAuthenticated().then((ok) => {
+            if (mounted) setIsAuthed(!!ok);
+          });
+          return () => { mounted = false; };
+        }, []);
 
         // Fase 2: Barramento de invalidação seletiva — substitui broadcast global por keys específicas
         useInvalidationBus([
@@ -154,7 +163,7 @@ function LayoutContent({ children, currentPageName }) {
           'Pedido', 'ContaReceber', 'ContaPagar', 'Entrega', 'NotaFiscal',
           'OrdemCompra', 'MovimentacaoEstoque', 'Oportunidade', 'Representante',
           'ContatoB2B', 'SegmentoCliente', 'RegiaoAtendimento',
-        ], { enabled: true });
+        ], { enabled: isAuthed });
 
         // Fase 3: Rastreamento de histórico + prefetch preditivo
         useNavHistory();
@@ -236,6 +245,7 @@ function LayoutContent({ children, currentPageName }) {
 
         const prefetchForItem = (title) => {
                         try {
+                          if (!isAuthed) return;
                           switch (title) {
                             case 'Dashboard':
                               queryClient.prefetchQuery({ queryKey: ['dash', 'kpis'], queryFn: () => base44.entities.AuditLog.filter({}, '-data_hora', 5) });
@@ -635,7 +645,7 @@ function LayoutContent({ children, currentPageName }) {
   ` : '';
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isAuthed) return;
     const entityToModule = {
       Cliente: 'CRM',
       Oportunidade: 'CRM',
@@ -747,7 +757,7 @@ function LayoutContent({ children, currentPageName }) {
 
   // Global Phase 4 patch: multiempresa stamping + audit on entity writes
   useEffect(() => {
-    if (!base44?.entities) return;
+    if (!base44?.entities || !isAuthed) return;
 
     const stamp = (dados) => {
       const out = { ...(dados || {}) };
@@ -1107,7 +1117,7 @@ function LayoutContent({ children, currentPageName }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, user?.id, empresaAtual?.id, moduleName]);
   useEffect(() => {
-            if (!user) return;
+            if (!user || !isAuthed) return;
             if (AUDIT_BUSINESS_ONLY) return;
             const handlerClick = (e) => {
       try {
@@ -1289,7 +1299,7 @@ function LayoutContent({ children, currentPageName }) {
   });
 
   useEffect(() => {
-    if (!moduleName) return;
+    if (!moduleName || !isAuthed) return;
     const key = `audit_block_${moduleName}`;
     try {
       const allowed = hasPermission(moduleName, null, 'ver');
