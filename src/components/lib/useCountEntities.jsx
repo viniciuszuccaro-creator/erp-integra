@@ -174,7 +174,7 @@ export function useCountEntities(entityName, filter = {}, options = {}) {
     refetchOnReconnect: false,
     retry: 2,
     retryDelay: (i) => Math.min(1000 * 2 ** i, 5000),
-    enabled: options.enabled ?? true,
+    enabled: (options.enabled ?? true) && !!entityName && (!!empresaId || !!groupId),
     placeholderData: (prev) => {
       if (prev !== undefined) return prev;
       const cached = cache.get(reqKey);

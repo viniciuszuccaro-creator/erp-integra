@@ -22,7 +22,7 @@ export default function BootstrapGuard({ children }) {
       }
     },
     initialData: [],
-    enabled: !!user,
+    enabled: !!user && !!empresaAtual,
   });
 
   React.useEffect(() => {

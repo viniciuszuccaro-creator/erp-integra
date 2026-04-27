@@ -13,6 +13,7 @@ export function useContextoGrupoEmpresa() {
   });
   const [grupoAtual, setGrupoAtual] = useState(null);
   const [empresaAtual, setEmpresaAtual] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -24,6 +25,9 @@ export function useContextoGrupoEmpresa() {
       const authed = await base44.auth.isAuthenticated();
       if (!authed) {
         setUser(null);
+        setGrupoAtual(null);
+        setEmpresaAtual(null);
+        setAuthChecked(true);
         return;
       }
       const currentUser = await base44.auth.me();
@@ -59,8 +63,10 @@ export function useContextoGrupoEmpresa() {
           if (empresas[0]) setEmpresaAtual(empresas[0]);
         }
       }
+      setAuthChecked(true);
     } catch (error) {
       console.error("Erro ao carregar contexto:", error);
+      setAuthChecked(true);
     }
   };
 
@@ -167,7 +173,7 @@ export function useContextoGrupoEmpresa() {
         status: 'Ativa'
       });
     },
-    enabled: !!grupoAtual && contexto === 'grupo',
+    enabled: authChecked && !!user && !!grupoAtual && contexto === 'grupo',
   });
 
   const obterPoliticaPadrao = async (tipoDocumento) => {
@@ -329,7 +335,7 @@ export function useContextoGrupoEmpresa() {
     ratearDocumento,
     sincronizarBaixaParaEmpresas,
     sincronizarBaixaParaGrupo,
-    isLoading: !user
+    isLoading: !authChecked
   };
 }
 

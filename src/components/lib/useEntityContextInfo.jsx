@@ -15,6 +15,7 @@ export default function useEntityContextInfo(entityName) {
       return null;
     },
     staleTime: 600000,
+    enabled: !!entityName,
   });
 
   const props = schema?.properties || {};
