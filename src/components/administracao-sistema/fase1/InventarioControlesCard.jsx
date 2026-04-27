@@ -7,9 +7,12 @@ const linhas = inventarioMarkdown.split("\n");
 
 const secoes = [
   { titulo: "Abas principais", match: "## Abas principais" },
+  { titulo: "Inventário operacional da área", match: "## Inventário operacional da área" },
   { titulo: "Mapa chave → função real", match: "## Mapa chave → função real" },
   { titulo: "Ações e botões críticos", match: "## Ações e botões críticos já encontrados" },
+  { titulo: "Regras obrigatórias por ação", match: "## Botões, ações e estados obrigatórios" },
   { titulo: "Cobertura já conectada", match: "## Cobertura já conectada" },
+  { titulo: "Fluxo recomendado de fechamento", match: "## Fluxo recomendado de fechamento" },
 ];
 
 function extrairSecao(match) {
