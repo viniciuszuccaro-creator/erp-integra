@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { findAdminControl } from "@/components/administracao-sistema/fase1/adminControlRegistry";
 
 function buildConfigCandidates({ categoria, chave, empresaId, grupoId }) {
   const baseFilter = {};
@@ -36,13 +37,18 @@ function pickBestConfig(list = [], { empresaId, grupoId }) {
  */
 export default function useConfiguracaoSistema({ categoria, chave, empresaId, grupoId, aliases = [] } = {}) {
   const queryClient = useQueryClient();
+  const controlMeta = findAdminControl(chave);
+  const mergedAliases = useMemo(() => {
+    const registryAliases = Array.isArray(controlMeta?.aliases) ? controlMeta.aliases : [];
+    return Array.from(new Set([...(aliases || []), ...registryAliases].filter(Boolean)));
+  }, [aliases, controlMeta]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["configuracaoSistema", categoria || "*", chave || "*", empresaId || "sem-empresa", grupoId || "sem-grupo"],
     queryFn: async () => {
       const authed = await base44.auth.isAuthenticated();
       if (!authed) return null;
-      const keys = [chave, ...(Array.isArray(aliases) ? aliases : [])].filter(Boolean);
+      const keys = [chave, ...mergedAliases].filter(Boolean);
       const scopedFilters = keys.flatMap((configKey) => {
         return buildConfigCandidates({ categoria, chave: configKey, empresaId, grupoId }).map(({ __nivel, ...rest }) => rest);
       });
@@ -127,10 +133,13 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
       limit: 50,
       sortField: '-updated_date'
     }).then((res) => pickBestConfig(Array.isArray(res?.data) ? res.data : [], { empresaId, grupoId }));
-  }, [categoria, empresaId, grupoId, JSON.stringify(aliases)]);
+  }, [categoria, empresaId, grupoId, JSON.stringify(mergedAliases)]);
 
   return {
     config: data,
+    controlMeta,
+    scope: controlMeta?.escopo || null,
+    moduleName: controlMeta?.modulo || null,
     isLoading,
     error,
     get,

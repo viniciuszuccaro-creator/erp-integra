@@ -12,6 +12,7 @@ import ToggleMapCard from "@/components/administracao-sistema/fase1/ToggleMapCar
 import CoberturaFluxosCard from "@/components/administracao-sistema/fase1/CoberturaFluxosCard";
 import InventarioControlesCompletudeCard from "@/components/administracao-sistema/fase1/InventarioControlesCompletudeCard";
 import AdminControlsStatusCard from "@/components/administracao-sistema/fase1/AdminControlsStatusCard";
+import AdminControlAuditChecklist from "@/components/administracao-sistema/fase1/AdminControlAuditChecklist";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
@@ -37,7 +38,10 @@ export default function ConfiguracoesGeraisIndex() {
           </div>
           <ToggleMapCard />
           <InventarioControlesCompletudeCard />
-          <CoberturaFluxosCard />
+          <div className="grid gap-4 xl:grid-cols-2">
+            <CoberturaFluxosCard />
+            <AdminControlAuditChecklist />
+          </div>
           <ProtectedSection
             module="Sistema"
             section={["Configurações", "Gerais"]}
