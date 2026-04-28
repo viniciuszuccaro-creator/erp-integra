@@ -4,9 +4,9 @@ import { Badge } from '@/components/ui/badge';
 
 const grupos = [
   { nome: 'Administração do Sistema', status: 'feito' },
-  { nome: 'IA', status: 'parcial' },
+  { nome: 'IA', status: 'feito' },
   { nome: 'Segurança', status: 'feito' },
-  { nome: 'Integrações', status: 'parcial' },
+  { nome: 'Integrações', status: 'feito' },
   { nome: 'Cadastros', status: 'pendente' },
   { nome: 'Financeiro', status: 'pendente' },
   { nome: 'Comercial', status: 'pendente' },

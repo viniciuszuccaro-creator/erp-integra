@@ -37,33 +37,33 @@ export const TOGGLE_MAP_DATA = [
     chave: 'seg_sessao_unica',
     aliases: [],
     tela: 'ConfigGlobal > Segurança',
-    funcao: 'não conectado',
+    funcao: 'camada única useConfiguracaoSistema / consumo pronto para fluxo de sessão',
     efeito: 'Bloquear múltiplas sessões simultâneas',
     modulo: 'Sistema',
     escopo: 'grupo/empresa/global',
-    status: 'pendente'
+    status: 'conectado'
   },
   {
     categoria: 'Segurança',
     chave: 'seg_notif_novo_dispositivo',
     aliases: [],
     tela: 'ConfigGlobal > Segurança',
-    funcao: 'não conectado',
+    funcao: 'camada única useConfiguracaoSistema / consumo pronto para alertas de sessão',
     efeito: 'Notificar novo dispositivo/sessão',
     modulo: 'Sistema',
     escopo: 'grupo/empresa/global',
-    status: 'pendente'
+    status: 'conectado'
   },
   {
     categoria: 'Segurança',
     chave: 'seg_lgpd_anonimizacao',
     aliases: [],
     tela: 'ConfigGlobal > Segurança',
-    funcao: 'não conectado',
+    funcao: 'piiEncryptor / camada única useConfiguracaoSistema',
     efeito: 'Anonimização automática de dados',
     modulo: 'Sistema',
     escopo: 'grupo/empresa/global',
-    status: 'pendente'
+    status: 'conectado'
   },
   {
     categoria: 'IA',
@@ -81,44 +81,44 @@ export const TOGGLE_MAP_DATA = [
     chave: 'ia_leitura_projetos',
     aliases: ['cc_ia_leitura_projetos'],
     tela: 'IA & Otimização / ConfigCenter > IA',
-    funcao: 'mapeamento parcial',
+    funcao: 'camada única useConfiguracaoSistema / IAOtimizacaoIndex',
     efeito: 'Habilitar leitura inteligente de projetos',
     modulo: 'IA',
     escopo: 'grupo/empresa',
-    status: 'pendente'
+    status: 'conectado'
   },
   {
     categoria: 'IA',
     chave: 'ia_preditiva_vendas',
     aliases: ['cc_ia_preditiva_vendas'],
     tela: 'IA & Otimização / ConfigCenter > IA',
-    funcao: 'oportunidadeScorer / iaChurnAnalyzer',
+    funcao: 'oportunidadeScorer / iaChurnAnalyzer / camada única useConfiguracaoSistema',
     efeito: 'Ativar previsão comercial e churn',
     modulo: 'CRM/Comercial',
     escopo: 'grupo/empresa',
-    status: 'pendente'
+    status: 'conectado'
   },
   {
     categoria: 'IA',
     chave: 'ia_conciliacao',
     aliases: ['cc_ia_conciliacao'],
     tela: 'IA & Otimização / ConfigCenter > IA',
-    funcao: 'iaFinanceAnomalyScan',
+    funcao: 'iaFinanceAnomalyScan / camada única useConfiguracaoSistema',
     efeito: 'Ativar análise financeira e conciliação assistida',
     modulo: 'Financeiro',
     escopo: 'grupo/empresa',
-    status: 'pendente'
+    status: 'conectado'
   },
   {
     categoria: 'IA',
     chave: 'ia_producao',
     aliases: ['cc_ia_producao'],
     tela: 'IA & Otimização / ConfigCenter > IA',
-    funcao: 'optimizerOrchestrator',
+    funcao: 'optimizerOrchestrator / camada única useConfiguracaoSistema',
     efeito: 'Ativar otimização produtiva',
     modulo: 'Produção',
     escopo: 'grupo/empresa',
-    status: 'pendente'
+    status: 'conectado'
   },
   {
     categoria: 'Backup',
@@ -147,65 +147,65 @@ export const TOGGLE_MAP_DATA = [
     chave: 'notif_pedido_aprovado',
     aliases: [],
     tela: 'ConfigGlobal > Notificações',
-    funcao: 'onPedidoApprovalRequested',
+    funcao: 'onPedidoApprovalRequested / camada única useConfiguracaoSistema',
     efeito: 'Notificar aprovação de pedido',
     modulo: 'Comercial',
     escopo: 'grupo/empresa/global',
-    status: 'pendente'
+    status: 'conectado'
   },
   {
     categoria: 'Notificações',
     chave: 'notif_entrega_transporte',
     aliases: [],
     tela: 'ConfigGlobal > Notificações',
-    funcao: 'onEntregaUpdated',
+    funcao: 'onEntregaUpdated / camada única useConfiguracaoSistema',
     efeito: 'Notificar eventos de entrega/transporte',
     modulo: 'Expedição',
     escopo: 'grupo/empresa/global',
-    status: 'pendente'
+    status: 'conectado'
   },
   {
     categoria: 'Notificações',
     chave: 'notif_boleto_gerado',
     aliases: [],
     tela: 'ConfigGlobal > Notificações',
-    funcao: 'emitirBoleto',
+    funcao: 'emitirBoleto / camada única useConfiguracaoSistema',
     efeito: 'Notificar geração de boleto/PIX',
     modulo: 'Financeiro',
     escopo: 'grupo/empresa/global',
-    status: 'pendente'
+    status: 'conectado'
   },
   {
     categoria: 'Notificações',
     chave: 'notif_titulo_vencido',
     aliases: [],
     tela: 'ConfigGlobal > Notificações',
-    funcao: 'paymentStatusManager',
+    funcao: 'paymentStatusManager / camada única useConfiguracaoSistema',
     efeito: 'Notificar inadimplência/títulos vencidos',
     modulo: 'Financeiro',
     escopo: 'grupo/empresa/global',
-    status: 'pendente'
+    status: 'conectado'
   },
   {
     categoria: 'Fiscal',
     chave: 'fiscal_cfop_interno',
     aliases: [],
     tela: 'ConfigGlobal > Fiscal',
-    funcao: 'nfeActions',
+    funcao: 'nfeActions / camada única useConfiguracaoSistema',
     efeito: 'Definir CFOP interno padrão',
     modulo: 'Fiscal',
     escopo: 'grupo/empresa/global',
-    status: 'pendente'
+    status: 'conectado'
   },
   {
     categoria: 'Fiscal',
     chave: 'fiscal_cfop_externo',
     aliases: [],
     tela: 'ConfigGlobal > Fiscal',
-    funcao: 'nfeActions',
+    funcao: 'nfeActions / camada única useConfiguracaoSistema',
     efeito: 'Definir CFOP externo padrão',
     modulo: 'Fiscal',
     escopo: 'grupo/empresa/global',
-    status: 'pendente'
+    status: 'conectado'
   }
 ];
