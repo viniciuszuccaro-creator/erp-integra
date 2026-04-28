@@ -13,6 +13,7 @@ import TesteGoogleMaps from "@/components/integracoes/TesteGoogleMaps";
 import StatusIntegracoes from "@/components/integracoes/StatusIntegracoes";
 
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import useConfiguracaoSistema from "@/components/lib/useConfiguracaoSistema";
 import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
 import { FileText, DollarSign, MessageCircle, Truck, Globe, ShoppingCart, CheckCircle2, AlertCircle } from "lucide-react";
@@ -21,9 +22,10 @@ import { useQuery } from "@tanstack/react-query";
 import SincronizacaoMarketplacesAtiva from "@/components/integracoes/SincronizacaoMarketplacesAtiva";
 
 export default function IntegracoesIndex({ initialTab }) {
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
   const { user } = useUser();
   const [tab, setTab] = useState(initialTab || "gerenciamento");
+  const integracoesBase = useConfiguracaoSistema({ chave: empresaAtual?.id ? `integracoes_${empresaAtual.id}` : null, categoria: 'Integracoes', empresaId: empresaAtual?.id, grupoId: grupoAtual?.id });
 
   const handleTabChange = (next) => {
     setTab(next);
@@ -46,14 +48,7 @@ export default function IntegracoesIndex({ initialTab }) {
     queryFn: async () => {
       if (!empresaAtual?.id) return null;
       try {
-        const chave = `integracoes_${empresaAtual.id}`;
-        const res = await base44.functions.invoke('getEntityRecord', {
-          entityName: 'ConfiguracaoSistema',
-          filter: { chave },
-          limit: 1,
-        });
-        const list = Array.isArray(res?.data) ? res.data : [];
-        return list[0] || null;
+        return integracoesBase.config || null;
       } catch (_) { return null; }
     },
     enabled: !!empresaAtual?.id,

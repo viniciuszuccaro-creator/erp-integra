@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Brain, Zap, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import useConfiguracaoSistema from "@/components/lib/useConfiguracaoSistema";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToggleConfig } from "@/components/lib/useToggleConfig";
 import ToggleRow from "@/components/sistema/ToggleRow";
@@ -63,7 +64,9 @@ export default function IAOtimizacaoIndex({ initialTab }) {
   }, [eId, gId]);
 
   // IAToggleRow agora usa o ToggleRow compartilhado com accentColor purple
-  const IAToggleRow = ({ chave, label, desc }) => (
+  const IAToggleRow = ({ chave, label, desc, aliases = [] }) => {
+    useConfiguracaoSistema({ chave, aliases, empresaId: eId, grupoId: gId, categoria: 'Sistema' });
+    return (
     <ToggleRow
       configs={configsToggle}
       chave={chave}
@@ -77,6 +80,7 @@ export default function IAOtimizacaoIndex({ initialTab }) {
       accentColor="purple"
     />
   );
+  };
 
   const handleTabChange = (next) => {
     setTab(next);
@@ -136,10 +140,10 @@ export default function IAOtimizacaoIndex({ initialTab }) {
                   <CardContent className="p-3 space-y-2">
                     {(eId || gId) ? (
                       <>
-                        <IAToggleRow chave="ia_leitura_projetos" label="IA Leitura de Projetos" desc="Análise automática de projetos de engenharia" />
-                        <IAToggleRow chave="ia_preditiva_vendas" label="IA Preditiva de Vendas" desc="Previsão de demanda e detecção de churn" />
-                        <IAToggleRow chave="ia_conciliacao" label="IA Conciliação Bancária" desc="Conciliação automática de extratos" />
-                        <IAToggleRow chave="ia_producao" label="IA Produção" desc="Otimização de ordens de produção" />
+                        <IAToggleRow chave="ia_leitura_projetos" aliases={["cc_ia_leitura_projetos"]} label="IA Leitura de Projetos" desc="Análise automática de projetos de engenharia" />
+                        <IAToggleRow chave="ia_preditiva_vendas" aliases={["cc_ia_preditiva_vendas"]} label="IA Preditiva de Vendas" desc="Previsão de demanda e detecção de churn" />
+                        <IAToggleRow chave="ia_conciliacao" aliases={["cc_ia_conciliacao"]} label="IA Conciliação Bancária" desc="Conciliação automática de extratos" />
+                        <IAToggleRow chave="ia_producao" aliases={["cc_ia_producao"]} label="IA Produção" desc="Otimização de ordens de produção" />
                         <IAToggleRow chave="ia_recomendacao_produtos" label="IA Recomendação de Produtos" desc="Sugestões inteligentes no checkout" />
                         <IAToggleRow chave="ia_anomalia_financeira" label="IA Detector de Anomalias Financeiras" desc="Detecta pagamentos suspeitos e duplicados" />
                       </>
