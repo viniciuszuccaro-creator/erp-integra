@@ -2,7 +2,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import { CheckCircle2, AlertCircle, XCircle, Wifi, WifiOff } from "lucide-react";
+import { CheckCircle2, AlertCircle, XCircle, Wifi } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 /**

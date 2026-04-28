@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ADMIN_CONTROL_ITEMS } from "./adminControlInventory";
 
 const itens = [
   { chave: "seg_auditoria_detalhada", tela: "Configurações Gerais > Segurança", funcao: "auditError", modulo: "Sistema", escopo: "grupo/empresa/global" },
@@ -25,6 +26,8 @@ const itens = [
 ];
 
 export default function MapaTogglesCard() {
+  const actionMap = Object.fromEntries(ADMIN_CONTROL_ITEMS.filter((item) => item.funcao).map((item) => [item.funcao, item]));
+
   return (
     <Card className="w-full">
       <CardHeader className="pb-3">
@@ -42,6 +45,11 @@ export default function MapaTogglesCard() {
               <div><span className="font-medium">Módulo:</span> {item.modulo}</div>
               <div><span className="font-medium">Escopo:</span> {item.escopo}</div>
             </div>
+            {actionMap[item.funcao] && (
+              <div className="rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-600">
+                Controle relacionado: {actionMap[item.funcao].label} • {actionMap[item.funcao].tela}
+              </div>
+            )}
           </div>
         ))}
       </CardContent>
