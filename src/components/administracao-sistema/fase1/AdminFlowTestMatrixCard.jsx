@@ -4,14 +4,14 @@ import { Badge } from '@/components/ui/badge';
 
 const FLOW_GROUPS = [
   { nome: 'Administração do Sistema', status: 'coberto' },
-  { nome: 'IA', status: 'parcial' },
+  { nome: 'IA', status: 'coberto' },
   { nome: 'Segurança', status: 'coberto' },
   { nome: 'Integrações', status: 'coberto' },
   { nome: 'Cadastros', status: 'pendente' },
   { nome: 'Financeiro', status: 'pendente' },
   { nome: 'Comercial', status: 'pendente' },
   { nome: 'Estoque', status: 'pendente' },
-  { nome: 'Produção', status: 'parcial' },
+  { nome: 'Produção', status: 'pendente' },
   { nome: 'Expedição', status: 'pendente' },
 ];
 

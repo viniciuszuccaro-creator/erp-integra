@@ -77,7 +77,7 @@ export const ADMIN_CONTROL_REQUIREMENTS = [
     id: 'feedback',
     label: 'Feedback visual na execução',
     description: 'Ação precisa mostrar estado carregando, sucesso ou erro para o usuário.',
-    coveredBy: ['seedData', 'backfillDry', 'backfillApply']
+    coveredBy: ['seedData', 'backfillDry', 'backfillApply', 'criarBaseIntegracoes', 'testarWebhookAsaas', 'simularNfeAutorizada']
   },
   {
     id: 'audit',

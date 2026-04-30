@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { toast } from "sonner";
+import { validateAdminControlExecution } from "@/components/administracao-sistema/fase1/adminActionGuards";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,37 +65,57 @@ export default function IntegracoesIndex({ initialTab }) {
 
   const handleCriarBase = async () => {
     if (!empresaAtual?.id) return;
-    if (!auditoriaAtiva) return;
-    const chave = `integracoes_${empresaAtual.id}`;
-    await base44.functions.invoke('upsertConfig', {
-      chave,
-      data: {
+    try {
+      const guard = await validateAdminControlExecution({ controlId: 'integracoes_empresa_base', empresaId: empresaAtual.id, grupoId: grupoAtual?.id || null });
+      if (!guard.allowed) throw new Error(guard.reason);
+      const chave = `integracoes_${empresaAtual.id}`;
+      await base44.functions.invoke('upsertConfig', {
         chave,
-        categoria: 'Integracoes',
-        integracao_nfe: { provedor: null, api_url: null, api_key: null, cnpj_emitente: null, ambiente: 'homologacao' },
-        integracao_boletos: { provedor: null, api_url: null, api_key: null, customer_id_default: null, customers_map: {} }
-      },
-      scope: { empresa_id: empresaAtual.id }
-    });
+        data: {
+          chave,
+          categoria: 'Integracoes',
+          integracao_nfe: { provedor: null, api_url: null, api_key: null, cnpj_emitente: null, ambiente: 'homologacao' },
+          integracao_boletos: { provedor: null, api_url: null, api_key: null, customer_id_default: null, customers_map: {} }
+        },
+        scope: { empresa_id: empresaAtual.id }
+      });
+      toast.success('Estrutura base criada com sucesso.');
+    } catch (error) {
+      toast.error(error?.message || 'Não foi possível criar a estrutura base.');
+    }
   };
 
   const handleTestWebhookAsaasPago = async () => {
     if (!empresaAtual?.id) return;
-    await base44.functions.invoke('legacyIntegrationsMirror', {
-      provider: 'asaas',
-      empresa_id: empresaAtual.id,
-      payment: { id: 'test_payment', status: 'RECEIVED', value: 10 }
-    });
+    try {
+      const guard = await validateAdminControlExecution({ controlId: 'integracoes_webhook_asaas', empresaId: empresaAtual.id, grupoId: grupoAtual?.id || null });
+      if (!guard.allowed) throw new Error(guard.reason);
+      await base44.functions.invoke('legacyIntegrationsMirror', {
+        provider: 'asaas',
+        empresa_id: empresaAtual.id,
+        payment: { id: 'test_payment', status: 'RECEIVED', value: 10 }
+      });
+      toast.success('Webhook Asaas simulado com sucesso.');
+    } catch (error) {
+      toast.error(error?.message || 'Falha ao simular webhook Asaas.');
+    }
   };
 
   const handleTestWebhookNFeAutorizada = async () => {
     if (!empresaAtual?.id) return;
-    await base44.functions.invoke('legacyIntegrationsMirror', {
-      provider: 'enotas',
-      empresa_id: empresaAtual.id,
-      nfeId: 'test_nf',
-      status: 'autorizada'
-    });
+    try {
+      const guard = await validateAdminControlExecution({ controlId: 'integracoes_webhook_nfe', empresaId: empresaAtual.id, grupoId: grupoAtual?.id || null });
+      if (!guard.allowed) throw new Error(guard.reason);
+      await base44.functions.invoke('legacyIntegrationsMirror', {
+        provider: 'enotas',
+        empresa_id: empresaAtual.id,
+        nfeId: 'test_nf',
+        status: 'autorizada'
+      });
+      toast.success('NF-e autorizada simulada com sucesso.');
+    } catch (error) {
+      toast.error(error?.message || 'Falha ao simular NF-e autorizada.');
+    }
   };
 
   const handleCopy = async (text) => {

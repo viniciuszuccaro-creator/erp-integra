@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Settings, Users, Shield, FileText, Sparkles, Wrench, Brain, Plug } from "lucide-react";
+import { Settings, Users, Shield, FileText, Wrench, Brain, Plug } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import { Button } from "@/components/ui/button";
@@ -48,7 +48,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
     await logAdminAction(`Aba administrativa aberta: ${val}`, { tab: val, permitted: true });
   };
 
-  const canAccess = (perm) => isAdminUser || hasPermission('Sistema', perm, 'visualizar');
+  const canAccess = (perm) => isAdminUser || hasPermission('Sistema', perm, 'visualizar') || hasPermission('Sistema', perm, 'ver');
   const visibleTabs = TAB_DEFS.filter(t => canAccess(t.perm));
 
   const logAdminAction = async (descricao, dados_novos = null) => {
