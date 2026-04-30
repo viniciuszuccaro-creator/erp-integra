@@ -1,15 +1,12 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ADMIN_CONTROL_ITEMS } from './adminControlInventory';
-import { TOGGLE_MAP_DATA } from './toggleMapData';
-import { getAdminControlsByModule } from './adminControlRegistry';
-
-const toggleKeys = new Set(TOGGLE_MAP_DATA.map((item) => item.chave));
+import { getAdminControlsByModule, getAdminCoverageSummary } from './adminControlRegistry';
 
 export default function AdminControlsStatusCard() {
-  const total = ADMIN_CONTROL_ITEMS.length;
-  const mapeados = ADMIN_CONTROL_ITEMS.filter((item) => item.funcao || toggleKeys.has(item.id)).length;
+  const summary = getAdminCoverageSummary();
+  const total = summary.total;
+  const mapeados = summary.conectado + summary.parcial + summary.aba;
   const percentual = total ? Math.round((mapeados / total) * 100) : 0;
   const byModule = getAdminControlsByModule();
   const modules = Object.keys(byModule);
@@ -35,6 +32,7 @@ export default function AdminControlsStatusCard() {
           <div className="rounded-lg border p-3 bg-slate-50">
             <div className="text-slate-600">Fonte única</div>
             <div className="text-sm font-semibold text-slate-900 mt-1">useConfiguracaoSistema</div>
+            <div className="mt-1 text-xs text-slate-500">{summary.conectado} conectados • {summary.parcial} parciais • {summary.aba} abas</div>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
