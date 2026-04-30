@@ -140,6 +140,8 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
     controlMeta,
     scope: controlMeta?.escopo || null,
     moduleName: controlMeta?.modulo || null,
+    screenName: controlMeta?.tela || null,
+    aliases: mergedAliases,
     isLoading,
     error,
     get,

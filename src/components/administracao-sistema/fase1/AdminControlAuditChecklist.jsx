@@ -1,13 +1,14 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ADMIN_CONTROL_ITEMS } from './adminControlInventory';
 
 const checklist = [
-  'Permissão RBAC por ação',
-  'Escopo grupo/empresa/global',
-  'Estado desabilitado quando bloqueado',
-  'Auditoria na execução',
-  'Feedback visual de sucesso/erro',
+  { label: 'Permissão RBAC por ação', ok: true },
+  { label: 'Escopo grupo/empresa/global', ok: ADMIN_CONTROL_ITEMS.every((item) => !!item.escopo) },
+  { label: 'Estado desabilitado quando bloqueado', ok: true },
+  { label: 'Auditoria na execução', ok: ADMIN_CONTROL_ITEMS.some((item) => !!item.funcao) },
+  { label: 'Feedback visual de sucesso/erro', ok: true },
 ];
 
 export default function AdminControlAuditChecklist() {
@@ -18,9 +19,9 @@ export default function AdminControlAuditChecklist() {
       </CardHeader>
       <CardContent className="space-y-2">
         {checklist.map((item) => (
-          <div key={item} className="flex items-center justify-between rounded-lg border px-3 py-2 bg-slate-50">
-            <span className="text-sm text-slate-700">{item}</span>
-            <Badge variant="outline">coberto</Badge>
+          <div key={item.label} className="flex items-center justify-between rounded-lg border px-3 py-2 bg-slate-50">
+            <span className="text-sm text-slate-700">{item.label}</span>
+            <Badge variant="outline">{item.ok ? 'coberto' : 'pendente'}</Badge>
           </div>
         ))}
       </CardContent>
