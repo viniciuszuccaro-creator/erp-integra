@@ -1,3 +1,5 @@
+import { ADMIN_CONTROL_CONNECTION_MAP } from './adminControlConnectionMap';
+
 export const ADMIN_CONTROL_INVENTORY = {
   administracaoSistema: {
     titulo: 'Administração do Sistema',
@@ -56,7 +58,7 @@ export const ADMIN_CONTROL_INVENTORY = {
 };
 
 export const ADMIN_CONTROL_GROUPS = Object.values(ADMIN_CONTROL_INVENTORY);
-export const ADMIN_CONTROL_ITEMS = ADMIN_CONTROL_GROUPS.flatMap((grupo) => grupo.itens);
+export const ADMIN_CONTROL_ITEMS = [...ADMIN_CONTROL_GROUPS.flatMap((grupo) => grupo.itens), ...ADMIN_CONTROL_CONNECTION_MAP];
 
 export const ADMIN_CONTROL_REQUIREMENTS = [
   {
@@ -87,6 +89,6 @@ export const ADMIN_CONTROL_REQUIREMENTS = [
     id: 'toggleGate',
     label: 'Leitura de configuração antes da função real',
     description: 'Toggles-mãe precisam ser lidos por um helper único antes de liberar execução.',
-    coveredBy: ['fiscal', 'notificacoes', 'seguranca', 'iaModelos', 'otimizacao', 'politicas', 'manutencao', 'compliance']
+    coveredBy: ['fiscal', 'notificacoes', 'seguranca', 'iaModelos', 'otimizacao', 'politicas', 'manutencao', 'compliance', 'seg_login_duplo_fator', 'seg_auditoria_detalhada', 'cc_ia_seguranca_ativa', 'integracoes_empresa_base', 'integracoes_webhook_asaas', 'integracoes_webhook_nfe']
   }
 ];

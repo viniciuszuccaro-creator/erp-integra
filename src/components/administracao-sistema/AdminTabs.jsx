@@ -37,18 +37,34 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
   }, [initialTab]);
 
   // Atualiza URL sem recarregar a página
-  const handleTabChange = (val) => {
+  const handleTabChange = async (val) => {
     setActiveTab(val);
     try {
       const url = new URL(window.location.href);
       url.searchParams.set("tab", val);
       window.history.replaceState({}, "", url.toString());
     } catch (_) {}
+    await logAdminAction(`Aba administrativa aberta: ${val}`, { tab: val, permitted: true });
   };
 
   const canAccess = (perm) => isAdminUser || hasPermission('Sistema', perm, 'visualizar');
-
   const visibleTabs = TAB_DEFS.filter(t => canAccess(t.perm));
+
+  const logAdminAction = async (descricao, dados_novos = null) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: 'Administrador',
+        acao: 'Visualização',
+        modulo: 'Sistema',
+        tipo_auditoria: 'ui',
+        entidade: 'Administração do Sistema',
+        descricao,
+        dados_novos,
+        data_hora: new Date().toISOString(),
+        empresa_id: empresaAtual?.id || null,
+      });
+    } catch {}
+  };
 
   // Garante que o tab ativo seja válido
   const resolvedTab = visibleTabs.find(t => t.value === activeTab)
@@ -184,6 +200,7 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
         group_id: grupoAtual?.id || null,
         empresa_id: empresaAtual?.id || null,
       });
+      await base44.entities.AuditLog.create({ usuario: 'Administrador', acao: 'Execução', modulo: 'Sistema', tipo_auditoria: 'sistema', entidade: 'Ferramentas Admin', descricao: 'Seed administrativo executado', dados_novos: { empresa_id: empresaAtual?.id || null }, data_hora: new Date().toISOString() });
       toast.success('Seed concluído: ' + JSON.stringify(res?.data?.summary || {}, null, 2));
     } catch (err) {
       toast.error('Erro no seed: ' + err?.message);
@@ -196,6 +213,7 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
     setLoadingBackfillDry(true);
     try {
       const res = await base44.functions.invoke('backfillGroupEmpresa', { dryRun: true, apply: false, limitPerEntity: 1000 });
+      await base44.entities.AuditLog.create({ usuario: 'Administrador', acao: 'Execução', modulo: 'Sistema', tipo_auditoria: 'sistema', entidade: 'Ferramentas Admin', descricao: 'Backfill dry-run executado', data_hora: new Date().toISOString() });
       toast.success('Dry-run: ' + JSON.stringify(res?.data?.summary || {}, null, 2));
     } catch (err) {
       toast.error('Erro: ' + err?.message);
@@ -209,6 +227,7 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
     setLoadingBackfillApply(true);
     try {
       const res = await base44.functions.invoke('backfillGroupEmpresa', { dryRun: false, apply: true, limitPerEntity: 1000 });
+      await base44.entities.AuditLog.create({ usuario: 'Administrador', acao: 'Execução', modulo: 'Sistema', tipo_auditoria: 'sistema', entidade: 'Ferramentas Admin', descricao: 'Backfill apply executado', data_hora: new Date().toISOString() });
       toast.success('Aplicado: ' + JSON.stringify(res?.data?.summary || {}, null, 2));
     } catch (err) {
       toast.error('Erro: ' + err?.message);
@@ -228,7 +247,7 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
           <CardContent className="p-4 space-y-3">
             <h3 className="font-semibold text-slate-900">Seed de Dados (Teste)</h3>
             <p className="text-xs text-slate-500">Cria clientes, produtos e colaboradores de teste com contexto multiempresa atual.</p>
-            <Button variant="outline" onClick={runSeed} disabled={loadingSeed}>
+            <Button variant="outline" onClick={runSeed} disabled={loadingSeed || !empresaAtual?.id}>
               {loadingSeed ? 'Executando…' : 'Executar Seed Leve'}
             </Button>
           </CardContent>
