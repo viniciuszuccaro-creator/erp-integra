@@ -153,6 +153,7 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
     get,
     ativo,
     isEnabled: ativo,
+    enabled: ativo(),
     requireEnabled,
     resolver,
     setConfig: (patch) => setMutation.mutate(patch),

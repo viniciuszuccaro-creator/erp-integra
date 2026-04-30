@@ -25,6 +25,7 @@ export default function ToggleMapCard() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-slate-700">
               <div><strong>Tela:</strong> {item.tela}</div>
               <div><strong>Função real:</strong> {item.funcao}</div>
+              <div><strong>Leitura antes da execução:</strong> useConfiguracaoSistema('{item.chave}')</div>
               <div><strong>Efeito:</strong> {item.efeito}</div>
               <div><strong>Módulo:</strong> {item.modulo} • <strong>Escopo:</strong> {item.escopo}</div>
             </div>

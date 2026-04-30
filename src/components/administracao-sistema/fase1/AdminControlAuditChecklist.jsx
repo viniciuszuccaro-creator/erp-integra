@@ -1,13 +1,17 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ADMIN_CONTROL_ITEMS, ADMIN_CONTROL_REQUIREMENTS } from './adminControlInventory';
+import { ADMIN_CONTROL_REQUIREMENTS } from './adminControlInventory';
+import { getChecklistStatus } from './adminControlRuntime';
 
-const checklist = ADMIN_CONTROL_REQUIREMENTS.map((rule) => ({
-  ...rule,
-  ok: rule.coveredBy.every((id) => ADMIN_CONTROL_ITEMS.some((item) => item.id === id)),
-  cobertura: `${rule.coveredBy.filter((id) => ADMIN_CONTROL_ITEMS.some((item) => item.id === id)).length}/${rule.coveredBy.length}`
-}));
+const checklist = ADMIN_CONTROL_REQUIREMENTS.map((rule) => {
+  const status = getChecklistStatus(rule.coveredBy);
+  return {
+    ...rule,
+    ok: status.ok,
+    cobertura: status.coverage,
+  };
+});
 
 export default function AdminControlAuditChecklist() {
   return (

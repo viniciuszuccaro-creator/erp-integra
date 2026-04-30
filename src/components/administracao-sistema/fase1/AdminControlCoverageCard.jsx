@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getAdminControlsByModule, getAdminCoverageSummary, getAdminExecutionMatrix } from './adminControlRegistry';
+import { getAdminControlStatus } from './adminControlRuntime';
 
 const statusColors = {
   conectado: 'bg-emerald-100 text-emerald-700 border-emerald-200',
@@ -49,7 +50,7 @@ export default function AdminControlCoverageCard() {
             <div className="text-sm font-semibold text-slate-900">{group}</div>
             <div className="space-y-2">
               {items.map((item) => {
-                const status = item.status || (item.funcao ? 'conectado' : 'parcial');
+                const status = getAdminControlStatus(item);
                 return (
                   <div key={item.id || item.chave} className="rounded-lg border p-3 bg-white">
                     <div className="flex flex-wrap items-center justify-between gap-2">
