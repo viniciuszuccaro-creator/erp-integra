@@ -63,6 +63,7 @@ export default function IntegracoesIndex({ initialTab }) {
 
   const handleCriarBase = async () => {
     if (!empresaAtual?.id) return;
+    if (!auditoriaAtiva) return;
     const chave = `integracoes_${empresaAtual.id}`;
     await base44.functions.invoke('upsertConfig', {
       chave,
@@ -133,7 +134,7 @@ export default function IntegracoesIndex({ initialTab }) {
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold mb-2">Checklist de Implantação (empresa atual)</h3>
                     {!configuracao && (
-                      <Button variant="outline" onClick={handleCriarBase}>Criar estrutura base</Button>
+                      <Button variant="outline" onClick={handleCriarBase} disabled={!empresaAtual?.id || !auditoriaAtiva}>Criar estrutura base</Button>
                     )}
                   </div>
                   <ul className="space-y-2 text-sm">

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { validateAdminControlExecution } from "@/components/administracao-sistema/fase1/adminActionGuards";
 
 // Lazy sub-modules para não carregar tudo ao mesmo tempo
 import AdminStatusBar from "@/components/administracao-sistema/AdminStatusBar";
@@ -195,6 +196,8 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
   const runSeed = async () => {
     setLoadingSeed(true);
     try {
+      const guard = await validateAdminControlExecution({ controlId: 'seedData', empresaId: empresaAtual?.id || null, grupoId: grupoAtual?.id || null });
+      if (!guard.allowed) throw new Error(guard.reason);
       const res = await base44.functions.invoke('seedData', {
         counts: { clientes: 5, produtos: 10, colaboradores: 5 },
         group_id: grupoAtual?.id || null,
@@ -212,6 +215,8 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
   const runBackfillDry = async () => {
     setLoadingBackfillDry(true);
     try {
+      const guard = await validateAdminControlExecution({ controlId: 'backfillDry', empresaId: empresaAtual?.id || null, grupoId: grupoAtual?.id || null });
+      if (!guard.allowed) throw new Error(guard.reason);
       const res = await base44.functions.invoke('backfillGroupEmpresa', { dryRun: true, apply: false, limitPerEntity: 1000 });
       await base44.entities.AuditLog.create({ usuario: 'Administrador', acao: 'Execução', modulo: 'Sistema', tipo_auditoria: 'sistema', entidade: 'Ferramentas Admin', descricao: 'Backfill dry-run executado', data_hora: new Date().toISOString() });
       toast.success('Dry-run: ' + JSON.stringify(res?.data?.summary || {}, null, 2));
@@ -226,6 +231,8 @@ function AdminFerramentas({ empresaAtual, grupoAtual }) {
     if (!confirm('Aplicar correções de multiempresa? (apenas casos inequívocos)')) return;
     setLoadingBackfillApply(true);
     try {
+      const guard = await validateAdminControlExecution({ controlId: 'backfillApply', empresaId: empresaAtual?.id || null, grupoId: grupoAtual?.id || null });
+      if (!guard.allowed) throw new Error(guard.reason);
       const res = await base44.functions.invoke('backfillGroupEmpresa', { dryRun: false, apply: true, limitPerEntity: 1000 });
       await base44.entities.AuditLog.create({ usuario: 'Administrador', acao: 'Execução', modulo: 'Sistema', tipo_auditoria: 'sistema', entidade: 'Ferramentas Admin', descricao: 'Backfill apply executado', data_hora: new Date().toISOString() });
       toast.success('Aplicado: ' + JSON.stringify(res?.data?.summary || {}, null, 2));
