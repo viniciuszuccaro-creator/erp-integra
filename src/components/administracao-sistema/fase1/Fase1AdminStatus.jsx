@@ -8,12 +8,13 @@ export default function Fase1AdminStatus() {
       <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
           <p className="text-sm font-semibold text-slate-900">Administração do Sistema — fase 1 conectada</p>
-          <p className="text-sm text-slate-700">Inventário visível, mapa de toggles reais e camada única de configuração já preparados para expansão módulo a módulo.</p>
+          <p className="text-sm text-slate-700">Inventário visível, mapa de toggles reais, camada única de configuração e matriz dos módulos principais preparados para expansão módulo a módulo.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline">Inventário</Badge>
           <Badge variant="outline">Hook único</Badge>
           <Badge variant="outline">Toggles-mãe</Badge>
+          <Badge variant="outline">Fluxos principais</Badge>
         </div>
       </CardContent>
     </Card>

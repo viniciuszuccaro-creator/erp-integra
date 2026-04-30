@@ -4,15 +4,15 @@ export const ADMIN_CONTROL_INVENTORY = {
   administracaoSistema: {
     titulo: 'Administração do Sistema',
     itens: [
-      { tipo: 'aba', id: 'gerais', label: 'Parâmetros Gerais', tela: 'AdminTabs', modulo: 'Sistema', section: 'Configurações', escopo: 'grupo/empresa/global' },
-      { tipo: 'aba', id: 'integracoes', label: 'Integrações', tela: 'AdminTabs', modulo: 'Sistema', section: 'Integrações', escopo: 'grupo/empresa' },
-      { tipo: 'aba', id: 'acessos', label: 'Gestão de Acessos', tela: 'AdminTabs', modulo: 'Sistema', section: 'Controle de Acesso', escopo: 'grupo/empresa' },
-      { tipo: 'aba', id: 'seguranca', label: 'Segurança & Gov.', tela: 'AdminTabs', modulo: 'Sistema', section: 'Segurança', escopo: 'grupo/empresa/global' },
-      { tipo: 'aba', id: 'ia', label: 'IA & Otimização', tela: 'AdminTabs', modulo: 'Sistema', section: 'IA', escopo: 'grupo/empresa' },
-      { tipo: 'aba', id: 'auditoria', label: 'Auditoria e Logs', tela: 'AdminTabs', modulo: 'Sistema', section: 'Auditoria', escopo: 'grupo/empresa' },
-      { tipo: 'acao', id: 'seedData', label: 'Executar Seed Leve', tela: 'AdminFerramentas', modulo: 'Sistema', section: 'Ferramentas', escopo: 'grupo/empresa', funcao: 'seedData' },
-      { tipo: 'acao', id: 'backfillDry', label: 'Dry-run (visualizar)', tela: 'AdminFerramentas', modulo: 'Sistema', section: 'Ferramentas', escopo: 'global', funcao: 'backfillGroupEmpresa' },
-      { tipo: 'acao', id: 'backfillApply', label: 'Aplicar Correções', tela: 'AdminFerramentas', modulo: 'Sistema', section: 'Ferramentas', escopo: 'global', funcao: 'backfillGroupEmpresa' }
+      { tipo: 'aba', id: 'gerais', label: 'Parâmetros Gerais', tela: 'AdminTabs', modulo: 'Sistema', section: 'Configurações', escopo: 'grupo/empresa/global', status: 'conectado' },
+      { tipo: 'aba', id: 'integracoes', label: 'Integrações', tela: 'AdminTabs', modulo: 'Sistema', section: 'Integrações', escopo: 'grupo/empresa', status: 'conectado' },
+      { tipo: 'aba', id: 'acessos', label: 'Gestão de Acessos', tela: 'AdminTabs', modulo: 'Sistema', section: 'Controle de Acesso', escopo: 'grupo/empresa', status: 'conectado' },
+      { tipo: 'aba', id: 'seguranca', label: 'Segurança & Gov.', tela: 'AdminTabs', modulo: 'Sistema', section: 'Segurança', escopo: 'grupo/empresa/global', status: 'conectado' },
+      { tipo: 'aba', id: 'ia', label: 'IA & Otimização', tela: 'AdminTabs', modulo: 'Sistema', section: 'IA', escopo: 'grupo/empresa', status: 'conectado' },
+      { tipo: 'aba', id: 'auditoria', label: 'Auditoria e Logs', tela: 'AdminTabs', modulo: 'Sistema', section: 'Auditoria', escopo: 'grupo/empresa', status: 'conectado' },
+      { tipo: 'acao', id: 'seedData', label: 'Executar Seed Leve', tela: 'AdminFerramentas', modulo: 'Sistema', section: 'Ferramentas', escopo: 'grupo/empresa', funcao: 'seedData', status: 'conectado' },
+      { tipo: 'acao', id: 'backfillDry', label: 'Dry-run (visualizar)', tela: 'AdminFerramentas', modulo: 'Sistema', section: 'Ferramentas', escopo: 'global', funcao: 'backfillGroupEmpresa', status: 'conectado' },
+      { tipo: 'acao', id: 'backfillApply', label: 'Aplicar Correções', tela: 'AdminFerramentas', modulo: 'Sistema', section: 'Ferramentas', escopo: 'global', funcao: 'backfillGroupEmpresa', status: 'conectado' }
     ]
   },
   configuracoesGerais: {
@@ -50,9 +50,20 @@ export const ADMIN_CONTROL_INVENTORY = {
   seguranca: {
     titulo: 'Segurança & Governança',
     itens: [
-      { tipo: 'aba', id: 'politicas', label: 'Políticas', tela: 'SegurancaGovernancaIndex', modulo: 'Sistema', section: 'Segurança', escopo: 'grupo/empresa/global' },
-      { tipo: 'aba', id: 'manutencao', label: 'Monitoramento & Manutenção', tela: 'SegurancaGovernancaIndex', modulo: 'Sistema', section: 'Segurança', escopo: 'grupo/empresa/global' },
-      { tipo: 'aba', id: 'compliance', label: 'Compliance IA', tela: 'SegurancaGovernancaIndex', modulo: 'Sistema', section: 'Segurança', escopo: 'grupo/empresa/global' }
+      { tipo: 'aba', id: 'politicas', label: 'Políticas', tela: 'SegurancaGovernancaIndex', modulo: 'Sistema', section: 'Segurança', escopo: 'grupo/empresa/global', status: 'conectado' },
+      { tipo: 'aba', id: 'manutencao', label: 'Monitoramento & Manutenção', tela: 'SegurancaGovernancaIndex', modulo: 'Sistema', section: 'Segurança', escopo: 'grupo/empresa/global', status: 'conectado' },
+      { tipo: 'aba', id: 'compliance', label: 'Compliance IA', tela: 'SegurancaGovernancaIndex', modulo: 'Sistema', section: 'Segurança', escopo: 'grupo/empresa/global', status: 'conectado' }
+    ]
+  },
+  modulosPrincipais: {
+    titulo: 'Módulos Principais',
+    itens: [
+      { tipo: 'fluxo', id: 'cadastros-governado', label: 'Cadastros', tela: 'Cadastros', modulo: 'Cadastros', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'entityGuard', status: 'parcial' },
+      { tipo: 'fluxo', id: 'financeiro-governado', label: 'Financeiro', tela: 'Financeiro', modulo: 'Financeiro', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'paymentStatusManager', status: 'parcial' },
+      { tipo: 'fluxo', id: 'comercial-governado', label: 'Comercial', tela: 'Comercial', modulo: 'Comercial', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'onPedidoApprovalRequested', status: 'parcial' },
+      { tipo: 'fluxo', id: 'estoque-governado', label: 'Estoque', tela: 'Estoque', modulo: 'Estoque', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'applyInventoryAdjustments', status: 'parcial' },
+      { tipo: 'fluxo', id: 'producao-governado', label: 'Produção', tela: 'Producao', modulo: 'Produção', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'optimizerOrchestrator', status: 'parcial' },
+      { tipo: 'fluxo', id: 'expedicao-governado', label: 'Expedição', tela: 'Expedicao', modulo: 'Expedição', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'onEntregaUpdated', status: 'parcial' }
     ]
   }
 };
