@@ -20,6 +20,9 @@ export default function SegurancaGovernancaIndex() {
   const mfaConfig = useConfiguracaoSistema({ chave: 'seg_login_duplo_fator', aliases: ['cc_exigir_mfa'], empresaId: empresaAtual?.id, grupoId: grupoAtual?.id, categoria: 'Seguranca' });
   const auditConfig = useConfiguracaoSistema({ chave: 'seg_auditoria_detalhada', aliases: ['cc_auditoria_automatica'], empresaId: empresaAtual?.id, grupoId: grupoAtual?.id, categoria: 'Seguranca' });
   const iaSecurityConfig = useConfiguracaoSistema({ chave: 'seg_ia_seguranca', aliases: ['cc_ia_seguranca_ativa'], empresaId: empresaAtual?.id, grupoId: grupoAtual?.id, categoria: 'Sistema' });
+  const mfaGate = mfaConfig.isEnabled(false);
+  const auditGate = auditConfig.isEnabled(false);
+  const iaGate = iaSecurityConfig.isEnabled(false);
   const params = new URLSearchParams(window.location.search);
   const segTab = params.get('segTab') || 'politicas';
   if (!isAdmin()) return <div className="p-4 text-sm text-slate-500">Acesso restrito.</div>;
@@ -41,18 +44,23 @@ export default function SegurancaGovernancaIndex() {
               <div className="grid gap-3 md:grid-cols-3 mb-4">
                 <div className="rounded-lg border bg-slate-50 p-3 text-sm">
                   <div className="text-slate-500">MFA</div>
-                  <div className="font-semibold text-slate-900">{mfaConfig.isEnabled(false) ? 'Ativo' : 'Inativo'}</div>
+                  <div className="font-semibold text-slate-900">{mfaGate ? 'Ativo' : 'Inativo'}</div>
                 </div>
                 <div className="rounded-lg border bg-slate-50 p-3 text-sm">
                   <div className="text-slate-500">Auditoria detalhada</div>
-                  <div className="font-semibold text-slate-900">{auditConfig.isEnabled(false) ? 'Ativa' : 'Inativa'}</div>
+                  <div className="font-semibold text-slate-900">{auditGate ? 'Ativa' : 'Inativa'}</div>
                 </div>
                 <div className="rounded-lg border bg-slate-50 p-3 text-sm">
                   <div className="text-slate-500">IA de segurança</div>
-                  <div className="font-semibold text-slate-900">{iaSecurityConfig.isEnabled(false) ? 'Ativa' : 'Inativa'}</div>
+                  <div className="font-semibold text-slate-900">{iaGate ? 'Ativa' : 'Inativa'}</div>
                 </div>
               </div>
               <ConfiguracaoSeguranca empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
+              <div className="mb-4 rounded-lg border bg-slate-50 p-3 text-xs text-slate-600">
+                MFA no login: <strong>{mfaGate ? 'obrigatório no fluxo' : 'desligado no fluxo'}</strong> •
+                Auditoria detalhada: <strong>{auditGate ? 'registrador detalhado liberado' : 'registrador detalhado bloqueado'}</strong> •
+                IA de segurança: <strong>{iaGate ? 'análise permitida' : 'análise bloqueada'}</strong>
+              </div>
               <SegurancaDashboard />
             </CardContent>
           </Card>

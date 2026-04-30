@@ -50,6 +50,8 @@ export default function IAOtimizacaoIndex({ initialTab }) {
 
   const { saving, handleToggle, getToggleValue } = useToggleConfig(eId, gId, iaQueryKey);
   const queryClient = useQueryClient();
+  const iaSegurancaConfig = useConfiguracaoSistema({ chave: 'cc_ia_seguranca_ativa', aliases: ['seg_ia_seguranca'], empresaId: eId, grupoId: gId, categoria: 'Sistema' });
+  const iaSegurancaAtiva = iaSegurancaConfig.isEnabled(false);
 
   // Subscription em tempo real: refetch quando ConfiguracaoSistema muda em outro contexto
   React.useEffect(() => {
@@ -121,9 +123,12 @@ export default function IAOtimizacaoIndex({ initialTab }) {
                 <ContextoConfigBanner />
                 <HerancaConfigNotice />
               </div>
-              <div className="col-span-full">
+              <div className="col-span-full space-y-3">
                 <div className="p-3 bg-cyan-50 border border-cyan-200 rounded-lg text-sm text-cyan-800">
                   💡 <strong>APIs Externas, Webhooks e Chatbot Intents</strong> estão centralizados em <strong>Cadastros Gerais → Tecnologia, IA & Parâmetros</strong>.
+                </div>
+                <div className="p-3 rounded-lg border bg-slate-50 text-sm text-slate-700">
+                  IA de segurança global: <strong>{iaSegurancaAtiva ? 'ativa e liberada para análises' : 'desativada e bloqueando análises de segurança'}</strong>
                 </div>
               </div>
 

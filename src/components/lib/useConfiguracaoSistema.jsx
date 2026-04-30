@@ -135,6 +135,12 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
     }).then((res) => pickBestConfig(Array.isArray(res?.data) ? res.data : [], { empresaId, grupoId }));
   }, [categoria, empresaId, grupoId, JSON.stringify(mergedAliases)]);
 
+  const requireEnabled = useCallback((fallback = false, message = 'Configuração desativada para este contexto.') => {
+    const enabled = ativo(fallback);
+    if (!enabled) throw new Error(message);
+    return true;
+  }, [ativo]);
+
   return {
     config: data,
     controlMeta,
@@ -147,6 +153,7 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
     get,
     ativo,
     isEnabled: ativo,
+    requireEnabled,
     resolver,
     setConfig: (patch) => setMutation.mutate(patch),
     isSaving: setMutation.isPending,

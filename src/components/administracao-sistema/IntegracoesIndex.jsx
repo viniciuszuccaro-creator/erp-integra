@@ -26,6 +26,8 @@ export default function IntegracoesIndex({ initialTab }) {
   const { user } = useUser();
   const [tab, setTab] = useState(initialTab || "gerenciamento");
   const integracoesBase = useConfiguracaoSistema({ chave: empresaAtual?.id ? `integracoes_${empresaAtual.id}` : null, categoria: 'Integracoes', empresaId: empresaAtual?.id, grupoId: grupoAtual?.id });
+  const auditoriaDetalhada = useConfiguracaoSistema({ chave: 'seg_auditoria_detalhada', aliases: ['cc_auditoria_automatica'], categoria: 'Seguranca', empresaId: empresaAtual?.id, grupoId: grupoAtual?.id });
+  const auditoriaAtiva = auditoriaDetalhada.isEnabled(false);
 
   const handleTabChange = (next) => {
     setTab(next);
@@ -118,7 +120,10 @@ export default function IntegracoesIndex({ initialTab }) {
                 <ContextoConfigBanner />
                 <HerancaConfigNotice />
               </div>
-              <div className="w-full mb-4">
+              <div className="w-full mb-4 space-y-3">
+                <div className="rounded-lg border bg-slate-50 p-3 text-sm text-slate-700">
+                  Auditoria detalhada para integrações: <strong>{auditoriaAtiva ? 'ativa antes das execuções' : 'inativa para execuções detalhadas'}</strong>
+                </div>
                 <IntegracoesPanel />
               </div>
 
