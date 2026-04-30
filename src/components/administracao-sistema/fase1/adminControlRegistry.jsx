@@ -51,12 +51,23 @@ export function getAdminControlsByScreen() {
 
 export function getAdminCoverageSummary() {
   const summary = ADMIN_CONTROLS_REGISTRY.reduce((acc, item) => {
-    const status = item.status || (item.funcao ? 'conectado' : 'parcial');
+    const status = item.status || (item.funcao ? 'conectado' : item.tipo === 'aba' ? 'aba' : 'parcial');
     acc.total += 1;
     acc[status] = (acc[status] || 0) + 1;
     return acc;
-  }, { total: 0, conectado: 0, parcial: 0, pendente: 0 });
+  }, { total: 0, conectado: 0, parcial: 0, pendente: 0, aba: 0 });
 
   summary.percentualConectado = summary.total ? Math.round((summary.conectado / summary.total) * 100) : 0;
+  summary.percentualMapeado = summary.total ? Math.round(((summary.conectado + summary.parcial + summary.aba) / summary.total) * 100) : 0;
   return summary;
+}
+
+export function getAdminExecutionMatrix() {
+  return ADMIN_CONTROLS_REGISTRY.map((item) => ({
+    ...item,
+    status_execucao: item.funcao ? 'função definida' : item.tipo === 'aba' ? 'navegação protegida' : 'aguardando conexão final',
+    exige_rbac: true,
+    exige_auditoria: !!item.funcao,
+    exige_contexto: !!item.escopo,
+  }));
 }

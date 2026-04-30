@@ -57,3 +57,36 @@ export const ADMIN_CONTROL_INVENTORY = {
 
 export const ADMIN_CONTROL_GROUPS = Object.values(ADMIN_CONTROL_INVENTORY);
 export const ADMIN_CONTROL_ITEMS = ADMIN_CONTROL_GROUPS.flatMap((grupo) => grupo.itens);
+
+export const ADMIN_CONTROL_REQUIREMENTS = [
+  {
+    id: 'rbac',
+    label: 'Permissão RBAC por ação',
+    description: 'Todo botão, aba, toggle e ação crítica deve passar por permissão antes de executar.',
+    coveredBy: ['gerais', 'integracoes', 'acessos', 'seguranca', 'ia', 'auditoria', 'seedData', 'backfillDry', 'backfillApply']
+  },
+  {
+    id: 'scope',
+    label: 'Escopo grupo/empresa/global',
+    description: 'Cada controle precisa declarar claramente onde a configuração se aplica.',
+    coveredBy: ADMIN_CONTROL_ITEMS.map((item) => item.id)
+  },
+  {
+    id: 'feedback',
+    label: 'Feedback visual na execução',
+    description: 'Ação precisa mostrar estado carregando, sucesso ou erro para o usuário.',
+    coveredBy: ['seedData', 'backfillDry', 'backfillApply']
+  },
+  {
+    id: 'audit',
+    label: 'Auditoria na execução',
+    description: 'Toda ação real precisa ter função/backend ou trilha auditável associada.',
+    coveredBy: ADMIN_CONTROL_ITEMS.filter((item) => item.funcao).map((item) => item.id)
+  },
+  {
+    id: 'toggleGate',
+    label: 'Leitura de configuração antes da função real',
+    description: 'Toggles-mãe precisam ser lidos por um helper único antes de liberar execução.',
+    coveredBy: ['fiscal', 'notificacoes', 'seguranca', 'iaModelos', 'otimizacao', 'politicas', 'manutencao', 'compliance']
+  }
+];
