@@ -58,12 +58,12 @@ export const ADMIN_CONTROL_INVENTORY = {
   modulosPrincipais: {
     titulo: 'Módulos Principais',
     itens: [
-      { tipo: 'fluxo', id: 'cadastros-governado', label: 'Cadastros', tela: 'Cadastros', modulo: 'Cadastros', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'entityGuard', status: 'parcial' },
-      { tipo: 'fluxo', id: 'financeiro-governado', label: 'Financeiro', tela: 'Financeiro', modulo: 'Financeiro', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'paymentStatusManager', status: 'parcial' },
-      { tipo: 'fluxo', id: 'comercial-governado', label: 'Comercial', tela: 'Comercial', modulo: 'Comercial', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'onPedidoApprovalRequested', status: 'parcial' },
-      { tipo: 'fluxo', id: 'estoque-governado', label: 'Estoque', tela: 'Estoque', modulo: 'Estoque', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'applyInventoryAdjustments', status: 'parcial' },
-      { tipo: 'fluxo', id: 'producao-governado', label: 'Produção', tela: 'Producao', modulo: 'Produção', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'optimizerOrchestrator', status: 'parcial' },
-      { tipo: 'fluxo', id: 'expedicao-governado', label: 'Expedição', tela: 'Expedicao', modulo: 'Expedição', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'onEntregaUpdated', status: 'parcial' }
+      { tipo: 'fluxo', id: 'cadastros-governado', label: 'Cadastros', tela: 'Cadastros', modulo: 'Cadastros', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'entityGuard', status: 'conectado' },
+      { tipo: 'fluxo', id: 'financeiro-governado', label: 'Financeiro', tela: 'Financeiro', modulo: 'Financeiro', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'paymentStatusManager', status: 'conectado' },
+      { tipo: 'fluxo', id: 'comercial-governado', label: 'Comercial', tela: 'Comercial', modulo: 'Comercial', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'onPedidoApprovalRequested', status: 'conectado' },
+      { tipo: 'fluxo', id: 'estoque-governado', label: 'Estoque', tela: 'Estoque', modulo: 'Estoque', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'applyInventoryAdjustments', status: 'conectado' },
+      { tipo: 'fluxo', id: 'producao-governado', label: 'Produção', tela: 'Producao', modulo: 'Produção', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'optimizerOrchestrator', status: 'conectado' },
+      { tipo: 'fluxo', id: 'expedicao-governado', label: 'Expedição', tela: 'Expedicao', modulo: 'Expedição', section: 'Fluxo Principal', escopo: 'grupo/empresa', funcao: 'onEntregaUpdated', status: 'conectado' }
     ]
   }
 };

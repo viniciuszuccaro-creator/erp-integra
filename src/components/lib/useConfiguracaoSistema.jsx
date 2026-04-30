@@ -1,9 +1,6 @@
 import { useMemo, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
-import { findAdminControl } from "@/components/administracao-sistema/fase1/adminControlRegistry";
 
-function buildConfigCandidates({ categoria, chave, empresaId, grupoId }) {
+export function getConfigScopeCandidates({ categoria, chave, empresaId, grupoId }) {
   const baseFilter = {};
   if (categoria) baseFilter.categoria = categoria;
   if (chave) baseFilter.chave = chave;
@@ -16,7 +13,7 @@ function buildConfigCandidates({ categoria, chave, empresaId, grupoId }) {
   return candidates;
 }
 
-function pickBestConfig(list = [], { empresaId, grupoId }) {
+export function pickBestConfigRecord(list = [], { empresaId, grupoId }) {
   if (!Array.isArray(list) || list.length === 0) return null;
   const scored = list.map((item) => {
     let score = 4;
@@ -28,6 +25,34 @@ function pickBestConfig(list = [], { empresaId, grupoId }) {
   scored.sort((a, b) => a.score - b.score);
   return scored[0]?.item || null;
 }
+
+export async function resolveConfiguracaoSistema({ categoria, chave, empresaId = null, grupoId = null, aliases = [] } = {}) {
+  const authed = await base44.auth.isAuthenticated();
+  if (!authed || !chave) return null;
+  const keys = [chave, ...(aliases || [])].filter(Boolean);
+  const scopedFilters = keys.flatMap((configKey) => {
+    return getConfigScopeCandidates({ categoria, chave: configKey, empresaId, grupoId }).map(({ __nivel, ...rest }) => rest);
+  });
+  const res = await base44.functions.invoke('getEntityRecord', {
+    entityName: 'ConfiguracaoSistema',
+    filter: scopedFilters.length > 1 ? { $or: scopedFilters } : scopedFilters[0],
+    limit: 100,
+    sortField: '-updated_date'
+  });
+  const list = Array.isArray(res?.data) ? res.data : [];
+  return pickBestConfigRecord(list.filter((item) => keys.includes(item?.chave)), { empresaId, grupoId });
+}
+
+export async function isConfiguracaoSistemaAtiva({ categoria, chave, empresaId = null, grupoId = null, aliases = [], fallback = false } = {}) {
+  const config = await resolveConfiguracaoSistema({ categoria, chave, empresaId, grupoId, aliases });
+  if (typeof config?.ativa === 'boolean') return config.ativa;
+  return fallback;
+}
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { findAdminControl } from "@/components/administracao-sistema/fase1/adminControlRegistry";
+
+
 
 /**
  * Hook de acesso centralizado às configurações do sistema
@@ -48,18 +73,7 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
     queryFn: async () => {
       const authed = await base44.auth.isAuthenticated();
       if (!authed) return null;
-      const keys = [chave, ...mergedAliases].filter(Boolean);
-      const scopedFilters = keys.flatMap((configKey) => {
-        return buildConfigCandidates({ categoria, chave: configKey, empresaId, grupoId }).map(({ __nivel, ...rest }) => rest);
-      });
-      const res = await base44.functions.invoke('getEntityRecord', {
-        entityName: 'ConfiguracaoSistema',
-        filter: scopedFilters.length > 1 ? { $or: scopedFilters } : scopedFilters[0],
-        limit: 100,
-        sortField: '-updated_date'
-      });
-      const list = Array.isArray(res?.data) ? res.data : [];
-      return pickBestConfig(list.filter((item) => keys.includes(item?.chave)), { empresaId, grupoId });
+      return resolveConfiguracaoSistema({ categoria, chave, empresaId, grupoId, aliases: mergedAliases });
     },
     staleTime: 60_000,
   });
@@ -120,19 +134,7 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
 
   const resolver = useCallback((localChave, localCategoria = categoria) => {
     if (!localChave) return null;
-    return base44.functions.invoke('getEntityRecord', {
-      entityName: 'ConfiguracaoSistema',
-      filter: {
-        $or: buildConfigCandidates({
-          categoria: localCategoria,
-          chave: localChave,
-          empresaId,
-          grupoId,
-        }).map(({ __nivel, ...rest }) => rest)
-      },
-      limit: 50,
-      sortField: '-updated_date'
-    }).then((res) => pickBestConfig(Array.isArray(res?.data) ? res.data : [], { empresaId, grupoId }));
+    return resolveConfiguracaoSistema({ categoria: localCategoria, chave: localChave, empresaId, grupoId });
   }, [categoria, empresaId, grupoId, JSON.stringify(mergedAliases)]);
 
   const requireEnabled = useCallback((fallback = false, message = 'Configuração desativada para este contexto.') => {

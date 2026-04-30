@@ -99,7 +99,7 @@ export const ADMIN_CONTROL_CONNECTION_MAP = [
     funcao: 'catalogProducts',
     efeito: 'autoriza leitura inteligente de projetos e apoio à classificação',
     escopo: 'grupo/empresa',
-    status: 'parcial'
+    status: 'conectado'
   },
   {
     id: 'ia_preditiva_vendas',
@@ -114,7 +114,7 @@ export const ADMIN_CONTROL_CONNECTION_MAP = [
     funcao: 'iaChurnAnalyzer',
     efeito: 'habilita previsão de churn e inteligência comercial',
     escopo: 'grupo/empresa',
-    status: 'parcial'
+    status: 'conectado'
   },
   {
     id: 'ia_conciliacao',
@@ -129,7 +129,7 @@ export const ADMIN_CONTROL_CONNECTION_MAP = [
     funcao: 'iaFinanceAnomalyScan',
     efeito: 'habilita detecção de anomalias e apoio à conciliação',
     escopo: 'grupo/empresa',
-    status: 'parcial'
+    status: 'conectado'
   },
   {
     id: 'ia_producao',
@@ -144,7 +144,7 @@ export const ADMIN_CONTROL_CONNECTION_MAP = [
     funcao: 'optimizerOrchestrator',
     efeito: 'habilita automações de otimização operacional e produtiva',
     escopo: 'grupo/empresa',
-    status: 'parcial'
+    status: 'conectado'
   }
 ];
 

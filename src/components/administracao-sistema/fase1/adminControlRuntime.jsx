@@ -7,14 +7,19 @@ export function getAdminControlStatus(item) {
 
 export function getAdminControlExecutionReadiness(item) {
   const status = getAdminControlStatus(item);
+  const hasFunction = !!item?.funcao;
+  const hasScope = !!item?.escopo;
+  const hasGate = !!item?.chave || item?.tipo === 'aba';
+  const hasAudit = !!item?.funcao;
+  const hasRbac = true;
   return {
     status,
-    hasFunction: !!item?.funcao,
-    hasScope: !!item?.escopo,
-    hasGate: !!item?.chave,
-    hasAudit: !!item?.funcao,
-    hasRbac: true,
-    ready: status === 'conectado' || status === 'aba',
+    hasFunction,
+    hasScope,
+    hasGate,
+    hasAudit,
+    hasRbac,
+    ready: hasScope && hasGate && hasRbac && (status === 'conectado' || item?.tipo === 'aba'),
   };
 }
 

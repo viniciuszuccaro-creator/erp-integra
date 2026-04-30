@@ -1,17 +1,6 @@
 import { base44 } from '@/api/base44Client';
 import { findAdminControl } from './adminControlRegistry';
-
-function buildScopedFilters(control, empresaId, grupoId) {
-  const keys = [control?.chave, ...(control?.aliases || [])].filter(Boolean);
-  return keys.flatMap((chave) => {
-    const filters = [];
-    if (empresaId && grupoId) filters.push({ chave, empresa_id: empresaId, group_id: grupoId });
-    if (empresaId) filters.push({ chave, empresa_id: empresaId });
-    if (grupoId) filters.push({ chave, group_id: grupoId });
-    filters.push({ chave });
-    return filters;
-  });
-}
+import { resolveConfiguracaoSistema } from '@/components/lib/useConfiguracaoSistema';
 
 export async function validateAdminControlExecution({ controlId, empresaId = null, grupoId = null }) {
   const control = findAdminControl(controlId);
@@ -41,16 +30,13 @@ export async function validateAdminControlExecution({ controlId, empresaId = nul
   }
 
   if (control.chave) {
-    const scopedFilters = buildScopedFilters(control, empresaId, grupoId);
-    const configResponse = await base44.functions.invoke('getEntityRecord', {
-      entityName: 'ConfiguracaoSistema',
-      filter: scopedFilters.length > 1 ? { $or: scopedFilters } : scopedFilters[0],
-      limit: 20,
-      sortField: '-updated_date'
+    const config = await resolveConfiguracaoSistema({
+      categoria: control.section || control.modulo || 'Sistema',
+      chave: control.chave,
+      empresaId,
+      grupoId,
+      aliases: control.aliases || []
     });
-
-    const configList = Array.isArray(configResponse?.data) ? configResponse.data : [];
-    const config = configList[0] || null;
     if (config && config.ativa === false) {
       return { allowed: false, reason: 'A configuração-mãe desta ação está desativada.', control, config };
     }
