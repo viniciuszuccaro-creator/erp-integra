@@ -156,7 +156,9 @@ export default function IntegracoesIndex({ initialTab }) {
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold mb-2">Checklist de Implantação (empresa atual)</h3>
                     {!configuracao && (
-                      <Button variant="outline" onClick={handleCriarBase} disabled={!empresaAtual?.id || !auditoriaAtiva}>Criar estrutura base</Button>
+                      <Button variant="outline" onClick={handleCriarBase} disabled={!empresaAtual?.id || !auditoriaAtiva}>
+                        Criar estrutura base
+                      </Button>
                     )}
                   </div>
                   <ul className="space-y-2 text-sm">
@@ -198,8 +200,8 @@ export default function IntegracoesIndex({ initialTab }) {
                   </div>
                   <div className="text-xs text-slate-600">Header: x-internal-token: <span className="font-mono">DEPLOY_AUDIT_TOKEN</span></div>
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" onClick={handleTestWebhookAsaasPago}>Testar webhook Asaas (pago)</Button>
-                    <Button size="sm" onClick={handleTestWebhookNFeAutorizada}>Simular NF-e autorizada</Button>
+                    <Button size="sm" onClick={handleTestWebhookAsaasPago} disabled={!empresaAtual?.id || !auditoriaAtiva}>Testar webhook Asaas (pago)</Button>
+                    <Button size="sm" onClick={handleTestWebhookNFeAutorizada} disabled={!empresaAtual?.id || !auditoriaAtiva}>Simular NF-e autorizada</Button>
                   </div>
                 </CardContent>
               </Card>

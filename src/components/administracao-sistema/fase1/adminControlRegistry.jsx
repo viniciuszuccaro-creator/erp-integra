@@ -65,9 +65,10 @@ export function getAdminCoverageSummary() {
 export function getAdminExecutionMatrix() {
   return ADMIN_CONTROLS_REGISTRY.map((item) => ({
     ...item,
-    status_execucao: item.funcao ? 'função definida' : item.tipo === 'aba' ? 'navegação protegida' : 'aguardando conexão final',
+    status_execucao: item.funcao ? 'função definida' : item.tipo === 'aba' ? 'navegação protegida por configuração' : 'aguardando conexão final',
     exige_rbac: true,
     exige_auditoria: !!item.funcao,
     exige_contexto: !!item.escopo,
+    exige_toggle_mae: !!item.chave,
   }));
 }

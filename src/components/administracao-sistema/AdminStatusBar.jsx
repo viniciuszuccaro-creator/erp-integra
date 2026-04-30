@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { CheckCircle2, AlertCircle, XCircle, Wifi } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { resolveConfiguracaoSistema } from "@/components/lib/useConfiguracaoSistema";
 
 /**
  * AdminStatusBar — barra de saúde em tempo real do sistema.
@@ -14,52 +15,40 @@ export default function AdminStatusBar() {
   const eId = empresaAtual?.id;
   const gId = grupoAtual?.id;
 
-  const { data: configs = [], isFetching } = useQuery({
+  const { data: status = {}, isFetching } = useQuery({
     queryKey: ["admin-status-bar", eId ?? "sem", gId ?? "sem"],
     queryFn: async () => {
-      try {
-        const orConds = [];
-        if (gId) orConds.push({ group_id: gId });
-        if (eId) orConds.push({ empresa_id: eId });
-        orConds.push({ empresa_id: null, group_id: null });
-        const res = await base44.functions.invoke("getEntityRecord", {
-          entityName: "ConfiguracaoSistema",
-          filter: orConds.length > 1 ? { $or: orConds } : (orConds[0] || {}),
-          limit: 200,
-          sort: "-updated_date",
-        });
-        return Array.isArray(res?.data) ? res.data : [];
-      } catch (_) {
-        return [];
-      }
+      const [nfeConfig, boletoConfig, whatsappConfig, notifPedidoConfig, iaVendasConfig, iaFinanceiroConfig] = await Promise.all([
+        resolveConfiguracaoSistema({ chave: `integracoes_${eId}`, categoria: 'Integracoes', empresaId: eId, grupoId: gId }),
+        resolveConfiguracaoSistema({ chave: `integracoes_${eId}`, categoria: 'Integracoes', empresaId: eId, grupoId: gId }),
+        resolveConfiguracaoSistema({ chave: 'integracao_whatsapp', categoria: 'Integracoes', empresaId: eId, grupoId: gId }),
+        resolveConfiguracaoSistema({ chave: 'notif_pedido_aprovado', categoria: 'Notificacoes', empresaId: eId, grupoId: gId }),
+        resolveConfiguracaoSistema({ chave: 'ia_preditiva_vendas', categoria: 'Sistema', empresaId: eId, grupoId: gId, aliases: ['cc_ia_preditiva_vendas'] }),
+        resolveConfiguracaoSistema({ chave: 'ia_anomalia_financeira', categoria: 'Sistema', empresaId: eId, grupoId: gId })
+      ]);
+
+      return {
+        nfeOk: !!nfeConfig?.integracao_nfe?.api_key,
+        boletosOk: !!boletoConfig?.integracao_boletos?.api_key,
+        whatsappOk: whatsappConfig?.ativa === true,
+        notifPedidoOk: notifPedidoConfig?.ativa === true,
+        iaVendasOk: iaVendasConfig?.ativa === true,
+        iaFinanceiroOk: iaFinanceiroConfig?.ativa === true,
+      };
     },
-    enabled: true,
+    enabled: !!(eId || gId),
     staleTime: 0,
     refetchOnMount: "always",
-    refetchInterval: 60000, // Atualiza a cada 1 min
+    refetchInterval: 60000,
   });
 
-  const getToggle = (chave) => {
-    const match = configs.find((c) => c.chave === chave && (
-      (eId && c.empresa_id === eId) ||
-      (gId && c.group_id === gId) ||
-      (!c.empresa_id && !c.group_id)
-    ));
-    return match?.ativa === true;
-  };
-
-  const getIntegracao = (chave, campo) => {
-    const match = configs.find((c) => c.chave === chave);
-    return !!(match?.[campo]?.api_key || match?.[campo]?.ativa);
-  };
-
   const indicators = [
-    { label: "NF-e", ok: getIntegracao("integracao_nfe", "integracao_nfe") || getToggle("integracao_nfe") },
-    { label: "Boleto/PIX", ok: getIntegracao("integracao_boletos", "integracao_boletos") || getToggle("integracao_boletos") },
-    { label: "WhatsApp", ok: getToggle("integracao_whatsapp") },
-    { label: "Notif. Pedido", ok: getToggle("notif_pedido_aprovado") },
-    { label: "IA Vendas", ok: getToggle("ia_preditiva_vendas") },
-    { label: "IA Finanças", ok: getToggle("ia_anomalia_financeira") },
+    { label: "NF-e", ok: !!status.nfeOk },
+    { label: "Boleto/PIX", ok: !!status.boletosOk },
+    { label: "WhatsApp", ok: !!status.whatsappOk },
+    { label: "Notif. Pedido", ok: !!status.notifPedidoOk },
+    { label: "IA Vendas", ok: !!status.iaVendasOk },
+    { label: "IA Finanças", ok: !!status.iaFinanceiroOk },
   ];
 
   const okCount = indicators.filter((i) => i.ok).length;

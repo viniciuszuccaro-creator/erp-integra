@@ -18,9 +18,9 @@ export const ADMIN_CONTROL_INVENTORY = {
   configuracoesGerais: {
     titulo: 'Configurações Gerais',
     itens: [
-      { tipo: 'aba', id: 'fiscal', label: 'Fiscal', tela: 'ConfigGlobal', modulo: 'Sistema', section: 'Configurações', escopo: 'grupo/empresa/global' },
-      { tipo: 'aba', id: 'notificacoes', label: 'Notificações', tela: 'ConfigGlobal', modulo: 'Sistema', section: 'Configurações', escopo: 'grupo/empresa/global' },
-      { tipo: 'aba', id: 'seguranca', label: 'Segurança', tela: 'ConfigGlobal', modulo: 'Sistema', section: 'Configurações', escopo: 'grupo/empresa/global' }
+      { tipo: 'aba', id: 'fiscal', label: 'Fiscal', tela: 'ConfigGlobal', modulo: 'Sistema', section: 'Configurações', chave: 'fiscal_cfop_interno', escopo: 'grupo/empresa/global', status: 'conectado' },
+      { tipo: 'aba', id: 'notificacoes', label: 'Notificações', tela: 'ConfigGlobal', modulo: 'Sistema', section: 'Configurações', chave: 'notif_pedido_aprovado', escopo: 'grupo/empresa/global', status: 'conectado' },
+      { tipo: 'aba', id: 'seguranca', label: 'Segurança', tela: 'ConfigGlobal', modulo: 'Sistema', section: 'Configurações', chave: 'seg_auditoria_detalhada', escopo: 'grupo/empresa/global', status: 'conectado' }
     ]
   },
   integracoes: {
@@ -34,25 +34,25 @@ export const ADMIN_CONTROL_INVENTORY = {
   ia: {
     titulo: 'IA & Otimização',
     itens: [
-      { tipo: 'aba', id: 'iaModelos', label: 'IA e Modelos', tela: 'IAOtimizacaoIndex', modulo: 'Sistema', section: 'IA', escopo: 'grupo/empresa' },
-      { tipo: 'aba', id: 'otimizacao', label: 'Otimização', tela: 'IAOtimizacaoIndex', modulo: 'Sistema', section: 'IA', escopo: 'grupo/empresa' }
+      { tipo: 'aba', id: 'iaModelos', label: 'IA e Modelos', tela: 'IAOtimizacaoIndex', modulo: 'Sistema', section: 'IA', chave: 'cc_ia_seguranca_ativa', escopo: 'grupo/empresa', status: 'conectado' },
+      { tipo: 'aba', id: 'otimizacao', label: 'Otimização', tela: 'IAOtimizacaoIndex', modulo: 'Sistema', section: 'IA', chave: 'ia_producao', escopo: 'grupo/empresa', status: 'conectado' }
     ]
   },
   acessos: {
     titulo: 'Gestão de Acessos',
     itens: [
-      { tipo: 'aba', id: 'perfis', label: 'Perfis RBAC', tela: 'GestaoAcessosIndex', modulo: 'Sistema', section: 'Controle de Acesso', escopo: 'grupo/empresa' },
-      { tipo: 'aba', id: 'usuarios', label: 'Usuários', tela: 'GestaoAcessosIndex', modulo: 'Sistema', section: 'Controle de Acesso', escopo: 'grupo/empresa' },
-      { tipo: 'aba', id: 'sod', label: 'SoD', tela: 'GestaoAcessosIndex', modulo: 'Sistema', section: 'Controle de Acesso', escopo: 'grupo/empresa' },
-      { tipo: 'aba', id: 'relatorios', label: 'Relatórios', tela: 'GestaoAcessosIndex', modulo: 'Sistema', section: 'Controle de Acesso', escopo: 'grupo/empresa' }
+      { tipo: 'aba', id: 'perfis', label: 'Perfis RBAC', tela: 'GestaoAcessosIndex', modulo: 'Sistema', section: 'Controle de Acesso', chave: 'seg_auditoria_detalhada', escopo: 'grupo/empresa', status: 'conectado' },
+      { tipo: 'aba', id: 'usuarios', label: 'Usuários', tela: 'GestaoAcessosIndex', modulo: 'Sistema', section: 'Controle de Acesso', chave: 'seg_auditoria_detalhada', escopo: 'grupo/empresa', status: 'conectado' },
+      { tipo: 'aba', id: 'sod', label: 'SoD', tela: 'GestaoAcessosIndex', modulo: 'Sistema', section: 'Controle de Acesso', chave: 'cc_ia_seguranca_ativa', escopo: 'grupo/empresa', status: 'conectado' },
+      { tipo: 'aba', id: 'relatorios', label: 'Relatórios', tela: 'GestaoAcessosIndex', modulo: 'Sistema', section: 'Controle de Acesso', chave: 'seg_auditoria_detalhada', escopo: 'grupo/empresa', status: 'conectado' }
     ]
   },
   seguranca: {
     titulo: 'Segurança & Governança',
     itens: [
-      { tipo: 'aba', id: 'politicas', label: 'Políticas', tela: 'SegurancaGovernancaIndex', modulo: 'Sistema', section: 'Segurança', escopo: 'grupo/empresa/global', status: 'conectado' },
-      { tipo: 'aba', id: 'manutencao', label: 'Monitoramento & Manutenção', tela: 'SegurancaGovernancaIndex', modulo: 'Sistema', section: 'Segurança', escopo: 'grupo/empresa/global', status: 'conectado' },
-      { tipo: 'aba', id: 'compliance', label: 'Compliance IA', tela: 'SegurancaGovernancaIndex', modulo: 'Sistema', section: 'Segurança', escopo: 'grupo/empresa/global', status: 'conectado' }
+      { tipo: 'aba', id: 'politicas', label: 'Políticas', tela: 'SegurancaGovernancaIndex', modulo: 'Sistema', section: 'Segurança', chave: 'seg_login_duplo_fator', escopo: 'grupo/empresa/global', status: 'conectado' },
+      { tipo: 'aba', id: 'manutencao', label: 'Monitoramento & Manutenção', tela: 'SegurancaGovernancaIndex', modulo: 'Sistema', section: 'Segurança', chave: 'seg_auditoria_detalhada', escopo: 'grupo/empresa/global', status: 'conectado' },
+      { tipo: 'aba', id: 'compliance', label: 'Compliance IA', tela: 'SegurancaGovernancaIndex', modulo: 'Sistema', section: 'Segurança', chave: 'cc_ia_seguranca_ativa', escopo: 'grupo/empresa/global', status: 'conectado' }
     ]
   },
   modulosPrincipais: {
