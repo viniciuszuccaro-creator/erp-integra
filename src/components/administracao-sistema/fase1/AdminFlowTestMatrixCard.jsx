@@ -7,12 +7,12 @@ const FLOW_GROUPS = [
   { nome: 'IA', status: 'coberto', detalhe: 'toggles e leitura central já ativos' },
   { nome: 'Segurança', status: 'coberto', detalhe: 'MFA, auditoria e IA de segurança governados' },
   { nome: 'Integrações', status: 'coberto', detalhe: 'webhooks, estrutura base e testes rápidos' },
-  { nome: 'Cadastros', status: 'parcial', detalhe: 'RBAC e contexto existem, faltam gates finos por ação' },
-  { nome: 'Financeiro', status: 'parcial', detalhe: 'funções reais mapeadas, falta cobertura total de UI' },
-  { nome: 'Comercial', status: 'parcial', detalhe: 'ações críticas mapeadas, falta fechar 100% dos botões' },
-  { nome: 'Estoque', status: 'parcial', detalhe: 'ajustes e movimentos mapeados, falta auditoria de superfície' },
-  { nome: 'Produção', status: 'parcial', detalhe: 'otimização ligada ao inventário, falta conexão total da UI' },
-  { nome: 'Expedição', status: 'parcial', detalhe: 'entregas e notificações mapeadas, falta fechamento visual total' },
+  { nome: 'Cadastros', status: 'parcial', detalhe: 'próximo alvo para inventário e gates finos por ação' },
+  { nome: 'Financeiro', status: 'parcial', detalhe: 'próximo alvo para cobertura total de UI e botões' },
+  { nome: 'Comercial', status: 'parcial', detalhe: 'próximo alvo para fechar ações críticas de ponta a ponta' },
+  { nome: 'Estoque', status: 'parcial', detalhe: 'próximo alvo para auditoria e gating completo da superfície' },
+  { nome: 'Produção', status: 'parcial', detalhe: 'próximo alvo para conexão total da interface operacional' },
+  { nome: 'Expedição', status: 'parcial', detalhe: 'próximo alvo para fechamento visual e operacional das ações' },
 ];
 
 const STATUS_BADGE = {

@@ -16,6 +16,8 @@ import AdminControlAuditChecklist from "@/components/administracao-sistema/fase1
 import AdminControlCoverageCard from "@/components/administracao-sistema/fase1/AdminControlCoverageCard";
 import AdminExecutionConnectionCard from "@/components/administracao-sistema/fase1/AdminExecutionConnectionCard";
 import AdminFlowTestMatrixCard from "@/components/administracao-sistema/fase1/AdminFlowTestMatrixCard";
+import AdminUnifiedControlMatrixCard from "@/components/administracao-sistema/fase1/AdminUnifiedControlMatrixCard";
+import AdminSystemFlowChecklistCard from "@/components/administracao-sistema/fase1/AdminSystemFlowChecklistCard";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
@@ -40,8 +42,10 @@ export default function ConfiguracoesGeraisIndex() {
             <MapaTogglesCard />
           </div>
           <ToggleMapCard />
+          <AdminUnifiedControlMatrixCard />
           <AdminExecutionConnectionCard />
           <AdminFlowTestMatrixCard />
+          <AdminSystemFlowChecklistCard />
           <AdminControlCoverageCard />
           <InventarioControlesCompletudeCard />
           <div className="grid gap-4 xl:grid-cols-2">
