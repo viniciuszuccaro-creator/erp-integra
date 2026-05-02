@@ -359,6 +359,9 @@ export function useContextoVisual() {
           };
 
           const filterInContext = async (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
+                   const localSkip = Number(criterios?.__skip || 0);
+                   const cleanCriteria = { ...(criterios || {}) };
+                   delete cleanCriteria.__skip;
                    const ENTITY_CONTEXT_FIELD = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
                    const SHARED_SET = new Set(['Cliente','Fornecedor','Transportadora']);
                    const ctxCampo = ENTITY_CONTEXT_FIELD[entityName] || campo || 'empresa_id';
@@ -380,7 +383,7 @@ export function useContextoVisual() {
 
                    if (!groupId && !empresaId && !noContext) return [];
 
-                   const rest = { ...criterios };
+                   const rest = { ...cleanCriteria };
                    const orConds = [];
 
                    if (empresaId) {
@@ -440,12 +443,13 @@ export function useContextoVisual() {
                    const authed = await base44.auth.isAuthenticated();
                    if (!authed) return [];
                    const res = await base44.functions.invoke('entityListSorted', {
-                       entityName,
-                       filter: filtro,
-                       sortField,
-                       sortDirection,
-                       limit: limit || 100,
-                     });
+                     entityName,
+                     filter: filtro,
+                     sortField,
+                     sortDirection,
+                     limit: limit || 100,
+                     skip: localSkip,
+                   });
                    return Array.isArray(res?.data) ? res.data : [];
                  };
 

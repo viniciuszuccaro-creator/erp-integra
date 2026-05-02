@@ -86,8 +86,17 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
       setConfirmedMap(prev => ({ ...prev, [chave]: backendValue }));
 
       if (queryKey) {
-        await queryClient.invalidateQueries({ queryKey, exact: true });
-        await queryClient.refetchQueries({ queryKey, exact: true });
+        await queryClient.setQueryData(queryKey, (prev) => {
+          if (!Array.isArray(prev)) return prev;
+          const next = [...prev];
+          const idx = next.findIndex((item) => item?.chave === chave && ((!empresaId && !item?.empresa_id) || item?.empresa_id === empresaId) && ((!grupoId && !item?.group_id) || item?.group_id === grupoId));
+          if (idx >= 0) {
+            next[idx] = { ...next[idx], ativa: backendValue };
+            return next;
+          }
+          return [{ chave, categoria: categoria || 'Sistema', ativa: backendValue, ...(empresaId ? { empresa_id: empresaId } : {}), ...(grupoId ? { group_id: grupoId } : {}) }, ...next];
+        });
+        queryClient.invalidateQueries({ queryKey, exact: true, refetchType: 'none' });
       }
 
       return true;

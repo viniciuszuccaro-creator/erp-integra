@@ -47,17 +47,7 @@ export default function IntegracoesIndex({ initialTab }) {
     } catch {}
   };
 
-  const { data: configuracao } = useQuery({
-    queryKey: ["configuracaoSistema", empresaAtual?.id],
-    queryFn: async () => {
-      if (!empresaAtual?.id) return null;
-      try {
-        return integracoesBase.config || null;
-      } catch (_) { return null; }
-    },
-    enabled: !!empresaAtual?.id,
-    staleTime: 60000,
-  });
+  const configuracao = integracoesBase.config || null;
 
   const nfeOk = !!configuracao?.integracao_nfe?.api_key;
   const boletosOk = !!configuracao?.integracao_boletos?.api_key;

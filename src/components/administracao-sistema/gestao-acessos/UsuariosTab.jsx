@@ -25,6 +25,8 @@ export default function UsuariosTab() {
   const { data: usuarios = [], isLoading: loadingUsers } = useQuery({
     queryKey: ['usuarios-gestao'],
     queryFn: () => base44.entities.User.list(),
+    staleTime: 300000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: perfis = [] } = useQuery({
@@ -36,6 +38,8 @@ export default function UsuariosTab() {
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas-gestao'],
     queryFn: () => base44.entities.Empresa.list(),
+    staleTime: 300000,
+    refetchOnWindowFocus: false,
   });
 
   const handleInvite = async () => {

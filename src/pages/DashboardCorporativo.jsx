@@ -349,7 +349,7 @@ export default function DashboardCorporativo() {
 
         {/* Tabs de Navegação */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-white border shadow-sm w-full flex-wrap h-auto">
+          <div className="w-full overflow-x-auto pb-1"><TabsList className="bg-white border shadow-sm inline-flex min-w-max flex-nowrap h-auto">
             <TabsTrigger value="visao-geral" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <BarChart3 className="w-4 h-4 mr-2" />
               Visão Geral
@@ -366,7 +366,7 @@ export default function DashboardCorporativo() {
               <Factory className="w-4 h-4 mr-2" />
               Operacional
             </TabsTrigger>
-          </TabsList>
+          </TabsList></div>
 
           {/* ABA: Visão Geral */}
           <TabsContent value="visao-geral" className="space-y-6 mt-6">

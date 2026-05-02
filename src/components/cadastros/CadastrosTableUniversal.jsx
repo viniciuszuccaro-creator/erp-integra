@@ -57,7 +57,7 @@ export default function CadastrosTableUniversal({
     queryKey: [entityName, sortField, currentPage, debouncedSearch, empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       const skip = (currentPage - 1) * pageSize;
-      return await filterInContext(entityName, searchFilter, sortField, pageSize);
+      return await filterInContext(entityName, { ...searchFilter, __skip: skip }, sortField, pageSize);
     },
     staleTime: 45_000,
     gcTime: 120_000,
@@ -68,8 +68,8 @@ export default function CadastrosTableUniversal({
   useEffect(() => {
     const api = base44.entities?.[entityName];
     if (!api?.subscribe) return;
-    const unsub = api.subscribe((evt) => {
-      queryClient.invalidateQueries({ queryKey: [entityName] });
+    const unsub = api.subscribe(() => {
+      queryClient.invalidateQueries({ queryKey: [entityName], refetchType: 'none' });
     });
     return unsub;
   }, [entityName, queryClient]);
