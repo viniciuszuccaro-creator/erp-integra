@@ -86,11 +86,14 @@ export default function DashboardCorporativo() {
 
   const { dataInicio, dataFim } = getDateRange();
 
+  const queryDefaults = { staleTime: 120000, refetchOnWindowFocus: false, refetchOnReconnect: false };
+
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos-dashboard', grupoAtual?.id],
     queryFn: () => estaNoGrupo
       ? base44.entities.Pedido.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.Pedido.list('-created_date', 9999),
+    ...queryDefaults,
   });
 
   const { data: clientes = [] } = useQuery({
@@ -98,6 +101,7 @@ export default function DashboardCorporativo() {
     queryFn: () => estaNoGrupo
       ? base44.entities.Cliente.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.Cliente.list('-created_date', 9999),
+    ...queryDefaults,
   });
 
   const { data: totalClientes = 0 } = useQuery({
@@ -120,6 +124,7 @@ export default function DashboardCorporativo() {
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas-dashboard'],
     queryFn: () => base44.entities.Empresa.list(),
+    ...queryDefaults,
   });
 
   const { data: produtos = [] } = useQuery({
@@ -127,6 +132,7 @@ export default function DashboardCorporativo() {
     queryFn: () => estaNoGrupo
       ? base44.entities.Produto.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.Produto.list('-created_date', 9999),
+    ...queryDefaults,
   });
 
   const { data: totalProdutos = 0 } = useQuery({
@@ -151,6 +157,7 @@ export default function DashboardCorporativo() {
     queryFn: () => estaNoGrupo
       ? base44.entities.ContaReceber.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.ContaReceber.list(),
+    ...queryDefaults,
   });
 
   const { data: contasPagar = [] } = useQuery({
@@ -158,6 +165,7 @@ export default function DashboardCorporativo() {
     queryFn: () => estaNoGrupo
       ? base44.entities.ContaPagar.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.ContaPagar.list(),
+    ...queryDefaults,
   });
 
   const { data: entregas = [] } = useQuery({
@@ -165,6 +173,7 @@ export default function DashboardCorporativo() {
     queryFn: () => estaNoGrupo
       ? base44.entities.Entrega.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.Entrega.list('-created_date', 9999),
+    ...queryDefaults,
   });
 
   const { data: ordensProducao = [] } = useQuery({
@@ -172,6 +181,7 @@ export default function DashboardCorporativo() {
     queryFn: () => estaNoGrupo
       ? base44.entities.OrdemProducao.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.OrdemProducao.list(),
+    ...queryDefaults,
   });
 
   // Filtrar por período e empresa

@@ -4,7 +4,7 @@ import { Activity, BarChart3 } from "lucide-react";
 
 export default function DashboardTabsNav() {
   return (
-    <TabsList className="bg-white border shadow-sm">
+    <div className="w-full overflow-x-auto pb-1"><TabsList className="bg-white border shadow-sm inline-flex min-w-max flex-nowrap h-auto">
       <TabsTrigger value="tempo-real" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
         <Activity className="w-4 h-4 mr-2" />
         Tempo Real
@@ -16,6 +16,6 @@ export default function DashboardTabsNav() {
       <TabsTrigger value="bi-operacional" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
         🤖 BI Operacional
       </TabsTrigger>
-    </TabsList>
+    </TabsList></div>
   );
 }

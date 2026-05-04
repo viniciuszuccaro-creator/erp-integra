@@ -65,14 +65,14 @@ export default function UsuariosTab() {
   return (
     <div className="w-full space-y-4">
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-3 items-center justify-between">
-        <div className="flex flex-wrap gap-2 flex-1">
+      <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between min-w-0">
+        <div className="flex flex-col sm:flex-row gap-2 flex-1 min-w-0">
           <div className="relative min-w-[180px] flex-1 max-w-sm">
             <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400" />
             <Input className="pl-8" placeholder="Buscar usuário..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos</SelectItem>
               <SelectItem value="admin">Admin</SelectItem>

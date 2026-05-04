@@ -1,48 +1,31 @@
 import * as React from "react"
+import * as SwitchPrimitive from "@radix-ui/react-switch"
 import { cn } from "@/lib/utils"
-
-const Switch = React.forwardRef(({ className, checked, onCheckedChange, disabled, ...props }, ref) => {
-  const handleClick = () => {
-    if (!disabled && onCheckedChange) {
-      onCheckedChange(!checked);
-    }
-  };
-
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={handleClick}
-      ref={ref}
-      className={cn(
-        "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50",
-        checked ? "bg-blue-600" : "bg-slate-200",
-        className
-      )}
-      {...props}
-    >
-      <span
-        className={cn(
-          "pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform",
-          checked ? "translate-x-5" : "translate-x-0"
-        )}
-      />
-    </button>
-  );
-});
-
-Switch.displayName = "Switch"
-
 import { uiAuditWrap } from "@/components/lib/uiAudit";
 
-const _Switch = Switch;
+const BaseSwitch = React.forwardRef(({ className, ...props }, ref) => (
+  <SwitchPrimitive.Root
+    ref={ref}
+    className={cn(
+      "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-blue-600 data-[state=unchecked]:bg-slate-200",
+      className
+    )}
+    {...props}
+  >
+    <SwitchPrimitive.Thumb
+      className="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
+    />
+  </SwitchPrimitive.Root>
+));
+
+BaseSwitch.displayName = "Switch"
+
 const AuditedSwitch = React.forwardRef(({ onCheckedChange, ...props }, ref) => {
-  const audited = typeof onCheckedChange === 'function' ? uiAuditWrap('Switch.onCheckedChange', onCheckedChange, { kind: 'switch', toastSuccess: true }) : undefined;
-  // CORREÇÃO CRÍTICA: Remove __wrapped_audit before passing to component
+  const audited = typeof onCheckedChange === 'function'
+    ? uiAuditWrap('Switch.onCheckedChange', onCheckedChange, { kind: 'switch', toastSuccess: true })
+    : undefined;
   const { __wrapped_audit, ...cleanProps } = props;
-  return (<_Switch ref={ref} onCheckedChange={audited} {...cleanProps} />);
+  return <BaseSwitch ref={ref} onCheckedChange={audited} {...cleanProps} />;
 });
 AuditedSwitch.displayName = 'AuditedSwitch';
 

@@ -76,7 +76,7 @@ export default function GestaoAcessosIndex() {
   return (
     <div className="w-full flex flex-col gap-3 min-h-0">
       {/* Banner RBAC com estatísticas */}
-      <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-3 flex items-center gap-3">
             <Shield className="w-8 h-8 text-blue-600 flex-shrink-0" />
