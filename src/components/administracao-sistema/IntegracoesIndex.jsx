@@ -113,9 +113,9 @@ export default function IntegracoesIndex({ initialTab }) {
   };
 
    return (
-    <div className="w-full h-full flex flex-col">
-      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full">
-        <TabsList className="flex flex-wrap gap-2 h-auto">
+    <div className="w-full h-full min-w-0 flex flex-col">
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full min-w-0">
+        <div className="w-full overflow-x-auto pb-1"><TabsList className="inline-flex min-w-max flex-nowrap gap-2 h-auto">
           <TabsTrigger value="gerenciamento"><CheckCircle2 className="w-4 h-4 mr-2" />Gerenciamento</TabsTrigger>
           <TabsTrigger value="status"><CheckCircle2 className="w-4 h-4 mr-2" />Status</TabsTrigger>
           <TabsTrigger value="nfe"><FileText className="w-4 h-4 mr-2" />NF-e</TabsTrigger>
@@ -124,7 +124,7 @@ export default function IntegracoesIndex({ initialTab }) {
           <TabsTrigger value="transportadoras"><Truck className="w-4 h-4 mr-2" />Transportadoras</TabsTrigger>
           <TabsTrigger value="maps"><Globe className="w-4 h-4 mr-2" />Maps</TabsTrigger>
           <TabsTrigger value="marketplaces"><ShoppingCart className="w-4 h-4 mr-2" />Marketplaces</TabsTrigger>
-        </TabsList>
+        </TabsList></div>
 
         <TabsContent value="gerenciamento" className="mt-4">
           <Card className="w-full">
@@ -137,7 +137,6 @@ export default function IntegracoesIndex({ initialTab }) {
                 <div className="rounded-lg border bg-slate-50 p-3 text-sm text-slate-700">
                   Auditoria detalhada para integrações: <strong>{auditoriaAtiva ? 'ativa antes das execuções' : 'inativa para execuções detalhadas'}</strong>
                 </div>
-                <IntegracoesPanel />
               </div>
 
               {/* Checklist de Implantação Global */}
@@ -198,7 +197,7 @@ export default function IntegracoesIndex({ initialTab }) {
 
               {/* Atalho para Cadastros Gerais — evita duplicação */}
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-                💡 <strong>Configurações de NF-e, Boletos, WhatsApp, APIs Externas e Webhooks</strong> estão centralizadas em <strong>Cadastros Gerais → Tecnologia, IA & Parâmetros</strong>. Use os links das abas acima (NF-e, Boletos/PIX, WhatsApp, etc.) para testes e configurações técnicas.
+                💡 <strong>Configurações de NF-e, Boletos, WhatsApp, APIs Externas e Webhooks</strong> estão centralizadas em <strong>Cadastros Gerais → Tecnologia, IA & Parâmetros</strong>. Este módulo fica focado em status, checklist, webhooks e testes técnicos.
               </div>
             </CardContent>
           </Card>

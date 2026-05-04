@@ -63,7 +63,7 @@ export default function UsuariosTab() {
   const roleColor = (role) => role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600';
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full min-w-0 space-y-4">
       {/* Toolbar */}
       <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between min-w-0">
         <div className="flex flex-col sm:flex-row gap-2 flex-1 min-w-0">
@@ -91,7 +91,7 @@ export default function UsuariosTab() {
       {loadingUsers ? (
         <div className="text-sm text-slate-500 p-4">Carregando...</div>
       ) : (
-        <div className="grid gap-2">
+        <div className="grid gap-2 min-w-0">
           {filtered.length === 0 && (
             <div className="text-sm text-slate-400 p-6 text-center">Nenhum usuário encontrado.</div>
           )}
@@ -116,7 +116,7 @@ export default function UsuariosTab() {
                     )}
                   </div>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => setSelectedUser(u)}>
+                <Button size="sm" variant="outline" data-permission="Sistema.Controle de Acesso.editar" onClick={() => setSelectedUser(u)}>
                   Configurar
                 </Button>
               </CardContent>

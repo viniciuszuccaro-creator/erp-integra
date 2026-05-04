@@ -29,9 +29,9 @@ export default function ConfiguracoesGeraisIndex() {
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <Card className="w-full">
-        <CardContent className="p-4 space-y-3">
+    <div className="w-full h-full min-w-0 flex flex-col">
+      <Card className="w-full min-w-0">
+        <CardContent className="p-4 space-y-3 min-w-0">
           <ContextoConfigBanner />
           <HerancaConfigNotice />
           <Fase1AdminStatus />
@@ -58,7 +58,9 @@ export default function ConfiguracoesGeraisIndex() {
             action="visualizar"
             fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para Configurações Gerais.</div>}
           >
-            <ConfigGlobal empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
+            <div className="w-full min-w-0 overflow-x-auto">
+              <ConfigGlobal empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
+            </div>
           </ProtectedSection>
         </CardContent>
       </Card>

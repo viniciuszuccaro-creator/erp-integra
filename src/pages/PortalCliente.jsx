@@ -143,7 +143,7 @@ export default function PortalCliente() {
     <div className="w-full min-h-full p-3 sm:p-4 space-y-3">
       <PortalHeader cliente={cliente} spotlight={spotlight} />
 
-      <Tabs value={tab} onValueChange={setTab} className="w-full">
+      <Tabs value={tab} onValueChange={setTab} className="w-full min-w-0">
         {/* Scrollable tabs para mobile */}
         <div className="w-full overflow-x-auto pb-1 -mx-0.5 px-0.5">
           <TabsList className="inline-flex h-auto gap-1 flex-nowrap min-w-max bg-slate-100 p-1 rounded-lg">
