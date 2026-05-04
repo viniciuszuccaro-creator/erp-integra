@@ -72,7 +72,7 @@ export default function CadastrosTableUniversal({
     const api = base44.entities?.[entityName];
     if (!api?.subscribe) return;
     const unsub = api.subscribe(() => {
-      queryClient.invalidateQueries({ queryKey: [entityName], refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: [entityName] });
     });
     return unsub;
   }, [entityName, queryClient]);

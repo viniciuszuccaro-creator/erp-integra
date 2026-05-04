@@ -231,7 +231,7 @@ export default function Dashboard() {
       try {
         const filtro = getFiltroContexto('empresa_id');
         const response = await base44.functions.invoke('countEntities', {
-          entityName: 'Produto',
+          entity_name: 'Produto',
           filter: filtro
         });
         return response.data?.count || produtos.length;
@@ -266,7 +266,7 @@ export default function Dashboard() {
       try {
         const filtro = getFiltroContexto('empresa_id', true);
         const response = await base44.functions.invoke('countEntities', {
-          entityName: 'Cliente',
+          entity_name: 'Cliente',
           filter: filtro
         });
         return response.data?.count || clientes.length;
@@ -284,7 +284,7 @@ export default function Dashboard() {
       try {
         const filtro = getFiltroContexto('empresa_alocada_id', true);
         const response = await base44.functions.invoke('countEntities', {
-          entityName: 'Colaborador',
+          entity_name: 'Colaborador',
           filter: filtro
         });
         return response.data?.count || colaboradores.length;

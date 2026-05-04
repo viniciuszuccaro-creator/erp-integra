@@ -73,9 +73,10 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
       if (!authed) return null;
       return resolveConfiguracaoSistema({ categoria, chave, empresaId, grupoId, aliases: mergedAliases });
     },
-    staleTime: 60_000,
-    gcTime: 120_000,
+    staleTime: 300_000,
+    gcTime: 600_000,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     networkMode: 'online',
   });
 
@@ -92,7 +93,7 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
       });
     },
     onSuccess: async (res, variables) => {
-      // Invalida todos os consumidores conhecidos
+      queryClient.setQueryData(["configuracaoSistema", categoria || "*", chave || "*", empresaId || "sem-empresa", grupoId || "sem-grupo"], (prev) => ({ ...(prev || {}), ...(res?.data?.record || variables || {}) }));
       queryClient.invalidateQueries({ queryKey: ["configuracaoSistema"] });
       queryClient.invalidateQueries({ queryKey: ["config-sistema"] });
       // Auditoria detalhada (quem, parâmetro, antes/depois)

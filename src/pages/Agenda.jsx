@@ -130,11 +130,12 @@ function Agenda() {
   });
 
   const { data: configuracoes } = useQuery({
-    queryKey: ['configuracaoSistema'],
+    queryKey: ['configuracaoSistema', empresaAtual?.id],
     queryFn: async () => {
-      const configs = await base44.entities.ConfiguracaoSistema.list();
-      return configs[0] || null; // Assuming there's only one system config or we take the first
+      return await filterInContext('ConfiguracaoSistema', {}, '-updated_date', 1, 'empresa_id').then((configs) => configs[0] || null);
     },
+    staleTime: 300000,
+    refetchOnWindowFocus: false,
   });
 
   // Verificar lembretes pendentes e criar notificações
@@ -812,7 +813,7 @@ function Agenda() {
     { cor: '#64748b', nome: 'Cinza' }
   ];
 
-  const googleSyncAtivo = configuracoes?.integracao_maps?.ativa || false;
+  const googleSyncAtivo = configuracoes?.integracao_maps?.ativa || configuracoes?.dados?.google_calendar_ativo || false;
 
 
   return (
