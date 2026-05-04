@@ -27,6 +27,7 @@ export default function UsuariosTab() {
     queryFn: () => base44.entities.User.list(),
     staleTime: 300000,
     refetchOnWindowFocus: false,
+    enabled: isAdmin() || hasPermission('Sistema', 'Controle de Acesso', 'visualizar'),
   });
 
   const { data: perfis = [] } = useQuery({
@@ -40,6 +41,7 @@ export default function UsuariosTab() {
     queryFn: () => base44.entities.Empresa.list(),
     staleTime: 300000,
     refetchOnWindowFocus: false,
+    enabled: isAdmin() || hasPermission('Sistema', 'Controle de Acesso', 'visualizar'),
   });
 
   const handleInvite = async () => {
@@ -63,7 +65,7 @@ export default function UsuariosTab() {
   const roleColor = (role) => role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600';
 
   return (
-    <div className="w-full min-w-0 space-y-4">
+    <div className="w-full min-w-0 h-full space-y-4">
       {/* Toolbar */}
       <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between min-w-0">
         <div className="flex flex-col sm:flex-row gap-2 flex-1 min-w-0">
