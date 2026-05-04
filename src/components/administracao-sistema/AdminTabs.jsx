@@ -107,7 +107,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       </div>
 
       {/* ── PARÂMETROS GERAIS ── */}
-      <TabsContent value="gerais" className="mt-4">
+      <TabsContent value="gerais" className="mt-4 min-w-0">
         <ProtectedSection
           module="Sistema" section={["Configurações"]} action="visualizar"
           fallback={<p className="p-4 text-sm text-slate-500">Acesso restrito às Configurações.</p>}
@@ -119,7 +119,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       </TabsContent>
 
       {/* ── INTEGRAÇÕES ── */}
-      <TabsContent value="integracoes" className="mt-4">
+      <TabsContent value="integracoes" className="mt-4 min-w-0">
         <ProtectedSection
           module="Sistema" section={["Integrações"]} action="visualizar"
           fallback={<p className="p-4 text-sm text-slate-500">Acesso restrito às Integrações.</p>}
@@ -131,7 +131,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       </TabsContent>
 
       {/* ── GESTÃO DE ACESSOS ── */}
-      <TabsContent value="acessos" className="mt-4">
+      <TabsContent value="acessos" className="mt-4 min-w-0">
         <ProtectedSection
           module="Sistema" section={["Controle de Acesso"]} action="visualizar"
           fallback={<p className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</p>}
@@ -143,7 +143,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       </TabsContent>
 
       {/* ── SEGURANÇA & GOVERNANÇA ── */}
-      <TabsContent value="seguranca" className="mt-4">
+      <TabsContent value="seguranca" className="mt-4 min-w-0">
         <ProtectedSection
           module="Sistema" section={["Segurança"]} action="visualizar"
           fallback={<p className="p-4 text-sm text-slate-500">Acesso restrito à Segurança.</p>}
@@ -155,7 +155,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       </TabsContent>
 
       {/* ── IA & OTIMIZAÇÃO ── */}
-      <TabsContent value="ia" className="mt-4">
+      <TabsContent value="ia" className="mt-4 min-w-0">
         <ProtectedSection
           module="Sistema" section={["IA"]} action="visualizar"
           fallback={<p className="p-4 text-sm text-slate-500">Acesso restrito às configurações de IA.</p>}
@@ -167,7 +167,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       </TabsContent>
 
       {/* ── AUDITORIA E LOGS ── */}
-      <TabsContent value="auditoria" className="mt-4">
+      <TabsContent value="auditoria" className="mt-4 min-w-0">
         <ProtectedSection
           module="Sistema" section={["Auditoria"]} action="visualizar"
           fallback={<p className="p-4 text-sm text-slate-500">Acesso restrito à Auditoria.</p>}
@@ -180,7 +180,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
 
       {/* ── FERRAMENTAS (admin only) ── */}
       {isAdminUser && (
-        <TabsContent value="ferramentas" className="mt-4">
+        <TabsContent value="ferramentas" className="mt-4 min-w-0">
           <AdminFerramentas empresaAtual={empresaAtual} grupoAtual={grupoAtual} />
         </TabsContent>
       )}

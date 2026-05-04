@@ -1,4 +1,7 @@
 import { useMemo, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { findAdminControl } from "@/components/administracao-sistema/fase1/adminControlRegistry";
 
 export function getConfigScopeCandidates({ categoria, chave, empresaId, grupoId }) {
   const baseFilter = {};
@@ -48,11 +51,6 @@ export async function isConfiguracaoSistemaAtiva({ categoria, chave, empresaId =
   if (typeof config?.ativa === 'boolean') return config.ativa;
   return fallback;
 }
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
-import { findAdminControl } from "@/components/administracao-sistema/fase1/adminControlRegistry";
-
-
 
 /**
  * Hook de acesso centralizado às configurações do sistema
