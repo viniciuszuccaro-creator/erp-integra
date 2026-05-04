@@ -124,7 +124,7 @@ export default function IntegracoesIndex({ initialTab }) {
           <TabsTrigger value="marketplaces"><ShoppingCart className="w-4 h-4 mr-2" />Marketplaces</TabsTrigger>
         </TabsList></div>
 
-        <TabsContent value="gerenciamento" className="mt-4">
+        <TabsContent value="gerenciamento" className="mt-4 min-w-0">
           <Card className="w-full">
             <CardContent className="p-4">
               <div className="w-full mb-3 space-y-2">
@@ -201,26 +201,26 @@ export default function IntegracoesIndex({ initialTab }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="status" className="mt-4">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0"><StatusIntegracoes empresaId={empresaAtual?.id} /></CardContent></Card>
+        <TabsContent value="status" className="mt-4 min-w-0">
+          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><StatusIntegracoes empresaId={empresaAtual?.id} /></CardContent></Card>
         </TabsContent>
-        <TabsContent value="nfe" className="mt-4">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0"><TesteNFe configuracao={configuracao} /></CardContent></Card>
+        <TabsContent value="nfe" className="mt-4 min-w-0">
+          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><TesteNFe configuracao={configuracao} /></CardContent></Card>
         </TabsContent>
-        <TabsContent value="boletos" className="mt-4">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0"><TesteBoletos configuracao={configuracao} /></CardContent></Card>
+        <TabsContent value="boletos" className="mt-4 min-w-0">
+          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><TesteBoletos configuracao={configuracao} /></CardContent></Card>
         </TabsContent>
-        <TabsContent value="whatsapp" className="mt-4">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0"><ConfigWhatsAppBusiness empresaId={empresaAtual?.id} /></CardContent></Card>
+        <TabsContent value="whatsapp" className="mt-4 min-w-0">
+          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><ConfigWhatsAppBusiness empresaId={empresaAtual?.id} /></CardContent></Card>
         </TabsContent>
-        <TabsContent value="transportadoras" className="mt-4">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0"><TesteTransportadoras configuracao={configuracao} /></CardContent></Card>
+        <TabsContent value="transportadoras" className="mt-4 min-w-0">
+          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><TesteTransportadoras configuracao={configuracao} /></CardContent></Card>
         </TabsContent>
-        <TabsContent value="maps" className="mt-4">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0"><TesteGoogleMaps configuracao={configuracao} /></CardContent></Card>
+        <TabsContent value="maps" className="mt-4 min-w-0">
+          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><TesteGoogleMaps configuracao={configuracao} /></CardContent></Card>
         </TabsContent>
-        <TabsContent value="marketplaces" className="mt-4">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0"><SincronizacaoMarketplacesAtiva /></CardContent></Card>
+        <TabsContent value="marketplaces" className="mt-4 min-w-0">
+          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><SincronizacaoMarketplacesAtiva /></CardContent></Card>
         </TabsContent>
       </Tabs>
     </div>

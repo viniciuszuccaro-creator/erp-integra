@@ -33,7 +33,7 @@ export default function UsuariosTab() {
   const { data: perfis = [] } = useQuery({
     queryKey: ['perfis-acesso-tab', empresaAtual?.id],
     queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 200),
-    enabled: !!empresaAtual?.id,
+    enabled: (isAdmin() || hasPermission('Sistema', 'Controle de Acesso', 'visualizar')) && !!empresaAtual?.id,
   });
 
   const { data: empresas = [] } = useQuery({

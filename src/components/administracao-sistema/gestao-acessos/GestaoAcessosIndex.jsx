@@ -160,26 +160,26 @@ export default function GestaoAcessosIndex() {
           </TabsList>
         </div>
 
-        <TabsContent value="perfis" className="mt-3 w-full">
-          <div className="w-full overflow-x-auto">
+        <TabsContent value="perfis" className="mt-3 w-full min-w-0">
+          <div className="w-full min-w-0 overflow-x-auto">
             <CentralPerfisAcesso />
           </div>
         </TabsContent>
 
-        <TabsContent value="usuarios" className="mt-3 w-full">
+        <TabsContent value="usuarios" className="mt-3 w-full min-w-0">
           <div className="w-full min-w-0 overflow-x-auto">
             <UsuariosTab />
           </div>
         </TabsContent>
 
-        <TabsContent value="sod" className="mt-3 w-full">
-          <div className="w-full overflow-x-auto">
+        <TabsContent value="sod" className="mt-3 w-full min-w-0">
+          <div className="w-full min-w-0 overflow-x-auto">
             <SoDChecker />
           </div>
         </TabsContent>
 
-        <TabsContent value="relatorios" className="mt-3 w-full">
-          <div className="w-full overflow-x-auto">
+        <TabsContent value="relatorios" className="mt-3 w-full min-w-0">
+          <div className="w-full min-w-0 overflow-x-auto">
             <RelatorioPermissoes perfis={perfis} usuarios={usuarios} empresas={empresas} />
           </div>
         </TabsContent>
