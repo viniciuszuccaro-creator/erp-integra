@@ -146,7 +146,7 @@ export default function UsuariosTab() {
       {/* Modal de edição */}
       {selectedUser && (
         <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+          <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-auto">
             <DialogHeader>
               <DialogTitle>Configurar Usuário — {selectedUser.full_name}</DialogTitle>
             </DialogHeader>

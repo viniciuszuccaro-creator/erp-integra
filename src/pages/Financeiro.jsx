@@ -80,9 +80,8 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro
+    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
   });
-
   const { data: contasPagar = [] } = useQuery({
     queryKey: ['contasPagar', empresaAtual?.id],
     queryFn: async () => {
@@ -116,9 +115,8 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro
+    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
   });
-
   const { data: rateios = [] } = useQuery({
     queryKey: ['rateios', empresaAtual?.id],
     queryFn: async () => {
@@ -131,9 +129,8 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro
+    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
   });
-
   const { data: extratosBancarios = [] } = useQuery({
     queryKey: ['extratos', empresaAtual?.id],
     queryFn: async () => {
@@ -146,9 +143,8 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro
+    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
   });
-
   const { data: configsGateway = [] } = useQuery({
     queryKey: ['configs-gateway', empresaAtual?.id],
     queryFn: async () => {
@@ -161,9 +157,8 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro
+    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
   });
-
   const { data: ordensLiquidacao = [] } = useQuery({
     queryKey: ['caixa-ordens-liquidacao', empresaAtual?.id],
     queryFn: async () => {
@@ -176,9 +171,8 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro
+    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
   });
-
   const { data: pedidosPendentesAprovacao = [] } = useQuery({
     queryKey: ['pedidos-pendentes-aprovacao', empresaAtual?.id],
     queryFn: async () => {
@@ -191,9 +185,8 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro
+    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
   });
-
   // Dados já vêm filtrados do servidor
   const contasReceberFiltradas = contasReceber;
   const contasPagarFiltradas = contasPagar;

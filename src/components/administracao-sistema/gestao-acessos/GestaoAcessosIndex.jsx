@@ -39,12 +39,17 @@ export default function GestaoAcessosIndex() {
   };
 
   // Hooks SEMPRE antes de qualquer return condicional
-  const { data: perfis = [] } = useQuery({
+  const { data: perfis = [], isLoading: loadingPerfis } = useQuery({
     queryKey: ['perfis-acesso', empresaAtual?.id],
     queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 200),
     enabled: podeVer,
+    staleTime: 300000,
+    gcTime: 600000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
   });
-  const { data: usuarios = [] } = useQuery({
+  const { data: usuarios = [], isLoading: loadingUsuarios } = useQuery({
     queryKey: ['usuarios', user?.id],
     queryFn: async () => {
       if (!(await base44.auth.isAuthenticated())) return [];
@@ -69,6 +74,10 @@ export default function GestaoAcessosIndex() {
     refetchOnReconnect: false,
     retry: 1,
   });
+
+  if (loadingPerfis || loadingUsuarios) {
+    return <div className="p-6 text-sm text-slate-500">Carregando gestão de acessos...</div>;
+  }
 
   if (!podeVer) {
     return (
