@@ -68,6 +68,7 @@ const DropdownMenuItem = React.forwardRef(({ className, inset, ...props }, ref) 
   if (typeof cleanProps.onSelect === 'function') {
     cleanProps.onSelect = uiAuditWrap(cleanProps['data-action'] || 'DropdownMenuItem.onSelect', cleanProps.onSelect, { kind: 'dropdown', toastSuccess: true });
   }
+  if ('data-action' in cleanProps) delete cleanProps['data-action'];
   if (perm) {
     const [m,s,a] = String(perm).split('.');
     const allowed = hasPermission(m, s || null, a || null);

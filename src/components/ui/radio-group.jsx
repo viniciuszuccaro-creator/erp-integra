@@ -31,9 +31,11 @@ RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName
 const AuditedRadioGroup = React.forwardRef(({ onValueChange, ...props }, ref) => {
   const { hasPermission } = usePermissions();
   const perm = props?.['data-permission'];
-  const audited = typeof onValueChange === 'function' ? uiAuditWrap('RadioGroup.onValueChange', onValueChange, { kind: 'radio', toastSuccess: true }) : undefined;
+  const actionName = props?.['data-action'] || 'RadioGroup.onValueChange';
+  const audited = typeof onValueChange === 'function' ? uiAuditWrap(actionName, onValueChange, { kind: 'radio', toastSuccess: true }) : undefined;
   const { __wrapped_audit, ...cleanProps } = props;
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
+  if ('data-action' in cleanProps) delete cleanProps['data-action'];
   if (perm) {
     const [m,s,a] = String(perm).split('.');
     const allowed = hasPermission(m, s || null, a || null);

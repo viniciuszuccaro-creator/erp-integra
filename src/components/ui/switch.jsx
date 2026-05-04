@@ -24,11 +24,13 @@ BaseSwitch.displayName = "Switch"
 const AuditedSwitch = React.forwardRef(({ onCheckedChange, ...props }, ref) => {
   const { hasPermission } = usePermissions();
   const perm = props?.['data-permission'];
+  const actionName = props?.['data-action'] || 'Switch.onCheckedChange';
   const audited = typeof onCheckedChange === 'function'
-    ? uiAuditWrap('Switch.onCheckedChange', onCheckedChange, { kind: 'switch', toastSuccess: true })
+    ? uiAuditWrap(actionName, onCheckedChange, { kind: 'switch', toastSuccess: true })
     : undefined;
   const { __wrapped_audit, ...cleanProps } = props;
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
+  if ('data-action' in cleanProps) delete cleanProps['data-action'];
   if (perm) {
     const [m,s,a] = String(perm).split('.');
     const allowed = hasPermission(m, s || null, a || null);

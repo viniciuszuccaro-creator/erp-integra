@@ -34,6 +34,7 @@ const WrappedCheckbox = React.forwardRef((props, ref) => {
   const { __wrapped_audit, ...cleanProps } = p;
   const perm = cleanProps?.['data-permission'];
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
+  if ('data-action' in cleanProps) delete cleanProps['data-action'];
   if (perm) {
     const [m,s,a] = String(perm).split('.');
     const allowed = hasPermission(m, s || null, a || null);

@@ -134,7 +134,7 @@ export default function GestaoAcessosIndex() {
          </span>
        </div>
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full min-w-0 flex-1">
         <div className="w-full overflow-x-auto pb-1 -mx-1 px-1">
           <TabsList className="inline-flex h-auto gap-1 flex-nowrap min-w-max bg-slate-100 p-1 rounded-lg">
             <TabsTrigger value="perfis" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
@@ -167,7 +167,7 @@ export default function GestaoAcessosIndex() {
         </TabsContent>
 
         <TabsContent value="usuarios" className="mt-3 w-full">
-          <div className="w-full">
+          <div className="w-full min-w-0 overflow-x-auto">
             <UsuariosTab />
           </div>
         </TabsContent>
