@@ -91,10 +91,18 @@ DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
 const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checked, ...props }, ref) => {
   const cleanProps = { ...props };
+  const { hasPermission } = usePermissions();
+  const perm = cleanProps?.['data-permission'];
   if (typeof cleanProps.onCheckedChange === 'function') {
     cleanProps.onCheckedChange = uiAuditWrap(cleanProps['data-action'] || 'DropdownMenuCheckboxItem.onCheckedChange', cleanProps.onCheckedChange, { kind: 'dropdown-checkbox' });
   }
   if ('data-action' in cleanProps) delete cleanProps['data-action'];
+  if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
+  if (perm) {
+    const [m,s,a] = String(perm).split('.');
+    const allowed = hasPermission(m, s || null, a || null);
+    if (!allowed) return <span className="inline-flex items-center rounded border border-dashed px-2 py-1 text-[10px] text-slate-400 select-none">Acesso negado</span>;
+  }
   return (
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
@@ -117,11 +125,19 @@ const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checke
 DropdownMenuCheckboxItem.displayName = DropdownMenuPrimitive.CheckboxItem.displayName
 
 const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props }, ref) => {
+  const { hasPermission } = usePermissions();
   const cleanProps = { ...props };
+  const perm = cleanProps?.['data-permission'];
   if (typeof cleanProps.onSelect === 'function') {
     cleanProps.onSelect = uiAuditWrap(cleanProps['data-action'] || 'DropdownMenuRadioItem.onSelect', cleanProps.onSelect, { kind: 'dropdown-radio' });
   }
   if ('data-action' in cleanProps) delete cleanProps['data-action'];
+  if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
+  if (perm) {
+    const [m,s,a] = String(perm).split('.');
+    const allowed = hasPermission(m, s || null, a || null);
+    if (!allowed) return <span className="inline-flex items-center rounded border border-dashed px-2 py-1 text-[10px] text-slate-400 select-none">Acesso negado</span>;
+  }
   return (
   <DropdownMenuPrimitive.RadioItem
     ref={ref}

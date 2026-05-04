@@ -71,7 +71,7 @@ export default function Financeiro() {
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'ContaReceber',
-          filter: getFiltroContexto('empresa_id')
+          filter: getFiltroContexto('empresa_id', true)
         });
         return response.data?.count || contasReceber.length;
       } catch {
@@ -104,7 +104,7 @@ export default function Financeiro() {
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'ContaPagar',
-          filter: getFiltroContexto('empresa_id')
+          filter: getFiltroContexto('empresa_id', true)
         });
         return response.data?.count || contasPagar.length;
       } catch {
