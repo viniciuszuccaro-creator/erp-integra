@@ -25,7 +25,7 @@ const TabsTrigger = React.forwardRef(({ className, ...props }, ref) => {
   const allowed = perm ? (() => { const [m,s,a] = String(perm).split('.'); return hasPermission(m, s || null, a || null); })() : true;
   if (perm && !allowed) {
     return (
-      <span className="inline-flex items-center rounded-md border border-dashed px-3 py-1 text-xs text-slate-400 select-none">Acesso negado</span>
+      <span className="inline-flex shrink-0 items-center rounded-md border border-dashed px-3 py-1 text-xs text-slate-400 select-none whitespace-nowrap">Acesso negado</span>
     );
   }
   return (

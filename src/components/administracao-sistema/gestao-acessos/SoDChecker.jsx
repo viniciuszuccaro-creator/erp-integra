@@ -11,7 +11,7 @@ import SoDResults from "@/components/administracao-sistema/gestao-acessos/SoDRes
 export default function SoDChecker() {
   const { isAdmin, hasPermission } = usePermissions();
   const { user } = useUser();
-  const { empresaAtual, estaNoGrupo } = useContextoVisual();
+  const { empresaAtual, estaNoGrupo, grupoAtual } = useContextoVisual();
   const podeExecutar = isAdmin() || hasPermission('Sistema', 'Controle de Acesso', 'editar');
 
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ export default function SoDChecker() {
     try {
       const { data } = await base44.functions.invoke('sodValidator', { 
         scope: estaNoGrupo ? 'grupo' : 'empresa',
-        group_id: estaNoGrupo ? (empresaAtual?.group_id || empresaAtual?.id) : undefined,
+        group_id: estaNoGrupo ? (grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.id) : undefined,
         empresa_id: !estaNoGrupo ? empresaAtual?.id : undefined,
         requested_by: user?.id,
       });
@@ -97,7 +97,7 @@ export default function SoDChecker() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col gap-3">
+    <div className="w-full h-full min-w-0 overflow-x-hidden flex flex-col gap-3">
       <ContextoConfigBanner />
       <Card className="w-full">
         <CardContent className="p-4 flex items-center justify-between gap-3 flex-wrap">

@@ -74,6 +74,9 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
       return resolveConfiguracaoSistema({ categoria, chave, empresaId, grupoId, aliases: mergedAliases });
     },
     staleTime: 60_000,
+    gcTime: 120_000,
+    refetchOnWindowFocus: false,
+    networkMode: 'online',
   });
 
   const setMutation = useMutation({

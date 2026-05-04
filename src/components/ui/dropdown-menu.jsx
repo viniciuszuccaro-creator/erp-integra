@@ -89,7 +89,13 @@ const DropdownMenuItem = React.forwardRef(({ className, inset, ...props }, ref) 
 })
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
-const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checked, ...props }, ref) => (
+const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checked, ...props }, ref) => {
+  const cleanProps = { ...props };
+  if (typeof cleanProps.onCheckedChange === 'function') {
+    cleanProps.onCheckedChange = uiAuditWrap(cleanProps['data-action'] || 'DropdownMenuCheckboxItem.onCheckedChange', cleanProps.onCheckedChange, { kind: 'dropdown-checkbox' });
+  }
+  if ('data-action' in cleanProps) delete cleanProps['data-action'];
+  return (
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
@@ -106,10 +112,17 @@ const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checke
     </span>
     {children}
   </DropdownMenuPrimitive.CheckboxItem>
-))
+  )
+})
 DropdownMenuCheckboxItem.displayName = DropdownMenuPrimitive.CheckboxItem.displayName
 
-const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props }, ref) => (
+const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props }, ref) => {
+  const cleanProps = { ...props };
+  if (typeof cleanProps.onSelect === 'function') {
+    cleanProps.onSelect = uiAuditWrap(cleanProps['data-action'] || 'DropdownMenuRadioItem.onSelect', cleanProps.onSelect, { kind: 'dropdown-radio' });
+  }
+  if ('data-action' in cleanProps) delete cleanProps['data-action'];
+  return (
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
@@ -125,7 +138,8 @@ const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props 
     </span>
     {children}
   </DropdownMenuPrimitive.RadioItem>
-))
+  )
+})
 DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName
 
 const DropdownMenuLabel = React.forwardRef(({ className, inset, ...props }, ref) => (
