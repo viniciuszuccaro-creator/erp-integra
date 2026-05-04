@@ -97,7 +97,7 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
           }
           return [{ chave, categoria: categoria || 'Sistema', ativa: backendValue, ...(empresaId ? { empresa_id: empresaId } : {}), ...(grupoId ? { group_id: grupoId } : {}) }, ...next];
         });
-        queryClient.invalidateQueries({ queryKey, exact: true });
+        await queryClient.invalidateQueries({ queryKey, exact: true, refetchType: 'active' });
       }
 
       return true;

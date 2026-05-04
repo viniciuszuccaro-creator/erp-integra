@@ -124,7 +124,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
           module="Sistema" section={["Integrações"]} action="visualizar"
           fallback={<p className="p-4 text-sm text-slate-500">Acesso restrito às Integrações.</p>}
         >
-          <div className="w-full h-full">
+          <div className="w-full h-full min-w-0 overflow-x-hidden">
             <IntegracoesIndex />
           </div>
         </ProtectedSection>
@@ -136,7 +136,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
           module="Sistema" section={["Controle de Acesso"]} action="visualizar"
           fallback={<p className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</p>}
         >
-          <div className="w-full overflow-hidden">
+          <div className="w-full min-w-0 overflow-x-hidden">
             <GestaoAcessosIndex />
           </div>
         </ProtectedSection>
@@ -148,7 +148,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
           module="Sistema" section={["Segurança"]} action="visualizar"
           fallback={<p className="p-4 text-sm text-slate-500">Acesso restrito à Segurança.</p>}
         >
-          <div className="w-full h-full">
+          <div className="w-full h-full min-w-0 overflow-x-hidden">
             <SegurancaGovernancaIndex />
           </div>
         </ProtectedSection>
@@ -160,7 +160,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
           module="Sistema" section={["IA"]} action="visualizar"
           fallback={<p className="p-4 text-sm text-slate-500">Acesso restrito às configurações de IA.</p>}
         >
-          <div className="w-full h-full">
+          <div className="w-full h-full min-w-0 overflow-x-hidden">
             <IAOtimizacaoIndex />
           </div>
         </ProtectedSection>
@@ -172,7 +172,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
           module="Sistema" section={["Auditoria"]} action="visualizar"
           fallback={<p className="p-4 text-sm text-slate-500">Acesso restrito à Auditoria.</p>}
         >
-          <div className="w-full h-full">
+          <div className="w-full h-full min-w-0 overflow-x-hidden">
             <AuditoriaLogsIndex />
           </div>
         </ProtectedSection>
