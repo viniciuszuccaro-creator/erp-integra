@@ -155,7 +155,7 @@ export default function GestaoAcessosIndex() {
        </div>
 
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full min-w-0 flex-1 flex flex-col overflow-hidden">
-        <div className="w-full min-w-0 overflow-x-auto pb-1 -mx-1 px-1">
+        <div className="w-full min-w-0 overflow-x-auto overflow-y-hidden pb-1 -mx-1 px-1">
           <TabsList className="inline-flex h-auto gap-1 flex-nowrap min-w-max bg-slate-100 p-1 rounded-lg">
             <TabsTrigger value="perfis" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Shield className="w-3.5 h-3.5 mr-1" />

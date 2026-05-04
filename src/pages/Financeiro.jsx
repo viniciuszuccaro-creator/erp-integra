@@ -407,7 +407,7 @@ export default function Financeiro() {
     <ProtectedSection module="Financeiro" action="visualizar">
     <ErrorBoundary>
       <ModuleLayout title="Financeiro e Contábil" subtitle="Pagamentos, recebimentos e conciliação">
-        <div className="w-full h-full min-w-0 flex flex-col gap-4 overflow-hidden">
+        <div className="w-full h-full min-w-0 flex flex-col gap-4 overflow-x-hidden overflow-y-auto">
           <ModuleKPIs>
             <KPIsFinanceiroLaunchpad
               receberPendente={receberPendente}

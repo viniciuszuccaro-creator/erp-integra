@@ -117,6 +117,7 @@ export function useContextoGrupoEmpresa() {
       try { localStorage.setItem('contexto_atual', 'grupo'); } catch {}
       try { if (grupo?.id) localStorage.setItem('group_atual_id', grupo.id); } catch {}
       queryClient.invalidateQueries();
+      queryClient.refetchQueries({ queryKey: ['empresas-grupo'] });
       // Evitar reload completo; atualizar queries e deixar GuardRails liberar
     },
     onError: (error) => {
@@ -163,6 +164,7 @@ export function useContextoGrupoEmpresa() {
       try { localStorage.setItem('contexto_atual', 'empresa'); } catch {}
       try { if (empresa?.id) localStorage.setItem('empresa_atual_id', empresa.id); } catch {}
       queryClient.invalidateQueries();
+      queryClient.refetchQueries({ queryKey: ['empresas'] });
       // Sem reload completo
     },
     onError: (error) => {

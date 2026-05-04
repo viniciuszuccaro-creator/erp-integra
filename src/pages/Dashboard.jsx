@@ -895,7 +895,7 @@ export default function Dashboard() {
                 <CardTitle>Command Center</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-3">
                   <div className="p-4 rounded-md border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Erros (24h)</div>
