@@ -67,7 +67,7 @@ export default function Financeiro() {
     queryFn: async () => {
       try {
         const response = await base44.functions.invoke('countEntities', {
-          entityName: 'ContaReceber',
+          entity_name: 'ContaReceber',
           filter: getFiltroContexto('empresa_id', true)
         });
         return response.data?.count || contasReceber.length;
@@ -100,7 +100,7 @@ export default function Financeiro() {
     queryFn: async () => {
       try {
         const response = await base44.functions.invoke('countEntities', {
-          entityName: 'ContaPagar',
+          entity_name: 'ContaPagar',
           filter: getFiltroContexto('empresa_id', true)
         });
         return response.data?.count || contasPagar.length;
@@ -373,7 +373,7 @@ export default function Financeiro() {
 
   const allModules = [...modules, ...grupoModules];
 
-  const allowedAllModules = allModules.filter(m => hasPermission('Financeiro', (m.sectionKey || m.title), 'ver'));
+  const allowedAllModules = allModules.filter(m => hasPermission('Financeiro', (m.sectionKey || m.title), 'ver') || hasPermission('Financeiro', null, 'ver'));
 
    const handleModuleClick = (module) => {
     React.startTransition(() => {

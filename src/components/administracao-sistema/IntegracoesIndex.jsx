@@ -50,6 +50,7 @@ export default function IntegracoesIndex({ initialTab }) {
   const nfeOk = !!configuracao?.integracao_nfe?.api_key;
   const boletosOk = !!configuracao?.integracao_boletos?.api_key;
   const webhookUrl = `${window?.location?.origin || ''}/functions/legacyIntegrationsMirror`;
+  const auditoriaExecucoesAtiva = auditoriaAtiva || user?.role === 'admin';
 
   const handleCriarBase = async () => {
     if (!empresaAtual?.id) return;
@@ -143,7 +144,7 @@ export default function IntegracoesIndex({ initialTab }) {
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold mb-2">Checklist de Implantação (empresa atual)</h3>
                     {!configuracao && (
-                      <Button variant="outline" onClick={handleCriarBase} disabled={!empresaAtual?.id || !auditoriaAtiva}>
+                      <Button variant="outline" onClick={handleCriarBase} disabled={!empresaAtual?.id || !auditoriaExecucoesAtiva}>
                         Criar estrutura base
                       </Button>
                     )}
@@ -187,8 +188,8 @@ export default function IntegracoesIndex({ initialTab }) {
                   </div>
                   <div className="text-xs text-slate-600">Header: x-internal-token: <span className="font-mono">DEPLOY_AUDIT_TOKEN</span></div>
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" onClick={handleTestWebhookAsaasPago} disabled={!empresaAtual?.id || !auditoriaAtiva}>Testar webhook Asaas (pago)</Button>
-                    <Button size="sm" onClick={handleTestWebhookNFeAutorizada} disabled={!empresaAtual?.id || !auditoriaAtiva}>Simular NF-e autorizada</Button>
+                    <Button size="sm" onClick={handleTestWebhookAsaasPago} disabled={!empresaAtual?.id || !auditoriaExecucoesAtiva}>Testar webhook Asaas (pago)</Button>
+                    <Button size="sm" onClick={handleTestWebhookNFeAutorizada} disabled={!empresaAtual?.id || !auditoriaExecucoesAtiva}>Simular NF-e autorizada</Button>
                   </div>
                 </CardContent>
               </Card>
