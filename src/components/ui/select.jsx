@@ -151,7 +151,9 @@ const AuditedSelect = (props) => {
   const perm = props?.['data-permission'];
   const p = { ...props };
   if ('data-permission' in p) delete p['data-permission'];
-  const allowed = perm ? (() => { const [m,s,a] = String(perm).split('.'); return hasPermission(m, s || null, a || null); })() : true;
+  const allowed = React.useMemo(() => (
+    perm ? (() => { const [m,s,a] = String(perm).split('.'); return hasPermission(m, s || null, a || null); })() : true
+  ), [perm, hasPermission]);
         if (perm && !allowed) return <span className="inline-flex h-10 items-center rounded-md border border-dashed px-3 text-xs text-slate-400 select-none">Acesso negado</span>;
         return <_Root {...withAuditRoot(p)} />
 };

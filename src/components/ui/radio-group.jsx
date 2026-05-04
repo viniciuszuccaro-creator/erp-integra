@@ -32,7 +32,9 @@ const AuditedRadioGroup = React.forwardRef(({ onValueChange, ...props }, ref) =>
   const { hasPermission } = usePermissions();
   const perm = props?.['data-permission'];
   const actionName = props?.['data-action'] || 'RadioGroup.onValueChange';
-  const audited = typeof onValueChange === 'function' ? uiAuditWrap(actionName, onValueChange, { kind: 'radio' }) : undefined;
+  const audited = React.useMemo(() => (
+    typeof onValueChange === 'function' ? uiAuditWrap(actionName, onValueChange, { kind: 'radio' }) : undefined
+  ), [actionName, onValueChange]);
   const { ...cleanProps } = props;
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
   if ('data-action' in cleanProps) delete cleanProps['data-action'];

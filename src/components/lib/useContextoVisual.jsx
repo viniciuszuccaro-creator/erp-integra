@@ -38,6 +38,9 @@ export function useContextoVisual() {
       return base44.entities.Empresa.list();
     },
     staleTime: 300000,
+    gcTime: 600000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     enabled: authChecked && isAuthenticated && contextoCarregado && !!user,
   });
 
