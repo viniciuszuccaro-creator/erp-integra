@@ -2,6 +2,7 @@ import * as React from "react"
 import * as SwitchPrimitive from "@radix-ui/react-switch"
 import { cn } from "@/lib/utils"
 import { uiAuditWrap } from "@/components/lib/uiAudit";
+import usePermissions from "@/components/lib/usePermissions";
 
 const BaseSwitch = React.forwardRef(({ className, ...props }, ref) => (
   <SwitchPrimitive.Root
@@ -21,10 +22,18 @@ const BaseSwitch = React.forwardRef(({ className, ...props }, ref) => (
 BaseSwitch.displayName = "Switch"
 
 const AuditedSwitch = React.forwardRef(({ onCheckedChange, ...props }, ref) => {
+  const { hasPermission } = usePermissions();
+  const perm = props?.['data-permission'];
   const audited = typeof onCheckedChange === 'function'
     ? uiAuditWrap('Switch.onCheckedChange', onCheckedChange, { kind: 'switch', toastSuccess: true })
     : undefined;
   const { __wrapped_audit, ...cleanProps } = props;
+  if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
+  if (perm) {
+    const [m,s,a] = String(perm).split('.');
+    const allowed = hasPermission(m, s || null, a || null);
+    if (!allowed) return <span className="inline-flex h-6 items-center rounded border border-dashed px-2 text-[10px] text-slate-400 select-none">Acesso negado</span>;
+  }
   return <BaseSwitch ref={ref} onCheckedChange={audited} {...cleanProps} />;
 });
 AuditedSwitch.displayName = 'AuditedSwitch';

@@ -15,7 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function GestaoAcessosIndex() {
   const { hasPermission, isAdmin } = usePermissions();
-  const podeVer = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'visualizar');
+  const podeVer = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'visualizar') || hasPermission('Sistema', null, 'visualizar');
   const { filterInContext, empresaAtual } = useContextoVisual();
   const { user } = useUser();
   const [tab, setTab] = React.useState('perfis');
@@ -74,7 +74,7 @@ export default function GestaoAcessosIndex() {
   const perfisAtivos = perfis.filter(p => p.ativo !== false).length;
 
   return (
-    <div className="w-full flex flex-col gap-3 min-h-0">
+    <div className="w-full h-full min-h-0 min-w-0 flex flex-col gap-3">
       {/* Banner RBAC com estatísticas */}
       <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         <Card className="border-blue-200 bg-blue-50">
