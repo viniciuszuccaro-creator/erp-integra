@@ -721,31 +721,7 @@ export default function Dashboard() {
 
 
         <TabsContent value="resumo" className="w-full h-full min-w-0 overflow-y-auto overflow-x-hidden space-y-6 mt-6">
-          {/* Sticky KPIs principais */}
-          <div className="sticky top-0 z-20 bg-gradient-to-b from-white/80 to-white/40 backdrop-blur-sm border-b border-slate-200 py-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 min-w-0">
-              <Card className="shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50">
-                <CardContent className="p-3">
-                  <div className="text-xs text-slate-500">Faturamento</div>
-                  <div className="text-sm font-semibold text-slate-900">Dia: R$ {(pedidos.filter(p=>new Date(p.data_pedido||p.created_date).toDateString()===new Date().toDateString()).reduce((s,p)=>s+(p.valor_total||0),0)).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-                  <div className="text-xs text-slate-600">Mês: R$ {pedidos.filter(p=>{const d=new Date(p.data_pedido||p.created_date);const n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).reduce((s,p)=>s+(p.valor_total||0),0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-                </CardContent>
-              </Card>
-              <Card className="shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50">
-                <CardContent className="p-3">
-                  <div className="text-xs text-slate-500">Pedidos</div>
-                  <div className="text-sm font-semibold text-slate-900">Abertos: {pedidosPendentes.length}</div>
-                  <div className="text-xs text-slate-600">Em aprovação: {pedidosAguardandoAprovacao.length}</div>
-                </CardContent>
-              </Card>
-              <Card className="shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50">
-                <CardContent className="p-3">
-                  <div className="text-xs text-slate-500">Estoque crítico</div>
-                  <div className="text-sm font-semibold text-slate-900">Itens: {produtosBaixoEstoque}</div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+
           <PanelGroup direction="vertical" className="gap-2 flex-1 w-full h-full">
             <Panel defaultSize={50} minSize={30} className="overflow-auto">
               {/* KPIs Principais + Widget Canais */}

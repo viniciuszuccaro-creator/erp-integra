@@ -34,6 +34,10 @@ export default function UsuariosTab() {
     queryKey: ['perfis-acesso-tab', empresaAtual?.id],
     queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 200),
     enabled: isAdmin() || hasPermission('Sistema', 'Controle de Acesso', 'visualizar'),
+    staleTime: 300000,
+    gcTime: 600000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const { data: empresas = [] } = useQuery({

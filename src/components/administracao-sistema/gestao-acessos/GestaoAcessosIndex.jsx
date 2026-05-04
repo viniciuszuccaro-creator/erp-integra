@@ -49,14 +49,18 @@ export default function GestaoAcessosIndex() {
     queryFn: () => base44.entities.User.list(),
     enabled: podeVer,
     staleTime: 300000,
+    gcTime: 600000,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas-ga', empresaAtual?.id],
     queryFn: () => base44.entities.Empresa.list(),
     enabled: podeVer,
     staleTime: 300000,
+    gcTime: 600000,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   if (!podeVer) {
