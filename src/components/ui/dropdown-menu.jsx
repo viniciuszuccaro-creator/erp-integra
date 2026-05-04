@@ -67,7 +67,8 @@ const DropdownMenuItem = React.forwardRef(({ className, inset, ...props }, ref) 
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
   if (cleanProps.__wrapped_audit) delete cleanProps.__wrapped_audit;
   if (typeof cleanProps.onSelect === 'function') {
-    cleanProps.onSelect = uiAuditWrap(cleanProps['data-action'] || 'DropdownMenuItem.onSelect', cleanProps.onSelect, { kind: 'dropdown' });
+    const original = cleanProps.onSelect;
+    cleanProps.onSelect = uiAuditWrap(cleanProps['data-action'] || 'DropdownMenuItem.onSelect', (event) => original(event), { kind: 'dropdown' });
   }
   if ('data-action' in cleanProps) delete cleanProps['data-action'];
   if (perm) {

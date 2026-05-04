@@ -25,11 +25,9 @@ const AuditedSwitch = React.forwardRef(({ onCheckedChange, ...props }, ref) => {
   const { hasPermission } = usePermissions();
   const perm = props?.['data-permission'];
   const actionName = props?.['data-action'] || 'Switch.onCheckedChange';
-  const audited = React.useMemo(() => (
-    typeof onCheckedChange === 'function'
-      ? uiAuditWrap(actionName, onCheckedChange, { kind: 'switch' })
-      : undefined
-  ), [actionName, onCheckedChange]);
+  const audited = typeof onCheckedChange === 'function'
+    ? uiAuditWrap(actionName, onCheckedChange, { kind: 'switch' })
+    : undefined;
   const { ...cleanProps } = props;
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
   if ('data-action' in cleanProps) delete cleanProps['data-action'];

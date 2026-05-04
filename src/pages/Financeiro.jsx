@@ -117,7 +117,6 @@ export default function Financeiro() {
     queryKey: ['rateios', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('RateioFinanceiro', {}, '-created_date', 50);
       } catch (err) {
         console.error('Erro ao buscar rateios:', err);
@@ -133,7 +132,6 @@ export default function Financeiro() {
     queryKey: ['extratos', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('ExtratoBancario', {}, '-data_movimento', 100);
       } catch (err) {
         console.error('Erro ao buscar extratos:', err);
@@ -164,7 +162,6 @@ export default function Financeiro() {
     queryKey: ['caixa-ordens-liquidacao', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('CaixaOrdemLiquidacao', {}, '-created_date', 50);
       } catch (err) {
         console.error('Erro ao buscar ordens de liquidação:', err);
