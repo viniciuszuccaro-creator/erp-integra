@@ -704,7 +704,7 @@ export default function Dashboard() {
   return (
     <ProtectedSection module="Dashboard" action="ver">
     <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="flex-1 overflow-hidden p-4 md:p-6 space-y-6 min-w-0">
+      <div className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 space-y-6 min-w-0">
       <DashboardHeader
         empresaAtual={empresaAtual}
         estaNoGrupo={estaNoGrupo}

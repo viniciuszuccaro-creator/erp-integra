@@ -23,7 +23,7 @@ export default function UsuariosTab() {
   const [roleFilter, setRoleFilter] = useState("todos");
 
   const { data: usuarios = [], isLoading: loadingUsers } = useQuery({
-    queryKey: ['usuarios-gestao'],
+    queryKey: ['usuarios-gestao', empresaAtual?.id],
     queryFn: () => base44.entities.User.list(),
     staleTime: 300000,
     refetchOnWindowFocus: false,

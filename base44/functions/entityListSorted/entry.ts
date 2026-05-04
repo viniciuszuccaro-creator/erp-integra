@@ -208,7 +208,11 @@ async function listOne(base44, user, q) {
   const hasOr = Array.isArray(rawFilter?.$or) && rawFilter.$or.length > 0;
   const scopeProvided = rawFilter?.empresa_id || rawFilter?.group_id || rawFilter?.empresa_dona_id || rawFilter?.empresa_alocada_id || hasOr;
 
-  // Sem escopo → lista tudo (acesso autenticado e auditado; dados protegidos por RBAC no frontend)
+  // Sem escopo em entidades multiempresa → não retorna listagem global
+  if (!scopeProvided && !isSimple) {
+    return { entityName, items: [] };
+  }
+
 
   const limit = Math.max(1, Math.min(Number(q?.limit || q?.pageSize) || 100, 500));
   const skip = Math.max(0, Number(q?.skip ?? q?.offset ?? 0) || 0);

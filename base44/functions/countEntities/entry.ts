@@ -141,7 +141,11 @@ async function countOne(base44, user, payload) {
     return { entityName, count: simpleCount };
   }
 
-  // Sem escopo → conta total global (badges indicativos); dados protegidos via entityListSorted
+  // Sem escopo em entidades multiempresa → não expõe contagem global
+  if (!scopeProvided && !isSimple) {
+    return { entityName, count: 0 };
+  }
+
   if (!scopeProvided) {
     const totalCount = await fastCount(base44, entityName, {});
     return { entityName, count: totalCount };
