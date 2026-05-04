@@ -33,7 +33,7 @@ const AuditedRadioGroup = React.forwardRef(({ onValueChange, ...props }, ref) =>
   const perm = props?.['data-permission'];
   const actionName = props?.['data-action'] || 'RadioGroup.onValueChange';
   const audited = typeof onValueChange === 'function' ? uiAuditWrap(actionName, onValueChange, { kind: 'radio', toastSuccess: true }) : undefined;
-  const { __wrapped_audit, ...cleanProps } = props;
+  const { ...cleanProps } = props;
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
   if ('data-action' in cleanProps) delete cleanProps['data-action'];
   if (perm) {

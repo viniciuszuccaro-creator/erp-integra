@@ -28,7 +28,7 @@ const AuditedSwitch = React.forwardRef(({ onCheckedChange, ...props }, ref) => {
   const audited = typeof onCheckedChange === 'function'
     ? uiAuditWrap(actionName, onCheckedChange, { kind: 'switch', toastSuccess: true })
     : undefined;
-  const { __wrapped_audit, ...cleanProps } = props;
+  const { ...cleanProps } = props;
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
   if ('data-action' in cleanProps) delete cleanProps['data-action'];
   if (perm) {
