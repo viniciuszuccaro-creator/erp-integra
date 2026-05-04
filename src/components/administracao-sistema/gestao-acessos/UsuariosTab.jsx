@@ -33,7 +33,7 @@ export default function UsuariosTab() {
   const { data: perfis = [] } = useQuery({
     queryKey: ['perfis-acesso-tab', empresaAtual?.id],
     queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 200),
-    enabled: (isAdmin() || hasPermission('Sistema', 'Controle de Acesso', 'visualizar')) && !!empresaAtual?.id,
+    enabled: isAdmin() || hasPermission('Sistema', 'Controle de Acesso', 'visualizar'),
   });
 
   const { data: empresas = [] } = useQuery({
@@ -67,7 +67,7 @@ export default function UsuariosTab() {
   return (
     <div className="w-full min-w-0 h-full space-y-4">
       {/* Toolbar */}
-      <div className="flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between min-w-0">
+      <div className="flex flex-col xl:flex-row gap-3 xl:items-center xl:justify-between min-w-0 w-full">
         <div className="flex flex-col sm:flex-row gap-2 flex-1 min-w-0">
           <div className="relative min-w-[180px] flex-1 max-w-sm">
             <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400" />

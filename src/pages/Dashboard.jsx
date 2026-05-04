@@ -713,14 +713,14 @@ export default function Dashboard() {
       />
 
       <ErrorBoundary>
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full min-w-0">
         <DashboardTabsNav />
 
 
 
 
 
-        <TabsContent value="resumo" className="w-full h-full overflow-y-auto space-y-6 mt-6">
+        <TabsContent value="resumo" className="w-full h-full min-w-0 overflow-y-auto overflow-x-hidden space-y-6 mt-6">
           {/* Sticky KPIs principais */}
           <div className="sticky top-0 z-20 bg-gradient-to-b from-white/80 to-white/40 backdrop-blur-sm border-b border-slate-200 py-3">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 min-w-0">

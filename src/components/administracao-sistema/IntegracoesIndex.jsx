@@ -112,7 +112,7 @@ export default function IntegracoesIndex({ initialTab }) {
 
    return (
     <div className="w-full h-full min-w-0 flex flex-col overflow-hidden">
-      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full min-w-0">
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full min-w-0 overflow-hidden">
         <div className="w-full overflow-x-auto pb-1"><TabsList className="inline-flex min-w-max flex-nowrap gap-2 h-auto">
           <TabsTrigger value="gerenciamento"><CheckCircle2 className="w-4 h-4 mr-2" />Gerenciamento</TabsTrigger>
           <TabsTrigger value="status"><CheckCircle2 className="w-4 h-4 mr-2" />Status</TabsTrigger>

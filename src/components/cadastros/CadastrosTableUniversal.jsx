@@ -54,15 +54,17 @@ export default function CadastrosTableUniversal({
 
   // Fetch data server-side
   const { data: items = [], isLoading } = useQuery({
-    queryKey: [entityName, sortField, currentPage, debouncedSearch, empresaAtual?.id, grupoAtual?.id],
+    queryKey: [entityName, sortField, currentPage, debouncedSearch, empresaAtual?.id, grupoAtual?.id, pageSize],
     placeholderData: (prev) => prev,
     queryFn: async () => {
+      if (!entityName) return [];
       const skip = (currentPage - 1) * pageSize;
       return await filterInContext(entityName, { ...searchFilter, __skip: skip }, sortField, pageSize);
     },
     staleTime: 45_000,
     gcTime: 120_000,
     refetchOnWindowFocus: false,
+    networkMode: 'online',
   });
 
   // Real-time updates
@@ -156,7 +158,7 @@ export default function CadastrosTableUniversal({
                     <th className="px-4 py-3 text-center font-medium text-slate-700 w-24">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 break-words">
                   {items.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
                       {columns.map((col) => (
