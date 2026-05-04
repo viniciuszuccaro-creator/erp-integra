@@ -26,8 +26,8 @@ import {
   Activity,
   Shield,
   FileText,
-  MessageCircle
-  } from "lucide-react";
+  MessageCircle,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -226,6 +226,7 @@ export default function Dashboard() {
 
   const { data: totalProdutos = 0 } = useQuery({
     enabled: !!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id) && canSeeEstoque,
+    initialData: 0,
     queryKey: ['produtos-count-dash', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
@@ -261,6 +262,7 @@ export default function Dashboard() {
 
   const { data: totalClientes = 0 } = useQuery({
     enabled: !!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id) && canSeeCRM,
+    initialData: 0,
     queryKey: ['clientes-count', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
@@ -280,6 +282,7 @@ export default function Dashboard() {
 
   const { data: totalColaboradoresDash = 0 } = useQuery({
     queryKey: ['colaboradores-count-dash', empresaAtual?.id, grupoAtual?.id],
+    initialData: 0,
     queryFn: async () => {
       try {
         const filtro = getFiltroContexto('empresa_alocada_id', true);
@@ -442,7 +445,7 @@ export default function Dashboard() {
     queryKey: ['command-center', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       const since = Date.now() - 24 * 60 * 60 * 1000;
-      const logs = await base44.entities.AuditLog.filter({}, '-data_hora', 500);
+      const logs = await filterInContext('AuditLog', {}, '-data_hora', 500);
       const within = (logs || []).filter(l => {
         const t = new Date(l?.data_hora || l?.created_date || Date.now()).getTime();
         return t >= since;

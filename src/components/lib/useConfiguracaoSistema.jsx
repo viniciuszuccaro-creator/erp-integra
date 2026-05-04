@@ -94,8 +94,8 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
     },
     onSuccess: async (res, variables) => {
       queryClient.setQueryData(["configuracaoSistema", categoria || "*", chave || "*", empresaId || "sem-empresa", grupoId || "sem-grupo"], (prev) => ({ ...(prev || {}), ...(res?.data?.record || variables || {}) }));
-      queryClient.invalidateQueries({ queryKey: ["configuracaoSistema"], refetchType: 'none' });
-      queryClient.invalidateQueries({ queryKey: ["config-sistema"], refetchType: 'none' });
+      queryClient.invalidateQueries({ queryKey: ["configuracaoSistema"], refetchType: 'active' });
+      queryClient.invalidateQueries({ queryKey: ["config-sistema"], refetchType: 'active' });
       // Auditoria detalhada (quem, parâmetro, antes/depois)
       try {
         const me = await base44.auth.me();

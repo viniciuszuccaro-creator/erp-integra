@@ -46,7 +46,10 @@ export default function GestaoAcessosIndex() {
   });
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: async () => {
+      if (!(await base44.auth.isAuthenticated())) return [];
+      return base44.entities.User.list();
+    },
     enabled: podeVer,
     staleTime: 300000,
     gcTime: 600000,
