@@ -55,6 +55,7 @@ export default function CadastrosTableUniversal({
   // Fetch data server-side
   const { data: items = [], isLoading } = useQuery({
     queryKey: [entityName, sortField, currentPage, debouncedSearch, empresaAtual?.id, grupoAtual?.id],
+    placeholderData: (prev) => prev,
     queryFn: async () => {
       const skip = (currentPage - 1) * pageSize;
       return await filterInContext(entityName, { ...searchFilter, __skip: skip }, sortField, pageSize);
@@ -178,6 +179,7 @@ export default function CadastrosTableUniversal({
                             <Button
                               size="sm"
                               variant="ghost"
+                              data-permission="Cadastros.visualizar.ver"
                               onClick={() => onView(item)}
                               className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-sm"
                               title="Visualizar"
@@ -189,6 +191,7 @@ export default function CadastrosTableUniversal({
                             <Button
                               size="sm"
                               variant="ghost"
+                              data-permission="Cadastros.editar.editar"
                               onClick={() => onEdit(item)}
                               className="h-8 w-8 p-0 text-slate-600 hover:text-green-600 hover:bg-green-50 rounded-sm"
                               title="Editar"
@@ -200,6 +203,7 @@ export default function CadastrosTableUniversal({
                             <Button
                               size="sm"
                               variant="ghost"
+                              data-permission="Cadastros.excluir.excluir"
                               onClick={() => {
                                 if (window.confirm("Tem certeza que deseja deletar?")) {
                                   onDelete(item);

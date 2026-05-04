@@ -312,7 +312,7 @@ export default function DashboardCorporativo() {
   return (
     <ProtectedSection module="Dashboard" section={["Corporativo"]} action="visualizar">
     <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="flex-1 overflow-auto p-6 space-y-6">
+      <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6 min-w-0">
         {/* Header com Filtros */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>

@@ -701,7 +701,7 @@ export default function Dashboard() {
   return (
     <ProtectedSection module="Dashboard" action="ver">
     <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="flex-1 overflow-hidden p-6 space-y-6">
+      <div className="flex-1 overflow-hidden p-4 md:p-6 space-y-6 min-w-0">
       <DashboardHeader
         empresaAtual={empresaAtual}
         estaNoGrupo={estaNoGrupo}
@@ -723,7 +723,7 @@ export default function Dashboard() {
         <TabsContent value="resumo" className="w-full h-full overflow-y-auto space-y-6 mt-6">
           {/* Sticky KPIs principais */}
           <div className="sticky top-0 z-20 bg-gradient-to-b from-white/80 to-white/40 backdrop-blur-sm border-b border-slate-200 py-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 min-w-0">
               <Card className="shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50">
                 <CardContent className="p-3">
                   <div className="text-xs text-slate-500">Faturamento</div>

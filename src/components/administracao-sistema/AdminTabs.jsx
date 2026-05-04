@@ -78,8 +78,8 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       : "data-[state=active]:bg-blue-600 data-[state=active]:text-white";
 
   return (
-    <Tabs value={resolvedTab} onValueChange={handleTabChange} className="w-full h-full">
-      <TabsList className="flex flex-wrap gap-1 h-auto bg-slate-100 p-1 rounded-xl">
+    <Tabs value={resolvedTab} onValueChange={handleTabChange} className="w-full h-full min-w-0">
+      <div className="w-full overflow-x-auto pb-1"><TabsList className="inline-flex min-w-max flex-nowrap gap-1 h-auto bg-slate-100 p-1 rounded-xl">
         {visibleTabs.map(({ value, label, icon: Icon, color }) => (
           <TabsTrigger
             key={value}
@@ -99,7 +99,7 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
             <span className="hidden sm:inline">Ferramentas</span>
           </TabsTrigger>
         )}
-      </TabsList>
+      </TabsList></div>
 
       {/* ── STATUS BAR GLOBAL ── */}
       <div className="mt-3">

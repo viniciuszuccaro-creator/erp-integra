@@ -2,6 +2,8 @@ import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { uiAuditWrap } from "@/components/lib/uiAudit";
+import usePermissions from "@/components/lib/usePermissions";
 
 const DropdownMenu = DropdownMenuPrimitive.Root
 
@@ -58,17 +60,31 @@ const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, ...pr
 ))
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
-const DropdownMenuItem = React.forwardRef(({ className, inset, ...props }, ref) => (
-  <DropdownMenuPrimitive.Item
-    ref={ref}
-    className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      inset && "pl-8",
-      className
-    )}
-    {...props}
-  />
-))
+const DropdownMenuItem = React.forwardRef(({ className, inset, ...props }, ref) => {
+  const { hasPermission } = usePermissions();
+  const perm = props?.['data-permission'];
+  const cleanProps = { ...props };
+  if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
+  if (typeof cleanProps.onSelect === 'function') {
+    cleanProps.onSelect = uiAuditWrap(cleanProps['data-action'] || 'DropdownMenuItem.onSelect', cleanProps.onSelect, { kind: 'dropdown', toastSuccess: true });
+  }
+  if (perm) {
+    const [m,s,a] = String(perm).split('.');
+    const allowed = hasPermission(m, s || null, a || null);
+    if (!allowed) return <span className="inline-flex items-center rounded border border-dashed px-2 py-1 text-[10px] text-slate-400 select-none">Acesso negado</span>;
+  }
+  return (
+    <DropdownMenuPrimitive.Item
+      ref={ref}
+      className={cn(
+        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+        inset && "pl-8",
+        className
+      )}
+      {...cleanProps}
+    />
+  )
+})
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
 const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checked, ...props }, ref) => (
