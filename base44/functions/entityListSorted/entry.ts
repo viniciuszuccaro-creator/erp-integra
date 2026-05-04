@@ -213,6 +213,11 @@ async function listOne(base44, user, q) {
     return { entityName, items: [] };
   }
 
+  // Usuário não-admin nunca pode consultar User sem escopo explícito de segurança
+  if (entityName === 'User' && user?.role !== 'admin') {
+    return { entityName, items: [] };
+  }
+
 
   const limit = Math.max(1, Math.min(Number(q?.limit || q?.pageSize) || 100, 500));
   const skip = Math.max(0, Number(q?.skip ?? q?.offset ?? 0) || 0);

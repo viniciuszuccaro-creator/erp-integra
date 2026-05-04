@@ -35,10 +35,11 @@ export default function ProtectedSection({
   // Sempre manter a mesma ordem de hooks entre renders
   const allowed = !isLoading && hasPermission(modulo, section, action);
   const [allowedFinal, setAllowedFinal] = useState(null);
+  const shouldValidateBackend = Boolean(modulo) && allowed;
 
   useEffect(() => {
     if (isLoading) return;
-    if (!modulo) { setAllowedFinal(allowed); return; }
+    if (!modulo || !shouldValidateBackend) { setAllowedFinal(allowed); return; }
 
     const key = getGuardKey(modulo, section, action, empresaAtual?.id, grupoAtual?.id);
     const now = Date.now();
@@ -90,7 +91,7 @@ export default function ProtectedSection({
     }).finally(() => {
       __guardInflight.delete(key);
     });
-  }, [isLoading, allowed, modulo, section, action, empresaAtual?.id, grupoAtual?.id]);
+  }, [isLoading, allowed, modulo, section, action, empresaAtual?.id, grupoAtual?.id, shouldValidateBackend]);
 
   useEffect(() => {
     if (isLoading) return;

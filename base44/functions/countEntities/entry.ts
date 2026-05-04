@@ -137,6 +137,9 @@ async function countOne(base44, user, payload) {
 
   // Entidades simples (catálogos) não precisam de escopo — retorna contagem total
   if (isSimple) {
+    if (entityName === 'User' && user?.role !== 'admin') {
+      return { entityName, count: 0 };
+    }
     const simpleCount = await fastCount(base44, entityName, {});
     return { entityName, count: simpleCount };
   }
