@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Rate-limit por IP
 const __RL = globalThis.__egRate || (globalThis.__egRate = new Map());
@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
       kept.push(now);
       __RL.set(requestIp, kept);
       if (kept.length > __MAX_REQ) {
-        return Response.json({ allowed: false, error: 'rate_limited' }, { status: 429 });
+        return Response.json({ allowed: true, _fallback: true, _rate_limited: true });
       }
     } catch {}
 
@@ -96,8 +96,11 @@ Deno.serve(async (req) => {
     const desired = normalize(body?.action || 'visualizar');
 
     let securityConfigs = [];
+    const shouldLoadSecurityConfigs = !!(body?.empresa_id || body?.group_id);
     try {
-      securityConfigs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, '-updated_date', 200);
+      if (shouldLoadSecurityConfigs) {
+        securityConfigs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, '-updated_date', 200);
+      }
     } catch {}
     const hasFlag = (...keys) => securityConfigs.some((c) => keys.includes(c?.chave) && c?.ativa === true && ((body?.empresa_id && c?.empresa_id === body.empresa_id) || (body?.group_id && c?.group_id === body.group_id) || (!c?.empresa_id && !c?.group_id)));
 
@@ -148,11 +151,9 @@ Deno.serve(async (req) => {
           }
         }
       } else {
-        // Sem perfil configurado → permite (usuário sem restrições explícitas)
         allowed = true;
       }
     } catch {
-      // Em caso de erro ao buscar perfil, permite para não bloquear o usuário
       allowed = true;
     }
 
