@@ -48,9 +48,15 @@ export default function UsuariosTab() {
 
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas-gestao'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryFn: async () => {
+      if (!(await base44.auth.isAuthenticated())) return [];
+      return base44.entities.Empresa.list();
+    },
     staleTime: 300000,
+    gcTime: 600000,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
     enabled: isAdmin() || hasPermission('Sistema', 'Controle de Acesso', 'visualizar'),
   });
 

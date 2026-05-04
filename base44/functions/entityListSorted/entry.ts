@@ -313,7 +313,7 @@ Deno.serve(async (req) => {
 
     // MODO SINGLE
     const single = await listOne(base44, user, {
-      entityName: body?.entityName,
+      entityName: body?.entityName || body?.entity_name,
       filter: body?.filter || {},
       sortField: body?.sortField,
       sortDirection: body?.sortDirection,

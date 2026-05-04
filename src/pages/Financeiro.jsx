@@ -58,8 +58,11 @@ export default function Financeiro() {
       }
     },
     staleTime: 120000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     retry: 2,
-    enabled: canSeeFinanceiro
+    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
   });
 
   const { data: totalContasReceber = 0 } = useQuery({
@@ -91,8 +94,11 @@ export default function Financeiro() {
       }
     },
     staleTime: 120000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     retry: 2,
-    enabled: canSeeFinanceiro
+    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
   });
 
   const { data: totalContasPagar = 0 } = useQuery({
