@@ -193,9 +193,8 @@ export default function IntegracoesIndex({ initialTab }) {
                 </CardContent>
               </Card>
 
-              {/* Atalho para Cadastros Gerais — evita duplicação */}
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-                💡 <strong>Configurações de NF-e, Boletos, WhatsApp, APIs Externas e Webhooks</strong> estão centralizadas em <strong>Cadastros Gerais → Tecnologia, IA & Parâmetros</strong>. Este módulo fica focado em status, checklist, webhooks e testes técnicos.
+                💡 <strong>Este módulo está focado em status, checklist, webhooks e testes técnicos</strong>, evitando duplicação com configurações já centralizadas no sistema.
               </div>
             </CardContent>
           </Card>

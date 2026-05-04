@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Wallet } from "lucide-react";
@@ -8,16 +8,13 @@ import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
-import HeaderFinanceiroCompacto from "@/components/financeiro/HeaderFinanceiroCompacto";
 import ModuleLayout from "@/components/layout/ModuleLayout";
 import ModuleKPIs from "@/components/layout/ModuleKPIs";
 import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
 import KPIsFinanceiroLaunchpad from "@/components/financeiro/KPIsFinanceiroLaunchpad";
 import MetricasSecundariasLaunchpad from "@/components/financeiro/MetricasSecundariasLaunchpad";
-
 import ModulosGridFinanceiro from "@/components/financeiro/ModulosGridFinanceiro";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import useFinanceiroDerivedData from "@/components/financeiro/hooks/useFinanceiroDerivedData";
 
 const CaixaCentralLiquidacao = React.lazy(() => import("../components/financeiro/CaixaCentralLiquidacao"));
@@ -414,30 +411,34 @@ export default function Financeiro() {
     <ProtectedSection module="Financeiro" action="visualizar">
     <ErrorBoundary>
       <ModuleLayout title="Financeiro e Contábil" subtitle="Pagamentos, recebimentos e conciliação">
-        <ModuleKPIs>
-          <KPIsFinanceiroLaunchpad
-            receberPendente={receberPendente}
-            pagarPendente={pagarPendente}
-            saldo={saldo}
-            contasReceberVencidas={contasReceberVencidas}
-            contasPagarVencidas={contasPagarVencidas}
-          />
-        </ModuleKPIs>
-        <ModuleContent>
-          <MetricasSecundariasLaunchpad
-            titulosComBoleto={titulosComBoleto}
-            titulosComPix={titulosComPix}
-            empresasComGateway={empresasComGateway}
-            rateiosCount={rateios.length}
-            extratosNaoConciliados={extratosNaoConciliados}
-            valorNaoConciliado={valorNaoConciliado}
-            ordensLiquidacaoPendentes={ordensLiquidacaoPendentes}
-            totalPendentesAprovacao={totalPendentesAprovacao}
-          />
-          <ModuleTabs
-            listagem={<ModulosGridFinanceiro modules={allowedAllModules} onModuleClick={handleModuleClick} />}
-          />
-        </ModuleContent>
+        <div className="w-full h-full min-w-0 flex flex-col gap-4 overflow-hidden">
+          <ModuleKPIs>
+            <KPIsFinanceiroLaunchpad
+              receberPendente={receberPendente}
+              pagarPendente={pagarPendente}
+              saldo={saldo}
+              contasReceberVencidas={contasReceberVencidas}
+              contasPagarVencidas={contasPagarVencidas}
+            />
+          </ModuleKPIs>
+          <ModuleContent>
+            <div className="w-full min-w-0 overflow-x-auto">
+              <MetricasSecundariasLaunchpad
+                titulosComBoleto={titulosComBoleto}
+                titulosComPix={titulosComPix}
+                empresasComGateway={empresasComGateway}
+                rateiosCount={rateios.length}
+                extratosNaoConciliados={extratosNaoConciliados}
+                valorNaoConciliado={valorNaoConciliado}
+                ordensLiquidacaoPendentes={ordensLiquidacaoPendentes}
+                totalPendentesAprovacao={totalPendentesAprovacao}
+              />
+            </div>
+            <ModuleTabs
+              listagem={<ModulosGridFinanceiro modules={allowedAllModules} onModuleClick={handleModuleClick} />}
+            />
+          </ModuleContent>
+        </div>
       </ModuleLayout>
     </ErrorBoundary>
     </ProtectedSection>
