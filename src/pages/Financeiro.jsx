@@ -67,7 +67,7 @@ export default function Financeiro() {
     queryFn: async () => {
       try {
         const response = await base44.functions.invoke('countEntities', {
-          entity_name: 'ContaReceber',
+          entityName: 'ContaReceber',
           filter: getFiltroContexto('empresa_id', true)
         });
         return response.data?.count || contasReceber.length;
@@ -100,7 +100,7 @@ export default function Financeiro() {
     queryFn: async () => {
       try {
         const response = await base44.functions.invoke('countEntities', {
-          entity_name: 'ContaPagar',
+          entityName: 'ContaPagar',
           filter: getFiltroContexto('empresa_id', true)
         });
         return response.data?.count || contasPagar.length;

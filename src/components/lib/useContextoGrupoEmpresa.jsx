@@ -52,7 +52,7 @@ export function useContextoGrupoEmpresa() {
         if (grupoId) {
           const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
           if (grupos[0]) setGrupoAtual(grupos[0]);
-        } else if (currentUser.role === 'admin') {
+        } else if (currentUser.role === 'admin' && !localStorage.getItem('group_atual_id')) {
           // Admin fallback: selecionar automaticamente um grupo ativo
           const todos = await base44.entities.GrupoEmpresarial.list();
           const ativo = todos.find(g => g.status === 'Ativo') || todos[0];
@@ -66,6 +66,8 @@ export function useContextoGrupoEmpresa() {
         if (empresaId) {
           const empresas = await base44.entities.Empresa.filter({ id: empresaId });
           if (empresas[0]) setEmpresaAtual(empresas[0]);
+        } else {
+          setEmpresaAtual(null);
         }
       }
       setContextoCarregado(true);
@@ -174,14 +176,17 @@ export function useContextoGrupoEmpresa() {
     queryKey: ['empresas-grupo', grupoAtual?.id],
     queryFn: async () => {
       if (!grupoAtual?.id) return [];
-      const authed = await base44.auth.isAuthenticated();
-      if (!authed) return [];
       return await base44.entities.Empresa.filter({
-        grupo_id: grupoAtual.id,
+        group_id: grupoAtual.id,
         status: 'Ativa'
       });
     },
-    enabled: authChecked && contextoCarregado && !!user && !!grupoAtual && contexto === 'grupo',
+    enabled: authChecked && contextoCarregado && !!user && !!grupoAtual?.id && contexto === 'grupo',
+    staleTime: 300000,
+    gcTime: 600000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
   });
 
   const obterPoliticaPadrao = async (tipoDocumento) => {
