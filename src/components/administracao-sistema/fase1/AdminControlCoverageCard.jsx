@@ -37,7 +37,7 @@ export default function AdminControlCoverageCard() {
           <div className="text-sm font-semibold text-slate-900">Matriz de execução</div>
           <div className="mt-2 grid gap-2 md:grid-cols-2">
             {executionMatrix.slice(0, 10).map((item) => (
-              <div key={item.id} className="rounded-lg border bg-white px-3 py-2">
+              <div key={`${item.id}-${item.status_execucao || 'status'}`} className="rounded-lg border bg-white px-3 py-2">
                 <div className="text-sm font-medium text-slate-900">{item.label || item.chave || item.id}</div>
                 <div className="text-xs text-slate-500">{item.status_execucao}</div>
               </div>
@@ -52,7 +52,7 @@ export default function AdminControlCoverageCard() {
               {items.map((item) => {
                 const status = getAdminControlStatus(item);
                 return (
-                  <div key={item.id || item.chave} className="rounded-lg border p-3 bg-white">
+                  <div key={`${group}-${item.id || item.chave}-${item.tela || 'sem-tela'}`} className="rounded-lg border p-3 bg-white">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <div className="text-sm font-medium text-slate-900">{item.chave || item.label || item.id}</div>
