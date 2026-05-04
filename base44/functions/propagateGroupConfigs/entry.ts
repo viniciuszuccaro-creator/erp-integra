@@ -54,7 +54,8 @@ Deno.serve(async (req) => {
     if (!groupId) return Response.json({ error: 'group_id obrigatório (ou empresa_id que pertença a um grupo)' }, { status: 400 });
 
     const empresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, undefined, 500);
-    const targetEmpresas = Array.isArray(empresas_ids) && empresas_ids.length ? empresas.filter(e => empresas_ids.includes(e.id)) : empresas;
+    const targetEmpresasBase = Array.isArray(empresas_ids) && empresas_ids.length ? empresas.filter(e => empresas_ids.includes(e.id)) : empresas;
+    const targetEmpresas = targetEmpresasBase.slice(0, 25);
 
     // Helpers
     const keyFieldsByEntity = (en) => {
@@ -89,7 +90,8 @@ Deno.serve(async (req) => {
       let created = 0, updated = 0, skipped = 0;
       await processChunks(targetEmpresas, 1, async (empSlice) => {
         for (const emp of empSlice) {
-          await processChunks(baseRegs, 100, async (chunk) => {
+          await sleep(120);
+          await processChunks(baseRegs, 50, async (chunk) => {
             for (const r of chunk) {
               const payload = sanitize({ ...r, group_id: undefined, empresa_id: emp.id });
               const keyField = keys.find(k => r?.[k]);
@@ -121,6 +123,7 @@ Deno.serve(async (req) => {
       const keys = keyFieldsByEntity(entityName);
       let created = 0, updated = 0, skipped = 0;
       for (const r of baseRegs) {
+        await sleep(120);
         const payload = sanitize({ ...r, empresa_id: undefined, group_id: groupId });
         const keyField = keys.find(k => r?.[k]);
         const filtro = { group_id: groupId };
