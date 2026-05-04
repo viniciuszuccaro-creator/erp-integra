@@ -101,16 +101,18 @@ export default function usePermissions() {
     const modNode = perms?.[modKey] || perms?.[module];
     if (!modNode) return false;
 
-    // Se não houver seção especificada, verifica ação em qualquer subnível direto
+    // Se não houver seção especificada, verifica ação em qualquer subnível direto ou profundo
     if (!section) {
-      return Object.values(modNode).some((node) => {
-        if (Array.isArray(node)) return node.includes(desired) || (desired === 'visualizar' && node.includes('ver'));
-        // Caso node seja objeto, verifica se algum filho é array com a ação
-        if (node && typeof node === 'object') {
-          return Object.values(node).some((v) => Array.isArray(v) && (v.includes(desired) || (desired === 'visualizar' && v.includes('ver'))));
+      const stack = [modNode];
+      while (stack.length) {
+        const node = stack.pop();
+        if (Array.isArray(node)) {
+          if (node.includes(desired) || (desired === 'visualizar' && node.includes('ver'))) return true;
+        } else if (node && typeof node === 'object') {
+          Object.values(node).forEach((v) => stack.push(v));
         }
-        return false;
-      });
+      }
+      return false;
     }
 
     // Suporta paths hierárquicos: "Pedidos.Financeiro.margens" ou ["Pedidos","Financeiro","margens"]

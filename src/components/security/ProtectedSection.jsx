@@ -114,8 +114,8 @@ export default function ProtectedSection({
   }, [isLoading, allowedFinal, action, modulo, section, user?.id, empresaAtual?.id]);
 
   useEffect(() => {
-    if (!isLoading && allowedFinal === false) setOpenDenied(true);
-  }, [isLoading, allowedFinal]);
+    if (!isLoading && allowedFinal === false && !hideInstead && !disableInstead) setOpenDenied(true);
+  }, [isLoading, allowedFinal, hideInstead, disableInstead]);
 
   if (isLoading || allowedFinal === null) return <div className="contents" data-ps-loading />;
   if (!allowedFinal) {

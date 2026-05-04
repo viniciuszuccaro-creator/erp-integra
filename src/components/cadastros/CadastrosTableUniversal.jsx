@@ -101,7 +101,7 @@ export default function CadastrosTableUniversal({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full min-w-0">
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
@@ -117,14 +117,14 @@ export default function CadastrosTableUniversal({
       </div>
 
       {/* Table */}
-      <Card className="rounded-sm border-slate-200 shadow-sm overflow-hidden">
+      <Card className="rounded-sm border-slate-200 shadow-sm overflow-hidden w-full min-w-0">
         <CardContent className="p-0">
           {isLoading ? (
             renderLoading()
           ) : items.length === 0 ? (
             <div className="p-8 text-center text-slate-500">Nenhum registro encontrado</div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="w-full overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
                   <tr>
@@ -173,7 +173,7 @@ export default function CadastrosTableUniversal({
                         </td>
                       ))}
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-1">
+                        <div className="flex items-center justify-center gap-1 flex-nowrap">
                           {onView && (
                             <Button
                               size="sm"

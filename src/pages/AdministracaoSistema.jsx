@@ -64,7 +64,7 @@ export default function AdministracaoSistema() {
       <ModuleLayout title="Administração do Sistema">
         <AdminHeader />
         <ModuleContent>
-          <div className="p-4 md:p-6 w-full h-full">
+          <div className="p-4 md:p-6 w-full h-full min-w-0 overflow-x-hidden">
             <AdminTabs
               initialTab={initialTab}
               isAdmin={isAdmin}
