@@ -87,6 +87,14 @@ Deno.serve(async (req) => {
             source_id: updated.id || id,
             group_id: updatePayload.group_id
           });
+        } else if (updatePayload.group_id && updatePayload.empresa_id) {
+          await base44.asServiceRole.functions.invoke('propagateGroupConfigs', {
+            entity_name: 'ConfiguracaoSistema',
+            source_id: updated.id || id,
+            group_id: updatePayload.group_id,
+            empresa_id: updatePayload.empresa_id,
+            direction: 'empresa_to_grupo'
+          });
         }
       } catch (_) {}
 
@@ -171,6 +179,14 @@ Deno.serve(async (req) => {
             source_id: updated.id || match.id,
             group_id: gId
           });
+        } else if (gId && eId) {
+          await base44.asServiceRole.functions.invoke('propagateGroupConfigs', {
+            entity_name: 'ConfiguracaoSistema',
+            source_id: updated.id || match.id,
+            group_id: gId,
+            empresa_id: eId,
+            direction: 'empresa_to_grupo'
+          });
         }
       } catch (_) {}
 
@@ -207,6 +223,14 @@ Deno.serve(async (req) => {
             entity_name: 'ConfiguracaoSistema',
             source_id: created.id,
             group_id: gId
+          });
+        } else if (gId && eId) {
+          await base44.asServiceRole.functions.invoke('propagateGroupConfigs', {
+            entity_name: 'ConfiguracaoSistema',
+            source_id: created.id,
+            group_id: gId,
+            empresa_id: eId,
+            direction: 'empresa_to_grupo'
           });
         }
       } catch (_) {}
