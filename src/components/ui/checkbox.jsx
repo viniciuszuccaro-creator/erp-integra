@@ -4,6 +4,7 @@ import { Check } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import usePermissions from "@/components/lib/usePermissions";
+import { uiAuditWrap } from "@/components/lib/uiAudit";
 
  const Checkbox = React.forwardRef(({ className, ...props }, ref) => (
    <CheckboxPrimitive.Root
@@ -19,8 +20,6 @@ import usePermissions from "@/components/lib/usePermissions";
   </CheckboxPrimitive.Root>
 ))
 Checkbox.displayName = CheckboxPrimitive.Root.displayName
-
-import { uiAuditWrap } from "@/components/lib/uiAudit";
 
 // decorate onCheckedChange if present
 const _orig = Checkbox; // keep ref
