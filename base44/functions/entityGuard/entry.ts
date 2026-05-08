@@ -68,7 +68,8 @@ Deno.serve(async (req) => {
         ver: 'visualizar', view: 'visualizar', read: 'visualizar', listar: 'visualizar',
         delete: 'excluir', remove: 'excluir', apagar: 'excluir',
         create: 'criar', add: 'criar', update: 'editar', edit: 'editar',
-        approve: 'aprovar', aprovar: 'aprovar', export: 'exportar', exportar: 'exportar'
+        approve: 'aprovar', aprovar: 'aprovar', export: 'exportar', exportar: 'exportar',
+        cancel: 'cancelar', cancelar: 'cancelar', execute: 'executar', executar: 'executar', status: 'visualizar'
       };
       return map[s] || s;
     };
@@ -86,7 +87,7 @@ Deno.serve(async (req) => {
         rh: 'RH', recursoshumanos: 'RH',
         dashboard: 'Dashboard', relatorios: 'Relatórios',
         agenda: 'Agenda', cadastros: 'Cadastros', cadastrosgerais: 'Cadastros',
-        contratos: 'Contratos', administracao: 'Sistema', sistema: 'Sistema',
+        contratos: 'Contratos', administracao: 'Sistema', administracaosistema: 'Sistema', sistema: 'Sistema',
       };
       return aliases[norm] || s || 'Sistema';
     };
@@ -151,10 +152,10 @@ Deno.serve(async (req) => {
           }
         }
       } else {
-        allowed = true;
+        allowed = false;
       }
     } catch {
-      allowed = true;
+      allowed = false;
     }
 
     // Sem escopo multiempresa → permite (o frontend já valida o contexto)

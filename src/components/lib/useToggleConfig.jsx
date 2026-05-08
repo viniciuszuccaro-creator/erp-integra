@@ -86,6 +86,10 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
 
       setConfirmedMap(prev => aliases.reduce((acc, key) => ({ ...acc, [key]: backendValue }), prev));
 
+      try {
+        localStorage.setItem(`toggle_confirmed_${grupoId || 'global'}_${empresaId || 'grupo'}_${chave}`, String(backendValue));
+      } catch (_) {}
+
       if (queryKey) {
         queryClient.setQueryData(queryKey, (prev) => {
           if (!Array.isArray(prev)) return prev;
@@ -125,7 +129,13 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     if (chave in optimisticMap) return optimisticMap[chave];
     // Prioridade 2: valor confirmado pelo backend (após salvar, antes do refetch)
     if (chave in confirmedMap) return confirmedMap[chave];
-    // Prioridade 3: valor da query (banco)
+    // Prioridade 3: cache confirmado local da última gravação no mesmo escopo
+    try {
+      const cached = localStorage.getItem(`toggle_confirmed_${grupoId || 'global'}_${empresaId || 'grupo'}_${chave}`);
+      if (cached === 'true') return true;
+      if (cached === 'false') return false;
+    } catch (_) {}
+    // Prioridade 4: valor da query (banco)
     const match = findMatchingRecord(configs, chave);
     if (match && typeof match.ativa === 'boolean') return match.ativa;
     // Prioridade 4: fallback global

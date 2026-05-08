@@ -135,12 +135,13 @@ async function countOne(base44, user, payload) {
   const hasOr = Array.isArray(filter?.$or) && filter.$or.length > 0;
   const scopeProvided = filter?.empresa_id || filter?.group_id || filter?.empresa_dona_id || filter?.empresa_alocada_id || hasOr;
 
-  // Entidades simples (catálogos) não precisam de escopo — retorna contagem total
+  // Entidades simples respeitam filtros de grupo/empresa quando enviados
   if (isSimple) {
     if (entityName === 'User' && user?.role !== 'admin') {
       return { entityName, count: 0 };
     }
-    const simpleCount = await fastCount(base44, entityName, {});
+    const simpleFilter = normalizeSharedFilter({ ...(filter || {}) });
+    const simpleCount = await fastCount(base44, entityName, simpleFilter);
     return { entityName, count: simpleCount };
   }
 
