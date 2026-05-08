@@ -33,6 +33,7 @@ export default function ToggleRow({ configs, chave, categoria, label, desc, savi
         <Switch
           checked={val}
           disabled={isSaving || isFetching}
+          data-action={`ToggleRow.${chave}`}
           onCheckedChange={(checked) => onToggle(chave, categoria, checked)}
         />
       </div>

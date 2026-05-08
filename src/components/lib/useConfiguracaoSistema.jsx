@@ -103,9 +103,9 @@ export default function useConfiguracaoSistema({ categoria, chave, empresaId, gr
           event: {
             type: data?.id ? 'update' : 'create',
             entity_name: 'ConfiguracaoSistema',
-            entity_id: (res && res.id) || data?.id || null
+            entity_id: res?.data?.id || res?.data?.record?.id || data?.id || null
           },
-          data: { ...(res || {}), __meta: { changed_by: me?.email || me?.full_name, param: chave || variables?.chave } },
+          data: { ...(res?.data?.record || variables || {}), __meta: { changed_by: me?.email || me?.full_name, param: chave || variables?.chave } },
           old_data: data || null
         });
       } catch (_) {}
