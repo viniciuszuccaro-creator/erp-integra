@@ -65,14 +65,12 @@ const SEARCH_FIELDS = {
   JobAgendado: ['nome', 'descricao'],
   ConfiguracaoNFe: ['nome', 'ambiente', 'descricao'],
   EventoNotificacao: ['nome', 'descricao', 'tipo'],
-  PerfilAcesso: ['nome_perfil', 'nome', 'descricao'],
-  ConfiguracaoDespesaRecorrente: ['descricao', 'nome'],
   default: ['nome', 'descricao', 'codigo', 'razao_social', 'nome_completo', 'nome_grupo', 'nome_segmento', 'nome_regiao', 'nome_banco', 'nome_fantasia', 'sigla']
 };
 
 // Entidades que não precisam de filtro empresa/grupo
 const SIMPLE_CATALOG = new Set([
-  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
+  'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
   'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
   'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
   'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
@@ -143,9 +141,6 @@ function normalizeSharedFilter(f) {
 
 // Expande filtro de empresa/grupo para cobrir todos os campos de vinculação
 async function expandGroupFilter(base44, entityName, f) {
-  const ctxCampo = (entityName === 'Fornecedor' || entityName === 'Transportadora') ? 'empresa_dona_id'
-    : (entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id');
-
   // empresa_id simples → expande para $or cobrindo todos os campos + registros legados
   if (f?.empresa_id && !f?.$or && !f?.group_id) {
     const { empresa_id, ...rest } = f;

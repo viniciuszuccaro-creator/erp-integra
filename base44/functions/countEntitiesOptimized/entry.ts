@@ -7,6 +7,7 @@
 import { createClientFromRequest } from "npm:@base44/sdk@0.8.25";
 
 const FIELD_MAP = {
+  Banco: "empresa_id",
   Cliente: "empresa_id",
   Fornecedor: "empresa_dona_id",
   Transportadora: "empresa_dona_id",
@@ -17,7 +18,7 @@ const FIELD_MAP = {
 
 const SHARED_ENTITIES = new Set(["Cliente", "Fornecedor", "Transportadora", "Produto"]);
 const SCOPED_ENTITIES = new Set([
-  "Cliente", "Fornecedor", "Transportadora", "Colaborador", "Produto", "Pedido",
+  "Banco", "Cliente", "Fornecedor", "Transportadora", "Colaborador", "Produto", "Pedido",
   "ContaPagar", "ContaReceber", "Entrega", "NotaFiscal", "OrdemCompra",
   "MovimentacaoEstoque", "CentroCusto", "PlanoDeContas", "PlanoContas"
 ]);

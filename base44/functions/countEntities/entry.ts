@@ -21,7 +21,7 @@ const stableStringify = (value) => {
 };
 
 const SIMPLE_CATALOG = new Set([
-  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
+  'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
   'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
   'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
   'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
