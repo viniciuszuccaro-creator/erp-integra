@@ -20,6 +20,22 @@ const SHARED_ENTITIES = new Set(["Cliente", "Fornecedor", "Transportadora"]);
 const serverCache = new Map();
 const CACHE_TTL = 30_000;
 
+async function countPaged(api, countFilter) {
+  let total = 0;
+  let skip = 0;
+  const pageSize = 1000;
+
+  while (true) {
+    const rows = await api.filter(countFilter, undefined, pageSize, skip);
+    const page = Array.isArray(rows) ? rows : [];
+    total += page.length;
+    if (page.length < pageSize) break;
+    skip += pageSize;
+  }
+
+  return total;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -74,7 +90,7 @@ Deno.serve(async (req) => {
       // Contar
       try {
         const api = base44.asServiceRole.entities[entity];
-        const count = await api.filter(countFilter, undefined, 0).then((res) => res?.length || 0);
+        const count = await countPaged(api, countFilter);
 
         result[entity] = count;
 

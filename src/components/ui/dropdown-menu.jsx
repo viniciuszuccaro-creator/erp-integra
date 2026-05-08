@@ -73,7 +73,7 @@ const DropdownMenuItem = React.forwardRef(({ className, inset, ...props }, ref) 
   if ('data-action' in cleanProps) delete cleanProps['data-action'];
   if (perm) {
     const [m,s,a] = String(perm).split('.');
-    const allowed = hasPermission(m, s || null, a || null);
+    const allowed = hasPermission(m, s || null, a || 'visualizar');
     if (!allowed) return <span className="inline-flex items-center rounded border border-dashed px-2 py-1 text-[10px] text-slate-400 select-none">Acesso negado</span>;
   }
   return (
@@ -101,7 +101,7 @@ const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checke
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
   if (perm) {
     const [m,s,a] = String(perm).split('.');
-    const allowed = hasPermission(m, s || null, a || null);
+    const allowed = hasPermission(m, s || null, a || 'visualizar');
     if (!allowed) return <span className="inline-flex items-center rounded border border-dashed px-2 py-1 text-[10px] text-slate-400 select-none">Acesso negado</span>;
   }
   return (
@@ -136,7 +136,7 @@ const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props 
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
   if (perm) {
     const [m,s,a] = String(perm).split('.');
-    const allowed = hasPermission(m, s || null, a || null);
+    const allowed = hasPermission(m, s || null, a || 'visualizar');
     if (!allowed) return <span className="inline-flex items-center rounded border border-dashed px-2 py-1 text-[10px] text-slate-400 select-none">Acesso negado</span>;
   }
   return (

@@ -1,6 +1,4 @@
 import * as React from "react"
-import { useEffect } from "react"
-
 import { cn } from "@/lib/utils"
 import { uiAuditWrap, logUIIssue } from "@/components/lib/uiAudit";
 import usePermissions from "@/components/lib/usePermissions";
@@ -23,7 +21,7 @@ const Input = React.forwardRef(({ className, type, onChange, onBlur, ...props },
   const perm = props?.['data-permission'];
   const forwardedProps = { ...cleanProps };
   if ('data-permission' in forwardedProps) delete forwardedProps['data-permission'];
-  const isAllowed = perm ? (() => { const [m,s,a] = String(perm).split('.'); return hasPermission(m, s || null, a || null); })() : true;
+  const isAllowed = perm ? (() => { const [m,s,a] = String(perm).split('.'); return hasPermission(m, s || null, a || 'visualizar'); })() : true;
   if (perm && !isAllowed) {
     return (
       <input

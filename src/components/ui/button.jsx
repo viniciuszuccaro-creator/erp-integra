@@ -45,7 +45,7 @@ const Button = React.forwardRef(({ className, variant, size, asChild = false, ..
   let isAllowed = true;
   if (perm) {
     const [mod, sec, act] = String(perm).split('.');
-    try { isAllowed = hasPermission(mod, sec || null, act || null); } catch { isAllowed = true; }
+    try { isAllowed = hasPermission(mod, sec || null, act || 'visualizar'); } catch { isAllowed = true; }
   }
   const passProps = { ...props, __perm: perm, __sensitive: props?.['data-sensitive'] };
   if ('data-permission' in passProps) delete passProps['data-permission'];
@@ -93,7 +93,7 @@ function withUIAudit(props) {
 
   const wrapIfDenied = (onClick) => async (e) => {
     try {
-      if (false && isSensitive) {
+      if (isSensitive) {
         const path = typeof window !== 'undefined' ? window.location.pathname : '';
         const page = (path.split('/').pop() || '').replace(/^\//,'');
         const pageToModule = { CRM: 'CRM', Comercial: 'Comercial', Estoque: 'Estoque', Compras: 'Compras', Financeiro: 'Financeiro', Fiscal: 'Fiscal', RH: 'RH', Expedicao: 'Expedição', Producao: 'Produção' };

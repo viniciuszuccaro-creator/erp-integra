@@ -33,7 +33,7 @@ const AuditedSwitch = React.forwardRef(({ onCheckedChange, ...props }, ref) => {
   if ('data-action' in cleanProps) delete cleanProps['data-action'];
   if (perm) {
     const [m,s,a] = String(perm).split('.');
-    const allowed = hasPermission(m, s || null, a || null);
+    const allowed = hasPermission(m, s || null, a || 'visualizar');
     if (!allowed) return <span className="inline-flex h-6 items-center rounded border border-dashed px-2 text-[10px] text-slate-400 select-none">Acesso negado</span>;
   }
   return <BaseSwitch ref={ref} onCheckedChange={audited} {...cleanProps} />;

@@ -38,7 +38,7 @@ const WrappedCheckbox = React.forwardRef((props, ref) => {
   if ('data-action' in cleanProps) delete cleanProps['data-action'];
   if (perm) {
     const [m,s,a] = String(perm).split('.');
-    const allowed = hasPermission(m, s || null, a || null);
+    const allowed = hasPermission(m, s || null, a || 'visualizar');
     if (!allowed) {
       return (
         <span className="inline-flex h-4 items-center rounded border border-dashed px-1 text-[10px] text-slate-400 select-none">Acesso negado</span>
