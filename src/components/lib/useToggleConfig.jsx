@@ -69,8 +69,9 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     const scope = getScope();
 
     pendingRef.current[chave] = true;
+    const aliases = getAliasKeys(chave);
     setSaving(prev => ({ ...prev, [chave]: true }));
-    setOptimisticMap(prev => ({ ...prev, [chave]: newValue }));
+    setOptimisticMap(prev => aliases.reduce((acc, key) => ({ ...acc, [key]: newValue }), prev));
 
     try {
       const res = await base44.functions.invoke('upsertConfig', {
@@ -83,7 +84,7 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
         ? res.data.record.ativa
         : newValue;
 
-      setConfirmedMap(prev => ({ ...prev, [chave]: backendValue }));
+      setConfirmedMap(prev => aliases.reduce((acc, key) => ({ ...acc, [key]: backendValue }), prev));
 
       if (queryKey) {
         queryClient.setQueryData(queryKey, (prev) => {
@@ -104,14 +105,14 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     } catch (err) {
       setOptimisticMap(prev => {
         const next = { ...prev };
-        delete next[chave];
+        aliases.forEach((key) => delete next[key]);
         return next;
       });
       throw err;
     } finally {
       setOptimisticMap(prev => {
         const next = { ...prev };
-        delete next[chave];
+        aliases.forEach((key) => delete next[key]);
         return next;
       });
       setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });

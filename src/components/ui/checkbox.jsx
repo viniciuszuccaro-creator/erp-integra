@@ -32,7 +32,7 @@ const WrappedCheckbox = React.forwardRef((props, ref) => {
     p.onCheckedChange = uiAuditWrap(p['data-action'] || 'Checkbox.onCheckedChange', (value) => original(value), { kind: 'checkbox' });
     p.__wrapped_audit = true;
   }
-  const { __wrapped_audit, ...cleanProps } = p;
+  const cleanProps = { ...p };
   delete cleanProps.__wrapped_audit;
   const perm = cleanProps?.['data-permission'];
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];

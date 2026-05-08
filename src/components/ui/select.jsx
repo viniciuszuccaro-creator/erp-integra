@@ -140,7 +140,7 @@ function withAuditRoot(props) {
     p.__wrapped_audit = true;
   }
   // CORREÇÃO CRÍTICA: Remove __wrapped_audit before passing to Radix UI
-  const { __wrapped_audit, ...cleanProps } = p;
+  const cleanProps = { ...p };
   delete cleanProps.__wrapped_audit;
   if ('data-action' in cleanProps) delete cleanProps['data-action'];
   return cleanProps;

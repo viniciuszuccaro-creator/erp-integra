@@ -85,19 +85,20 @@ export default function useCadastrosAllCounts() {
       ALL_ENTITIES.forEach(e => { full[e] = Number(result[e]) || 0; });
       return full;
     },
-    staleTime: 20_000,
+    staleTime: 120_000,
     gcTime: 10 * 60_000,
     placeholderData: (prev) => prev,
     refetchOnWindowFocus: false,
-    refetchOnMount: 'always',
-    retry: 2,
-    retryDelay: (attempt) => Math.min(2000 * (attempt + 1), 8000),
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    retry: 1,
+    retryDelay: (attempt) => Math.min(3000 * (attempt + 1), 10000),
   });
 
   // Invalida ao trocar empresa/grupo
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["cadastros-all-counts-v5"] });
-    queryClient.invalidateQueries({ queryKey: ["entityCounts_v5"] });
+    queryClient.invalidateQueries({ queryKey: ["cadastros-all-counts-v5"], refetchType: 'none' });
+    queryClient.invalidateQueries({ queryKey: ["entityCounts_v5"], refetchType: 'none' });
   }, [empresaId, groupId]); // eslint-disable-line
 
   // Subscrição real-time: invalida contagens quando qualquer entidade muda
@@ -107,8 +108,8 @@ export default function useCadastrosAllCounts() {
       const api = base44.entities?.[name];
       if (!api?.subscribe) return null;
       return api.subscribe(() => {
-        queryClient.invalidateQueries({ queryKey: ["cadastros-all-counts-v5"] });
-        queryClient.invalidateQueries({ queryKey: ["entityCounts_v5"] });
+        queryClient.invalidateQueries({ queryKey: ["cadastros-all-counts-v5"], refetchType: 'none' });
+        queryClient.invalidateQueries({ queryKey: ["entityCounts_v5"], refetchType: 'none' });
       });
     }).filter(Boolean);
     return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
