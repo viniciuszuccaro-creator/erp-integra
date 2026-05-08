@@ -45,12 +45,6 @@ async function expandGroupFilter(base44, entityName, f) {
       { [ctxCampo]: empresa_id },
       { empresas_compartilhadas_ids: { $in: [empresa_id] } },
     ];
-    // Para Produto: inclui produtos do grupo compartilhados
-    if (entityName === 'Produto') {
-      orConds.push({ compartilhado_grupo: true });
-    } else {
-      orConds.push({ empresa_id: null }); // registros legados sem empresa
-    }
     if (ctxCampo !== 'empresa_id') orConds.push({ empresa_id });
     return { ...rest, $or: orConds };
   }
@@ -80,11 +74,10 @@ async function expandGroupFilter(base44, entityName, f) {
           { empresas_compartilhadas_ids: { $in: empresasIds } },
           { group_id: groupId },
         ];
-        if (entityName !== 'Produto') orConds.push({ empresa_id: null }); // legados
-        if (entityName === 'Produto') orConds.push({ compartilhado_grupo: true });
+
         return { ...rest, $or: orConds };
       }
-      return { ...rest, $or: [{ [ctxCampo]: { $in: empresasIds } }, { group_id: groupId }, { empresa_id: null }] };
+      return { ...rest, $or: [{ [ctxCampo]: { $in: empresasIds } }, { group_id: groupId }] };
     } catch (_) { /* fallback */ }
   }
   return f;
@@ -137,7 +130,7 @@ async function countOne(base44, user, payload) {
 
   // Entidades simples respeitam filtros de grupo/empresa quando enviados
   if (isSimple) {
-    if (entityName === 'User' && user?.role !== 'admin') {
+    if ((entityName === 'User' || entityName === 'PerfilAcesso' || entityName === 'Empresa' || entityName === 'GrupoEmpresarial') && user?.role !== 'admin') {
       return { entityName, count: 0 };
     }
     const simpleFilter = normalizeSharedFilter({ ...(filter || {}) });
@@ -218,6 +211,8 @@ Deno.serve(async (req) => {
     return Response.json({ count: single.count, entityName: single.entityName });
 
   } catch (error) {
-    return Response.json({ error: String(error?.message || error) }, { status: 500 });
+    const message = String(error?.message || error);
+    const status = error?.response?.status || error?.status || (message.toLowerCase().includes('rate limit') ? 429 : 500);
+    return Response.json({ error: message }, { status });
   }
 });

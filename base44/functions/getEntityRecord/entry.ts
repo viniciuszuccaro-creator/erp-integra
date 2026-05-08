@@ -60,6 +60,8 @@ Deno.serve(async (req) => {
 
     return Response.json({ error: 'Parâmetros insuficientes: forneça id ou filter' }, { status: 400 });
   } catch (err) {
-    return Response.json({ error: String(err?.message || err) }, { status: 500 });
+    const message = String(err?.message || err);
+    const status = err?.response?.status || err?.status || (message.toLowerCase().includes('rate limit') ? 429 : 500);
+    return Response.json({ error: message }, { status });
   }
 });

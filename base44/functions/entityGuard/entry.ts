@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
       kept.push(now);
       __RL.set(requestIp, kept);
       if (kept.length > __MAX_REQ) {
-        return Response.json({ allowed: true, _fallback: true, _rate_limited: true });
+        return Response.json({ allowed: false, error: 'rate_limited' }, { status: 429 });
       }
     } catch {}
 
@@ -127,27 +127,33 @@ Deno.serve(async (req) => {
         const perfil = await base44.asServiceRole.entities.PerfilAcesso.get(user.perfil_acesso_id);
         const perms = perfil?.permissoes;
         if (perms) {
-          const modNode = perms[moduleName];
+          const normalizeKey = (v) => String(v || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const getByKey = (obj, key) => {
+            if (!obj || typeof obj !== 'object') return undefined;
+            const found = Object.keys(obj).find((k) => normalizeKey(k) === normalizeKey(key));
+            return found ? obj[found] : undefined;
+          };
+          const leafAllows = (node) => {
+            const stack = [node];
+            while (stack.length) {
+              const current = stack.pop();
+              if (Array.isArray(current)) {
+                if (current.includes(desired) || current.includes('visualizar') || (desired === 'visualizar' && current.includes('ver'))) return true;
+              } else if (current && typeof current === 'object') {
+                Object.values(current).forEach((v) => stack.push(v));
+              }
+            }
+            return false;
+          };
+          const modNode = getByKey(perms, moduleName);
           if (modNode) {
             if (!section) {
-              allowed = Object.values(modNode).some((node) => {
-                if (Array.isArray(node)) return node.includes(desired) || node.includes('visualizar');
-                if (node && typeof node === 'object') return Object.values(node).some((v) => Array.isArray(v) && (v.includes(desired) || v.includes('visualizar')));
-                return false;
-              });
+              allowed = leafAllows(modNode);
             } else {
               const path = Array.isArray(section) ? section : String(section).split('.').filter(Boolean);
               let cursor = modNode;
-              for (const seg of path) { if (!cursor) break; cursor = cursor[seg]; }
-              if (Array.isArray(cursor)) allowed = cursor.includes(desired) || cursor.includes('visualizar');
-              else if (cursor && typeof cursor === 'object') {
-                const stack = [cursor];
-                while (stack.length && !allowed) {
-                  const node = stack.pop();
-                  if (Array.isArray(node)) { if (node.includes(desired) || node.includes('visualizar')) allowed = true; }
-                  else if (node && typeof node === 'object') Object.values(node).forEach(v => stack.push(v));
-                }
-              }
+              for (const seg of path) { cursor = getByKey(cursor, seg); if (!cursor) break; }
+              allowed = leafAllows(cursor);
             }
           }
         }
@@ -164,7 +170,6 @@ Deno.serve(async (req) => {
     return Response.json({ allowed });
 
   } catch (err) {
-    // Em caso de erro interno, PERMITE (fail-open) para não bloquear operações
-    return Response.json({ allowed: true, _fallback: true });
+    return Response.json({ allowed: false, error: String(err?.message || err || 'guard_error') }, { status: 500 });
   }
 });

@@ -2,6 +2,11 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
+const CTX_CACHE_TTL = 120000;
+const __ctxRuntime = typeof window !== 'undefined'
+  ? (window.__ctxRuntime || (window.__ctxRuntime = { promise: null, data: null, ts: 0 }))
+  : { promise: null, data: null, ts: 0 };
+
 export function useContextoGrupoEmpresa() {
   const [user, setUser] = useState(null);
   const [contexto, setContexto] = useState(() => {
@@ -24,40 +29,58 @@ export function useContextoGrupoEmpresa() {
 
   const carregarContextoInicial = async () => {
     try {
-      const authed = await base44.auth.isAuthenticated();
-      if (!authed) {
-        setIsAuthenticated(false);
-        setUser(null);
-        setGrupoAtual(null);
-        setEmpresaAtual(null);
+      const cached = __ctxRuntime.data;
+      if (cached && Date.now() - __ctxRuntime.ts < CTX_CACHE_TTL) {
+        setIsAuthenticated(cached.isAuthenticated);
+        setUser(cached.user);
+        setContexto(cached.contexto || 'empresa');
+        setGrupoAtual(cached.grupoAtual || null);
+        setEmpresaAtual(cached.empresaAtual || null);
         setContextoCarregado(true);
         setAuthChecked(true);
         return;
       }
-      const currentUser = await base44.auth.me();
-      setIsAuthenticated(true);
-      setUser(currentUser);
+
+      if (__ctxRuntime.promise) {
+        const cachedResult = await __ctxRuntime.promise;
+        setIsAuthenticated(cachedResult.isAuthenticated);
+        setUser(cachedResult.user);
+        setContexto(cachedResult.contexto || 'empresa');
+        setGrupoAtual(cachedResult.grupoAtual || null);
+        setEmpresaAtual(cachedResult.empresaAtual || null);
+        setContextoCarregado(true);
+        setAuthChecked(true);
+        return;
+      }
+
+      const loadContext = async () => {
+        const authed = await base44.auth.isAuthenticated();
+        if (!authed) {
+          return { isAuthenticated: false, user: null, contexto: 'empresa', grupoAtual: null, empresaAtual: null };
+        }
+        const currentUser = await base44.auth.me();
 
       // Detecta contexto: prioridade user.contexto_atual, senão localStorage
       const ctxPersistido = (() => {
         try { return localStorage.getItem('contexto_atual'); } catch { return null; }
       })();
-      const ctx = currentUser.contexto_atual || ctxPersistido || 'empresa';
-      setContexto(ctx);
-      try { localStorage.setItem('contexto_atual', ctx); } catch {}
+        const ctx = currentUser.contexto_atual || ctxPersistido || 'empresa';
+        let loadedGrupo = null;
+        let loadedEmpresa = null;
+        try { localStorage.setItem('contexto_atual', ctx); } catch {}
 
-      if (ctx === 'grupo') {
+        if (ctx === 'grupo') {
         // Tenta user > localStorage
         const grupoId = currentUser.grupo_atual_id || currentUser.grupo_padrao_id || localStorage.getItem('group_atual_id');
         if (grupoId) {
           const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
-          if (grupos[0]) setGrupoAtual(grupos[0]);
+          if (grupos[0]) loadedGrupo = grupos[0];
         } else if (currentUser.role === 'admin' && !localStorage.getItem('group_atual_id')) {
           // Admin fallback: selecionar automaticamente um grupo ativo
           const todos = await base44.entities.GrupoEmpresarial.list();
           const ativo = todos.find(g => g.status === 'Ativo') || todos[0];
           if (ativo) {
-            setGrupoAtual(ativo);
+            loadedGrupo = ativo;
             try { localStorage.setItem('group_atual_id', ativo.id); } catch {}
           }
         }
@@ -65,16 +88,40 @@ export function useContextoGrupoEmpresa() {
         const empresaId = currentUser.empresa_atual_id || currentUser.empresa_padrao_id || localStorage.getItem('empresa_atual_id');
         if (empresaId) {
           const empresas = await base44.entities.Empresa.filter({ id: empresaId });
-          if (empresas[0]) setEmpresaAtual(empresas[0]);
-        } else {
-          setEmpresaAtual(null);
+          if (empresas[0]) loadedEmpresa = empresas[0];
         }
       }
+
+        return { isAuthenticated: true, user: currentUser, contexto: ctx, grupoAtual: loadedGrupo, empresaAtual: loadedEmpresa };
+      };
+
+      __ctxRuntime.promise = loadContext();
+      const result = await __ctxRuntime.promise;
+      __ctxRuntime.data = result;
+      __ctxRuntime.ts = Date.now();
+      __ctxRuntime.promise = null;
+
+      setIsAuthenticated(result.isAuthenticated);
+      setUser(result.user);
+      setContexto(result.contexto || 'empresa');
+      setGrupoAtual(result.grupoAtual || null);
+      setEmpresaAtual(result.empresaAtual || null);
       setContextoCarregado(true);
       setAuthChecked(true);
     } catch (error) {
-      setIsAuthenticated(false);
-      console.error("Erro ao carregar contexto:", error);
+      __ctxRuntime.promise = null;
+      const status = error?.response?.status || error?.status;
+      if (status === 429 && __ctxRuntime.data) {
+        const cached = __ctxRuntime.data;
+        setIsAuthenticated(cached.isAuthenticated);
+        setUser(cached.user);
+        setContexto(cached.contexto || 'empresa');
+        setGrupoAtual(cached.grupoAtual || null);
+        setEmpresaAtual(cached.empresaAtual || null);
+      } else {
+        setIsAuthenticated(false);
+      }
+      if (status !== 429) console.error("Erro ao carregar contexto:", error);
       setContextoCarregado(true);
       setAuthChecked(true);
     }
@@ -116,7 +163,9 @@ export function useContextoGrupoEmpresa() {
       setEmpresaAtual(null);
       try { localStorage.setItem('contexto_atual', 'grupo'); } catch {}
       try { if (grupo?.id) localStorage.setItem('group_atual_id', grupo.id); } catch {}
-      queryClient.invalidateQueries();
+      __ctxRuntime.data = null;
+      __ctxRuntime.ts = 0;
+      queryClient.invalidateQueries({ refetchType: 'none' });
       queryClient.refetchQueries({ queryKey: ['empresas-grupo'] });
       // Evitar reload completo; atualizar queries e deixar GuardRails liberar
     },
@@ -163,7 +212,9 @@ export function useContextoGrupoEmpresa() {
       setGrupoAtual(null);
       try { localStorage.setItem('contexto_atual', 'empresa'); } catch {}
       try { if (empresa?.id) localStorage.setItem('empresa_atual_id', empresa.id); } catch {}
-      queryClient.invalidateQueries();
+      __ctxRuntime.data = null;
+      __ctxRuntime.ts = 0;
+      queryClient.invalidateQueries({ refetchType: 'none' });
       queryClient.refetchQueries({ queryKey: ['empresas'] });
       // Sem reload completo
     },

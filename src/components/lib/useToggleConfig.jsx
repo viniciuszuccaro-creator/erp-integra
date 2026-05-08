@@ -87,7 +87,9 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
       setConfirmedMap(prev => aliases.reduce((acc, key) => ({ ...acc, [key]: backendValue }), prev));
 
       try {
-        localStorage.setItem(`toggle_confirmed_${grupoId || 'global'}_${empresaId || 'grupo'}_${chave}`, String(backendValue));
+        aliases.forEach((key) => {
+          localStorage.setItem(`toggle_confirmed_${grupoId || 'global'}_${empresaId || 'grupo'}_${key}`, String(backendValue));
+        });
       } catch (_) {}
 
       if (queryKey) {
@@ -131,9 +133,12 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     if (chave in confirmedMap) return confirmedMap[chave];
     // Prioridade 3: cache confirmado local da última gravação no mesmo escopo
     try {
-      const cached = localStorage.getItem(`toggle_confirmed_${grupoId || 'global'}_${empresaId || 'grupo'}_${chave}`);
-      if (cached === 'true') return true;
-      if (cached === 'false') return false;
+      const aliases = getAliasKeys(chave);
+      for (const key of aliases) {
+        const cached = localStorage.getItem(`toggle_confirmed_${grupoId || 'global'}_${empresaId || 'grupo'}_${key}`);
+        if (cached === 'true') return true;
+        if (cached === 'false') return false;
+      }
     } catch (_) {}
     // Prioridade 4: valor da query (banco)
     const match = findMatchingRecord(configs, chave);
@@ -144,7 +149,7 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
       if (global && typeof global.ativa === 'boolean') return global.ativa;
     }
     return false;
-  }, [optimisticMap, confirmedMap, findMatchingRecord]);
+  }, [optimisticMap, confirmedMap, findMatchingRecord, getAliasKeys, grupoId, empresaId]);
 
   return {
     saving,

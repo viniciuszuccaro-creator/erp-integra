@@ -150,15 +150,11 @@ async function expandGroupFilter(base44, entityName, f) {
   if (f?.empresa_id && !f?.$or && !f?.group_id) {
     const { empresa_id, ...rest } = f;
     const orConds = [{ empresa_id }, { empresa_dona_id: empresa_id }];
-    if (entityName !== 'Produto') orConds.push({ empresa_id: null }); // legados (não para Produto)
     if (EXPAND_SET.has(entityName)) {
       orConds.push({ empresas_compartilhadas_ids: { $in: [empresa_id] } });
     }
     if (entityName === 'Colaborador') {
       orConds.push({ empresa_alocada_id: empresa_id });
-    }
-    if (entityName === 'Produto') {
-      orConds.push({ compartilhado_grupo: true }); // produtos compartilhados do grupo
     }
     return { ...rest, $or: orConds };
   }
@@ -176,15 +172,11 @@ async function expandGroupFilter(base44, entityName, f) {
         { empresa_dona_id: { $in: empresasIds } },
         { group_id: groupId },
       ];
-      if (entityName !== 'Produto') orConds.push({ empresa_id: null }); // legados
       if (EXPAND_SET.has(entityName)) {
         orConds.push({ empresas_compartilhadas_ids: { $in: empresasIds } });
       }
       if (entityName === 'Colaborador') {
         orConds.push({ empresa_alocada_id: { $in: empresasIds } });
-      }
-      if (entityName === 'Produto') {
-        orConds.push({ compartilhado_grupo: true }); // produtos compartilhados do grupo
       }
       return { ...rest, $or: orConds };
     } catch (_) { /* fallback: usa group_id direto */ }
@@ -213,8 +205,12 @@ async function listOne(base44, user, q) {
     return { entityName, items: [] };
   }
 
-  // Usuário não-admin nunca pode consultar User sem escopo explícito de segurança
-  if (entityName === 'User' && user?.role !== 'admin') {
+  // Usuário não-admin nunca pode consultar entidades administrativas sensíveis via listagem global
+  if ((entityName === 'User' || entityName === 'PerfilAcesso') && user?.role !== 'admin') {
+    return { entityName, items: [] };
+  }
+
+  if ((entityName === 'Empresa' || entityName === 'GrupoEmpresarial') && user?.role !== 'admin' && !scopeProvided) {
     return { entityName, items: [] };
   }
 
@@ -328,6 +324,8 @@ Deno.serve(async (req) => {
     return compressedJson(single.items, req);
 
   } catch (err) {
-    return Response.json({ error: String(err?.message || err) }, { status: 500 });
+    const message = String(err?.message || err);
+    const status = err?.response?.status || err?.status || (message.toLowerCase().includes('rate limit') ? 429 : 500);
+    return Response.json({ error: message }, { status });
   }
 });
