@@ -40,15 +40,15 @@ const withRetry = async (fn) => {
 };
 
 Deno.serve(async (req) => {
+  let requestBody = {};
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    let body = {};
-    try { body = await req.json(); } catch (_) {}
+    try { requestBody = await req.json(); } catch (_) {}
 
-    const { entityName, id, filter, limit, sortField } = body;
+    const { entityName, id, filter, limit, sortField } = requestBody;
     if (!entityName) {
       return Response.json({ error: 'entityName é obrigatório' }, { status: 400 });
     }
@@ -108,8 +108,7 @@ Deno.serve(async (req) => {
     const status = err?.response?.status || err?.status || (message.toLowerCase().includes('rate limit') ? 429 : 500);
     if (status === 429) {
       try {
-        const body = await req.clone().json();
-        const cacheKey = `${body?.entityName}:${body?.id || ''}:${stableStringify(body?.filter || {})}:${body?.limit || ''}:${body?.sortField || ''}`;
+        const cacheKey = `${requestBody?.entityName}:${requestBody?.id || ''}:${stableStringify(requestBody?.filter || {})}:${requestBody?.limit || ''}:${requestBody?.sortField || ''}`;
         const cached = __RECORD_CACHE.get(cacheKey);
         if (cached && Date.now() - cached.ts < STALE_TTL_MS) {
           return Response.json({ ...cached.payload, _stale: true });
