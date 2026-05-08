@@ -8,6 +8,19 @@ const __MAX_REQ = 120;
 // Cache de permissões por usuário (evita chamar auth.me() a cada request)
 const __PERM_CACHE = globalThis.__egPermCache || (globalThis.__egPermCache = new Map());
 const __PERM_TTL = 300_000; // 5 min
+const __GUARD_RESULT_CACHE = globalThis.__egResultCache || (globalThis.__egResultCache = new Map());
+const __GUARD_RESULT_TTL = 120_000;
+const stableStringify = (value) => {
+  try {
+    if (!value || typeof value !== 'object') return JSON.stringify(value);
+    const ordered = Array.isArray(value)
+      ? value.map((item) => JSON.parse(stableStringify(item)))
+      : Object.keys(value).sort().reduce((acc, key) => ({ ...acc, [key]: value[key] }), {});
+    return JSON.stringify(ordered);
+  } catch (_) {
+    return String(value);
+  }
+};
 
 Deno.serve(async (req) => {
   try {
@@ -17,6 +30,20 @@ Deno.serve(async (req) => {
     // Ping de automação
     if (!body || Object.keys(body).length === 0 || body._automation === true) {
       return Response.json({ ok: true, status: 'healthy' });
+    }
+
+    const resultCacheKey = stableStringify({
+      token: (req.headers.get('authorization') || '').slice(-32),
+      module: body?.module,
+      section: body?.section,
+      action: body?.action,
+      entity_name: body?.entity_name,
+      empresa_id: body?.empresa_id,
+      group_id: body?.group_id,
+    });
+    const cachedResult = __GUARD_RESULT_CACHE.get(resultCacheKey);
+    if (cachedResult && Date.now() - cachedResult.ts < __GUARD_RESULT_TTL) {
+      return Response.json(cachedResult.payload);
     }
 
     // Rate limit por IP
@@ -58,7 +85,9 @@ Deno.serve(async (req) => {
 
     // Admin sempre tem acesso
     if (user?.role === 'admin') {
-      return Response.json({ allowed: true });
+      const payload = { allowed: true };
+      __GUARD_RESULT_CACHE.set(resultCacheKey, { payload, ts: Date.now() });
+      return Response.json(payload);
     }
 
     const normalize = (a) => {
@@ -167,7 +196,9 @@ Deno.serve(async (req) => {
     // Sem escopo multiempresa → permite (o frontend já valida o contexto)
     // NÃO bloquear por falta de empresa_id pois algumas entidades são globais
 
-    return Response.json({ allowed });
+    const payload = { allowed };
+    __GUARD_RESULT_CACHE.set(resultCacheKey, { payload, ts: Date.now() });
+    return Response.json(payload);
 
   } catch (err) {
     return Response.json({ allowed: false, error: String(err?.message || err || 'guard_error') }, { status: 500 });

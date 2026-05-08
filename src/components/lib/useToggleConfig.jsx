@@ -105,6 +105,10 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
           return [{ chave, categoria: categoria || 'Sistema', ativa: backendValue, ...(empresaId ? { empresa_id: empresaId } : {}), ...(grupoId ? { group_id: grupoId } : {}) }, ...next];
         });
         queryClient.invalidateQueries({ queryKey, exact: true, refetchType: 'none' });
+        queryClient.setQueriesData({ predicate: (query) => Array.isArray(query.queryKey) && query.queryKey.some(part => String(part).toLowerCase().includes('config')) }, (prev) => {
+          if (!Array.isArray(prev)) return prev;
+          return prev.map(item => aliases.includes(item?.chave) ? { ...item, ativa: backendValue } : item);
+        });
       }
 
       return true;
@@ -131,7 +135,15 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
     if (chave in optimisticMap) return optimisticMap[chave];
     // Prioridade 2: valor confirmado pelo backend (após salvar, antes do refetch)
     if (chave in confirmedMap) return confirmedMap[chave];
-    // Prioridade 3: cache confirmado local da última gravação no mesmo escopo
+    // Prioridade 3: valor da query (banco), quando já carregado
+    const match = findMatchingRecord(configs, chave);
+    if (match && typeof match.ativa === 'boolean') return match.ativa;
+    // Prioridade 4: fallback global do banco
+    if (Array.isArray(configs)) {
+      const global = configs.find(c => c.chave === chave && !c.empresa_id && !c.group_id);
+      if (global && typeof global.ativa === 'boolean') return global.ativa;
+    }
+    // Prioridade 5: cache confirmado local da última gravação no mesmo escopo
     try {
       const aliases = getAliasKeys(chave);
       for (const key of aliases) {
@@ -140,14 +152,6 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
         if (cached === 'false') return false;
       }
     } catch (_) {}
-    // Prioridade 4: valor da query (banco)
-    const match = findMatchingRecord(configs, chave);
-    if (match && typeof match.ativa === 'boolean') return match.ativa;
-    // Prioridade 4: fallback global
-    if (Array.isArray(configs)) {
-      const global = configs.find(c => c.chave === chave && !c.empresa_id && !c.group_id);
-      if (global && typeof global.ativa === 'boolean') return global.ativa;
-    }
     return false;
   }, [optimisticMap, confirmedMap, findMatchingRecord, getAliasKeys, grupoId, empresaId]);
 

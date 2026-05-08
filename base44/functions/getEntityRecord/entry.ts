@@ -7,6 +7,38 @@
  */
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+const __RECORD_CACHE = globalThis.__getEntityRecordCache || (globalThis.__getEntityRecordCache = new Map());
+const CACHE_TTL_MS = 30_000;
+const STALE_TTL_MS = 300_000;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const stableStringify = (value) => {
+  try {
+    if (!value || typeof value !== 'object') return JSON.stringify(value);
+    const ordered = Array.isArray(value)
+      ? value.map((item) => JSON.parse(stableStringify(item)))
+      : Object.keys(value).sort().reduce((acc, key) => ({ ...acc, [key]: value[key] }), {});
+    return JSON.stringify(ordered);
+  } catch (_) {
+    return String(value);
+  }
+};
+
+const withRetry = async (fn) => {
+  let lastError = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      const status = err?.response?.status || err?.status;
+      if (status !== 429) throw err;
+      await sleep(700 * (attempt + 1));
+    }
+  }
+  throw lastError;
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -21,6 +53,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'entityName é obrigatório' }, { status: 400 });
     }
 
+    const cacheKey = `${entityName}:${id || ''}:${stableStringify(filter || {})}:${limit || ''}:${sortField || ''}`;
+    const cached = __RECORD_CACHE.get(cacheKey);
+    if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+      return Response.json({ ...cached.payload, _cached: true });
+    }
+
     const api = base44.asServiceRole.entities[entityName];
     if (!api) {
       return Response.json({ error: `Entidade "${entityName}" não encontrada` }, { status: 404 });
@@ -30,17 +68,21 @@ Deno.serve(async (req) => {
     if (id) {
       if (typeof api.get === 'function') {
         try {
-          const record = await api.get(id);
+          const record = await withRetry(() => api.get(id));
           if (record && record.id) {
-            return Response.json({ record, _ts: Date.now() });
+            const payload = { record, _ts: Date.now() };
+            __RECORD_CACHE.set(cacheKey, { payload, ts: Date.now() });
+            return Response.json(payload);
           }
         } catch (_) {}
       }
       if (typeof api.filter === 'function') {
         try {
-          const res = await api.filter({ id }, '-updated_date', 1);
+          const res = await withRetry(() => api.filter({ id }, '-updated_date', 1));
           if (Array.isArray(res) && res.length > 0) {
-            return Response.json({ record: res[0], _ts: Date.now() });
+            const payload = { record: res[0], _ts: Date.now() };
+            __RECORD_CACHE.set(cacheKey, { payload, ts: Date.now() });
+            return Response.json(payload);
           }
         } catch (_) {}
       }
@@ -52,9 +94,11 @@ Deno.serve(async (req) => {
       const maxLimit = Math.min(Number(limit) || 50, 500);
       const sort = sortField || '-updated_date';
       if (typeof api.filter === 'function') {
-        const res = await api.filter(filter, sort, maxLimit);
+        const res = await withRetry(() => api.filter(filter, sort, maxLimit));
         const data = Array.isArray(res) ? res : [];
-        return Response.json({ data, _ts: Date.now() });
+        const payload = { data, _ts: Date.now() };
+        __RECORD_CACHE.set(cacheKey, { payload, ts: Date.now() });
+        return Response.json(payload);
       }
     }
 
@@ -62,6 +106,16 @@ Deno.serve(async (req) => {
   } catch (err) {
     const message = String(err?.message || err);
     const status = err?.response?.status || err?.status || (message.toLowerCase().includes('rate limit') ? 429 : 500);
+    if (status === 429) {
+      try {
+        const body = await req.clone().json();
+        const cacheKey = `${body?.entityName}:${body?.id || ''}:${stableStringify(body?.filter || {})}:${body?.limit || ''}:${body?.sortField || ''}`;
+        const cached = __RECORD_CACHE.get(cacheKey);
+        if (cached && Date.now() - cached.ts < STALE_TTL_MS) {
+          return Response.json({ ...cached.payload, _stale: true });
+        }
+      } catch (_) {}
+    }
     return Response.json({ error: message }, { status });
   }
 });

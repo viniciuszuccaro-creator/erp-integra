@@ -52,7 +52,7 @@ async function expandGroupFilter(base44, entityName, f) {
   // Caso 2: demais entidades com empresa_id — inclui legados
   if (!EXPAND_SET.has(entityName) && f?.empresa_id && !f?.$or && !f?.group_id) {
     const { empresa_id, ...rest } = f;
-    return { ...rest, $or: [{ empresa_id }, { empresa_id: null }] };
+    return { ...rest, empresa_id };
   }
 
   if (f?.$or && f?.group_id) {
