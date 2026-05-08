@@ -135,8 +135,18 @@ Deno.serve(async (req) => {
         });
       } catch (_) {}
 
+      try {
+        if (gId && !eId) {
+          await base44.asServiceRole.functions.invoke('propagateGroupConfigs', {
+            entity_name: 'ConfiguracaoSistema',
+            source_id: updated.id || match.id,
+            group_id: gId
+          });
+        }
+      } catch (_) {}
+
       return Response.json({ record: updated, id: updated.id || match.id, mode: 'update', _ts: Date.now() });
-    } else {
+      } else {
       // CRIA novo registro
       const createPayload = { chave, ...data };
       if (eId) createPayload.empresa_id = eId;
@@ -160,6 +170,16 @@ Deno.serve(async (req) => {
           dados_novos: created,
           data_hora: new Date().toISOString(),
         });
+      } catch (_) {}
+
+      try {
+        if (gId && !eId) {
+          await base44.asServiceRole.functions.invoke('propagateGroupConfigs', {
+            entity_name: 'ConfiguracaoSistema',
+            source_id: created.id,
+            group_id: gId
+          });
+        }
       } catch (_) {}
 
       return Response.json({ record: created, id: created.id, mode: 'create', _ts: Date.now() });

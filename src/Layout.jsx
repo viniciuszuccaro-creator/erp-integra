@@ -771,10 +771,12 @@ function LayoutContent({ children, currentPageName }) {
     const getScope = () => {
       const scope = {};
       try {
-        if (grupoAtual?.id) scope.group_id = grupoAtual.id;
-        if (contexto !== 'grupo' && empresaAtual?.id) scope.empresa_id = empresaAtual.id;
-        // Strict scope: mark blocked when no empresa in empresa-context
-        if (contexto !== 'grupo' && !empresaAtual?.id) scope.__blocked = true;
+        const storedContexto = localStorage.getItem('contexto_atual') || contexto;
+        const storedEmpresaId = localStorage.getItem('empresa_atual_id') || empresaAtual?.id;
+        const storedGrupoId = localStorage.getItem('group_atual_id') || grupoAtual?.id;
+        if (storedGrupoId) scope.group_id = storedGrupoId;
+        if (storedContexto !== 'grupo' && storedEmpresaId) scope.empresa_id = storedEmpresaId;
+        if (storedContexto !== 'grupo' && !storedEmpresaId) scope.__blocked = true;
       } catch (_) {}
       return scope;
     };
