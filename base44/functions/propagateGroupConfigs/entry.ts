@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
 
     // Helpers
     const keyFieldsByEntity = (en) => {
+      if (en === 'ConfiguracaoSistema') return ['chave'];
       if (en === 'Cliente') return ['cnpj', 'cpf', 'nome', 'razao_social'];
       if (en === 'Fornecedor') return ['cnpj', 'cpf', 'nome', 'razao_social'];
       if (en === 'TabelaPreco' || en === 'PlanoDeContas' || en === 'CentroCusto') return ['codigo', 'descricao', 'nome', 'titulo'];
@@ -145,6 +146,71 @@ Deno.serve(async (req) => {
     };
 
     const results = [];
+
+    // Propagação direta de um registro específico (usado por toggles/configurações)
+    if (input?.entity_name && input?.source_id && base44.asServiceRole.entities?.[input.entity_name]) {
+      const entityName = input.entity_name;
+      const source = await base44.asServiceRole.entities[entityName]
+        .filter({ id: input.source_id }, undefined, 1)
+        .then((rows) => rows?.[0] || null)
+        .catch(() => null);
+
+      if (!source) return Response.json({ error: 'Registro fonte não encontrado' }, { status: 404 });
+
+      const effectiveGroupId = source.group_id || groupId;
+      const effectiveEmpresaId = source.empresa_id || empresaId || null;
+      const effectiveStrategy = entityName === 'ConfiguracaoSistema' ? 'override' : strategy;
+      const keys = keyFieldsByEntity(entityName);
+      let directCreated = 0, directUpdated = 0, directSkipped = 0;
+
+      if (effectiveEmpresaId && effectiveGroupId) {
+        const payload = sanitize({ ...source, empresa_id: undefined, group_id: effectiveGroupId });
+        const keyField = keys.find(k => source?.[k]);
+        const filtro = { group_id: effectiveGroupId };
+        if (keyField) filtro[keyField] = source[keyField];
+        const existing = await base44.asServiceRole.entities[entityName].filter(filtro, undefined, 1).then(x => x?.[0]).catch(() => null);
+        if (existing) {
+          await base44.asServiceRole.entities[entityName].update(existing.id, payload);
+          directUpdated++;
+        } else {
+          await base44.asServiceRole.entities[entityName].create(payload);
+          directCreated++;
+        }
+      } else if (effectiveGroupId) {
+        for (const emp of targetEmpresas) {
+          const payload = sanitize({ ...source, empresa_id: emp.id, group_id: effectiveGroupId });
+          const keyField = keys.find(k => source?.[k]);
+          const filtro = { empresa_id: emp.id, group_id: effectiveGroupId };
+          if (keyField) filtro[keyField] = source[keyField];
+          const existing = await base44.asServiceRole.entities[entityName].filter(filtro, undefined, 1).then(x => x?.[0]).catch(() => null);
+          if (existing) {
+            if (effectiveStrategy === 'override') {
+              await base44.asServiceRole.entities[entityName].update(existing.id, payload);
+              directUpdated++;
+            } else if (effectiveStrategy === 'merge') {
+              const patch = {};
+              for (const [k, v] of Object.entries(payload)) if (existing[k] == null) patch[k] = v;
+              if (Object.keys(patch).length) { await base44.asServiceRole.entities[entityName].update(existing.id, patch); directUpdated++; } else { directSkipped++; }
+            } else { directSkipped++; }
+          } else {
+            await base44.asServiceRole.entities[entityName].create(payload);
+            directCreated++;
+          }
+        }
+      }
+
+      try { await base44.asServiceRole.entities.AuditLog.create({
+        usuario: user ? (user.full_name || user.email || 'Admin') : 'Sistema Agendado',
+        usuario_id: user?.id || null,
+        acao: 'Execução', modulo: 'Sistema', tipo_auditoria: 'sistema', entidade: 'PropagacaoRegistro',
+        descricao: `Propagação direta ${entityName}`,
+        dados_novos: { entity_name: entityName, source_id: input.source_id, group_id: effectiveGroupId, empresa_id: effectiveEmpresaId, created: directCreated, updated: directUpdated, skipped: directSkipped },
+        data_hora: new Date().toISOString()
+      }); } catch {}
+
+      return Response.json({ ok: true, direct: true, entity_name: entityName, created: directCreated, updated: directUpdated, skipped: directSkipped });
+    }
+
     if (direction === 'grupo_to_empresas') {
       for (const en of entidades) if (base44.asServiceRole.entities?.[en]) results.push(await copyGroupToEmpresas(en));
     } else if (direction === 'empresa_to_grupo') {

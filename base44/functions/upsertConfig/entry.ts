@@ -61,6 +61,35 @@ Deno.serve(async (req) => {
       if (scope?.empresa_id) updatePayload.empresa_id = scope.empresa_id;
 
       const updated = await api.update(id, updatePayload);
+
+      try {
+        await base44.asServiceRole.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Sistema',
+          usuario_id: user?.id || null,
+          empresa_id: updatePayload.empresa_id || null,
+          group_id: updatePayload.group_id || null,
+          acao: 'Edição',
+          modulo: 'Sistema',
+          tipo_auditoria: 'entidade',
+          entidade: 'ConfiguracaoSistema',
+          registro_id: id,
+          descricao: `Configuração ${updatePayload.chave || chave || id} atualizada por ID`,
+          dados_anteriores: existing,
+          dados_novos: updated,
+          data_hora: new Date().toISOString(),
+        });
+      } catch (_) {}
+
+      try {
+        if (updatePayload.group_id && !updatePayload.empresa_id) {
+          await base44.asServiceRole.functions.invoke('propagateGroupConfigs', {
+            entity_name: 'ConfiguracaoSistema',
+            source_id: updated.id || id,
+            group_id: updatePayload.group_id
+          });
+        }
+      } catch (_) {}
+
       return Response.json({ record: updated, id: updated.id || id, mode: 'update', _ts: Date.now() });
     }
 

@@ -15,7 +15,7 @@ const FIELD_MAP = {
   CentroCusto: "empresa_id",
 };
 
-const SHARED_ENTITIES = new Set(["Cliente", "Fornecedor", "Transportadora"]);
+const SHARED_ENTITIES = new Set(["Cliente", "Fornecedor", "Transportadora", "Produto"]);
 const SCOPED_ENTITIES = new Set([
   "Cliente", "Fornecedor", "Transportadora", "Colaborador", "Produto", "Pedido",
   "ContaPagar", "ContaReceber", "Entrega", "NotaFiscal", "OrdemCompra",
@@ -112,7 +112,12 @@ Deno.serve(async (req) => {
       }
 
       if (orConditions.length > 0) {
-        countFilter.$or = orConditions;
+        if (Array.isArray(countFilter.$or) && countFilter.$or.length) {
+          countFilter.$and = [{ $or: countFilter.$or }, { $or: orConditions }];
+          delete countFilter.$or;
+        } else {
+          countFilter.$or = orConditions;
+        }
       }
 
       // Contar
