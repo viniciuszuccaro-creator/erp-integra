@@ -16,6 +16,21 @@ const FIELD_MAP = {
 };
 
 const SHARED_ENTITIES = new Set(["Cliente", "Fornecedor", "Transportadora"]);
+const SCOPED_ENTITIES = new Set([
+  "Cliente", "Fornecedor", "Transportadora", "Colaborador", "Produto", "Pedido",
+  "ContaPagar", "ContaReceber", "Entrega", "NotaFiscal", "OrdemCompra",
+  "MovimentacaoEstoque", "CentroCusto", "PlanoDeContas", "PlanoContas"
+]);
+
+const stableStringify = (value) => {
+  try {
+    if (!value || typeof value !== "object") return JSON.stringify(value);
+    if (Array.isArray(value)) return JSON.stringify(value.map((item) => JSON.parse(stableStringify(item))));
+    return JSON.stringify(Object.keys(value).sort().reduce((acc, key) => ({ ...acc, [key]: value[key] }), {}));
+  } catch (_) {
+    return String(value);
+  }
+};
 
 const serverCache = new Map();
 const CACHE_TTL = 30_000;
@@ -60,8 +75,8 @@ Deno.serve(async (req) => {
 
       if (!entity) continue;
 
-      // Verificar cache
-      const cacheKey = `${entity}|${groupId}|${empresaId}`;
+      // Verificar cache incluindo filtro para evitar contagem cruzada entre telas/contextos
+      const cacheKey = `${entity}|${groupId || ""}|${empresaId || ""}|${stableStringify(filter)}`;
       const cached = serverCache.get(cacheKey);
       if (cached && now - cached.ts < CACHE_TTL) {
         result[entity] = cached.count;
@@ -73,14 +88,27 @@ Deno.serve(async (req) => {
       const campo = FIELD_MAP[entity] || "empresa_id";
       const orConditions = [];
 
+      if (!empresaId && !groupId && SCOPED_ENTITIES.has(entity)) {
+        result[entity] = 0;
+        continue;
+      }
+
       if (empresaId) {
-        orConditions.push({ [campo]: empresaId });
+        orConditions.push({ [campo]: empresaId }, { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresa_alocada_id: empresaId });
         if (SHARED_ENTITIES.has(entity)) {
           orConditions.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
         }
       }
       if (groupId) {
         orConditions.push({ group_id: groupId });
+        const empresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, "-created_date", 200);
+        const empresasIds = (empresas || []).map((empresa) => empresa.id).filter(Boolean);
+        if (empresasIds.length) {
+          orConditions.push({ [campo]: { $in: empresasIds } }, { empresa_id: { $in: empresasIds } }, { empresa_dona_id: { $in: empresasIds } }, { empresa_alocada_id: { $in: empresasIds } });
+          if (SHARED_ENTITIES.has(entity)) {
+            orConditions.push({ empresas_compartilhadas_ids: { $in: empresasIds } });
+          }
+        }
       }
 
       if (orConditions.length > 0) {

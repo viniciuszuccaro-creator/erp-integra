@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
             while (stack.length) {
               const current = stack.pop();
               if (Array.isArray(current)) {
-                if (current.includes(desired) || current.includes('visualizar') || (desired === 'visualizar' && current.includes('ver'))) return true;
+                if (current.includes(desired) || (desired === 'visualizar' && current.includes('ver'))) return true;
               } else if (current && typeof current === 'object') {
                 Object.values(current).forEach((v) => stack.push(v));
               }
@@ -193,8 +193,14 @@ Deno.serve(async (req) => {
       allowed = false;
     }
 
-    // Sem escopo multiempresa → permite (o frontend já valida o contexto)
-    // NÃO bloquear por falta de empresa_id pois algumas entidades são globais
+    const scopedEntities = new Set([
+      'Cliente', 'Fornecedor', 'Transportadora', 'Colaborador', 'Produto', 'Pedido',
+      'ContaPagar', 'ContaReceber', 'Entrega', 'NotaFiscal', 'OrdemCompra',
+      'MovimentacaoEstoque', 'CentroCusto', 'PlanoDeContas', 'PlanoContas'
+    ]);
+    if (targetEntity && scopedEntities.has(targetEntity) && desired !== 'visualizar' && !body?.empresa_id && !body?.group_id) {
+      allowed = false;
+    }
 
     const payload = { allowed };
     __GUARD_RESULT_CACHE.set(resultCacheKey, { payload, ts: Date.now() });

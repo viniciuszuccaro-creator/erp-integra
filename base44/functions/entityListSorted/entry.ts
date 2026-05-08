@@ -80,7 +80,7 @@ const SIMPLE_CATALOG = new Set([
   'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
   'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'ChatbotCanal',
   'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento',
-  'ContatoB2B', 'CentroCusto', 'PlanoDeContas', 'PlanoContas',
+  'ContatoB2B',
   'Veiculo', 'Motorista', 'Representante', 'GrupoEmpresarial', 'Empresa',
   'TabelaPrecoItem', 'CentroOperacao', 'ConfiguracaoDespesaRecorrente',
 ]);

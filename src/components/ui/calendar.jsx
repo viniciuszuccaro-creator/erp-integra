@@ -4,6 +4,8 @@ import { DayPicker } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+import usePermissions from "@/components/lib/usePermissions"
+import { uiAuditWrap } from "@/components/lib/uiAudit"
 
 function Calendar({
   className,
@@ -11,6 +13,20 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }) {
+  const { hasPermission } = usePermissions();
+  const perm = props?.['data-permission'];
+  const actionName = props?.['data-action'] || 'Calendar.onSelect';
+  const cleanProps = { ...props };
+  if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
+  if ('data-action' in cleanProps) delete cleanProps['data-action'];
+  if (typeof cleanProps.onSelect === 'function') {
+    cleanProps.onSelect = uiAuditWrap(actionName, cleanProps.onSelect, { kind: 'calendar' });
+  }
+  if (perm) {
+    const [m, s, a] = String(perm).split('.');
+    const allowed = hasPermission(m, s || null, a || 'visualizar');
+    if (!allowed) return <span className="inline-flex items-center rounded border border-dashed px-2 py-1 text-[10px] text-slate-400 select-none">Acesso negado</span>;
+  }
   return (
     (<DayPicker
       showOutsideDays={showOutsideDays}
@@ -34,7 +50,7 @@ function Calendar({
         row: "flex w-full mt-2",
         cell: cn(
           "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected].day-range-end)]:rounded-r-md",
-          props.mode === "range"
+          cleanProps.mode === "range"
             ? "[&:has(>.day-range-end)]:rounded-r-md [&:has(>.day-range-start)]:rounded-l-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md"
             : "[&:has([aria-selected])]:rounded-md"
         ),
@@ -60,7 +76,7 @@ function Calendar({
           ? <ChevronLeft className={cn("h-4 w-4", className)} {...iconProps} />
           : <ChevronRight className={cn("h-4 w-4", className)} {...iconProps} />,
       }}
-      {...props} />)
+      {...cleanProps} />)
   );
 }
 Calendar.displayName = "Calendar"

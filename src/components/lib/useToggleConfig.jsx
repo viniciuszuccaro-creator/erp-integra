@@ -64,13 +64,14 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
   }, [empresaId, grupoId, getAliasKeys]);
 
   const handleToggle = useCallback(async (chave, categoria, newValue) => {
-    if (saving[chave] || pendingRef.current[chave]) return;
+    const aliasesCheck = getAliasKeys(chave);
+    if (aliasesCheck.some((key) => saving[key] || pendingRef.current[key])) return;
 
     const scope = getScope();
 
-    pendingRef.current[chave] = true;
     const aliases = getAliasKeys(chave);
-    setSaving(prev => ({ ...prev, [chave]: true }));
+    aliases.forEach((key) => { pendingRef.current[key] = true; });
+    setSaving(prev => aliases.reduce((acc, key) => ({ ...acc, [key]: true }), prev));
     setOptimisticMap(prev => aliases.reduce((acc, key) => ({ ...acc, [key]: newValue }), prev));
 
     try {
@@ -107,7 +108,9 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
         queryClient.invalidateQueries({ queryKey, exact: true, refetchType: 'none' });
         queryClient.setQueriesData({ predicate: (query) => Array.isArray(query.queryKey) && query.queryKey.some(part => String(part).toLowerCase().includes('config')) }, (prev) => {
           if (!Array.isArray(prev)) return prev;
-          return prev.map(item => aliases.includes(item?.chave) ? { ...item, ativa: backendValue } : item);
+          const found = prev.some(item => aliases.includes(item?.chave));
+          const updated = prev.map(item => aliases.includes(item?.chave) ? { ...item, ativa: backendValue, ...(empresaId ? { empresa_id: empresaId } : {}), ...(grupoId ? { group_id: grupoId } : {}) } : item);
+          return found ? updated : [{ chave, categoria: categoria || 'Sistema', ativa: backendValue, ...(empresaId ? { empresa_id: empresaId } : {}), ...(grupoId ? { group_id: grupoId } : {}) }, ...updated];
         });
       }
 
@@ -125,8 +128,8 @@ export function useToggleConfig(empresaId, grupoId, queryKey) {
         aliases.forEach((key) => delete next[key]);
         return next;
       });
-      setSaving(prev => { const n = { ...prev }; delete n[chave]; return n; });
-      delete pendingRef.current[chave];
+      setSaving(prev => { const n = { ...prev }; aliases.forEach((key) => delete n[key]); return n; });
+      aliases.forEach((key) => delete pendingRef.current[key]);
     }
   }, [saving, getScope, queryClient, queryKey, empresaId, grupoId, getAliasKeys]);
 

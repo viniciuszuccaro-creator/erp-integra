@@ -29,7 +29,7 @@ const SIMPLE_CATALOG = new Set([
   'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
   'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'ChatbotCanal',
   'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento',
-  'ContatoB2B', 'CentroCusto', 'PlanoDeContas', 'PlanoContas',
+  'ContatoB2B',
   'Veiculo', 'Motorista', 'Representante', 'GrupoEmpresarial', 'Empresa',
   'TabelaPrecoItem', 'CentroOperacao', 'ConfiguracaoDespesaRecorrente',
 ]);
@@ -69,7 +69,7 @@ async function expandGroupFilter(base44, entityName, f) {
   // Caso 2: demais entidades com empresa_id — inclui legados
   if (!EXPAND_SET.has(entityName) && f?.empresa_id && !f?.$or && !f?.group_id) {
     const { empresa_id, ...rest } = f;
-    return { ...rest, $or: [{ empresa_id }, { empresa_id: null }] };
+    return { ...rest, $or: [{ empresa_id }] };
   }
 
   if (f?.$or && f?.group_id) {
