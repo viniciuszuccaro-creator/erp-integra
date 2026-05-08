@@ -3,6 +3,23 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // Entidades com campo empresas_compartilhadas_ids — precisam de $or expandido
 const EXPAND_SET = new Set(['Cliente', 'Fornecedor', 'Transportadora', 'Colaborador', 'Produto']);
 
+const __COUNT_CACHE = globalThis.__countEntitiesCache || (globalThis.__countEntitiesCache = new Map());
+const __GROUP_EMPRESAS_CACHE = globalThis.__countGroupEmpresasCache || (globalThis.__countGroupEmpresasCache = new Map());
+const COUNT_CACHE_TTL_MS = 60_000;
+const GROUP_CACHE_TTL_MS = 300_000;
+
+const stableStringify = (value) => {
+  try {
+    if (!value || typeof value !== 'object') return JSON.stringify(value);
+    const ordered = Array.isArray(value)
+      ? value.map((item) => JSON.parse(stableStringify(item)))
+      : Object.keys(value).sort().reduce((acc, key) => ({ ...acc, [key]: value[key] }), {});
+    return JSON.stringify(ordered);
+  } catch (_) {
+    return String(value);
+  }
+};
+
 const SIMPLE_CATALOG = new Set([
   'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
   'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
@@ -52,7 +69,7 @@ async function expandGroupFilter(base44, entityName, f) {
   // Caso 2: demais entidades com empresa_id — inclui legados
   if (!EXPAND_SET.has(entityName) && f?.empresa_id && !f?.$or && !f?.group_id) {
     const { empresa_id, ...rest } = f;
-    return { ...rest, empresa_id };
+    return { ...rest, $or: [{ empresa_id }, { empresa_id: null }] };
   }
 
   if (f?.$or && f?.group_id) {
@@ -63,8 +80,13 @@ async function expandGroupFilter(base44, entityName, f) {
   if (f?.group_id && !f?.$or && !f?.empresa_id && !f?.empresa_dona_id && !f?.empresa_alocada_id) {
     try {
       const groupId = f.group_id;
-      const empresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, '-id', 200);
-      const empresasIds = (empresas || []).map(e => e.id).filter(Boolean);
+      const cachedGroup = __GROUP_EMPRESAS_CACHE.get(groupId);
+      let empresasIds = cachedGroup && Date.now() - cachedGroup.ts < GROUP_CACHE_TTL_MS ? cachedGroup.ids : null;
+      if (!empresasIds) {
+        const empresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, '-id', 200);
+        empresasIds = (empresas || []).map(e => e.id).filter(Boolean);
+        __GROUP_EMPRESAS_CACHE.set(groupId, { ids: empresasIds, ts: Date.now() });
+      }
       const rest = { ...f };
       delete rest.group_id;
       if (EXPAND_SET.has(entityName)) {
@@ -124,6 +146,12 @@ async function countOne(base44, user, payload) {
   const { entityName, filter = {} } = payload || {};
   if (!entityName) return { entityName, count: 0 };
 
+  const countCacheKey = `${entityName}:${stableStringify(filter || {})}`;
+  const cached = __COUNT_CACHE.get(countCacheKey);
+  if (cached && Date.now() - cached.ts < COUNT_CACHE_TTL_MS) {
+    return { entityName, count: cached.count };
+  }
+
   const isSimple = SIMPLE_CATALOG.has(entityName);
   const hasOr = Array.isArray(filter?.$or) && filter.$or.length > 0;
   const scopeProvided = filter?.empresa_id || filter?.group_id || filter?.empresa_dona_id || filter?.empresa_alocada_id || hasOr;
@@ -156,6 +184,7 @@ async function countOne(base44, user, payload) {
   }
 
   const count = await fastCount(base44, entityName, finalFilter);
+  __COUNT_CACHE.set(countCacheKey, { count, ts: Date.now() });
   return { entityName, count };
 }
 
