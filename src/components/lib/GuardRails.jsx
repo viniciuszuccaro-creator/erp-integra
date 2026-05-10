@@ -8,18 +8,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function GuardRails({ children, currentPageName }) {
   const { user } = useUser();
   const { hasPermission } = usePermissions();
-  const { empresaAtual, grupoAtual, contexto, authChecked, isAuthenticated } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contexto, isLoading: loadingContexto } = useContextoVisual();
   const [auth, setAuth] = React.useState(false);
   const [booted, setBooted] = React.useState(false);
+  const getStoredContextId = (key) => {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  };
+  const grupoAtivoId = grupoAtual?.id || user?.grupo_atual_id || user?.grupo_padrao_id || getStoredContextId('group_atual_id');
+  const empresaAtivaId = empresaAtual?.id || user?.empresa_atual_id || user?.empresa_padrao_id || getStoredContextId('empresa_atual_id');
 
   React.useEffect(() => {
-    if (!authChecked) return;
-    setAuth(!!isAuthenticated);
-    setBooted(true);
-  }, [authChecked, isAuthenticated]);
+    let mounted = true;
+    base44.auth.isAuthenticated().then((ok) => {
+      if (!mounted) return;
+      setAuth(!!ok);
+      setBooted(true);
+    });
+    return () => { mounted = false; };
+  }, []);
 
   // Loading state until auth/context determined
-  if (!booted) {
+  if (!booted || loadingContexto) {
     return (
       <div className="p-6">
         <Card className="bg-white">
@@ -53,7 +66,7 @@ export default function GuardRails({ children, currentPageName }) {
 
   // Validação de contexto (grupo x empresa)
   if (contexto === 'grupo') {
-    if (!grupoAtual?.id) {
+    if (!grupoAtivoId) {
       return (
         <div className="p-6">
           <Card className="bg-white">
@@ -68,7 +81,7 @@ export default function GuardRails({ children, currentPageName }) {
       );
     }
   } else {
-    if (!empresaAtual?.id) {
+    if (!empresaAtivaId) {
       return (
         <div className="p-6">
           <Card className="bg-white">

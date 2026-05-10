@@ -6,9 +6,18 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Box, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode = false }) {
   const dadosIniciais = kitProduto || kit;
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = hasPermission?.("Cadastros.KitProduto.criar") || hasPermission?.("Cadastros.Produto.criar");
+  const podeEditar = hasPermission?.("Cadastros.KitProduto.editar") || hasPermission?.("Cadastros.Produto.editar");
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_kit: '',
     codigo_kit: '',
@@ -22,7 +31,20 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ ...formData, nome: formData.nome_kit || formData.nome || '' });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissão para salvar kit de produtos.');
+      return;
+    }
+    onSubmit({
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      nome: formData.nome_kit || formData.nome || ''
+    });
   };
 
   const adicionarItem = () => {
@@ -71,7 +93,14 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
       <div>
         <div className="flex items-center justify-between mb-2">
           <Label>Itens do Kit</Label>
-          <Button type="button" size="sm" onClick={adicionarItem}>
+          <Button
+            type="button"
+            size="sm"
+            onClick={adicionarItem}
+            disabled={!podeSalvar}
+            data-permission="Cadastros.KitProduto.editar"
+            data-sensitive="true"
+          >
             <Plus className="w-4 h-4 mr-1" />
             Adicionar Item
           </Button>
@@ -102,7 +131,15 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
                   }}
                 />
               </div>
-              <Button type="button" size="sm" variant="ghost" onClick={() => removerItem(idx)}>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => removerItem(idx)}
+                disabled={!podeSalvar}
+                data-permission="Cadastros.KitProduto.editar"
+                data-sensitive="true"
+              >
                 <Trash2 className="w-4 h-4 text-red-600" />
               </Button>
             </div>
@@ -124,6 +161,9 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
           <Label>Aplicar Desconto</Label>
           <Switch
             checked={formData.aplicar_desconto_kit}
+            disabled={!podeSalvar}
+            data-permission="Cadastros.KitProduto.editar"
+            data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, aplicar_desconto_kit: v })}
           />
         </div>
@@ -145,11 +185,20 @@ export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode =
         <Label className="font-semibold">Kit Ativo</Label>
         <Switch
           checked={formData.ativo}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.KitProduto.alterarStatus"
+          data-sensitive="true"
           onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
         />
       </div>
 
-      <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
+      <Button
+        type="submit"
+        className="w-full bg-purple-600 hover:bg-purple-700"
+        disabled={!contextoValido || !podeSalvar}
+        data-permission="Cadastros.KitProduto.salvar"
+        data-sensitive="true"
+      >
         {dadosIniciais ? 'Atualizar Kit' : 'Criar Kit de Produtos'}
       </Button>
     </form>

@@ -7,56 +7,82 @@ import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
 import SoDResults from "@/components/administracao-sistema/gestao-acessos/SoDResults";
+import { toast } from "sonner";
 
 export default function SoDChecker() {
   const { isAdmin, hasPermission } = usePermissions();
   const { user } = useUser();
-  const { empresaAtual, estaNoGrupo, grupoAtual } = useContextoVisual();
-  const podeExecutar = isAdmin() || hasPermission('Sistema', 'Controle de Acesso', 'editar');
+  const { empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
+  const podeExecutar = isAdmin() || hasPermission("Sistema", "Controle de Acesso", "editar");
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = estaNoGrupo ? null : empresaAtual?.id || null;
+  const hasValidScope = estaNoGrupo ? Boolean(groupId) : Boolean(groupId && empresaId);
 
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState(null);
   const [erro, setErro] = useState(null);
   const [persistindo, setPersistindo] = useState(false);
 
-  const executarAnalise = async () => {
-    setLoading(true); setErro(null);
+  const audit = async ({ acao, entidade, descricao, dadosNovos }) => {
     try {
-      const { data } = await base44.functions.invoke('sodValidator', { 
-        scope: estaNoGrupo ? 'grupo' : 'empresa',
-        group_id: estaNoGrupo ? (grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.id) : undefined,
-        empresa_id: !estaNoGrupo ? empresaAtual?.id : undefined,
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario",
+        usuario_id: user?.id || null,
+        empresa_id: empresaId,
+        group_id: groupId,
+        acao,
+        modulo: "Sistema",
+        entidade,
+        descricao,
+        dados_novos: dadosNovos || null,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn("Falha ao registrar auditoria SoD:", error);
+    }
+  };
+
+  const executarAnalise = async () => {
+    setLoading(true);
+    setErro(null);
+    try {
+      if (!hasValidScope) {
+        throw new Error("Selecione um grupo e uma empresa antes de analisar SoD.");
+      }
+
+      const { data } = await base44.functions.invoke("sodValidator", {
+        scope: estaNoGrupo ? "grupo" : "empresa",
+        group_id: groupId || undefined,
+        empresa_id: empresaId || undefined,
         requested_by: user?.id,
       });
+
       setResultado(data);
-      try {
-        base44.entities.AuditLog.create({
-          usuario: user?.full_name || user?.email || 'Usuário',
-          usuario_id: user?.id,
-          empresa_id: empresaAtual?.id || null,
-          acao: 'Visualização',
-          modulo: 'Sistema',
-          entidade: 'SoD',
-          descricao: `Análise SoD executada (${estaNoGrupo ? 'grupo' : 'empresa'})`,
-          dados_novos: data || null,
-          data_hora: new Date().toISOString(),
-        });
-      } catch {}
+      await audit({
+        acao: "Visualizacao",
+        entidade: "SoD",
+        descricao: `Analise SoD executada (${estaNoGrupo ? "grupo" : "empresa"})`,
+        dadosNovos: data || null
+      });
+      toast.success("Analise SoD executada e auditada.");
     } catch (e) {
-      setErro(e?.message || 'Falha ao executar análise');
+      const message = e?.message || "Falha ao executar analise";
+      setErro(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
-  if (!podeExecutar) {
-    return <div className="p-2 text-xs text-slate-500">Sem permissão para analisar SoD.</div>;
-  }
-
   const persistirConflitos = async () => {
     if (!resultado) return;
     setPersistindo(true);
+    setErro(null);
     try {
+      if (!hasValidScope) {
+        throw new Error("Selecione um grupo e uma empresa antes de persistir conflitos.");
+      }
+
       const conflicts = Array.isArray(resultado?.conflicts) ? resultado.conflicts : [];
       const porPerfil = conflicts.reduce((acc, c) => {
         const id = c?.perfil_id;
@@ -65,7 +91,7 @@ export default function SoDChecker() {
         acc[id].push({
           tipo_conflito: c?.tipo_conflito,
           descricao: c?.descricao,
-          severidade: c?.severidade || 'Média',
+          severidade: c?.severidade || "Media",
           data_deteccao: new Date().toISOString(),
         });
         return acc;
@@ -75,48 +101,58 @@ export default function SoDChecker() {
       for (const perfilId of ids) {
         await base44.entities.PerfilAcesso.update(perfilId, {
           conflitos_sod_detectados: porPerfil[perfilId],
+          ...(groupId ? { group_id: groupId } : {}),
+          ...(empresaId ? { empresa_id: empresaId } : {}),
         });
       }
 
-      try {
-        base44.entities.AuditLog.create({
-          usuario: user?.full_name || user?.email || 'Usuário',
-          usuario_id: user?.id,
-          empresa_id: empresaAtual?.id || null,
-          acao: 'Edição',
-          modulo: 'Sistema',
-          entidade: 'PerfilAcesso',
-          descricao: `Conflitos SoD persistidos para ${ids.length} perfis`,
-          dados_novos: porPerfil,
-          data_hora: new Date().toISOString(),
-        });
-      } catch {}
+      await audit({
+        acao: "Edicao",
+        entidade: "PerfilAcesso",
+        descricao: `Conflitos SoD persistidos para ${ids.length} perfis`,
+        dadosNovos: porPerfil
+      });
+      toast.success(`Conflitos SoD persistidos em ${ids.length} perfil(is).`);
+    } catch (e) {
+      const message = e?.message || "Falha ao persistir conflitos SoD";
+      setErro(message);
+      toast.error(message);
     } finally {
       setPersistindo(false);
     }
   };
 
+  if (!podeExecutar) {
+    return <div className="p-2 text-xs text-slate-500">Sem permissao para analisar SoD.</div>;
+  }
+
   return (
-    <div className="w-full h-full min-w-0 overflow-x-hidden flex flex-col gap-3">
+    <div className="w-full h-full flex flex-col gap-3">
       <ContextoConfigBanner />
       <Card className="w-full">
         <CardContent className="p-4 flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h3 className="font-semibold text-slate-800">Análise de Segregação de Funções (SoD)</h3>
-            <p className="text-xs text-slate-500">Verifica conflitos de permissões nos perfis de acesso.</p>
+            <h3 className="font-semibold text-slate-800">Analise de Segregacao de Funcoes (SoD)</h3>
+            <p className="text-xs text-slate-500">Verifica conflitos de permissoes nos perfis de acesso.</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button onClick={executarAnalise} disabled={loading} data-action="SoD.analisar">
-              {loading ? 'Analisando…' : 'Executar Análise'}
+            <Button onClick={executarAnalise} disabled={loading || !hasValidScope || !podeExecutar} data-action="SoD.analisar" data-permission="Sistema.Controle de Acesso.editar">
+              {loading ? "Analisando..." : "Executar Analise"}
             </Button>
             {resultado && (
-              <Button onClick={persistirConflitos} disabled={persistindo} variant="outline" data-action="SoD.persistir">
-                {persistindo ? 'Salvando…' : 'Persistir Conflitos'}
+              <Button onClick={persistirConflitos} disabled={persistindo || !hasValidScope || !podeExecutar} variant="outline" data-action="SoD.persistir" data-permission="Sistema.Controle de Acesso.editar" data-sensitive="true">
+                {persistindo ? "Salvando..." : "Persistir Conflitos"}
               </Button>
             )}
           </div>
         </CardContent>
       </Card>
+
+      {!hasValidScope && (
+        <div className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+          Selecione um contexto valido antes de executar SoD.
+        </div>
+      )}
 
       {erro && (
         <div className="text-sm text-red-600">{erro}</div>

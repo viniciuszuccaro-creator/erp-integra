@@ -9,11 +9,15 @@ import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import { Loader2, Building2, AlertTriangle, Upload } from "lucide-react";
 import { toast } from "sonner";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function EmpresaForm({ empresa, onSubmit, isSubmitting, windowMode = false }) {
+  const { canCreate, canEdit } = usePermissions();
+  const podeCriar = canCreate("Cadastros", "Empresa") || canCreate("Cadastros", null) || canCreate("Sistema", "Empresas");
+  const podeEditar = canEdit("Cadastros", "Empresa") || canEdit("Cadastros", null) || canEdit("Sistema", "Empresas");
   const [formData, setFormData] = useState(empresa || {
     razao_social: '',
     nome_fantasia: '',
@@ -66,6 +70,14 @@ export default function EmpresaForm({ empresa, onSubmit, isSubmitting, windowMod
   });
 
   const handleSubmit = async () => {
+    if (empresa && !podeEditar) {
+      toast.error("Seu perfil nao permite editar empresas.");
+      return;
+    }
+    if (!empresa && !podeCriar) {
+      toast.error("Seu perfil nao permite criar empresas.");
+      return;
+    }
     onSubmit(formData);
   };
 
@@ -170,7 +182,12 @@ export default function EmpresaForm({ empresa, onSubmit, isSubmitting, windowMod
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={isSubmitting || (empresa ? !podeEditar : !podeCriar)}
+          data-permission="Cadastros.Empresa.salvar"
+          data-sensitive
+        >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {empresa ? 'Atualizar' : 'Criar Empresa'}
         </Button>

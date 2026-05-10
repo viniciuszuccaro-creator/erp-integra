@@ -9,11 +9,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Shield, AlertTriangle, XCircle, Trash2, Power, PowerOff } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windowMode = false }) {
+  const { canCreate, canEdit, canDelete } = usePermissions();
+  const podeCriar = canCreate("Cadastros", "PerfilAcesso") || canCreate("Sistema", "Controle de Acesso") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "PerfilAcesso") || canEdit("Sistema", "Controle de Acesso") || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", "PerfilAcesso") || canDelete("Sistema", "Controle de Acesso") || canDelete("Cadastros", null);
   const [formData, setFormData] = useState(perfil || {
     nome: '',
     descricao: '',
@@ -81,6 +86,14 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (perfil && !podeEditar) {
+      toast.error('Seu perfil nao permite editar perfis de acesso.');
+      return;
+    }
+    if (!perfil && !podeCriar) {
+      toast.error('Seu perfil nao permite criar perfis de acesso.');
+      return;
+    }
     
     if (!formData.nome) {
       alert('Preencha o nome do perfil');
@@ -100,6 +113,10 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
   };
 
   const handleExcluir = () => {
+    if (!podeExcluir) {
+      toast.error('Seu perfil nao permite excluir perfis de acesso.');
+      return;
+    }
     if (!window.confirm(`Tem certeza que deseja excluir o perfil "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
@@ -214,6 +231,9 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
               type="button"
               variant="outline"
               onClick={handleAlternarStatus}
+              disabled={!podeEditar}
+              data-permission="Cadastros.PerfilAcesso.alterarStatus"
+              data-sensitive
               className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
             >
               {formData.ativo ? (
@@ -232,13 +252,21 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
               type="button"
               variant="destructive"
               onClick={handleExcluir}
+              disabled={!podeExcluir}
+              data-permission="Cadastros.PerfilAcesso.excluir"
+              data-sensitive
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Excluir
             </Button>
           </>
         )}
-        <Button type="submit" disabled={isSubmitting || bloqueioSoD}>
+        <Button
+          type="submit"
+          disabled={isSubmitting || bloqueioSoD || (perfil ? !podeEditar : !podeCriar)}
+          data-permission="Cadastros.PerfilAcesso.salvar"
+          data-sensitive
+        >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {bloqueioSoD && <XCircle className="w-4 h-4 mr-2 text-red-600" />}
           {bloqueioSoD ? 'BLOQUEADO (Conflito SoD)' : perfil ? 'Atualizar' : 'Criar Perfil'}

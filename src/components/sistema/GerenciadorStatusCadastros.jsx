@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { 
   Users, 
   Building2, 
@@ -23,44 +23,56 @@ import {
  * Integrado com sistema de Inativação/Exclusão universal
  */
 export default function GerenciadorStatusCadastros() {
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const contextoValido = scopeId !== 'sem-contexto';
+
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryKey: ['status-cadastros', 'clientes', scopeId, contexto],
+    queryFn: () => filterInContext('Cliente', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores'],
-    queryFn: () => base44.entities.Fornecedor.list(),
+    queryKey: ['status-cadastros', 'fornecedores', scopeId, contexto],
+    queryFn: () => filterInContext('Fornecedor', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['status-cadastros', 'produtos', scopeId, contexto],
+    queryFn: () => filterInContext('Produto', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.list(),
+    queryKey: ['status-cadastros', 'colaboradores', scopeId, contexto],
+    queryFn: () => filterInContext('Colaborador', {}, '-created_date', 500, 'empresa_alocada_id'),
+    enabled: contextoValido,
   });
 
   const { data: transportadoras = [] } = useQuery({
-    queryKey: ['transportadoras'],
-    queryFn: () => base44.entities.Transportadora.list(),
+    queryKey: ['status-cadastros', 'transportadoras', scopeId, contexto],
+    queryFn: () => filterInContext('Transportadora', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryKey: ['status-cadastros', 'empresas', scopeId, contexto],
+    queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
+    enabled: contextoValido,
   });
 
   const { data: tabelasPreco = [] } = useQuery({
-    queryKey: ['tabelas-preco'],
-    queryFn: () => base44.entities.TabelaPreco.list(),
+    queryKey: ['status-cadastros', 'tabelas-preco', scopeId, contexto],
+    queryFn: () => filterInContext('TabelaPreco', {}, '-updated_date', 500),
+    enabled: contextoValido,
   });
 
   const { data: perfisAcesso = [] } = useQuery({
-    queryKey: ['perfis-acesso'],
-    queryFn: () => base44.entities.PerfilAcesso.list(),
+    queryKey: ['status-cadastros', 'perfis-acesso', scopeId, contexto],
+    queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 500),
+    enabled: contextoValido,
   });
 
   const estatisticas = [

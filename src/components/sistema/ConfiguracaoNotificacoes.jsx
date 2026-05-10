@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,11 +16,41 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { REGRAS_PADRAO } from './MotorNotificacoes';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
-export default function ConfiguracaoNotificacoes({ empresaId }) {
+const cloneRegrasPadrao = () => JSON.parse(JSON.stringify(REGRAS_PADRAO));
+
+export default function ConfiguracaoNotificacoes({ empresaId, grupoId }) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [salvando, setSalvando] = useState(false);
-  const [regras, setRegras] = useState(REGRAS_PADRAO);
+  const [regras, setRegras] = useState(cloneRegrasPadrao);
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
+  const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = empresaId || empresaAtual?.id || null;
+  const scopeId = empresaAtivaId || grupoAtivoId || 'sem-contexto';
+  const scope = empresaAtivaId ? { empresa_id: empresaAtivaId } : grupoAtivoId ? { group_id: grupoAtivoId } : {};
+  const chave = `notificacoes_${scopeId}`;
+  const contextoValido = scopeId !== 'sem-contexto';
+  const podeEditarNotificacoes = isAdmin() || hasPermission('Sistema', 'Notificacoes', 'editar') || hasPermission('Sistema', 'Notificações', 'editar') || hasPermission('Sistema', 'Configuracoes', 'editar') || hasPermission('Sistema', 'Configurações', 'editar');
+
+  const { data: config } = useQuery({
+    queryKey: ['config-notificacoes', scopeId],
+    queryFn: async () => {
+      const existentes = await base44.entities.ConfiguracaoSistema.filter({ chave, ...scope }, undefined, 1);
+      return existentes?.[0] || null;
+    },
+    enabled: contextoValido,
+  });
+
+  React.useEffect(() => {
+    const regrasSalvas = config?.configuracoes_sistema?.regras;
+    setRegras(regrasSalvas ? { ...cloneRegrasPadrao(), ...regrasSalvas } : cloneRegrasPadrao());
+  }, [config?.id]);
 
   const toggleRegra = (id) => {
     setRegras(prev => {
@@ -49,17 +80,61 @@ export default function ConfiguracaoNotificacoes({ empresaId }) {
   };
 
   const handleSalvar = async () => {
+    if (!scopeId || scopeId === 'sem-contexto') {
+      toast({
+        title: 'Selecione um grupo ou empresa',
+        description: 'As regras de notificacao precisam de um contexto para salvar.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    if (!podeEditarNotificacoes) {
+      toast({
+        title: 'Sem permissao',
+        description: 'Voce nao tem permissao para editar notificacoes.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setSalvando(true);
     try {
-      await base44.entities.ConfiguracaoSistema.create({
-        chave: `notificacoes_${empresaId}`,
+      const payload = {
+        chave,
         categoria: 'Integracoes',
+        ...scope,
         configuracoes_sistema: {
           regras: regras,
           ativo: true,
           ultima_atualizacao: new Date().toISOString()
         }
-      });
+      };
+
+      if (config?.id) {
+        await base44.entities.ConfiguracaoSistema.update(config.id, { ...config, ...payload });
+      } else {
+        await base44.entities.ConfiguracaoSistema.create(payload);
+      }
+
+      try {
+        const me = await base44.auth.me();
+        await base44.entities.AuditLog.create({
+          usuario: me?.full_name || me?.email || 'Usuario',
+          usuario_id: me?.id || null,
+          acao: config?.id ? 'Edicao' : 'Criacao',
+          modulo: 'Notificacoes',
+          entidade: 'ConfiguracaoSistema',
+          registro_id: config?.id || null,
+          empresa_id: empresaAtivaId || null,
+          group_id: grupoAtivoId || null,
+          descricao: 'Regras de notificacao atualizadas',
+          dados_novos: payload,
+          sucesso: true,
+          data_hora: new Date().toISOString()
+        });
+      } catch {}
+
+      await queryClient.invalidateQueries({ queryKey: ['config-notificacoes', scopeId] });
       
       toast({
         title: '✅ Configurações Salvas!',
@@ -74,6 +149,27 @@ export default function ConfiguracaoNotificacoes({ empresaId }) {
     } finally {
       setSalvando(false);
     }
+  };
+
+  const handleRestaurarPadroes = () => {
+    if (!contextoValido) {
+      toast({
+        title: 'Selecione um grupo ou empresa',
+        description: 'As regras precisam de um contexto antes de restaurar padroes.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    if (!podeEditarNotificacoes) {
+      toast({
+        title: 'Sem permissao',
+        description: 'Voce nao tem permissao para restaurar padroes.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setRegras(cloneRegrasPadrao());
   };
 
   const agruparPorModulo = () => {
@@ -187,6 +283,8 @@ export default function ConfiguracaoNotificacoes({ empresaId }) {
                         <Switch
                           checked={regra.ativo}
                           onCheckedChange={() => toggleRegra(regra.id)}
+                          disabled={!contextoValido || !podeEditarNotificacoes}
+                          data-action={`Notificacoes.${regra.id}.ativo`}
                         />
                         <div>
                           <p className="font-semibold text-slate-900">{regra.nome}</p>
@@ -200,41 +298,56 @@ export default function ConfiguracaoNotificacoes({ empresaId }) {
                         </Badge>
                         
                         <div className="flex items-center gap-1 ml-4">
-                          <button
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
                             onClick={() => toggleCanal(regra.id, 'email')}
-                            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-colors ${
+                            disabled={!contextoValido || !podeEditarNotificacoes}
+                            className={`h-auto flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-colors ${
                               regra.canais.includes('email')
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
                             }`}
+                            data-action={`Notificacoes.${regra.id}.canal.email`}
                           >
                             <Mail className="w-3 h-3" />
                             Email
-                          </button>
+                          </Button>
                           
-                          <button
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
                             onClick={() => toggleCanal(regra.id, 'whatsapp')}
-                            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-colors ${
+                            disabled={!contextoValido || !podeEditarNotificacoes}
+                            className={`h-auto flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-colors ${
                               regra.canais.includes('whatsapp')
                                 ? 'bg-emerald-600 text-white'
                                 : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
                             }`}
+                            data-action={`Notificacoes.${regra.id}.canal.whatsapp`}
                           >
                             <MessageCircle className="w-3 h-3" />
                             WhatsApp
-                          </button>
+                          </Button>
                           
-                          <button
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
                             onClick={() => toggleCanal(regra.id, 'sistema')}
-                            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-colors ${
+                            disabled={!contextoValido || !podeEditarNotificacoes}
+                            className={`h-auto flex items-center gap-1 px-3 py-1 rounded-full text-xs transition-colors ${
                               regra.canais.includes('sistema')
                                 ? 'bg-purple-600 text-white'
                                 : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
                             }`}
+                            data-action={`Notificacoes.${regra.id}.canal.sistema`}
                           >
                             <Bell className="w-3 h-3" />
                             Sistema
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -255,13 +368,16 @@ export default function ConfiguracaoNotificacoes({ empresaId }) {
       ))}
 
       <div className="flex justify-end gap-3">
-        <Button variant="outline">
+        <Button variant="outline" onClick={handleRestaurarPadroes} disabled={!contextoValido || !podeEditarNotificacoes} data-action="Notificacoes.restaurarPadroes" data-permission="Sistema.Notificacoes.editar" data-sensitive="true">
           Restaurar Padrões
         </Button>
         <Button
           onClick={handleSalvar}
-          disabled={salvando}
+          disabled={salvando || !contextoValido || !podeEditarNotificacoes}
           className="bg-blue-600 hover:bg-blue-700"
+          data-action="Notificacoes.Configuracao.salvar"
+          data-permission="Sistema.Notificacoes.editar"
+          data-sensitive="true"
         >
           {salvando ? (
             <>

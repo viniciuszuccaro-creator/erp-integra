@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * 🏦 GESTÃO DE REMESSA E RETORNO CNAB V21.8
@@ -46,26 +48,41 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
   const [processandoRetorno, setProcessandoRetorno] = useState(false);
 
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { canCreate, canEdit, hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeGerarRemessa = canCreate("Financeiro", "Remessa Retorno") ||
+    canCreate("Financeiro", "Remessa") ||
+    hasPermission("Financeiro", null, "gerenciar");
+  const podeProcessarRetorno = canEdit("Financeiro", "Remessa Retorno") ||
+    canEdit("Financeiro", "Contas a Receber") ||
+    hasPermission("Financeiro", null, "baixar");
 
   // Queries
   const { data: bancos = [] } = useQuery({
-    queryKey: ['bancos'],
-    queryFn: () => base44.entities.Banco.list(),
+    queryKey: ['bancos', contextKey],
+    queryFn: () => filterInContext('Banco', {}, 'nome', 100),
+    enabled: contextoValido,
   });
 
   const { data: contasBancarias = [] } = useQuery({
-    queryKey: ['contas-bancarias'],
-    queryFn: () => base44.entities.ContaBancariaEmpresa.list(),
+    queryKey: ['contas-bancarias', contextKey],
+    queryFn: () => filterInContext('ContaBancariaEmpresa', {}, 'banco', 100),
+    enabled: contextoValido,
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber'],
-    queryFn: () => base44.entities.ContaReceber.list('-data_vencimento'),
+    queryKey: ['contasReceber', contextKey],
+    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 500),
+    enabled: contextoValido,
   });
 
   const { data: arquivos = [] } = useQuery({
-    queryKey: ['arquivos-remessa-retorno'],
-    queryFn: () => base44.entities.ArquivoRemessaRetorno.list('-created_date'),
+    queryKey: ['arquivos-remessa-retorno', contextKey],
+    queryFn: () => filterInContext('ArquivoRemessaRetorno', {}, '-created_date', 200),
+    enabled: contextoValido,
   });
 
   // Filtrar títulos aptos para remessa (pendentes e sem remessa)
@@ -86,8 +103,10 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
   // Mutation: Gerar Remessa
   const gerarRemessaMutation = useMutation({
     mutationFn: async ({ bancoId, titulosIds }) => {
+      if (!contextoValido || !podeGerarRemessa) throw new Error("Sem contexto ou permissÃ£o para gerar remessa.");
       const banco = bancos.find(b => b.id === bancoId);
       const titulos = contasReceber.filter(c => titulosIds.includes(c.id));
+      if (!titulos.length) throw new Error("Selecione ao menos um tÃ­tulo.");
 
       // Gerar conteúdo CNAB simplificado (mock)
       const numeroArquivo = arquivos.filter(a => a.tipo_arquivo === 'Remessa').length + 1;
@@ -97,8 +116,9 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
       }).join('\n');
 
       // Criar arquivo
-      const arquivo = await base44.entities.ArquivoRemessaRetorno.create({
-        empresa_id: titulos[0].empresa_id,
+      const arquivo = await createInContext('ArquivoRemessaRetorno', {
+        ...(titulos[0].empresa_id ? { empresa_id: titulos[0].empresa_id } : {}),
+        ...(groupId ? { group_id: groupId } : {}),
         banco_id: bancoId,
         banco_codigo: banco.codigo,
         banco_nome: banco.nome,
@@ -124,7 +144,7 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
       // Atualizar títulos
       for (const titulo of titulos) {
         const nossoNumero = String(Date.now()).substring(0, 10);
-        await base44.entities.ContaReceber.update(titulo.id, {
+        await updateInContext('ContaReceber', titulo.id, {
           arquivo_remessa_id: arquivo.id,
           nosso_numero: nossoNumero,
           data_registro_banco: new Date().toISOString(),
@@ -157,6 +177,7 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
   // Mutation: Processar Retorno
   const processarRetornoMutation = useMutation({
     mutationFn: async (file) => {
+      if (!contextoValido || !podeProcessarRetorno) throw new Error("Sem contexto ou permissÃ£o para processar retorno.");
       const conteudo = await file.text();
       const linhas = conteudo.split('\n').filter(l => l.trim());
 
@@ -172,7 +193,9 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
       });
 
       // Criar registro do arquivo
-      const arquivo = await base44.entities.ArquivoRemessaRetorno.create({
+      const arquivo = await createInContext('ArquivoRemessaRetorno', {
+        ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
+        ...(groupId ? { group_id: groupId } : {}),
         tipo_arquivo: 'Retorno',
         banco_codigo: '000',
         banco_nome: 'Importado',
@@ -199,7 +222,7 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
         const titulo = contasReceber.find(c => c.nosso_numero === ocorrencia.nossoNumero);
         
         if (titulo && ocorrencia.codigoOcorrencia === '06') {
-          await base44.entities.ContaReceber.update(titulo.id, {
+          await updateInContext('ContaReceber', titulo.id, {
             status: 'Recebido',
             data_recebimento: ocorrencia.dataPagamento || new Date().toISOString(),
             valor_recebido: ocorrencia.valorPago || titulo.valor,
@@ -277,6 +300,7 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
                   </div>
                   <Button
                     onClick={() => setDialogRemessa(true)}
+                    disabled={!contextoValido || !podeGerarRemessa}
                     className="bg-blue-600 hover:bg-blue-700"
                   >
                     <Send className="w-4 h-4 mr-2" />
@@ -300,6 +324,7 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
                           onCheckedChange={(checked) => {
                             setTitulosSelecionados(checked ? titulosAptosRemessa.map(t => t.id) : []);
                           }}
+                          disabled={!contextoValido || !podeGerarRemessa}
                         />
                       </TableHead>
                       <TableHead>Cliente</TableHead>
@@ -322,6 +347,7 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
                                   : [...prev, titulo.id]
                               );
                             }}
+                            disabled={!contextoValido || !podeGerarRemessa}
                           />
                         </TableCell>
                         <TableCell className="font-medium">{titulo.cliente}</TableCell>
@@ -384,7 +410,7 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
                       accept=".ret,.RET,.txt,.TXT"
                       onChange={handleFileUpload}
                       className="max-w-xs mx-auto"
-                      disabled={processandoRetorno}
+                      disabled={processandoRetorno || !contextoValido || !podeProcessarRetorno}
                     />
                     {processandoRetorno && (
                       <div className="mt-4">
@@ -501,7 +527,7 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
 
               <div>
                 <Label>Banco *</Label>
-                <Select value={bancoSelecionado} onValueChange={setBancoSelecionado}>
+                <Select value={bancoSelecionado} onValueChange={setBancoSelecionado} disabled={!contextoValido || !podeGerarRemessa || gerarRemessaMutation.isPending}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o banco..." />
                   </SelectTrigger>
@@ -530,7 +556,7 @@ export default function GestaoRemessaRetorno({ windowMode = false }) {
                       titulosIds: titulosSelecionados
                     });
                   }}
-                  disabled={gerarRemessaMutation.isPending}
+                  disabled={!contextoValido || !podeGerarRemessa || gerarRemessaMutation.isPending}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Download className="w-4 h-4 mr-2" />

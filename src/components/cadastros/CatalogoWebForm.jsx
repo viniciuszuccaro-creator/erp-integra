@@ -5,9 +5,18 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Globe } from 'lucide-react';
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windowMode = false }) {
   const dadosIniciais = catalogoWeb || catalogo;
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = hasPermission?.("Cadastros.CatalogoWeb.criar") || hasPermission?.("Cadastros.Produto.criar");
+  const podeEditar = hasPermission?.("Cadastros.CatalogoWeb.editar") || hasPermission?.("Cadastros.Produto.editar");
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_catalogo: '',
     descricao: '',
@@ -20,7 +29,20 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ ...formData, nome: formData.nome_catalogo || formData.nome || '' });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissão para salvar catálogo web.');
+      return;
+    }
+    onSubmit({
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      nome: formData.nome_catalogo || formData.nome || ''
+    });
   };
 
   const content = (
@@ -57,6 +79,9 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
           <Label>Exibir no Site</Label>
           <Switch
             checked={formData.exibir_site}
+            disabled={!podeSalvar}
+            data-permission="Cadastros.CatalogoWeb.editar"
+            data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, exibir_site: v })}
           />
         </div>
@@ -64,6 +89,9 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
           <Label>Exibir no Marketplace</Label>
           <Switch
             checked={formData.exibir_marketplace}
+            disabled={!podeSalvar}
+            data-permission="Cadastros.CatalogoWeb.editar"
+            data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, exibir_marketplace: v })}
           />
         </div>
@@ -82,11 +110,20 @@ export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windo
         <Label className="font-semibold">Catálogo Ativo</Label>
         <Switch
           checked={formData.ativo}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.CatalogoWeb.alterarStatus"
+          data-sensitive="true"
           onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
         />
       </div>
 
-      <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+      <Button
+        type="submit"
+        className="w-full bg-blue-600 hover:bg-blue-700"
+        disabled={!contextoValido || !podeSalvar}
+        data-permission="Cadastros.CatalogoWeb.salvar"
+        data-sensitive="true"
+      >
         {dadosIniciais ? 'Atualizar' : 'Criar Catálogo Web'}
       </Button>
     </form>

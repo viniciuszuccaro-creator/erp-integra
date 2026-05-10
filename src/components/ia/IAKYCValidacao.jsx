@@ -5,10 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, AlertTriangle, Loader2, Search, Building } from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 export default function IAKYCValidacao({ tipo, cpfCnpj, onDadosValidados }) {
+  const { contexto, empresaAtual, grupoAtual } = useContextoVisual();
+  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
+  const contextoValido = !!(empresaAtivaId || grupoAtivoId);
+
   const validarMutation = useMutation({
     mutationFn: async () => {
+      if (!contextoValido) {
+        throw new Error('Selecione um grupo ou empresa antes de validar dados com IA.');
+      }
+
       const prompt = tipo === 'CNPJ' 
         ? `Consulte informações da Receita Federal para o CNPJ ${cpfCnpj}. Retorne: razão social, nome fantasia, situação cadastral, CNAE principal, ramo de atividade, porte, endereço completo (CEP, logradouro, número, bairro, cidade, estado).`
         : `Valide o CPF ${cpfCnpj} e retorne se é válido e situação cadastral.`;
@@ -55,7 +67,9 @@ export default function IAKYCValidacao({ tipo, cpfCnpj, onDadosValidados }) {
         resultado: 'Automático',
         confianca_ia: 90,
         dados_entrada: { cpf_cnpj: cpfCnpj },
-        dados_saida: resultado
+        dados_saida: resultado,
+        empresa_id: empresaAtivaId || null,
+        group_id: grupoAtivoId || null,
       });
 
       return resultado;
@@ -66,8 +80,8 @@ export default function IAKYCValidacao({ tipo, cpfCnpj, onDadosValidados }) {
         onDadosValidados(dados);
       }
     },
-    onError: () => {
-      toast.error('Erro ao validar dados. Verifique o CPF/CNPJ informado.');
+    onError: (error) => {
+      toast.error(String(error?.message || 'Erro ao validar dados. Verifique o CPF/CNPJ informado.'));
     }
   });
 
@@ -76,8 +90,9 @@ export default function IAKYCValidacao({ tipo, cpfCnpj, onDadosValidados }) {
       type="button"
       variant="outline"
       onClick={() => validarMutation.mutate()}
-      disabled={!cpfCnpj || validarMutation.isPending}
+      disabled={!cpfCnpj || validarMutation.isPending || !contextoValido}
       className="w-full"
+      data-action="IA.KYC.validar"
     >
       {validarMutation.isPending ? (
         <>

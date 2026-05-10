@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, ShoppingCart, Package, TrendingUp, Calendar } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -19,7 +20,14 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, createInContext } = useContextoVisual();
+  const { canCreate, hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = !!(empresaAtual?.id || groupId);
+  const podeCriarSolicitacao = canCreate('Compras', 'SolicitacaoCompra') ||
+    canCreate('Compras', 'Solicitação Compra') ||
+    hasPermission('Compras', 'Solicitações de Compra', 'criar');
+  const controlesBloqueados = !contextoValido || !podeCriarSolicitacao;
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -44,10 +52,10 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.SolicitacaoCompra.create({
+    mutationFn: (data) => createInContext('SolicitacaoCompra', {
       ...data,
-      empresa_id: empresaAtual?.id,
-      group_id: empresaAtual?.grupo_id,
+      ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
+      ...(groupId ? { group_id: groupId } : {}),
       solicitante: user?.full_name,
       solicitante_id: user?.id,
       setor: "Estoque"
@@ -58,9 +66,18 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
       onClose();
     },
   });
+  const controlesDesabilitados = controlesBloqueados || createMutation.isPending;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!contextoValido || !podeCriarSolicitacao) {
+      toast({
+        title: "Ação bloqueada",
+        description: "Selecione um grupo/empresa e confirme sua permissão para criar solicitações.",
+        variant: "destructive"
+      });
+      return;
+    }
     createMutation.mutate(formData);
   };
 
@@ -136,6 +153,7 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
                   min="0.01"
                   value={formData.quantidade_solicitada}
                   onChange={(e) => setFormData({ ...formData, quantidade_solicitada: parseFloat(e.target.value) || 0 })}
+                  disabled={controlesDesabilitados}
                   required
                   className="pr-16"
                 />
@@ -156,6 +174,7 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
                   type="date"
                   value={formData.data_necessidade}
                   onChange={(e) => setFormData({ ...formData, data_necessidade: e.target.value })}
+                  disabled={controlesDesabilitados}
                   required
                 />
                 <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -169,6 +188,7 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
             <Select
               value={formData.prioridade}
               onValueChange={(v) => setFormData({ ...formData, prioridade: v })}
+              disabled={controlesDesabilitados}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -188,6 +208,7 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
             <Textarea
               value={formData.justificativa}
               onChange={(e) => setFormData({ ...formData, justificativa: e.target.value })}
+              disabled={controlesDesabilitados}
               required
               rows={3}
               placeholder="Detalhe o motivo da compra..."
@@ -223,7 +244,7 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, w
         )}
         <Button 
           type="submit" 
-          disabled={createMutation.isPending}
+          disabled={controlesDesabilitados}
           className="bg-orange-600 hover:bg-orange-700"
         >
           <ShoppingCart className="w-4 h-4 mr-2" />

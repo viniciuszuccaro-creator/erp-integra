@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,12 +10,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Shield, Search, Filter, Eye, Building2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PaginationControls from "@/components/ui/PaginationControls";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * Logs de auditoria completos do sistema
  * Registra todas as ações dos usuários
  */
 export default function LogsAuditoria() {
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const contextoValido = scopeId !== 'sem-contexto';
   const [filtroModulo, setFiltroModulo] = useState("todos");
   const [filtroAcao, setFiltroAcao] = useState("todos");
   const [filtroUsuario, setFiltroUsuario] = useState("");
@@ -26,13 +29,15 @@ export default function LogsAuditoria() {
   const [itemsPerPage, setItemsPerPage] = useState(50);
 
   const { data: logs = [], isLoading } = useQuery({
-    queryKey: ['audit-logs'],
-    queryFn: () => base44.entities.AuditLog.list('-created_date', 500),
+    queryKey: ['audit-logs-full', scopeId, contexto],
+    queryFn: () => filterInContext('AuditLog', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas-audit'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryKey: ['empresas-audit', scopeId, contexto],
+    queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
+    enabled: contextoValido,
   });
 
   const logsFiltrados = logs.filter(log => {
@@ -56,7 +61,7 @@ export default function LogsAuditoria() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full">
       <div>
         <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <Shield className="w-7 h-7 text-blue-600" />
@@ -66,7 +71,7 @@ export default function LogsAuditoria() {
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card className="bg-blue-50">
           <CardContent className="p-4 text-center">
             <p className="text-sm text-blue-700">Total de Logs</p>
@@ -78,7 +83,7 @@ export default function LogsAuditoria() {
           <CardContent className="p-4 text-center">
             <p className="text-sm text-green-700">Sucessos</p>
             <p className="text-3xl font-bold text-green-900">
-              {logs.filter(l => l.sucesso).length}
+              {logs.filter(l => l.sucesso !== false).length}
             </p>
           </CardContent>
         </Card>
@@ -87,7 +92,7 @@ export default function LogsAuditoria() {
           <CardContent className="p-4 text-center">
             <p className="text-sm text-red-700">Erros</p>
             <p className="text-3xl font-bold text-red-900">
-              {logs.filter(l => !l.sucesso).length}
+              {logs.filter(l => l.sucesso === false).length}
             </p>
           </CardContent>
         </Card>
@@ -105,11 +110,11 @@ export default function LogsAuditoria() {
       {/* Filtros */}
       <Card>
         <CardContent className="p-4">
-          <div className="grid md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <Label>Módulo</Label>
               <Select value={filtroModulo} onValueChange={setFiltroModulo}>
-                <SelectTrigger className="mt-2">
+                <SelectTrigger className="mt-2" data-action="LogsAuditoria.filtroModulo">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -124,7 +129,7 @@ export default function LogsAuditoria() {
             <div>
               <Label>Ação</Label>
               <Select value={filtroAcao} onValueChange={setFiltroAcao}>
-                <SelectTrigger className="mt-2">
+                <SelectTrigger className="mt-2" data-action="LogsAuditoria.filtroAcao">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -145,6 +150,7 @@ export default function LogsAuditoria() {
                   value={filtroUsuario}
                   onChange={(e) => setFiltroUsuario(e.target.value)}
                   className="pl-9"
+                  data-action="LogsAuditoria.filtroUsuario"
                 />
               </div>
             </div>
@@ -156,6 +162,7 @@ export default function LogsAuditoria() {
                 value={periodoInicio}
                 onChange={(e) => setPeriodoInicio(e.target.value)}
                 className="mt-2"
+                data-action="LogsAuditoria.periodoInicio"
               />
             </div>
 
@@ -166,6 +173,7 @@ export default function LogsAuditoria() {
                 value={periodoFim}
                 onChange={(e) => setPeriodoFim(e.target.value)}
                 className="mt-2"
+                data-action="LogsAuditoria.periodoFim"
               />
             </div>
           </div>
@@ -179,10 +187,10 @@ export default function LogsAuditoria() {
             <CardTitle>Registro de Atividades ({logsFiltrados.length})</CardTitle>
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2">
-                <Checkbox checked={showDescricao} onCheckedChange={setShowDescricao} /> Descrição
+                <Checkbox checked={showDescricao} onCheckedChange={setShowDescricao} data-action="LogsAuditoria.colunaDescricao" /> Descrição
               </div>
               <div className="flex items-center gap-2">
-                <Checkbox checked={showIP} onCheckedChange={setShowIP} /> IP
+                <Checkbox checked={showIP} onCheckedChange={setShowIP} data-action="LogsAuditoria.colunaIP" /> IP
               </div>
             </div>
           </div>
@@ -243,7 +251,7 @@ export default function LogsAuditoria() {
                     </TableCell>
                   )}
                     <TableCell>
-                      {log.sucesso ? (
+                      {log.sucesso !== false ? (
                         <Badge className="bg-green-100 text-green-700">✓</Badge>
                       ) : (
                         <Badge className="bg-red-100 text-red-700">✗</Badge>

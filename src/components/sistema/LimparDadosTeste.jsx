@@ -8,6 +8,8 @@ import { Progress } from '@/components/ui/progress';
 import { Trash2, AlertTriangle, CheckCircle, Database, Shield } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * 🗑️ LIMPEZA DE DADOS DE TESTE
@@ -22,8 +24,57 @@ export default function LimparDadosTeste() {
   const [confirmacao, setConfirmacao] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [] } = useContextoVisual();
+  const { user, isAdmin, hasPermission } = usePermissions();
+  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
+  const contextoValido = !!(grupoAtivoId || empresaAtivaId);
+  const usuarioAdmin = typeof isAdmin === 'function' ? isAdmin() : !!isAdmin;
+  const podeExecutarLimpeza = contextoValido && (
+    usuarioAdmin ||
+    hasPermission?.('Sistema', null, 'excluir') ||
+    hasPermission?.('Sistema', 'manutencao', 'excluir')
+  );
+
+  const pertenceAoEscopo = (registro) => {
+    if (!registro) return false;
+    const empresasIds = empresasDoGrupo.map((e) => e.id);
+    const registroGrupoId = registro.group_id || registro.grupo_id || registro.grupo_atual_id;
+    const registroEmpresaId = registro.empresa_id || registro.empresa_atual_id;
+    const temEscopo = !!(registroGrupoId || registroEmpresaId);
+    if (!temEscopo) return false;
+    if (contexto === 'grupo') {
+      return registroGrupoId === grupoAtivoId || empresasIds.includes(registroEmpresaId);
+    }
+    return registroEmpresaId === empresaAtivaId || registroGrupoId === grupoAtivoId;
+  };
+
+  const listarNoEscopo = async (entityName) => {
+    const registros = await base44.entities[entityName].list();
+    return registros.filter(pertenceAoEscopo);
+  };
 
   const executarLimpeza = async () => {
+    if (!contextoValido) {
+      toast({
+        title: "Contexto obrigatorio",
+        description: "Selecione um grupo ou empresa antes de limpar dados.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!podeExecutarLimpeza) {
+      toast({
+        title: "Acesso negado",
+        description: "Somente administrador ou perfil com permissao de exclusao no Sistema pode executar esta acao.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (confirmacao !== 'LIMPAR TUDO') {
       toast({
         title: "⚠️ Confirmação necessária",
@@ -40,7 +91,7 @@ export default function LimparDadosTeste() {
     try {
       // 1. Pedidos e Orçamentos
       setProgresso(5);
-      const pedidosDel = await base44.entities.Pedido.list();
+      const pedidosDel = await listarNoEscopo('Pedido');
       for (const p of pedidosDel) {
         await base44.entities.Pedido.delete(p.id);
       }
@@ -48,7 +99,7 @@ export default function LimparDadosTeste() {
 
       // 2. PedidoEtapa
       setProgresso(10);
-      const etapasDel = await base44.entities.PedidoEtapa.list();
+      const etapasDel = await listarNoEscopo('PedidoEtapa');
       for (const e of etapasDel) {
         await base44.entities.PedidoEtapa.delete(e.id);
       }
@@ -56,7 +107,7 @@ export default function LimparDadosTeste() {
 
       // 3. Produtos
       setProgresso(15);
-      const produtosDel = await base44.entities.Produto.list();
+      const produtosDel = await listarNoEscopo('Produto');
       for (const p of produtosDel) {
         await base44.entities.Produto.delete(p.id);
       }
@@ -64,7 +115,7 @@ export default function LimparDadosTeste() {
 
       // 4. Clientes
       setProgresso(20);
-      const clientesDel = await base44.entities.Cliente.list();
+      const clientesDel = await listarNoEscopo('Cliente');
       for (const c of clientesDel) {
         await base44.entities.Cliente.delete(c.id);
       }
@@ -72,7 +123,7 @@ export default function LimparDadosTeste() {
 
       // 5. Fornecedores
       setProgresso(25);
-      const fornecedoresDel = await base44.entities.Fornecedor.list();
+      const fornecedoresDel = await listarNoEscopo('Fornecedor');
       for (const f of fornecedoresDel) {
         await base44.entities.Fornecedor.delete(f.id);
       }
@@ -80,7 +131,7 @@ export default function LimparDadosTeste() {
 
       // 6. Colaboradores
       setProgresso(30);
-      const colaboradoresDel = await base44.entities.Colaborador.list();
+      const colaboradoresDel = await listarNoEscopo('Colaborador');
       for (const c of colaboradoresDel) {
         await base44.entities.Colaborador.delete(c.id);
       }
@@ -88,7 +139,7 @@ export default function LimparDadosTeste() {
 
       // 7. Transportadoras
       setProgresso(35);
-      const transportadorasDel = await base44.entities.Transportadora.list();
+      const transportadorasDel = await listarNoEscopo('Transportadora');
       for (const t of transportadorasDel) {
         await base44.entities.Transportadora.delete(t.id);
       }
@@ -96,7 +147,7 @@ export default function LimparDadosTeste() {
 
       // 8. Entregas
       setProgresso(40);
-      const entregasDel = await base44.entities.Entrega.list();
+      const entregasDel = await listarNoEscopo('Entrega');
       for (const e of entregasDel) {
         await base44.entities.Entrega.delete(e.id);
       }
@@ -104,7 +155,7 @@ export default function LimparDadosTeste() {
 
       // 9. Romaneios
       setProgresso(45);
-      const romaneiosDel = await base44.entities.Romaneio.list();
+      const romaneiosDel = await listarNoEscopo('Romaneio');
       for (const r of romaneiosDel) {
         await base44.entities.Romaneio.delete(r.id);
       }
@@ -112,7 +163,7 @@ export default function LimparDadosTeste() {
 
       // 10. Movimentações Estoque
       setProgresso(50);
-      const movDel = await base44.entities.MovimentacaoEstoque.list();
+      const movDel = await listarNoEscopo('MovimentacaoEstoque');
       for (const m of movDel) {
         await base44.entities.MovimentacaoEstoque.delete(m.id);
       }
@@ -120,7 +171,7 @@ export default function LimparDadosTeste() {
 
       // 11. Contas a Receber
       setProgresso(55);
-      const crDel = await base44.entities.ContaReceber.list();
+      const crDel = await listarNoEscopo('ContaReceber');
       for (const cr of crDel) {
         await base44.entities.ContaReceber.delete(cr.id);
       }
@@ -128,7 +179,7 @@ export default function LimparDadosTeste() {
 
       // 12. Contas a Pagar
       setProgresso(60);
-      const cpDel = await base44.entities.ContaPagar.list();
+      const cpDel = await listarNoEscopo('ContaPagar');
       for (const cp of cpDel) {
         await base44.entities.ContaPagar.delete(cp.id);
       }
@@ -136,7 +187,7 @@ export default function LimparDadosTeste() {
 
       // 13. Oportunidades CRM
       setProgresso(65);
-      const opDel = await base44.entities.Oportunidade.list();
+      const opDel = await listarNoEscopo('Oportunidade');
       for (const o of opDel) {
         await base44.entities.Oportunidade.delete(o.id);
       }
@@ -144,7 +195,7 @@ export default function LimparDadosTeste() {
 
       // 14. Interações
       setProgresso(70);
-      const intDel = await base44.entities.Interacao.list();
+      const intDel = await listarNoEscopo('Interacao');
       for (const i of intDel) {
         await base44.entities.Interacao.delete(i.id);
       }
@@ -152,7 +203,7 @@ export default function LimparDadosTeste() {
 
       // 15. Ordens de Compra
       setProgresso(75);
-      const ocDel = await base44.entities.OrdemCompra.list();
+      const ocDel = await listarNoEscopo('OrdemCompra');
       for (const oc of ocDel) {
         await base44.entities.OrdemCompra.delete(oc.id);
       }
@@ -160,7 +211,7 @@ export default function LimparDadosTeste() {
 
       // 16. Solicitações de Compra
       setProgresso(80);
-      const scDel = await base44.entities.SolicitacaoCompra.list();
+      const scDel = await listarNoEscopo('SolicitacaoCompra');
       for (const sc of scDel) {
         await base44.entities.SolicitacaoCompra.delete(sc.id);
       }
@@ -168,7 +219,7 @@ export default function LimparDadosTeste() {
 
       // 17. Ordens de Produção
       setProgresso(85);
-      const oprodDel = await base44.entities.OrdemProducao.list();
+      const oprodDel = await listarNoEscopo('OrdemProducao');
       for (const op of oprodDel) {
         await base44.entities.OrdemProducao.delete(op.id);
       }
@@ -176,7 +227,7 @@ export default function LimparDadosTeste() {
 
       // 18. Notas Fiscais
       setProgresso(90);
-      const nfDel = await base44.entities.NotaFiscal.list();
+      const nfDel = await listarNoEscopo('NotaFiscal');
       for (const nf of nfDel) {
         await base44.entities.NotaFiscal.delete(nf.id);
       }
@@ -184,7 +235,7 @@ export default function LimparDadosTeste() {
 
       // 19. Veículos
       setProgresso(93);
-      const veicDel = await base44.entities.Veiculo.list();
+      const veicDel = await listarNoEscopo('Veiculo');
       for (const v of veicDel) {
         await base44.entities.Veiculo.delete(v.id);
       }
@@ -192,7 +243,7 @@ export default function LimparDadosTeste() {
 
       // 20. Comissões
       setProgresso(96);
-      const comDel = await base44.entities.Comissao.list();
+      const comDel = await listarNoEscopo('Comissao');
       for (const c of comDel) {
         await base44.entities.Comissao.delete(c.id);
       }
@@ -200,6 +251,23 @@ export default function LimparDadosTeste() {
 
       setProgresso(100);
       setResultado({ sucesso: true, log });
+
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Sistema",
+        usuario_id: user?.id || null,
+        empresa_id: empresaAtivaId || null,
+        group_id: grupoAtivoId || null,
+        acao: "Limpeza",
+        modulo: "Sistema",
+        entidade: "DadosTeste",
+        descricao: "Limpeza local de dados de teste no escopo selecionado",
+        dados_novos: {
+          total_removido: log.reduce((sum, l) => sum + l.quantidade, 0),
+          entidades: log,
+        },
+        sucesso: true,
+        data_hora: new Date().toISOString(),
+      });
 
       // Invalidar cache
       queryClient.invalidateQueries();
@@ -210,6 +278,24 @@ export default function LimparDadosTeste() {
       });
 
     } catch (error) {
+      try {
+        await base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || "Sistema",
+          usuario_id: user?.id || null,
+          empresa_id: empresaAtivaId || null,
+          group_id: grupoAtivoId || null,
+          acao: "Erro",
+          modulo: "Sistema",
+          entidade: "DadosTeste",
+          descricao: "Falha na limpeza local de dados de teste",
+          dados_novos: { erro: error.message, entidades_processadas: log },
+          sucesso: false,
+          data_hora: new Date().toISOString(),
+        });
+      } catch (auditError) {
+        console.warn("[Sistema] Falha ao auditar erro de limpeza:", auditError);
+      }
+
       setResultado({ 
         sucesso: false, 
         erro: error.message,
@@ -313,6 +399,24 @@ export default function LimparDadosTeste() {
             <CardTitle className="text-red-900">Confirmação Obrigatória</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
+            {!contextoValido && (
+              <Alert className="border-orange-300 bg-orange-50">
+                <AlertTriangle className="w-4 h-4 text-orange-600" />
+                <AlertDescription className="text-sm text-orange-900">
+                  Selecione um grupo ou empresa antes de liberar esta rotina.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {contextoValido && !podeExecutarLimpeza && (
+              <Alert className="border-red-300 bg-red-50">
+                <Shield className="w-4 h-4 text-red-600" />
+                <AlertDescription className="text-sm text-red-900">
+                  Seu perfil nao possui permissao para executar limpeza de dados.
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div>
               <label className="block text-sm font-semibold text-slate-900 mb-2">
                 Digite "LIMPAR TUDO" para confirmar:
@@ -323,15 +427,16 @@ export default function LimparDadosTeste() {
                 onChange={(e) => setConfirmacao(e.target.value)}
                 placeholder="LIMPAR TUDO"
                 className="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:border-red-500 focus:outline-none"
-                disabled={executando}
+                disabled={executando || !podeExecutarLimpeza}
               />
             </div>
 
             <Button
               onClick={executarLimpeza}
-              disabled={executando || confirmacao !== 'LIMPAR TUDO'}
+              disabled={executando || confirmacao !== 'LIMPAR TUDO' || !podeExecutarLimpeza}
               className="w-full bg-red-600 hover:bg-red-700"
               size="lg"
+              data-action="Sistema.LimpezaDadosTeste.executar"
             >
               <Trash2 className="w-5 h-5 mr-2" />
               {executando ? 'Executando Limpeza...' : 'Executar Limpeza Completa'}

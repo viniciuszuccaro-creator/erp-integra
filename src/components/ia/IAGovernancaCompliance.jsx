@@ -6,24 +6,38 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Shield, AlertTriangle, CheckCircle, RefreshCw, Eye, Users, Lock } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 export default function IAGovernancaCompliance() {
   const [analisando, setAnalisando] = useState(false);
   const queryClient = useQueryClient();
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
+  const hasValidScope = !!(empresaAtivaId || grupoAtivoId);
+  const scopeKey = empresaAtivaId || grupoAtivoId || 'sem-contexto';
+  const scope = {
+    ...(grupoAtivoId ? { group_id: grupoAtivoId } : {}),
+    ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
+  };
 
   const { data: perfis = [] } = useQuery({
-    queryKey: ['perfisAcesso'],
-    queryFn: () => base44.entities.PerfilAcesso.list()
+    queryKey: ['perfisAcesso', scopeKey],
+    queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 500),
+    enabled: hasValidScope,
   });
 
   const { data: usuarios = [] } = useQuery({
-    queryKey: ['usuarios'],
+    queryKey: ['usuarios', scopeKey],
     queryFn: () => base44.entities.User.list()
   });
 
   const { data: logs = [] } = useQuery({
-    queryKey: ['logsIA', 'governanca'],
-    queryFn: () => base44.entities.LogsIA.filter({ tipo_ia: 'IA_Governanca' }, '-created_date', 50)
+    queryKey: ['logsIA', 'governanca', scopeKey],
+    queryFn: () => base44.entities.LogsIA.filter({ tipo_ia: 'IA_Governanca', ...scope }, '-created_date', 50),
+    enabled: hasValidScope,
   });
 
   const analisarGovernancaMutation = useMutation({
@@ -88,6 +102,7 @@ export default function IAGovernancaCompliance() {
             acao_sugerida: `Detectados ${conflitos.length} conflitos de SoD no perfil "${perfil.nome_perfil}"`,
             resultado: 'Automático',
             confianca_ia: 95,
+            ...scope,
             dados_entrada: { perfil_id: perfil.id },
             dados_saida: { conflitos }
           });
@@ -128,6 +143,7 @@ export default function IAGovernancaCompliance() {
             acao_sugerida: `Detectados ${alertas.length} alertas de segurança para usuário ${usuario.full_name}`,
             resultado: 'Automático',
             confianca_ia: 85,
+            ...scope,
             dados_saida: { alertas }
           });
         }
@@ -137,8 +153,8 @@ export default function IAGovernancaCompliance() {
       return { perfis_analisados: perfis.length, usuarios_analisados: usuarios.length };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['perfisAcesso'] });
-      queryClient.invalidateQueries({ queryKey: ['logsIA'] });
+      queryClient.invalidateQueries({ queryKey: ['perfisAcesso', scopeKey] });
+      queryClient.invalidateQueries({ queryKey: ['logsIA', 'governanca', scopeKey] });
     }
   });
 
@@ -165,8 +181,9 @@ export default function IAGovernancaCompliance() {
         </div>
         <Button
           onClick={() => analisarGovernancaMutation.mutate()}
-          disabled={analisando}
+          disabled={analisando || !hasValidScope}
           className="bg-blue-600 hover:bg-blue-700"
+          data-action="IAGovernanca.executarAnalise"
         >
           {analisando ? (
             <>

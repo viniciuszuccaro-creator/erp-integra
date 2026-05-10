@@ -20,9 +20,7 @@ export function useContextoVisual() {
     empresasDoGrupo: empresasDoGrupoContexto,
     estaNoGrupo: estaNoGrupoContexto,
     estaEmEmpresa,
-    authChecked,
-    isAuthenticated,
-    contextoCarregado
+    isLoading: loadingContextoGrupoEmpresa
   } = useContextoGrupoEmpresa();
 
   // Sincroniza o contexto local com o contexto real (grupo/empresa)
@@ -32,16 +30,8 @@ export function useContextoVisual() {
 
   const { data: empresas = [], isLoading: loadingEmpresas } = useQuery({
     queryKey: ['empresas'],
-    queryFn: async () => {
-      const authed = await base44.auth.isAuthenticated();
-      if (!authed) return [];
-      return base44.entities.Empresa.list();
-    },
+    queryFn: () => base44.entities.Empresa.list(),
     staleTime: 300000,
-    gcTime: 600000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    enabled: authChecked && isAuthenticated && contextoCarregado && !!user,
   });
 
   const [empresaAtualId, setEmpresaAtualId] = useState(null);
@@ -239,7 +229,8 @@ export function useContextoVisual() {
   const MODULE_BY_ENTITY = {
     Cliente: 'CRM', Oportunidade: 'CRM', Interacao: 'CRM', Pedido: 'Comercial', NotaFiscal: 'Fiscal', Entrega: 'Expedição',
     Fornecedor: 'Compras', SolicitacaoCompra: 'Compras', OrdemCompra: 'Compras', Produto: 'Estoque', MovimentacaoEstoque: 'Estoque',
-    ContaPagar: 'Financeiro', ContaReceber: 'Financeiro', CentroCusto: 'Financeiro', PlanoDeContas: 'Financeiro', PlanoContas: 'Financeiro', User: 'Sistema'
+    ContaPagar: 'Financeiro', ContaReceber: 'Financeiro', CaixaMovimento: 'Financeiro', ConciliacaoBancaria: 'Financeiro',
+    CentroCusto: 'Financeiro', PlanoDeContas: 'Financeiro', PlanoContas: 'Financeiro', User: 'Sistema'
   };
   const sanitizeOnWrite = (obj) => {
     if (!obj || typeof obj !== 'object') return obj;
@@ -362,9 +353,6 @@ export function useContextoVisual() {
           };
 
           const filterInContext = async (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
-                   const localSkip = Number(criterios?.__skip || 0);
-                   const cleanCriteria = { ...(criterios || {}) };
-                   delete cleanCriteria.__skip;
                    const ENTITY_CONTEXT_FIELD = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
                    const SHARED_SET = new Set(['Cliente','Fornecedor','Transportadora']);
                    const ctxCampo = ENTITY_CONTEXT_FIELD[entityName] || campo || 'empresa_id';
@@ -386,7 +374,7 @@ export function useContextoVisual() {
 
                    if (!groupId && !empresaId && !noContext) return [];
 
-                   const rest = { ...cleanCriteria };
+                   const rest = { ...criterios };
                    const orConds = [];
 
                    if (empresaId) {
@@ -405,6 +393,17 @@ export function useContextoVisual() {
                    }
                    if (groupId) {
                      orConds.push({ group_id: groupId });
+                     if (entityName === 'PerfilAcesso') {
+                       orConds.push(
+                         { grupo_id: groupId },
+                         { group_id: null },
+                         { grupo_id: null },
+                         { group_id: '' },
+                         { grupo_id: '' },
+                         { group_id: 'grupo_001' },
+                         { grupo_id: 'grupo_001' }
+                       );
+                     }
                      // Contexto do grupo sem empresa explícita → incluir todas empresas do grupo
                      if (!empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
                        const empresasIds = empresasDoGrupo.map(e => e.id).filter(Boolean);
@@ -443,15 +442,12 @@ export function useContextoVisual() {
                      sortDirection = last?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc';
                    }
 
-                   const authed = await base44.auth.isAuthenticated();
-                   if (!authed) return [];
                    const res = await base44.functions.invoke('entityListSorted', {
                      entityName,
                      filter: filtro,
                      sortField,
                      sortDirection,
                      limit: limit || 100,
-                     skip: localSkip,
                    });
                    return Array.isArray(res?.data) ? res.data : [];
                  };
@@ -462,10 +458,7 @@ export function useContextoVisual() {
     empresasDoGrupo,
     estaNoGrupo: contexto === 'grupo',
     grupoAtual,
-    isLoading: loadingUser || loadingEmpresas,
-    authChecked,
-    isAuthenticated,
-    contextoCarregado,
+    isLoading: loadingUser || loadingEmpresas || loadingContextoGrupoEmpresa,
     filtrarPorContexto,
     getFiltroContexto,
     carimbarContexto,

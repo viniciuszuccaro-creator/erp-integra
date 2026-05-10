@@ -26,8 +26,8 @@ import {
   Activity,
   Shield,
   FileText,
-  MessageCircle,
-} from "lucide-react";
+  MessageCircle
+  } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -126,10 +126,11 @@ export default function Dashboard() {
 
   const [autoRefresh, setAutoRefresh] = useState(true);
   const queryClient = useQueryClient();
-  const refetchInterval = (empresaAtual?.id || estaNoGrupo) ? ((activeTab === 'resumo' && autoRefresh) ? 60000 : false) : false; // evita burst desnecessário
+  const hasContextoAtivo = Boolean(empresaAtual?.id || estaNoGrupo || grupoAtual?.id);
+  const refetchInterval = (empresaAtual?.id || estaNoGrupo) ? ((activeTab === 'resumo' && autoRefresh) ? 60000 : 0) : false; // evita zero-dados sem contexto
 
   const { data: pedidos = [] } = useQuery({
-      enabled: canSeeComercial && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
+      enabled: Boolean(canSeeComercial && hasContextoAtivo),
       queryKey: ['pedidos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
@@ -145,7 +146,7 @@ export default function Dashboard() {
   });
 
   const { data: contasReceber = [] } = useQuery({
-      enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
+      enabled: Boolean(canSeeFinanceiro && hasContextoAtivo),
       queryKey: ['contasReceber', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
@@ -161,7 +162,7 @@ export default function Dashboard() {
   });
 
   const { data: contasPagar = [] } = useQuery({
-      enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
+      enabled: Boolean(canSeeFinanceiro && hasContextoAtivo),
       queryKey: ['contasPagar', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
@@ -177,7 +178,7 @@ export default function Dashboard() {
   });
 
   const { data: entregas = [] } = useQuery({
-      enabled: canSeeExpedicao && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
+      enabled: Boolean(canSeeExpedicao && hasContextoAtivo),
       queryKey: ['entregas', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
@@ -193,7 +194,7 @@ export default function Dashboard() {
   });
 
   const { data: colaboradores = [] } = useQuery({
-      enabled: canSeeRH && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
+      enabled: Boolean(canSeeRH && hasContextoAtivo),
       queryKey: ['colaboradores', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
@@ -209,7 +210,7 @@ export default function Dashboard() {
   });
 
   const { data: produtos = [] } = useQuery({
-      enabled: canSeeEstoque && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
+      enabled: Boolean(canSeeEstoque && hasContextoAtivo),
       queryKey: ['produtos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
@@ -225,8 +226,7 @@ export default function Dashboard() {
   });
 
   const { data: totalProdutos = 0 } = useQuery({
-    enabled: !!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id) && canSeeEstoque,
-    initialData: 0,
+    enabled: Boolean(hasContextoAtivo && canSeeEstoque),
     queryKey: ['produtos-count-dash', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
@@ -245,7 +245,7 @@ export default function Dashboard() {
   });
 
   const { data: clientes = [] } = useQuery({
-      enabled: canSeeCRM && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
+      enabled: Boolean(canSeeCRM && hasContextoAtivo),
       queryKey: ['clientes', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
@@ -261,8 +261,7 @@ export default function Dashboard() {
   });
 
   const { data: totalClientes = 0 } = useQuery({
-    enabled: !!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id) && canSeeCRM,
-    initialData: 0,
+    enabled: Boolean(hasContextoAtivo && canSeeCRM),
     queryKey: ['clientes-count', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
@@ -282,7 +281,6 @@ export default function Dashboard() {
 
   const { data: totalColaboradoresDash = 0 } = useQuery({
     queryKey: ['colaboradores-count-dash', empresaAtual?.id, grupoAtual?.id],
-    initialData: 0,
     queryFn: async () => {
       try {
         const filtro = getFiltroContexto('empresa_alocada_id', true);
@@ -300,7 +298,7 @@ export default function Dashboard() {
   });
 
   const { data: ordensProducao = [] } = useQuery({
-      enabled: canSeeProducao && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
+      enabled: Boolean(canSeeProducao && hasContextoAtivo),
       queryKey: ['ordensProducao', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
@@ -316,7 +314,7 @@ export default function Dashboard() {
   });
 
   const { data: notasFiscais = [] } = useQuery({
-      enabled: (canSeeFinanceiro || hasPermission('Fiscal', null, 'ver') || canSeeComercial) && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
+      enabled: Boolean((canSeeFinanceiro || hasPermission('Fiscal', null, 'ver') || canSeeComercial) && hasContextoAtivo),
       queryKey: ['notasFiscais', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
@@ -333,7 +331,7 @@ export default function Dashboard() {
   const nfAutorizadas = (notasFiscais || []).filter(n => n?.status === 'Autorizada').length;
 
   const { data: cobrancas = [] } = useQuery({
-      enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
+      enabled: Boolean(canSeeFinanceiro && hasContextoAtivo),
       queryKey: ['cobrancas', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
@@ -408,7 +406,7 @@ export default function Dashboard() {
       return res?.data || { previsoes: [] };
     },
     staleTime: 120000,
-    enabled: canSeeEstoque && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id)
+    enabled: Boolean(canSeeEstoque && hasContextoAtivo)
   });
 
   const { data: previsoesIA30 = {} } = useQuery({
@@ -423,7 +421,7 @@ export default function Dashboard() {
       return res?.data || { previsoes: [] };
     },
     staleTime: 120000,
-    enabled: canSeeEstoque && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id)
+    enabled: Boolean(canSeeEstoque && hasContextoAtivo)
   });
 
   const { data: anomaliasIA = {}, isLoading: loadingAnomIA } = useQuery({
@@ -435,18 +433,17 @@ export default function Dashboard() {
       return res?.data || { details: [] };
     },
     staleTime: 120000,
-    enabled: canSeeFinanceiro && (empresaAtual?.id || estaNoGrupo || grupoAtual?.id)
+    enabled: Boolean(canSeeFinanceiro && hasContextoAtivo)
   });
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
   // Command Center metrics (24h window) from AuditLog
   const { data: ccMetrics = { errors: 0, funcs: 0, secAlerts: 0 } } = useQuery({
-    enabled: !!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
     queryKey: ['command-center', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       const since = Date.now() - 24 * 60 * 60 * 1000;
-      const logs = await filterInContext('AuditLog', {}, '-data_hora', 500);
+      const logs = await base44.entities.AuditLog.filter({}, '-data_hora', 500);
       const within = (logs || []).filter(l => {
         const t = new Date(l?.data_hora || l?.created_date || Date.now()).getTime();
         return t >= since;
@@ -462,7 +459,6 @@ export default function Dashboard() {
 
   // KPIs Chatbot / SLA últimas 24h
   const { data: botMetrics = { chats: 0, sla_ok: 0, sla_total: 0 } } = useQuery({
-    enabled: !!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id),
     queryKey: ['bot-metrics-24h', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       const since = Date.now() - 24 * 60 * 60 * 1000;
@@ -706,7 +702,7 @@ export default function Dashboard() {
   return (
     <ProtectedSection module="Dashboard" action="ver">
     <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="flex-1 w-full h-full overflow-x-hidden overflow-y-auto p-4 md:p-6 space-y-6 min-w-0">
+      <div className="flex-1 overflow-hidden p-6 space-y-6">
       <DashboardHeader
         empresaAtual={empresaAtual}
         estaNoGrupo={estaNoGrupo}
@@ -718,15 +714,40 @@ export default function Dashboard() {
       />
 
       <ErrorBoundary>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full min-w-0">
-        <DashboardTabsNav />
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+        {/* Unificado em Resumo Geral */}
+        <div className="hidden" />
 
 
 
 
 
-        <TabsContent value="resumo" className="w-full h-full min-w-0 overflow-y-auto overflow-x-hidden space-y-6 mt-6">
-
+        <TabsContent value="resumo" className="w-full h-full overflow-y-auto space-y-6 mt-6">
+          {/* Sticky KPIs principais */}
+          <div className="sticky top-0 z-20 bg-gradient-to-b from-white/80 to-white/40 backdrop-blur-sm border-b border-slate-200 py-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Card className="shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50">
+                <CardContent className="p-3">
+                  <div className="text-xs text-slate-500">Faturamento</div>
+                  <div className="text-sm font-semibold text-slate-900">Dia: R$ {(pedidos.filter(p=>new Date(p.data_pedido||p.created_date).toDateString()===new Date().toDateString()).reduce((s,p)=>s+(p.valor_total||0),0)).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                  <div className="text-xs text-slate-600">Mês: R$ {pedidos.filter(p=>{const d=new Date(p.data_pedido||p.created_date);const n=new Date();return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();}).reduce((s,p)=>s+(p.valor_total||0),0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50">
+                <CardContent className="p-3">
+                  <div className="text-xs text-slate-500">Pedidos</div>
+                  <div className="text-sm font-semibold text-slate-900">Abertos: {pedidosPendentes.length}</div>
+                  <div className="text-xs text-slate-600">Em aprovação: {pedidosAguardandoAprovacao.length}</div>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm rounded-md bg-gradient-to-br from-white to-slate-50">
+                <CardContent className="p-3">
+                  <div className="text-xs text-slate-500">Estoque crítico</div>
+                  <div className="text-sm font-semibold text-slate-900">Itens: {produtosBaixoEstoque}</div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
           <PanelGroup direction="vertical" className="gap-2 flex-1 w-full h-full">
             <Panel defaultSize={50} minSize={30} className="overflow-auto">
               {/* KPIs Principais + Widget Canais */}
@@ -895,7 +916,7 @@ export default function Dashboard() {
                 <CardTitle>Command Center</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                   <div className="p-4 rounded-md border border-slate-200 bg-white/70 backdrop-blur shadow-md flex items-center justify-between">
                     <div>
                       <div className="text-sm font-semibold text-slate-700">Erros (24h)</div>
@@ -943,75 +964,88 @@ export default function Dashboard() {
             </Suspense>
           </ProtectedSection>
 
+          {/* Previsões de Estoque (IA) - visível apenas para quem vê Estoque */}
+          {canSeeEstoque && (
+            <Card className="bg-white/80 backdrop-blur-sm rounded-md shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-indigo-600" />
+                  Previsões de Estoque (14 dias)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingPrevIA ? (
+                  <div className="h-10 rounded-md bg-slate-100 animate-pulse" />
+                ) : (
+                  (() => {
+                    const preds = (previsoesIA?.previsoes || [])
+                      .filter(p => p.risco_ruptura && p.risco_ruptura !== 'baixo')
+                      .sort((a, b) => (a.dias_cobertura ?? 999) - (b.dias_cobertura ?? 999))
+                      .slice(0, 8);
+                    if (!preds.length) return <p className="text-sm text-slate-600">Sem riscos relevantes no horizonte.</p>;
+                    return (
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {preds.map((p, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white">
+                            <div>
+                              <div className="font-medium text-slate-900 truncate max-w-[340px]">{p.descricao}</div>
+                              <div className="text-xs text-slate-500">Cobertura: {p.dias_cobertura ?? '-'} dias • Demanda/dia: {p.demanda_dia_estimada ?? '-'} {p.preco_previsto != null && (<span className="ml-2">• Preço previsto: R$ {p.preco_previsto}</span>)}</div>
+                            </div>
+                            <Badge className={p.risco_ruptura === 'alto' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
+                              {String(p.risco_ruptura || '').toUpperCase()}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Módulos de Acesso Rápido */}
+          {/* Previsões de Estoque (IA) - visível apenas para quem vê Estoque */}
           <ProtectedSection module="Estoque" action="ver" hideInstead>
-            {canSeeEstoque && (
-              <Card className="bg-white/80 backdrop-blur-sm rounded-md shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-indigo-600" />
-                    Previsões de Estoque (14 e 30 dias)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {loadingPrevIA ? (
-                    <div className="h-10 rounded-md bg-slate-100 animate-pulse" />
-                  ) : (
-                    <>
-                      <div>
-                        <p className="text-sm font-medium text-slate-700 mb-3">Horizonte de 14 dias</p>
-                        {(() => {
-                          const preds = (previsoesIA?.previsoes || [])
-                            .filter(p => p.risco_ruptura && p.risco_ruptura !== 'baixo')
-                            .sort((a, b) => (a.dias_cobertura ?? 999) - (b.dias_cobertura ?? 999))
-                            .slice(0, 8);
-                          if (!preds.length) return <p className="text-sm text-slate-600">Sem riscos relevantes no horizonte.</p>;
-                          return (
-                            <div className="grid md:grid-cols-2 gap-3">
-                              {preds.map((p, idx) => (
-                                <div key={`14-${idx}`} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white gap-3">
-                                  <div className="min-w-0">
-                                    <div className="font-medium text-slate-900 truncate">{p.descricao}</div>
-                                    <div className="text-xs text-slate-500">Cobertura: {p.dias_cobertura ?? '-'} dias • Demanda/dia: {p.demanda_dia_estimada ?? '-'}</div>
-                                  </div>
-                                  <Badge className={p.risco_ruptura === 'alto' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
-                                    {String(p.risco_ruptura || '').toUpperCase()}
-                                  </Badge>
-                                </div>
-                              ))}
+          {canSeeEstoque && (
+            <Card className="bg-white/80 backdrop-blur-sm rounded-md shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-indigo-600" />
+                  Previsões de Estoque (30 dias)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingPrevIA ? (
+                  <div className="h-10 rounded-md bg-slate-100 animate-pulse" />
+                ) : (
+                  (() => {
+                    const preds = (previsoesIA30?.previsoes || [])
+                      .filter(p => p.risco_ruptura && p.risco_ruptura !== 'baixo')
+                      .sort((a, b) => (a.dias_cobertura ?? 999) - (b.dias_cobertura ?? 999))
+                      .slice(0, 8);
+                    if (!preds.length) return <p className="text-sm text-slate-600">Sem riscos relevantes no horizonte.</p>;
+                    return (
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {preds.map((p, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white">
+                            <div>
+                              <div className="font-medium text-slate-900 truncate max-w-[340px]">{p.descricao}</div>
+                              <div className="text-xs text-slate-500">Cobertura: {p.dias_cobertura ?? '-'} dias • Demanda/dia: {p.demanda_dia_estimada ?? '-'} {p.preco_previsto != null && (<span className="ml-2">• Preço previsto: R$ {p.preco_previsto}</span>)}</div>
                             </div>
-                          );
-                        })()}
+                            <Badge className={p.risco_ruptura === 'alto' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
+                              {String(p.risco_ruptura || '').toUpperCase()}
+                            </Badge>
+                          </div>
+                        ))}
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-700 mb-3">Horizonte de 30 dias</p>
-                        {(() => {
-                          const preds = (previsoesIA30?.previsoes || [])
-                            .filter(p => p.risco_ruptura && p.risco_ruptura !== 'baixo')
-                            .sort((a, b) => (a.dias_cobertura ?? 999) - (b.dias_cobertura ?? 999))
-                            .slice(0, 8);
-                          if (!preds.length) return <p className="text-sm text-slate-600">Sem riscos relevantes no horizonte.</p>;
-                          return (
-                            <div className="grid md:grid-cols-2 gap-3">
-                              {preds.map((p, idx) => (
-                                <div key={`30-${idx}`} className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white gap-3">
-                                  <div className="min-w-0">
-                                    <div className="font-medium text-slate-900 truncate">{p.descricao}</div>
-                                    <div className="text-xs text-slate-500">Cobertura: {p.dias_cobertura ?? '-'} dias • Demanda/dia: {p.demanda_dia_estimada ?? '-'}</div>
-                                  </div>
-                                  <Badge className={p.risco_ruptura === 'alto' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}>
-                                    {String(p.risco_ruptura || '').toUpperCase()}
-                                  </Badge>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                    );
+                  })()
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           </ProtectedSection>
 
           {/* Módulos de Acesso Rápido */}

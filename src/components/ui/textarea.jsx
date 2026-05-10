@@ -4,7 +4,7 @@ import { uiAuditWrap, logUIIssue } from "@/components/lib/uiAudit"
 import usePermissions from "@/components/lib/usePermissions";
 
 const Textarea = React.forwardRef(({ className, onChange, onBlur, ...props }, ref) => {
-  const { hasPermission } = usePermissions();
+  const { hasPermissionKey } = usePermissions();
   React.useEffect(() => {
     if (!onChange) {
       logUIIssue({ component: 'Textarea', issue: 'Sem onChange associado', severity: 'warn', meta: { name: props?.name } });
@@ -20,8 +20,7 @@ const Textarea = React.forwardRef(({ className, onChange, onBlur, ...props }, re
   const perm = cleanProps?.['data-permission'];
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
   if (perm) {
-    const [m,s,a] = String(perm).split('.');
-    const allowed = hasPermission(m, s || null, a || null);
+    const allowed = hasPermissionKey(perm);
     if (!allowed) {
       return (
         <span className="inline-flex min-h-[60px] w-full items-center rounded-md border border-dashed px-3 py-2 text-xs text-slate-400 select-none">Acesso negado</span>

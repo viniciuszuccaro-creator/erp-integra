@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
+import { useUser } from "@/components/lib/UserContext";
 import {
   FileText,
   Shield,
@@ -27,9 +28,10 @@ import {
  * Configuração Fiscal Automática por Empresa
  * Certificado, Séries, Alíquotas, Provedor NF-e
  */
-export default function ConfigFiscalAutomatica({ empresaId }) {
+export default function ConfigFiscalAutomatica({ empresaId, groupId }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useUser();
 
   const { data: empresa } = useQuery({
     queryKey: ['empresa', empresaId],
@@ -113,6 +115,10 @@ export default function ConfigFiscalAutomatica({ empresaId }) {
 
   const salvarMutation = useMutation({
     mutationFn: async () => {
+      if (!empresaId) {
+        throw new Error("Selecione uma empresa antes de salvar a configuracao fiscal.");
+      }
+
       const diasExpiracao = formData.data_validade_certificado
         ? Math.floor((new Date(formData.data_validade_certificado) - new Date()) / (1000 * 60 * 60 * 24))
         : null;
@@ -136,6 +142,7 @@ export default function ConfigFiscalAutomatica({ empresaId }) {
 
       const dadosCompletos = {
         empresa_id: empresaId,
+        group_id: groupId || empresa?.group_id || empresa?.grupo_id || null,
         empresa_nome: empresa?.nome_fantasia || empresa?.razao_social,
         razao_social: empresa?.razao_social,
         nome_fantasia: empresa?.nome_fantasia,
@@ -162,14 +169,38 @@ export default function ConfigFiscalAutomatica({ empresaId }) {
       };
 
       if (config?.id) {
-        return await base44.entities.ConfigFiscalEmpresa.update(config.id, dadosCompletos);
+        const result = await base44.entities.ConfigFiscalEmpresa.update(config.id, dadosCompletos);
+        return { ...result, __auditAction: "Edicao", __auditPrevious: config };
       } else {
-        return await base44.entities.ConfigFiscalEmpresa.create(dadosCompletos);
+        const result = await base44.entities.ConfigFiscalEmpresa.create(dadosCompletos);
+        return { ...result, __auditAction: "Criacao" };
       }
     },
-    onSuccess: () => {
+    onSuccess: async (result) => {
       queryClient.invalidateQueries({ queryKey: ['config-fiscal'] });
+      try {
+        await base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || "Sistema",
+          usuario_id: user?.id || null,
+          empresa_id: empresaId || null,
+          group_id: groupId || empresa?.group_id || empresa?.grupo_id || null,
+          acao: result?.__auditAction || "Edicao",
+          modulo: "Fiscal",
+          entidade: "ConfigFiscalEmpresa",
+          registro_id: result?.id || config?.id || null,
+          descricao: "Configuracao fiscal da empresa salva",
+          dados_anteriores: result?.__auditPrevious || null,
+          dados_novos: formData,
+          sucesso: true,
+          data_hora: new Date().toISOString(),
+        });
+      } catch (auditError) {
+        console.warn("[Fiscal] Falha ao auditar configuracao fiscal:", auditError);
+      }
       toast({ title: "✅ Configuração fiscal salva!" });
+    },
+    onError: (error) => {
+      toast({ title: "Erro ao salvar configuracao fiscal", description: String(error?.message || error), variant: "destructive" });
     },
   });
 
@@ -646,8 +677,9 @@ export default function ConfigFiscalAutomatica({ empresaId }) {
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button
           type="submit"
-          disabled={salvarMutation.isPending}
+          disabled={salvarMutation.isPending || !empresaId}
           className="bg-green-600 hover:bg-green-700 min-w-[200px]"
+          data-action="Fiscal.ConfigFiscal.salvar"
         >
           {salvarMutation.isPending ? 'Salvando...' : 'Salvar Configurações'}
         </Button>

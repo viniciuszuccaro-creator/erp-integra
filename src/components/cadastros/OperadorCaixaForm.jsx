@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,9 +11,17 @@ import { Badge } from "@/components/ui/badge";
 import { Wallet, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function OperadorCaixaForm({ operador, item, data, initialData, defaultValues, onSubmit, onSave, onClose, onCancel, windowMode = false }) {
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { canCreate, canEdit } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeSalvar = operador?.id
+    ? (canEdit("Cadastros", "OperadorCaixa") || canEdit("Financeiro", "Caixa") || canEdit("Cadastros", null))
+    : (canCreate("Cadastros", "OperadorCaixa") || canCreate("Financeiro", "Caixa") || canCreate("Cadastros", null));
   const dadosIniciais = item || data || initialData || defaultValues || operador;
   const [formData, setFormData] = useState(dadosIniciais || {
     usuario_id: "",
@@ -32,7 +39,8 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
     limite_valor_venda: 0,
     observacoes: "",
     ativo: true,
-    empresa_id: empresaAtual?.id || ""
+    empresa_id: empresaAtual?.id || "",
+    group_id: groupId || ""
   });
 
   const prevIdRef = React.useRef(dadosIniciais?.id);
@@ -44,18 +52,21 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
   }, [dadosIniciais?.id]);
 
   const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.list(),
+    queryKey: ['colaboradores', contextKey],
+    queryFn: () => filterInContext('Colaborador', {}, 'nome_completo', 500),
+    enabled: contextoValido,
   });
 
   const { data: turnos = [] } = useQuery({
-    queryKey: ['turnos'],
-    queryFn: () => base44.entities.Turno.list(),
+    queryKey: ['turnos', contextKey],
+    queryFn: () => filterInContext('Turno', {}, 'nome', 200),
+    enabled: contextoValido,
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryKey: ['empresas', contextKey],
+    queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 200, 'id'),
+    enabled: contextoValido,
   });
 
   // prevIdRef já cobre a sincronização acima
@@ -63,13 +74,26 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Injeta 'nome' para compatibilidade com o Visualizador Universal
-    const payload = { ...formData, nome: formData.nome_caixa || formData.usuario_nome || '' };
+    if (!contextoValido) {
+      toast.error("Selecione um grupo ou empresa antes de salvar.");
+      return;
+    }
+    if (!podeSalvar) {
+      toast.error("Seu perfil nao permite salvar operador de caixa.");
+      return;
+    }
+    const payload = {
+      ...formData,
+      nome: formData.nome_caixa || formData.usuario_nome || '',
+      ...(empresaAtual?.id && !formData.empresa_id ? { empresa_id: empresaAtual.id } : {}),
+      ...(groupId && !formData.group_id ? { group_id: groupId } : {})
+    };
     try {
       if (operador?.id) {
-        await base44.entities.OperadorCaixa.update(operador.id, payload);
+        await updateInContext('OperadorCaixa', operador.id, payload);
         toast.success("✅ Operador atualizado!");
       } else {
-        await base44.entities.OperadorCaixa.create(payload);
+        await createInContext('OperadorCaixa', payload);
         toast.success("✅ Operador criado!");
       }
       onSubmit?.();
@@ -297,7 +321,7 @@ export default function OperadorCaixaForm({ operador, item, data, initialData, d
             <X className="w-4 h-4 mr-2" />
             Cancelar
           </Button>
-          <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
+          <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700" disabled={!contextoValido || !podeSalvar}>
             <Save className="w-4 h-4 mr-2" />
             Salvar Operador
           </Button>

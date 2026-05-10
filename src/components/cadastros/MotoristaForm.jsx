@@ -6,16 +6,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertTriangle, Upload, UserCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { format, differenceInDays } from "date-fns";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { toast } from "sonner";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function MotoristaForm({ motorista, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || motorista;
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contextoAtual, filterInContext } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = hasPermission?.("Cadastros.Motorista.criar") || hasPermission?.("Logistica.Motorista.criar");
+  const podeEditar = hasPermission?.("Cadastros.Motorista.editar") || hasPermission?.("Logistica.Motorista.editar");
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_completo: '',
     cpf: '',
@@ -39,8 +48,9 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
   }, [dadosIniciais?.id]);
 
   const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.list(),
+    queryKey: ['colaboradores', groupId, empresaAtual?.id],
+    queryFn: () => filterInContext('Colaborador', {}, 'nome_completo', 200),
+    enabled: contextoValido,
   });
 
   const cnhValida = formData.cnh_validade && differenceInDays(new Date(formData.cnh_validade), new Date()) > 0;
@@ -54,7 +64,20 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
   });
 
   const handleSubmit = async () => {
-    onSubmit({ ...formData, nome: formData.nome_completo || formData.nome || '' });
+    if (!contextoValido) {
+      toast.error("Selecione um grupo ou empresa antes de salvar.");
+      return;
+    }
+    if (!podeSalvar) {
+      toast.error("Sem permissão para salvar motorista.");
+      return;
+    }
+    onSubmit({
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      nome: formData.nome_completo || formData.nome || ''
+    });
   };
 
   const formContent = (
@@ -160,7 +183,12 @@ export default function MotoristaForm({ motorista, item, data, initialData, defa
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={isSubmitting || !contextoValido || !podeSalvar}
+          data-permission="Cadastros.Motorista.salvar"
+          data-sensitive="true"
+        >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? 'Atualizar' : 'Cadastrar Motorista'}
         </Button>

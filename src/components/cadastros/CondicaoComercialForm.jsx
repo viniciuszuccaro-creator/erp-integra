@@ -6,9 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { DollarSign } from 'lucide-react';
+import usePermissions from '@/components/lib/usePermissions';
 
 export default function CondicaoComercialForm({ condicao, condicaoComercial, onSubmit, windowMode = false }) {
   const dadosIniciais = condicaoComercial || condicao;
+  const { canCreate, canEdit } = usePermissions();
+  const podeCriar = canCreate("Cadastros", "CondicaoComercial") || canCreate("Financeiro", "CondicaoComercial") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "CondicaoComercial") || canEdit("Financeiro", "CondicaoComercial") || canEdit("Cadastros", null);
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_condicao: '',
     tipo_condicao: 'Pagamento',
@@ -22,6 +26,14 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (dadosIniciais?.id && !podeEditar) {
+      alert("Sem permissao para editar condicoes comerciais.");
+      return;
+    }
+    if (!dadosIniciais?.id && !podeCriar) {
+      alert("Sem permissao para criar condicoes comerciais.");
+      return;
+    }
     onSubmit({ ...formData, nome: formData.nome_condicao || formData.nome || '' });
   };
 
@@ -135,7 +147,13 @@ export default function CondicaoComercialForm({ condicao, condicaoComercial, onS
         />
       </div>
 
-      <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
+      <Button
+        type="submit"
+        className="w-full bg-green-600 hover:bg-green-700"
+        disabled={dadosIniciais?.id ? !podeEditar : !podeCriar}
+        data-permission="Cadastros.CondicaoComercial.salvar"
+        data-sensitive
+      >
         {dadosIniciais ? 'Atualizar Condição' : 'Criar Condição Comercial'}
       </Button>
     </form>

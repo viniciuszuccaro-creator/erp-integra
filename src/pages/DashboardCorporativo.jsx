@@ -86,14 +86,11 @@ export default function DashboardCorporativo() {
 
   const { dataInicio, dataFim } = getDateRange();
 
-  const queryDefaults = { staleTime: 120000, refetchOnWindowFocus: false, refetchOnReconnect: false };
-
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos-dashboard', grupoAtual?.id],
     queryFn: () => estaNoGrupo
       ? base44.entities.Pedido.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.Pedido.list('-created_date', 9999),
-    ...queryDefaults,
   });
 
   const { data: clientes = [] } = useQuery({
@@ -101,7 +98,6 @@ export default function DashboardCorporativo() {
     queryFn: () => estaNoGrupo
       ? base44.entities.Cliente.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.Cliente.list('-created_date', 9999),
-    ...queryDefaults,
   });
 
   const { data: totalClientes = 0 } = useQuery({
@@ -124,7 +120,6 @@ export default function DashboardCorporativo() {
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas-dashboard'],
     queryFn: () => base44.entities.Empresa.list(),
-    ...queryDefaults,
   });
 
   const { data: produtos = [] } = useQuery({
@@ -132,7 +127,6 @@ export default function DashboardCorporativo() {
     queryFn: () => estaNoGrupo
       ? base44.entities.Produto.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.Produto.list('-created_date', 9999),
-    ...queryDefaults,
   });
 
   const { data: totalProdutos = 0 } = useQuery({
@@ -157,7 +151,6 @@ export default function DashboardCorporativo() {
     queryFn: () => estaNoGrupo
       ? base44.entities.ContaReceber.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.ContaReceber.list(),
-    ...queryDefaults,
   });
 
   const { data: contasPagar = [] } = useQuery({
@@ -165,7 +158,6 @@ export default function DashboardCorporativo() {
     queryFn: () => estaNoGrupo
       ? base44.entities.ContaPagar.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.ContaPagar.list(),
-    ...queryDefaults,
   });
 
   const { data: entregas = [] } = useQuery({
@@ -173,7 +165,6 @@ export default function DashboardCorporativo() {
     queryFn: () => estaNoGrupo
       ? base44.entities.Entrega.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.Entrega.list('-created_date', 9999),
-    ...queryDefaults,
   });
 
   const { data: ordensProducao = [] } = useQuery({
@@ -181,7 +172,6 @@ export default function DashboardCorporativo() {
     queryFn: () => estaNoGrupo
       ? base44.entities.OrdemProducao.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
       : base44.entities.OrdemProducao.list(),
-    ...queryDefaults,
   });
 
   // Filtrar por período e empresa
@@ -312,7 +302,7 @@ export default function DashboardCorporativo() {
   return (
     <ProtectedSection module="Dashboard" section={["Corporativo"]} action="visualizar">
     <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6 min-w-0">
+      <div className="flex-1 overflow-auto p-6 space-y-6">
         {/* Header com Filtros */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -359,7 +349,7 @@ export default function DashboardCorporativo() {
 
         {/* Tabs de Navegação */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="w-full overflow-x-auto pb-1"><TabsList className="bg-white border shadow-sm inline-flex min-w-max flex-nowrap h-auto">
+          <TabsList className="bg-white border shadow-sm w-full flex-wrap h-auto">
             <TabsTrigger value="visao-geral" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <BarChart3 className="w-4 h-4 mr-2" />
               Visão Geral
@@ -376,7 +366,7 @@ export default function DashboardCorporativo() {
               <Factory className="w-4 h-4 mr-2" />
               Operacional
             </TabsTrigger>
-          </TabsList></div>
+          </TabsList>
 
           {/* ABA: Visão Geral */}
           <TabsContent value="visao-geral" className="space-y-6 mt-6">

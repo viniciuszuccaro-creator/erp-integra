@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { useWindow } from "@/components/lib/useWindow";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { CreditCard, Plus, Edit2, Trash2, Play, Pause, BarChart3, Zap } from "lucide-react";
 import GatewayPagamentoForm from "./GatewayPagamentoForm";
 
@@ -21,16 +23,26 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext, deleteInContext } = useContextoVisual();
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeCriar = canCreate("Cadastros", "GatewayPagamento") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "GatewayPagamento") || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", "GatewayPagamento") || canDelete("Cadastros", null);
 
   const { data: gateways = [] } = useQuery({
-    queryKey: ['gateways-pagamento'],
-    queryFn: () => base44.entities.GatewayPagamento.list(),
+    queryKey: ['gateways-pagamento', contextKey],
+    queryFn: () => filterInContext('GatewayPagamento', {}, '-created_date', 200),
+    enabled: contextoValido,
   });
 
   const toggleAtivoMutation = useMutation({
     mutationFn: async ({ id, ativo }) => {
-      await base44.entities.GatewayPagamento.update(id, { ativo: !ativo });
+      if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissÃ£o para alterar.");
+      await updateInContext('GatewayPagamento', id, { ativo: !ativo });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['gateways-pagamento'] });
@@ -39,7 +51,10 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.GatewayPagamento.delete(id),
+    mutationFn: (id) => {
+      if (!podeExcluir) throw new Error("Sem permissÃ£o para excluir.");
+      return deleteInContext('GatewayPagamento', id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['gateways-pagamento'] });
       toast({ title: "✅ Gateway excluído!" });
@@ -104,7 +119,8 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
                   windowMode: true,
                   onSubmit: async (data) => {
                     try {
-                      await base44.entities.GatewayPagamento.create(data);
+                      if (!contextoValido || !podeCriar) throw new Error("Sem contexto ou permissÃ£o para criar.");
+                      await createInContext('GatewayPagamento', data);
                       queryClient.invalidateQueries({ queryKey: ['gateways-pagamento'] });
                       toast({ title: "✅ Gateway cadastrado!" });
                     } catch (error) {
@@ -116,6 +132,7 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
                   width: 900,
                   height: 600
                 })}
+                disabled={!contextoValido || !podeCriar}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -183,6 +200,7 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
                         variant="ghost"
                         size="icon"
                         onClick={() => toggleAtivoMutation.mutate({ id: gateway.id, ativo: gateway.ativo })}
+                        disabled={!contextoValido || !podeEditar || toggleAtivoMutation.isPending}
                         title={gateway.ativo ? "Desativar" : "Ativar"}
                       >
                         {gateway.ativo ? (
@@ -199,7 +217,8 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
                           windowMode: true,
                           onSubmit: async (data) => {
                             try {
-                              await base44.entities.GatewayPagamento.update(gateway.id, data);
+                              if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissÃ£o para editar.");
+                              await updateInContext('GatewayPagamento', gateway.id, data);
                               queryClient.invalidateQueries({ queryKey: ['gateways-pagamento'] });
                               toast({ title: "✅ Gateway atualizado!" });
                             } catch (error) {
@@ -211,6 +230,7 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
                           width: 900,
                           height: 600
                         })}
+                        disabled={!contextoValido || !podeEditar}
                         title="Editar"
                       >
                         <Edit2 className="w-4 h-4 text-blue-600" />
@@ -223,6 +243,7 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
                             deleteMutation.mutate(gateway.id);
                           }
                         }}
+                        disabled={!podeExcluir || deleteMutation.isPending}
                         title="Excluir"
                       >
                         <Trash2 className="w-4 h-4 text-red-600" />

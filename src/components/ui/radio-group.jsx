@@ -1,14 +1,15 @@
 import * as React from "react"
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group"
 import { Circle } from "lucide-react"
+
 import { cn } from "@/lib/utils"
 import { uiAuditWrap } from "@/components/lib/uiAudit";
 import usePermissions from "@/components/lib/usePermissions";
 
-const BaseRadioGroup = React.forwardRef(({ className, ...props }, ref) => {
+const RadioGroup = React.forwardRef(({ className, ...props }, ref) => {
   return <RadioGroupPrimitive.Root className={cn("grid gap-2", className)} {...props} ref={ref} />;
 })
-BaseRadioGroup.displayName = RadioGroupPrimitive.Root.displayName
+RadioGroup.displayName = RadioGroupPrimitive.Root.displayName
 
 const RadioGroupItem = React.forwardRef(({ className, ...props }, ref) => {
   return (
@@ -29,20 +30,30 @@ const RadioGroupItem = React.forwardRef(({ className, ...props }, ref) => {
 RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName
 
 const AuditedRadioGroup = React.forwardRef(({ onValueChange, ...props }, ref) => {
-  const { hasPermission } = usePermissions();
-  const perm = props?.['data-permission'];
-  const actionName = props?.['data-action'] || 'RadioGroup.onValueChange';
-  const audited = typeof onValueChange === 'function' ? uiAuditWrap(actionName, onValueChange, { kind: 'radio' }) : undefined;
-  const { ...cleanProps } = props;
+  const { hasPermissionKey } = usePermissions();
+  const toastSuccess = props?.['data-toast-success'] === true || props?.['data-toast-success'] === 'true';
+  const audited = typeof onValueChange === 'function'
+    ? uiAuditWrap(props?.['data-action'] || 'RadioGroup.onValueChange', onValueChange, { kind: 'radio', toastSuccess })
+    : undefined;
+  const { __wrapped_audit, ...cleanProps } = props;
+  const perm = cleanProps?.['data-permission'];
+
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
-  if ('data-action' in cleanProps) delete cleanProps['data-action'];
+  if ('data-toast-success' in cleanProps) delete cleanProps['data-toast-success'];
+
   if (perm) {
-    const [m,s,a] = String(perm).split('.');
-    const allowed = hasPermission(m, s || null, a || 'visualizar');
-    if (!allowed) return <span className="inline-flex items-center rounded border border-dashed px-2 py-1 text-[10px] text-slate-400 select-none">Acesso negado</span>;
+    const allowed = hasPermissionKey(perm);
+    if (!allowed) {
+      return (
+        <span className="inline-flex min-h-9 w-full items-center rounded-md border border-dashed px-3 text-xs text-slate-400 select-none">
+          Acesso negado
+        </span>
+      );
+    }
   }
-  return <BaseRadioGroup ref={ref} onValueChange={audited} {...cleanProps} />;
+
+  return <RadioGroup ref={ref} onValueChange={audited} {...cleanProps} />;
 });
-AuditedRadioGroup.displayName = 'AuditedRadioGroup';
+AuditedRadioGroup.displayName = "AuditedRadioGroup";
 
 export { AuditedRadioGroup as RadioGroup, RadioGroupItem }

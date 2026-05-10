@@ -6,9 +6,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Ruler } from 'lucide-react';
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, initialData, defaultValues, onSubmit, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || unidadeMedida || unidade;
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = hasPermission?.("Cadastros.UnidadeMedida.criar") || hasPermission?.("Cadastros.Produto.criar");
+  const podeEditar = hasPermission?.("Cadastros.UnidadeMedida.editar") || hasPermission?.("Cadastros.Produto.editar");
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     sigla: '',
     nome_completo: '',
@@ -31,7 +40,19 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissão para salvar unidade de medida.');
+      return;
+    }
+    onSubmit({
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id
+    });
   };
 
   const content = (
@@ -100,6 +121,9 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
           <Label>Usa em Estoque</Label>
           <Switch
             checked={formData.usa_em_estoque}
+            disabled={!podeSalvar}
+            data-permission="Cadastros.UnidadeMedida.editar"
+            data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, usa_em_estoque: v })}
           />
         </div>
@@ -107,6 +131,9 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
           <Label>Usa em Compras</Label>
           <Switch
             checked={formData.usa_em_compras}
+            disabled={!podeSalvar}
+            data-permission="Cadastros.UnidadeMedida.editar"
+            data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, usa_em_compras: v })}
           />
         </div>
@@ -117,6 +144,9 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
           <Label>Usa em Vendas</Label>
           <Switch
             checked={formData.usa_em_vendas}
+            disabled={!podeSalvar}
+            data-permission="Cadastros.UnidadeMedida.editar"
+            data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, usa_em_vendas: v })}
           />
         </div>
@@ -124,12 +154,21 @@ export default function UnidadeMedidaForm({ unidade, unidadeMedida, item, data, 
           <Label className="font-semibold">Ativo</Label>
           <Switch
             checked={formData.ativo}
+            disabled={!podeSalvar}
+            data-permission="Cadastros.UnidadeMedida.alterarStatus"
+            data-sensitive="true"
             onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
           />
         </div>
       </div>
 
-      <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700">
+      <Button
+        type="submit"
+        className="w-full bg-indigo-600 hover:bg-indigo-700"
+        disabled={!contextoValido || !podeSalvar}
+        data-permission="Cadastros.UnidadeMedida.salvar"
+        data-sensitive="true"
+      >
         {dadosIniciais ? 'Atualizar Unidade' : 'Criar Unidade de Medida'}
       </Button>
     </form>

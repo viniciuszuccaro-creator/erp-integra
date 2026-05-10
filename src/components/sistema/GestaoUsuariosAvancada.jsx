@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
 import {
   UserPlus,
   Building2,
@@ -30,13 +32,23 @@ export default function GestaoUsuariosAvancada({
   usuario, 
   perfis = [], 
   empresas = [],
+  canEdit = true,
   onClose,
   onSuccess 
 }) {
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { user: operador } = useUser();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "grupo" ? null : empresaAtual?.id || null;
+  const contextoValido = contexto === "grupo" ? !!groupId : !!empresaId;
+  const controlesDesabilitados = !contextoValido || !canEdit;
+  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
+    .map((item) => (typeof item === "string" ? item : item?.empresa_id || item?.id))
+    .filter(Boolean);
   const [formData, setFormData] = useState({
     perfil_acesso_id: usuario?.perfil_acesso_id || "sem-perfil",
-    empresas_vinculadas: usuario?.empresas_vinculadas || [],
+    empresas_vinculadas: normalizeEmpresaIds(usuario?.empresas_vinculadas),
     restricoes_adicionais: usuario?.restricoes_adicionais || {
       pode_ver_apenas_proprios_registros: false,
       limite_aprovacao_valor: 0,
@@ -51,18 +63,54 @@ export default function GestaoUsuariosAvancada({
 
   const atualizarUsuarioMutation = useMutation({
     mutationFn: async (data) => {
+      if (!contextoValido) {
+        throw new Error("Selecione um grupo ou empresa antes de alterar acesso de usuario.");
+      }
+      if (!canEdit) {
+        throw new Error("Sem permissao para alterar acesso de usuario.");
+      }
       const perfilId = data.perfil_acesso_id === "sem-perfil" ? null : data.perfil_acesso_id;
       const perfilSelecionado = perfis.find(p => p.id === perfilId);
+      const empresasPermitidas = new Set(empresas.map((empresa) => empresa.id));
+      const empresasVinculadas = normalizeEmpresaIds(data.empresas_vinculadas).filter((id) => empresasPermitidas.has(id));
       const empresasNomes = empresas
-        .filter(e => data.empresas_vinculadas?.includes(e.id))
+        .filter(e => empresasVinculadas.includes(e.id))
         .map(e => e.nome_fantasia || e.razao_social);
 
-      return await base44.entities.User.update(usuario.id, {
+      const payload = {
         ...data,
         perfil_acesso_id: perfilId,
         perfil_acesso_nome: perfilSelecionado?.nome_perfil || null,
-        empresas_vinculadas_nomes: empresasNomes
-      });
+        empresas_vinculadas: empresasVinculadas,
+        empresas_vinculadas_nomes: empresasNomes,
+        ...(groupId ? { group_id: groupId } : {}),
+        ...(empresaId ? { empresa_id: empresaId } : {})
+      };
+      const result = await base44.entities.User.update(usuario.id, payload);
+      try {
+        await base44.entities.AuditLog.create({
+          usuario: operador?.full_name || operador?.email || "Usuario local",
+          usuario_id: operador?.id || null,
+          empresa_id: empresaId,
+          group_id: groupId,
+          acao: "Edicao",
+          modulo: "Controle de Acesso",
+          entidade: "User",
+          registro_id: usuario.id,
+          descricao: `Configuracao de acesso alterada para ${usuario?.email || usuario?.full_name || usuario.id}`,
+          dados_antigos: {
+            perfil_acesso_id: usuario?.perfil_acesso_id || null,
+            empresas_vinculadas: usuario?.empresas_vinculadas || [],
+            autenticacao_dois_fatores: usuario?.autenticacao_dois_fatores || false,
+            restricoes_adicionais: usuario?.restricoes_adicionais || null
+          },
+          dados_novos: payload,
+          data_hora: new Date().toISOString()
+        });
+      } catch (error) {
+        console.warn("Falha ao auditar alteracao de usuario:", error);
+      }
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['usuarios'] });
@@ -78,6 +126,10 @@ export default function GestaoUsuariosAvancada({
   });
 
   const toggleEmpresa = (empresaId) => {
+    if (controlesDesabilitados) {
+      toast.error("Sem permissao para alterar empresas vinculadas.");
+      return;
+    }
     setFormData(prev => {
       const empresas = prev.empresas_vinculadas || [];
       const index = empresas.indexOf(empresaId);
@@ -92,6 +144,10 @@ export default function GestaoUsuariosAvancada({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!canEdit) {
+      toast.error("Sem permissao para alterar acesso de usuario.");
+      return;
+    }
     atualizarUsuarioMutation.mutate(formData);
   };
 
@@ -119,33 +175,45 @@ export default function GestaoUsuariosAvancada({
               <Label>Cargo</Label>
               <Input
                 value={formData.cargo}
+                disabled={controlesDesabilitados}
                 onChange={(e) => setFormData({ ...formData, cargo: e.target.value })}
                 placeholder="Ex: Vendedor"
                 className="mt-1"
+                data-permission="Sistema.Controle de Acesso.editar"
+                data-action="RBAC.Usuario.cargo"
               />
             </div>
             <div>
               <Label>Departamento</Label>
               <Input
                 value={formData.departamento}
+                disabled={controlesDesabilitados}
                 onChange={(e) => setFormData({ ...formData, departamento: e.target.value })}
                 placeholder="Ex: Comercial"
                 className="mt-1"
+                data-permission="Sistema.Controle de Acesso.editar"
+                data-action="RBAC.Usuario.departamento"
               />
             </div>
             <div>
               <Label>Telefone</Label>
               <Input
                 value={formData.telefone}
+                disabled={controlesDesabilitados}
                 onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
                 placeholder="(00) 00000-0000"
                 className="mt-1"
+                data-permission="Sistema.Controle de Acesso.editar"
+                data-action="RBAC.Usuario.telefone"
               />
             </div>
             <div className="flex items-center gap-2 mt-6">
               <Switch
                 checked={formData.autenticacao_dois_fatores}
+                disabled={controlesDesabilitados}
                 onCheckedChange={(v) => setFormData({ ...formData, autenticacao_dois_fatores: v })}
+                data-permission="Sistema.Controle de Acesso.editar"
+                data-action="RBAC.Usuario.2fa"
               />
               <Label className="cursor-pointer flex items-center gap-2">
                 <Fingerprint className="w-4 h-4 text-green-600" />
@@ -168,9 +236,10 @@ export default function GestaoUsuariosAvancada({
           <Label>Perfil de Acesso *</Label>
           <Select
             value={formData.perfil_acesso_id}
+            disabled={controlesDesabilitados}
             onValueChange={(v) => setFormData({ ...formData, perfil_acesso_id: v })}
           >
-            <SelectTrigger className="mt-1">
+            <SelectTrigger className="mt-1" data-permission="Sistema.Controle de Acesso.editar" data-action="RBAC.Usuario.perfil">
               <SelectValue placeholder="Selecionar perfil" />
             </SelectTrigger>
             <SelectContent>
@@ -212,7 +281,10 @@ export default function GestaoUsuariosAvancada({
                 >
                   <Checkbox
                     checked={vinculado}
+                    disabled={controlesDesabilitados}
                     onCheckedChange={() => toggleEmpresa(empresa.id)}
+                    data-permission="Sistema.Controle de Acesso.editar"
+                    data-action={`RBAC.Usuario.empresa.${empresa.id}`}
                   />
                   <div className="flex-1">
                     <p className="font-medium text-sm">{empresa.nome_fantasia || empresa.razao_social}</p>
@@ -244,6 +316,7 @@ export default function GestaoUsuariosAvancada({
             </Label>
             <Switch
               checked={formData.restricoes_adicionais?.pode_ver_apenas_proprios_registros}
+              disabled={controlesDesabilitados}
               onCheckedChange={(v) => setFormData({
                 ...formData,
                 restricoes_adicionais: {
@@ -251,6 +324,8 @@ export default function GestaoUsuariosAvancada({
                   pode_ver_apenas_proprios_registros: v
                 }
               })}
+              data-permission="Sistema.Controle de Acesso.editar"
+              data-action="RBAC.Usuario.restricao.proprios"
             />
           </div>
 
@@ -259,6 +334,7 @@ export default function GestaoUsuariosAvancada({
             <Input
               type="number"
               value={formData.restricoes_adicionais?.limite_aprovacao_valor || 0}
+              disabled={controlesDesabilitados}
               onChange={(e) => setFormData({
                 ...formData,
                 restricoes_adicionais: {
@@ -268,6 +344,8 @@ export default function GestaoUsuariosAvancada({
               })}
               className="mt-1"
               placeholder="0.00"
+              data-permission="Sistema.Controle de Acesso.editar"
+              data-action="RBAC.Usuario.limiteAprovacao"
             />
           </div>
         </CardContent>
@@ -275,13 +353,16 @@ export default function GestaoUsuariosAvancada({
 
       {/* Botões */}
       <div className="flex justify-end gap-3 sticky bottom-0 bg-white pt-4 border-t">
-        <Button type="button" variant="outline" onClick={onClose}>
+        <Button type="button" variant="outline" onClick={onClose} data-action="RBAC.Usuario.cancelar">
           Cancelar
         </Button>
         <Button
           type="submit"
-          disabled={atualizarUsuarioMutation.isPending}
+          disabled={atualizarUsuarioMutation.isPending || controlesDesabilitados}
           className="bg-blue-600 hover:bg-blue-700"
+          data-action="RBAC.Usuario.salvar"
+          data-permission="Sistema.Controle de Acesso.editar"
+          data-sensitive="true"
         >
           {atualizarUsuarioMutation.isPending ? 'Salvando...' : 'Salvar Configurações'}
         </Button>

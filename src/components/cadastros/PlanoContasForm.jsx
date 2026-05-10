@@ -6,9 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { FileText } from 'lucide-react';
+import usePermissions from '@/components/lib/usePermissions';
 
 export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, onClose, windowMode = false }) {
   const dadosIniciais = item || data || conta;
+  const { canCreate, canEdit } = usePermissions();
+  const podeCriar = canCreate("Cadastros", "PlanoDeContas") || canCreate("Financeiro", "PlanoDeContas") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "PlanoDeContas") || canEdit("Financeiro", "PlanoDeContas") || canEdit("Cadastros", null);
   const [formData, setFormData] = useState(dadosIniciais || {
     codigo_conta: '',
     nome_conta: '',
@@ -33,6 +37,14 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (dadosIniciais?.id && !podeEditar) {
+      alert("Sem permissao para editar plano de contas.");
+      return;
+    }
+    if (!dadosIniciais?.id && !podeCriar) {
+      alert("Sem permissao para criar plano de contas.");
+      return;
+    }
     // Injeta 'nome'/'codigo'/'descricao' para o Visualizador Universal
     const payload = {
       ...formData,
@@ -138,7 +150,13 @@ export default function PlanoContasForm({ conta, item, data, onSubmit, onSave, o
         <Switch checked={!!formData.ativo} onCheckedChange={(v) => setFormData({ ...formData, ativo: v })} />
       </div>
 
-      <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
+      <Button
+        type="submit"
+        className="w-full bg-green-600 hover:bg-green-700"
+        disabled={dadosIniciais?.id ? !podeEditar : !podeCriar}
+        data-permission="Cadastros.PlanoDeContas.salvar"
+        data-sensitive
+      >
         {dadosIniciais ? 'Atualizar Conta' : 'Criar Conta'}
       </Button>
     </form>

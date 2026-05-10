@@ -18,7 +18,13 @@ import KitProdutoForm from "@/components/cadastros/KitProdutoForm";
 import CatalogoWebForm from "@/components/cadastros/CatalogoWebForm";
 import UnidadeMedidaForm from "@/components/cadastros/UnidadeMedidaForm";
 
-export default function Bloco2Produtos({ allCounts, isLoading }) {
+function filterTiles(tiles, searchTerm) {
+  const q = String(searchTerm || "").trim().toLowerCase();
+  if (!q) return tiles;
+  return tiles.filter(({ k, title }) => `${k} ${title}`.toLowerCase().includes(q));
+}
+
+export default function Bloco2Produtos({ allCounts, isLoading, searchTerm = "" }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
 
@@ -27,6 +33,12 @@ export default function Bloco2Produtos({ allCounts, isLoading }) {
   const openList = (entidade, titulo, Icon, campos, FormComp) => () => {
     openWindow(VisualizadorUniversalEntidadeV24, { nomeEntidade: entidade, tituloDisplay: titulo, icone: Icon, camposPrincipais: campos, componenteEdicao: FormComp, windowMode: true }, { title: titulo, width: 1400, height: 800 });
   };
+
+  const canViewEntity = (entidade, modulo = "Cadastros") =>
+    hasPermission("Cadastros", entidade, "visualizar") ||
+    hasPermission("Cadastros", null, "visualizar") ||
+    hasPermission(modulo, entidade, "visualizar") ||
+    hasPermission(modulo, null, "visualizar");
 
   // ATENÇÃO: sempre usar o campo real que a entidade salva (não alias como nome_grupo, nome_marca etc.)
   // getDisplayValue no visualizador faz fallback automático se o campo estiver vazio
@@ -40,6 +52,7 @@ export default function Bloco2Produtos({ allCounts, isLoading }) {
     { k: 'CatalogoWeb',    title: 'Catálogo Web',             Icon: Globe,     campos: ['nome','nome_catalogo','descricao','ativo'],      form: CatalogoWebForm },
     { k: 'UnidadeMedida',  title: 'Unidades de Medida',       Icon: Ruler,     campos: ['sigla','nome','descricao'],                     form: UnidadeMedidaForm },
   ];
+  const filteredTiles = filterTiles(tiles, searchTerm);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -56,7 +69,9 @@ export default function Bloco2Produtos({ allCounts, isLoading }) {
 
       {/* Card Produtos (abre VisualizadorProdutos especializado) */}
       <Card className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
-        onClick={hasPermission('Estoque', null, 'visualizar') ? openProdutos : undefined}>
+        onClick={canViewEntity("Produto", "Estoque") ? openProdutos : undefined}
+        data-permission="Cadastros.Produto.visualizar"
+        data-action="Cadastros.Produto.abrir">
         <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
@@ -68,7 +83,9 @@ export default function Bloco2Produtos({ allCounts, isLoading }) {
             </CardTitle>
             <Button size="sm" className="bg-purple-600 hover:bg-purple-700 rounded-sm text-xs h-7"
               onClick={(e) => { e.stopPropagation(); openProdutos(); }}
-              disabled={!hasPermission('Estoque', null, 'visualizar')}>
+              disabled={!canViewEntity("Produto", "Estoque")}
+              data-permission="Cadastros.Produto.visualizar"
+              data-action="Cadastros.Produto.abrir">
               Abrir
             </Button>
           </div>
@@ -76,9 +93,11 @@ export default function Bloco2Produtos({ allCounts, isLoading }) {
         <CardContent className="p-3 text-xs text-slate-500">Listagem e edição completa com filtros avançados.</CardContent>
       </Card>
 
-      {tiles.map(({ k, title, Icon, campos, form: FormComp }) => (
+      {filteredTiles.map(({ k, title, Icon, campos, form: FormComp }) => (
         <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
-          onClick={hasPermission('Cadastros', null, 'visualizar') ? openList(k, title, Icon, campos, FormComp) : undefined}>
+          onClick={canViewEntity(k) ? openList(k, title, Icon, campos, FormComp) : undefined}
+          data-permission={`Cadastros.${k}.visualizar`}
+          data-action={`Cadastros.${k}.abrir`}>
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
@@ -90,7 +109,9 @@ export default function Bloco2Produtos({ allCounts, isLoading }) {
               </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, title, Icon, campos, FormComp)(); }}
-                disabled={!hasPermission('Cadastros', null, 'visualizar')}>
+                disabled={!canViewEntity(k)}
+                data-permission={`Cadastros.${k}.visualizar`}
+                data-action={`Cadastros.${k}.abrir`}>
                 Abrir
               </Button>
             </div>

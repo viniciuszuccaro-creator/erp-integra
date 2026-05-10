@@ -5,6 +5,20 @@
     <link rel="icon" type="image/svg+xml" href="https://base44.com/logo_v2.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Base44 APP</title>
+    <script>
+      window.__ERP_BOOT_ERROR__ = function (title, detail) {
+        const root = document.getElementById('root');
+        if (!root) return;
+        root.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f8fafc;font-family:Arial,sans-serif;padding:24px"><div style="max-width:760px;width:100%;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:24px;box-shadow:0 8px 28px rgba(15,23,42,.08)"><h1 style="margin:0 0 8px;color:#991b1b;font-size:22px">Erro ao iniciar o ERP local</h1><p style="margin:0 0 16px;color:#475569">O sistema carregou o servidor, mas o frontend encontrou um erro antes de abrir.</p><pre style="white-space:pre-wrap;background:#0f172a;color:#e2e8f0;border-radius:6px;padding:14px;max-height:360px;overflow:auto;font-size:12px">' + String(title || 'Erro desconhecido').replace(/[<>&]/g, s => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[s])) + '\\n\\n' + String(detail || '').replace(/[<>&]/g, s => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[s])) + '</pre></div></div>';
+      };
+      window.addEventListener('error', function (event) {
+        window.__ERP_BOOT_ERROR__(event.message, event.error && (event.error.stack || event.error.message));
+      });
+      window.addEventListener('unhandledrejection', function (event) {
+        const reason = event.reason;
+        window.__ERP_BOOT_ERROR__('Promise rejeitada', reason && (reason.stack || reason.message || reason));
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

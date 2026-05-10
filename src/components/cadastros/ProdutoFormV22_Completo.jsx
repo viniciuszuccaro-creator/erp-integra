@@ -19,6 +19,7 @@ import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { useQuery } from "@tanstack/react-query";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 const HistoricoProduto = React.lazy(() => import("./HistoricoProduto"));
@@ -40,7 +41,22 @@ const PesoDimensoesSection = React.lazy(() => import("./produto/PesoDimensoesSec
 function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, windowMode = false, closeSelf }) {
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const [user, setUser] = useState(null);
-  const { carimbarContexto } = useContextoVisual();
+  const {
+    empresaAtual,
+    grupoAtual,
+    carimbarContexto,
+    filterInContext,
+    createInContext,
+    updateInContext,
+    deleteInContext
+  } = useContextoVisual();
+  const { canCreate, canEdit, canDelete } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeCriar = canCreate("Cadastros", "Produto") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "Produto") || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", "Produto") || canDelete("Cadastros", null);
   
   useEffect(() => {
     const loadUser = async () => {
@@ -175,12 +191,12 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
 
   // V22.0: Query de produtos para auto-incremento
   const { data: todosProdutos = [] } = useQuery({
-    queryKey: ['produtos-codes-sample'],
-    queryFn: () => base44.entities.Produto.filter({}, '-created_date', 100),
+    queryKey: ['produtos-codes-sample', contextKey],
+    queryFn: () => filterInContext('Produto', {}, '-created_date', 100),
     staleTime: 300000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
-    enabled: !produto && abaAtiva === 'dados-gerais',
+    enabled: !produto && abaAtiva === 'dados-gerais' && contextoValido,
   });
 
   useEffect(() => {
@@ -197,48 +213,48 @@ function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, w
 
   // V21.2 FASE 2: Queries dos estruturantes
   const { data: setores = [] } = useQuery({
-    queryKey: ['setores-atividade'],
-    queryFn: () => base44.entities.SetorAtividade.list(),
+    queryKey: ['setores-atividade', contextKey],
+    queryFn: () => filterInContext('SetorAtividade', {}, 'nome', 200),
     staleTime: 300000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
-    enabled: abaAtiva === 'dados-gerais',
+    enabled: abaAtiva === 'dados-gerais' && contextoValido,
   });
 
   const { data: grupos = [] } = useQuery({
-    queryKey: ['grupos-produto'],
-    queryFn: () => base44.entities.GrupoProduto.list(),
+    queryKey: ['grupos-produto', contextKey],
+    queryFn: () => filterInContext('GrupoProduto', {}, 'nome', 200),
     staleTime: 300000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
-    enabled: abaAtiva === 'dados-gerais',
+    enabled: abaAtiva === 'dados-gerais' && contextoValido,
   });
 
   const { data: marcas = [] } = useQuery({
-    queryKey: ['marcas'],
-    queryFn: () => base44.entities.Marca.list(),
+    queryKey: ['marcas', contextKey],
+    queryFn: () => filterInContext('Marca', {}, 'nome', 200),
     staleTime: 300000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
-    enabled: abaAtiva === 'dados-gerais',
+    enabled: abaAtiva === 'dados-gerais' && contextoValido,
   });
 
   const { data: locaisEstoque = [] } = useQuery({
-    queryKey: ['locais-estoque'],
-    queryFn: () => base44.entities.LocalEstoque.list(),
+    queryKey: ['locais-estoque', contextKey],
+    queryFn: () => filterInContext('LocalEstoque', {}, 'nome', 200),
     staleTime: 300000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
-    enabled: abaAtiva === 'estoque-avancado',
+    enabled: abaAtiva === 'estoque-avancado' && contextoValido,
   });
 
   const { data: planoContas = [] } = useQuery({
-    queryKey: ['plano-contas'],
-    queryFn: () => base44.entities.PlanoDeContas.list(),
+    queryKey: ['plano-contas', contextKey],
+    queryFn: () => filterInContext('PlanoDeContas', {}, 'codigo', 500),
     staleTime: 300000,
     keepPreviousData: true,
     refetchOnWindowFocus: false,
-    enabled: abaAtiva === 'fiscal-contabil',
+    enabled: abaAtiva === 'fiscal-contabil' && contextoValido,
   });
 
   useEffect(() => {
@@ -486,9 +502,18 @@ Caso contrário, sugira:
       return;
     }
 
+    if (!contextoValido) {
+      toast.error('Selecione um grupo ou empresa antes de salvar o produto');
+      return;
+    }
+    if (produto?.id ? !podeEditar : !podeCriar) {
+      toast.error('Seu perfil nao permite salvar produtos');
+      return;
+    }
+
     if (formData.codigo && !produto?.id) {
       try {
-        const produtosExistentes = await base44.entities.Produto.filter({ codigo: formData.codigo });
+        const produtosExistentes = await filterInContext('Produto', { codigo: formData.codigo }, '-created_date', 1);
         if (produtosExistentes.length > 0) {
           toast.error(`❌ Código "${formData.codigo}" já existe em outro produto`);
           setAbaAtiva('dados-gerais');
@@ -548,10 +573,10 @@ Caso contrário, sugira:
 
     try {
       if (produto?.id) {
-        await base44.entities.Produto.update(produto.id, dadosSubmit);
+        await updateInContext('Produto', produto.id, dadosSubmit);
         toast.success('✅ Produto atualizado com sucesso!');
       } else {
-        await base44.entities.Produto.create(dadosSubmit);
+        await createInContext('Produto', dadosSubmit);
         toast.success('✅ Produto criado com sucesso!');
       }
       if (onSuccess) onSuccess();
@@ -566,6 +591,20 @@ Caso contrário, sugira:
 
   const handleExcluir = () => {
     if (!window.confirm(`Tem certeza que deseja excluir o produto "${formData.descricao}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    if (!podeExcluir) {
+      toast.error('Seu perfil nao permite excluir produtos');
+      return;
+    }
+    if (produto?.id) {
+      deleteInContext('Produto', produto.id)
+        .then(() => {
+          toast.success('Produto excluido com sucesso!');
+          if (onSuccess) onSuccess();
+          if (typeof closeSelf === 'function') closeSelf();
+        })
+        .catch((error) => toast.error('Erro ao excluir produto: ' + error.message));
       return;
     }
     if (onSubmit) {
@@ -1193,6 +1232,7 @@ Caso contrário, sugira:
                 data-permission="Cadastros.Produto.alterarStatus"
                 data-sensitive
                 onClick={handleAlternarStatus}
+                disabled={!podeEditar || !contextoValido}
                 className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
               >
                 {formData.status === 'Ativo' ? (
@@ -1213,6 +1253,7 @@ Caso contrário, sugira:
                 data-permission="Cadastros.Produto.excluir"
                 data-sensitive
                 onClick={handleExcluir}
+                disabled={!podeExcluir || !contextoValido}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Excluir
@@ -1220,7 +1261,7 @@ Caso contrário, sugira:
             </>
           )}
         </div>
-        <Button type="submit" data-permission="Cadastros.Produto.salvar" data-sensitive disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700 px-8">
+        <Button type="submit" data-permission="Cadastros.Produto.salvar" data-sensitive disabled={isSubmitting || !contextoValido || (produto?.id ? !podeEditar : !podeCriar)} className="bg-purple-600 hover:bg-purple-700 px-8">
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {!isSubmitting && <Save className="w-4 h-4 mr-2" />}
           {produto ? 'Atualizar Produto' : 'Criar Produto'}

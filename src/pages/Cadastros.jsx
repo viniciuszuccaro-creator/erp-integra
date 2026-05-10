@@ -11,7 +11,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchInput from "@/components/ui/SearchInput";
 import usePermissions from "../components/lib/usePermissions";
-import { useWindow } from "../components/lib/useWindow";
 import GerenciadorJanelas from "../components/sistema/GerenciadorJanelas";
 import Bloco1Pessoas from "@/components/cadastros/blocks/Bloco1Pessoas";
 import Bloco2Produtos from "@/components/cadastros/blocks/Bloco2Produtos";
@@ -25,9 +24,13 @@ import ExternalAppsHub from "@/components/administracao-sistema/ExternalAppsHub"
 
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [acordeonAberto, setAcordeonAberto] = useState([]);
+  const [acordeonAberto, setAcordeonAberto] = useState(["bloco1"]);
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
   const { counts: allCounts, totals, isLoading: countsLoading } = useCadastrosAllCounts();
+  const { isAdmin, hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const podeVerCadastros = isAdmin?.() || hasPermission("Cadastros", null, "visualizar") || hasPermission("Cadastros", "Cadastros Gerais", "visualizar");
+  const contextoAtivo = Boolean(empresaAtual?.id || grupoAtual?.id);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -52,15 +55,27 @@ export default function Cadastros() {
     }
   };
 
+  if (!podeVerCadastros) {
+    return (
+      <div className="h-full w-full p-6 lg:p-8 flex items-center justify-center">
+        <Card className="w-full max-w-xl rounded-sm border border-amber-200 bg-amber-50">
+          <CardContent className="p-6 text-sm text-amber-900">
+            Seu perfil ainda nao tem permissao para visualizar Cadastros Gerais.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-full w-full p-6 lg:p-8 space-y-6">
+    <div className="h-full w-full min-h-0 overflow-auto p-6 lg:p-8 space-y-6">
       <GerenciadorJanelas />
 
       <Tabs value={abaGerenciamento} onValueChange={handleAbaChange}>
         <div className="overflow-x-auto pb-1">
           <TabsList className="inline-flex flex-nowrap min-w-max gap-2 mb-2">
-            <TabsTrigger value="cadastros">📋 Cadastros Gerais</TabsTrigger>
-            <TabsTrigger value="apps-externos">📱 Apps, Portais & Ambientes Externos</TabsTrigger>
+            <TabsTrigger value="cadastros" data-permission="Cadastros.visualizar">📋 Cadastros Gerais</TabsTrigger>
+            <TabsTrigger value="apps-externos" data-permission="Sistema.Integracoes.visualizar">📱 Apps, Portais & Ambientes Externos</TabsTrigger>
           </TabsList>
         </div>
 
@@ -71,6 +86,14 @@ export default function Cadastros() {
 
         {/* ABA: CADASTROS */}
         <TabsContent value="cadastros" className="space-y-6 mt-6">
+          {!contextoAtivo && (
+            <Card className="rounded-sm border border-amber-200 bg-amber-50">
+              <CardContent className="p-3 text-sm text-amber-900">
+                Selecione um grupo ou empresa para aplicar o filtro multiempresa nos cadastros.
+              </CardContent>
+            </Card>
+          )}
+
           {/* DASHBOARD DE TOTAIS */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100" onClick={() => handleCardClick('bloco1')}>
@@ -157,7 +180,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco1Pessoas allCounts={allCounts} isLoading={countsLoading} />
+                <Bloco1Pessoas allCounts={allCounts} isLoading={countsLoading} searchTerm={searchTerm} />
               </AccordionContent>
             </AccordionItem>
 
@@ -173,7 +196,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco2Produtos allCounts={allCounts} isLoading={countsLoading} />
+                <Bloco2Produtos allCounts={allCounts} isLoading={countsLoading} searchTerm={searchTerm} />
               </AccordionContent>
             </AccordionItem>
 
@@ -189,7 +212,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco3Financeiro allCounts={allCounts} isLoading={countsLoading} />
+                <Bloco3Financeiro allCounts={allCounts} isLoading={countsLoading} searchTerm={searchTerm} />
               </AccordionContent>
             </AccordionItem>
 
@@ -205,7 +228,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco4Logistica allCounts={allCounts} isLoading={countsLoading} />
+                <Bloco4Logistica allCounts={allCounts} isLoading={countsLoading} searchTerm={searchTerm} />
               </AccordionContent>
             </AccordionItem>
 
@@ -221,7 +244,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco5Organizacional allCounts={allCounts} isLoading={countsLoading} />
+                <Bloco5Organizacional allCounts={allCounts} isLoading={countsLoading} searchTerm={searchTerm} />
               </AccordionContent>
             </AccordionItem>
 
@@ -237,7 +260,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <Bloco6Tecnologia allCounts={allCounts} isLoading={countsLoading} />
+                <Bloco6Tecnologia allCounts={allCounts} isLoading={countsLoading} searchTerm={searchTerm} />
               </AccordionContent>
             </AccordionItem>
           </Accordion>

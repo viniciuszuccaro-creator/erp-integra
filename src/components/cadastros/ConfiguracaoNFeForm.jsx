@@ -7,8 +7,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Save, Upload } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
-export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, windowMode = false }) {
+export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, windowMode = false, empresaId, groupId, scope: scopeProp }) {
+  const { toast } = useToast();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { canCreate, canEdit } = usePermissions();
+  const [localSubmitting, setLocalSubmitting] = useState(false);
   const [formData, setFormData] = useState(config || {
     provedor: "eNotas",
     api_url: "",
@@ -23,11 +30,50 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
     ativo: true,
     observacoes: ""
   });
+  const grupoIdAtual = groupId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaIdAtual = empresaId || empresaAtual?.id || null;
+  const scope = scopeProp || (empresaIdAtual ? { empresa_id: empresaIdAtual, group_id: grupoIdAtual } : grupoIdAtual ? { group_id: grupoIdAtual } : null);
+  const contextoValido = !!scope;
+  const salvando = !!isSubmitting || localSubmitting;
+  const podeSalvar = config?.id
+    ? (canEdit("Fiscal", "ConfiguracaoNFe") || canEdit("Fiscal", "NF-e") || canEdit("Cadastros", null))
+    : (canCreate("Fiscal", "ConfiguracaoNFe") || canCreate("Fiscal", "NF-e") || canCreate("Cadastros", null));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Injeta 'nome' para o Visualizador Universal (usa provedor + ambiente como identificador)
-    await onSubmit({ ...formData, nome: formData.nome || (formData.provedor + ' - ' + formData.ambiente) });
+    if (!contextoValido) {
+      toast({ title: "Selecione um grupo ou empresa antes de salvar NF-e.", variant: "destructive" });
+      return;
+    }
+    if (!podeSalvar) {
+      toast({ title: "Seu perfil nao permite salvar configuracao de NF-e.", variant: "destructive" });
+      return;
+    }
+
+    const payload = { ...formData, nome: formData.nome || (formData.provedor + ' - ' + formData.ambiente), ...scope };
+
+    if (onSubmit) {
+      await onSubmit(payload);
+      return;
+    }
+
+    setLocalSubmitting(true);
+    try {
+      const existentes = config?.id
+        ? []
+        : await filterInContext('ConfiguracaoNFe', { nome: payload.nome, ...scope }, undefined, 1);
+      const result = config?.id
+        ? await updateInContext('ConfiguracaoNFe', config.id, payload)
+        : existentes?.[0]?.id
+          ? await updateInContext('ConfiguracaoNFe', existentes[0].id, { ...existentes[0], ...payload })
+          : await createInContext('ConfiguracaoNFe', payload);
+
+      toast({ title: "Configuracao NF-e salva!" });
+    } catch (error) {
+      toast({ title: "Erro ao salvar NF-e", description: String(error?.message || error), variant: "destructive" });
+    } finally {
+      setLocalSubmitting(false);
+    }
   };
 
   const form = (
@@ -43,7 +89,7 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Provedor *</Label>
-              <Select value={formData.provedor} onValueChange={(val) => setFormData({ ...formData, provedor: val })}>
+              <Select value={formData.provedor} disabled={!contextoValido || salvando} onValueChange={(val) => setFormData({ ...formData, provedor: val })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -58,7 +104,7 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
 
             <div>
               <Label>Ambiente</Label>
-              <Select value={formData.ambiente} onValueChange={(val) => setFormData({ ...formData, ambiente: val })}>
+              <Select value={formData.ambiente} disabled={!contextoValido || salvando} onValueChange={(val) => setFormData({ ...formData, ambiente: val })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -76,6 +122,7 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
               value={formData.api_url}
               onChange={(e) => setFormData({ ...formData, api_url: e.target.value })}
               placeholder="https://api.enotas.com.br"
+              disabled={!contextoValido || salvando}
             />
           </div>
 
@@ -86,6 +133,7 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
               value={formData.api_key}
               onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
               placeholder="Insira a chave da API"
+              disabled={!contextoValido || salvando}
             />
           </div>
 
@@ -96,6 +144,7 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
               value={formData.senha_certificado}
               onChange={(e) => setFormData({ ...formData, senha_certificado: e.target.value })}
               placeholder="Senha do certificado A1"
+              disabled={!contextoValido || salvando}
             />
           </div>
 
@@ -106,6 +155,7 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
                 value={formData.serie_nfe}
                 onChange={(e) => setFormData({ ...formData, serie_nfe: e.target.value })}
                 placeholder="1"
+                disabled={!contextoValido || salvando}
               />
             </div>
             <div>
@@ -113,7 +163,8 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
               <Input
                 type="number"
                 value={formData.proximo_numero}
-                onChange={(e) => setFormData({ ...formData, proximo_numero: parseInt(e.target.value) })}
+                onChange={(e) => setFormData({ ...formData, proximo_numero: e.target.value === "" ? "" : parseInt(e.target.value, 10) || 1 })}
+                disabled={!contextoValido || salvando}
               />
             </div>
           </div>
@@ -124,6 +175,7 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
               <Switch
                 checked={formData.emitir_automatico}
                 onCheckedChange={(val) => setFormData({ ...formData, emitir_automatico: val })}
+                disabled={!contextoValido || salvando}
               />
             </div>
 
@@ -132,6 +184,7 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
               <Switch
                 checked={formData.enviar_email_automatico}
                 onCheckedChange={(val) => setFormData({ ...formData, enviar_email_automatico: val })}
+                disabled={!contextoValido || salvando}
               />
             </div>
 
@@ -140,6 +193,7 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
               <Switch
                 checked={formData.ativo}
                 onCheckedChange={(val) => setFormData({ ...formData, ativo: val })}
+                disabled={!contextoValido || salvando}
               />
             </div>
           </div>
@@ -150,15 +204,16 @@ export default function ConfiguracaoNFeForm({ config, onSubmit, isSubmitting, wi
               value={formData.observacoes}
               onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
               rows={2}
+              disabled={!contextoValido || salvando}
             />
           </div>
         </CardContent>
       </Card>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
+        <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={salvando || !contextoValido || !podeSalvar} data-action="Fiscal.NFe.salvar">
           <Save className="w-4 h-4 mr-2" />
-          {isSubmitting ? 'Salvando...' : config ? 'Atualizar' : 'Criar'}
+          {salvando ? 'Salvando...' : config ? 'Atualizar' : 'Criar'}
         </Button>
       </div>
     </form>

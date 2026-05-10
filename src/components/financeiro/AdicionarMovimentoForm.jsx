@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function AdicionarMovimentoForm({ initialData = {}, onSubmit, onCancel, empresaAtual }) {
   const [formMovimento, setFormMovimento] = useState({
@@ -23,22 +24,41 @@ export default function AdicionarMovimentoForm({ initialData = {}, onSubmit, onC
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { empresaAtual: empresaContexto, grupoAtual, createInContext } = useContextoVisual();
+  const { canCreate, canEdit, hasPermission } = usePermissions();
+  const empresaSelecionada = empresaAtual || empresaContexto;
+  const groupId = grupoAtual?.id || empresaSelecionada?.group_id || empresaSelecionada?.grupo_id || null;
+  const contextoValido = !!(empresaSelecionada?.id || groupId);
+  const podeRegistrarMovimento = canCreate('Financeiro', 'Caixa') ||
+    canEdit('Financeiro', 'Caixa') ||
+    hasPermission('Financeiro', 'Caixa Central', 'criar') ||
+    hasPermission('Financeiro', 'Movimentos de Caixa', 'criar');
+  const controlesDesabilitados = !contextoValido || !podeRegistrarMovimento;
 
   const handleAdicionarMovimento = async () => {
+    if (!contextoValido || !podeRegistrarMovimento) {
+      toast({
+        title: "AÃ§Ã£o bloqueada",
+        description: "Selecione um grupo/empresa e confirme sua permissÃ£o para movimentar caixa.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const movimento = {
       descricao: formMovimento.descricao,
       valor: formMovimento.valor,
       observacoes: formMovimento.observacoes,
       categoria: formMovimento.categoria,
-      empresa_id: empresaAtual?.id,
-      group_id: empresaAtual?.group_id
+      ...(empresaSelecionada?.id ? { empresa_id: empresaSelecionada.id } : {}),
+      ...(groupId ? { group_id: groupId } : {})
     };
 
     try {
       if (formMovimento.tipo === 'entrada') {
-        await base44.entities.CaixaMovimento.create({
-          empresa_id: empresaAtual?.id,
-          group_id: empresaAtual?.group_id,
+        await createInContext('CaixaMovimento', {
+          ...(empresaSelecionada?.id ? { empresa_id: empresaSelecionada.id } : {}),
+          ...(groupId ? { group_id: groupId } : {}),
           data_movimento: new Date().toISOString(),
           tipo_movimento: formMovimento.categoria === 'Reforço' ? 'Reforço' : 'Entrada',
           origem: formMovimento.categoria === 'Venda' ? 'Venda Direta' : formMovimento.categoria === 'Reforço' ? 'Reforço' : 'Liquidação Título',
@@ -51,7 +71,7 @@ export default function AdicionarMovimentoForm({ initialData = {}, onSubmit, onC
         });
 
         if (formMovimento.categoria !== 'Reforço') {
-          await base44.entities.ContaReceber.create({
+          await createInContext('ContaReceber', {
             ...movimento,
             cliente: formMovimento.responsavel || 'Caixa',
             data_emissao: new Date().toISOString().split('T')[0],
@@ -68,9 +88,9 @@ export default function AdicionarMovimentoForm({ initialData = {}, onSubmit, onC
         queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
         toast({ title: "✅ Entrada registrada no Caixa!" });
       } else {
-        await base44.entities.CaixaMovimento.create({
-          empresa_id: empresaAtual?.id,
-          group_id: empresaAtual?.group_id,
+        await createInContext('CaixaMovimento', {
+          ...(empresaSelecionada?.id ? { empresa_id: empresaSelecionada.id } : {}),
+          ...(groupId ? { group_id: groupId } : {}),
           data_movimento: new Date().toISOString(),
           tipo_movimento: formMovimento.categoria === 'Sangria' ? 'Sangria' : 'Saída',
           origem: formMovimento.categoria === 'Compra' ? 'Pagamento Título' : formMovimento.categoria === 'Sangria' ? 'Sangria' : formMovimento.categoria,
@@ -83,7 +103,7 @@ export default function AdicionarMovimentoForm({ initialData = {}, onSubmit, onC
         });
 
         if (formMovimento.categoria !== 'Sangria') {
-          await base44.entities.ContaPagar.create({
+          await createInContext('ContaPagar', {
             ...movimento,
             fornecedor: formMovimento.responsavel || 'Caixa',
             data_emissao: new Date().toISOString().split('T')[0],
@@ -119,6 +139,7 @@ export default function AdicionarMovimentoForm({ initialData = {}, onSubmit, onC
             <Select
               value={formMovimento.tipo}
               onValueChange={(v) => setFormMovimento({ ...formMovimento, tipo: v, categoria: '' })}
+              disabled={controlesDesabilitados}
             >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -149,6 +170,7 @@ export default function AdicionarMovimentoForm({ initialData = {}, onSubmit, onC
                 value={formMovimento.valor}
                 onChange={(e) => setFormMovimento({ ...formMovimento, valor: parseFloat(e.target.value) || 0 })}
                 className="pl-10"
+                disabled={controlesDesabilitados}
                 required
               />
             </div>
@@ -161,6 +183,7 @@ export default function AdicionarMovimentoForm({ initialData = {}, onSubmit, onC
             <Select
               value={formMovimento.forma_pagamento}
               onValueChange={(v) => setFormMovimento({ ...formMovimento, forma_pagamento: v })}
+              disabled={controlesDesabilitados}
             >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -178,6 +201,7 @@ export default function AdicionarMovimentoForm({ initialData = {}, onSubmit, onC
             <Select
               value={formMovimento.categoria}
               onValueChange={(v) => setFormMovimento({ ...formMovimento, categoria: v })}
+              disabled={controlesDesabilitados}
               required
             >
               <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
@@ -211,6 +235,7 @@ export default function AdicionarMovimentoForm({ initialData = {}, onSubmit, onC
             value={formMovimento.descricao}
             onChange={(e) => setFormMovimento({ ...formMovimento, descricao: e.target.value })}
             placeholder="Descreva o movimento..."
+            disabled={controlesDesabilitados}
             required
           />
         </div>
@@ -271,6 +296,7 @@ export default function AdicionarMovimentoForm({ initialData = {}, onSubmit, onC
         <Button 
           type="button"
           onClick={handleAdicionarMovimento}
+          disabled={controlesDesabilitados}
           className={formMovimento.tipo === 'entrada' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
         >
           {formMovimento.tipo === 'entrada' ? <ArrowUpCircle className="w-4 h-4 mr-2" /> : <ArrowDownCircle className="w-4 h-4 mr-2" />}

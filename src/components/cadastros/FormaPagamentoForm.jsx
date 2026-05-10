@@ -7,11 +7,16 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, CreditCard, Trash2, Power, PowerOff } from "lucide-react";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting, windowMode = false }) {
+  const { canCreate, canEdit, canDelete } = usePermissions();
+  const podeCriar = canCreate("Cadastros", "FormaPagamento") || canCreate("Financeiro", "FormaPagamento") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "FormaPagamento") || canEdit("Financeiro", "FormaPagamento") || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", "FormaPagamento") || canDelete("Financeiro", "FormaPagamento") || canDelete("Cadastros", null);
   const [formData, setFormData] = useState(forma || {
     codigo: '',
     descricao: '',
@@ -34,10 +39,22 @@ export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting, wind
   });
 
   const handleSubmit = async () => {
+    if (forma && !podeEditar) {
+      alert("Sem permissao para editar formas de pagamento.");
+      return;
+    }
+    if (!forma && !podeCriar) {
+      alert("Sem permissao para criar formas de pagamento.");
+      return;
+    }
     onSubmit(formData);
   };
 
   const handleExcluir = () => {
+    if (!podeExcluir) {
+      alert("Sem permissao para excluir formas de pagamento.");
+      return;
+    }
     if (!window.confirm(`Tem certeza que deseja excluir a forma de pagamento "${formData.descricao}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
@@ -164,6 +181,9 @@ export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting, wind
               type="button"
               variant="outline"
               onClick={handleAlternarStatus}
+              disabled={!podeEditar}
+              data-permission="Cadastros.FormaPagamento.alterarStatus"
+              data-sensitive
               className={formData.ativa ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
             >
               {formData.ativa ? (
@@ -172,12 +192,24 @@ export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting, wind
                 <><Power className="w-4 h-4 mr-2" />Ativar</>
               )}
             </Button>
-            <Button type="button" variant="destructive" onClick={handleExcluir}>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleExcluir}
+              disabled={!podeExcluir}
+              data-permission="Cadastros.FormaPagamento.excluir"
+              data-sensitive
+            >
               <Trash2 className="w-4 h-4 mr-2" />Excluir
             </Button>
           </>
         )}
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={isSubmitting || (forma ? !podeEditar : !podeCriar)}
+          data-permission="Cadastros.FormaPagamento.salvar"
+          data-sensitive
+        >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {forma ? 'Atualizar' : 'Criar Forma de Pagamento'}
         </Button>

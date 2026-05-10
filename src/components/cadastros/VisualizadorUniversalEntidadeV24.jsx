@@ -9,6 +9,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import useEntityCounts, { SIMPLE_CATALOG } from "@/components/lib/useEntityCounts";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,14 @@ import {
   ChevronUp, ChevronDown, ChevronsUpDown,
   Search, Edit, Trash2, Plus, RefreshCw, AlertCircle, X
 } from "lucide-react";
+import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompleto";
+import CadastroFornecedorCompleto from "@/components/cadastros/CadastroFornecedorCompleto";
+import TransportadoraForm from "@/components/cadastros/TransportadoraForm";
+import ColaboradorForm from "@/components/rh/ColaboradorForm";
+import RepresentanteFormCompleto from "@/components/cadastros/RepresentanteFormCompleto";
+import ContatoB2BForm from "@/components/cadastros/ContatoB2BForm";
+import SegmentoClienteForm from "@/components/cadastros/SegmentoClienteForm";
+import RegiaoAtendimentoForm from "@/components/cadastros/RegiaoAtendimentoForm";
 
 // ─── constantes visuais ───────────────────────────────────────────────────────
 const STATUS_COLORS = {
@@ -44,12 +53,23 @@ const DATE_FIELDS   = new Set(["created_date","updated_date","data_admissao","da
 const MONEY_FIELDS  = new Set(["salario","preco_venda","custo_aquisicao","custo_medio","valor_frete","orcamento_mensal","limite_credito","valor_total","valor","valor_minimo","valor_maximo","percentual_comissao"]);
 const PAGE_SIZES = [10, 20, 50, 100];
 const UNSORTABLE_BACKEND = new Set(["contatos","documentos","locais_entrega","lotes","itens"]);
+const ENTITY_CONTEXT_FIELD = { Fornecedor: "empresa_dona_id", Transportadora: "empresa_dona_id", Colaborador: "empresa_alocada_id" };
+const SHARED_ENTITIES = new Set(["Cliente", "Fornecedor", "Transportadora"]);
+
+const DEFAULT_FORM_COMPONENTS = {
+  Cliente: CadastroClienteCompleto,
+  Fornecedor: CadastroFornecedorCompleto,
+  Transportadora: TransportadoraForm,
+  Colaborador: ColaboradorForm,
+  Representante: RepresentanteFormCompleto,
+  ContatoB2B: ContatoB2BForm,
+  SegmentoCliente: SegmentoClienteForm,
+  RegiaoAtendimento: RegiaoAtendimentoForm,
+};
 
 const SELF_MANAGED_NAMES = new Set([
-  "CadastroClienteCompleto","CadastroFornecedorCompleto","TransportadoraForm",
-  "ColaboradorForm","RepresentanteFormCompleto","RepresentanteForm",
-  "ProdutoFormV22_Completo","ProdutoFormCompleto","ProdutoForm","RegiaoAtendimentoForm",
-  "ContatoB2BForm","SegmentoClienteForm",
+  "CadastroClienteCompleto","CadastroFornecedorCompleto","RepresentanteFormCompleto",
+  "ProdutoFormV22_Completo","ProdutoFormCompleto","ProdutoForm",
 ]);
 
 const FORM_ALIASES = [
@@ -187,13 +207,15 @@ function invalidateAll(qc, entity) {
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────────────────────
 export default function VisualizadorUniversalEntidadeV24({
   nomeEntidade, tituloDisplay, icone: IconeProp,
-  camposPrincipais, componenteEdicao: FormComponent,
+  camposPrincipais, componenteEdicao: FormComponentProp,
   windowMode, entityName, columns,
   pageSize: pageSizeProp,
   statusColors: extraColors,
+  startWithForm = false,
 }) {
   const ENTITY   = nomeEntidade || entityName || "";
   const TITULO   = tituloDisplay || ENTITY;
+  const FormComponent = FormComponentProp || DEFAULT_FORM_COMPONENTS[ENTITY] || null;
   const isSimple = SIMPLE_CATALOG.has(ENTITY);
   const _camposPrincipais = camposPrincipais || [];
   const _extraColors      = extraColors || {};
@@ -206,9 +228,22 @@ export default function VisualizadorUniversalEntidadeV24({
   }, [FormComponent]);
 
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const {
+    empresaAtual,
+    grupoAtual,
+    empresasDoGrupo,
+    createInContext,
+    updateInContext,
+    deleteInContext
+  } = useContextoVisual();
+  const { canCreate, canEdit, canDelete, hasPermission } = usePermissions();
   const empresaId = (empresaAtual && empresaAtual.id) || null;
   const groupId   = (grupoAtual   && grupoAtual.id)   || null;
+  const contextoValido = !!(empresaId || groupId || isSimple);
+  const canViewCadastro = hasPermission("Cadastros", ENTITY, "visualizar") || hasPermission("Cadastros", null, "visualizar");
+  const canCreateCadastro = canCreate("Cadastros", ENTITY) || canCreate("Cadastros", null);
+  const canEditCadastro = canEdit("Cadastros", ENTITY) || canEdit("Cadastros", null);
+  const canDeleteCadastro = canDelete("Cadastros", ENTITY) || canDelete("Cadastros", null);
 
   const COLUMNS = useMemo(function() {
     if (columns && columns.length > 0) return columns;
@@ -232,7 +267,7 @@ export default function VisualizadorUniversalEntidadeV24({
   const [page,     setPage]     = useState(1);
   const [pageSize, setPageSize] = useState(_pageSizeProp);
 
-  const [showForm,      setShowForm]      = useState(false);
+  const [showForm,      setShowForm]      = useState(Boolean(startWithForm && FormComponent));
   const [editItem,      setEditItem]      = useState(null);
   const [formKey,       setFormKey]       = useState(0);
   const [isLoadingEdit, setIsLoadingEdit] = useState(false);
@@ -262,11 +297,36 @@ export default function VisualizadorUniversalEntidadeV24({
 
   // Filtro limpo: backend expande empresa_id ou group_id para todos os campos
   const readFilter = useMemo(function() {
-    if (isSimple) return {};
-    if (groupId && !empresaId) return { group_id: groupId };
-    if (empresaId) return { empresa_id: empresaId };
-    return {};
-  }, [isSimple, empresaId, groupId]);
+    if (isSimple && !groupId && !empresaId) return {};
+    const ctxCampo = ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id";
+    const orConds = [];
+    if (empresaId) {
+      orConds.push({ [ctxCampo]: empresaId });
+      if (ENTITY === "Cliente") {
+        orConds.push({ empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } });
+      } else if (SHARED_ENTITIES.has(ENTITY)) {
+        orConds.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
+      }
+    }
+    if (groupId) {
+      orConds.push({ group_id: groupId });
+      if (!empresaId && Array.isArray(empresasDoGrupo) && empresasDoGrupo.length) {
+        const ids = empresasDoGrupo.map(function(e) { return e.id; }).filter(Boolean);
+        if (ids.length) {
+          if (ENTITY === "Cliente") {
+            orConds.push({ empresa_id: { $in: ids } }, { empresa_dona_id: { $in: ids } }, { empresas_compartilhadas_ids: { $in: ids } });
+          } else if (ENTITY === "Fornecedor" || ENTITY === "Transportadora") {
+            orConds.push({ empresa_dona_id: { $in: ids } }, { empresas_compartilhadas_ids: { $in: ids } });
+          } else if (ENTITY === "Colaborador") {
+            orConds.push({ empresa_alocada_id: { $in: ids } });
+          } else {
+            orConds.push({ [ctxCampo]: { $in: ids } });
+          }
+        }
+      }
+    }
+    return orConds.length ? { $or: orConds } : {};
+  }, [ENTITY, isSimple, empresaId, groupId, empresasDoGrupo]);
 
   const backendSortField = UNSORTABLE_BACKEND.has(sortField) ? "updated_date" : sortField;
   const backendSortDir   = sortDir;
@@ -300,7 +360,7 @@ export default function VisualizadorUniversalEntidadeV24({
     refetchOnWindowFocus: false,
     refetchOnMount: 'always',
     placeholderData: function(prev) { return prev !== undefined ? prev : []; },
-    enabled: !!ENTITY,
+    enabled: !!ENTITY && contextoValido && canViewCadastro,
   });
 
   // items: estabilidade total — nunca desaparece durante sort/paginação/exclusão
@@ -378,10 +438,13 @@ export default function VisualizadorUniversalEntidadeV24({
   const handlePersistSubmit = useCallback(async function(formData) {
     if (!formData || !ENTITY) return;
     if (formData._action === "delete") {
-      if (formData.id) { try { await base44.entities[ENTITY].delete(formData.id); } catch (_) {} }
+      if (!canDeleteCadastro) throw new Error("Sem permissÃ£o para excluir.");
+      if (formData.id) { try { await deleteInContext(ENTITY, formData.id); } catch (_) {} }
       handleCloseForm(true);
       return;
     }
+    if (editItem && editItem.id && !canEditCadastro) throw new Error("Sem permissÃ£o para editar.");
+    if ((!editItem || !editItem.id) && !canCreateCadastro) throw new Error("Sem permissÃ£o para criar.");
     setIsSaving(true);
     try {
       const clean = Object.assign({}, formData);
@@ -391,9 +454,9 @@ export default function VisualizadorUniversalEntidadeV24({
         if (!clean.group_id  && groupId)   clean.group_id   = groupId;
       }
       if (editItem && editItem.id) {
-        await base44.entities[ENTITY].update(editItem.id, clean);
+        await updateInContext(ENTITY, editItem.id, clean, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
       } else {
-        await base44.entities[ENTITY].create(clean);
+        await createInContext(ENTITY, clean, ENTITY_CONTEXT_FIELD[ENTITY] || "empresa_id");
       }
       handleCloseForm(true);
     } catch (e) {
@@ -401,23 +464,31 @@ export default function VisualizadorUniversalEntidadeV24({
     } finally {
       setIsSaving(false);
     }
-  }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, isSimple]);
+  }, [ENTITY, editItem, empresaId, groupId, handleCloseForm, isSimple, canCreateCadastro, canEditCadastro, canDeleteCadastro, createInContext, updateInContext, deleteInContext]);
 
   const handleNewItem = useCallback(function() {
+    if (!canCreateCadastro) {
+      alert("Sem permissao para criar.");
+      return;
+    }
     setEditItem(null);
     setEditError(null);
     setFormKey(function(k) { return k + 1; });
     setShowForm(true);
-  }, []);
+  }, [canCreateCadastro]);
 
   const handleEditItem = useCallback(function(item) {
     if (!item || !item.id) return;
+    if (!canEditCadastro) {
+      alert("Sem permissao para editar.");
+      return;
+    }
     setEditItem(JSON.parse(JSON.stringify(item)));
     setEditError(null);
     setIsLoadingEdit(false);
     setFormKey(function(k) { return k + 1; });
     setShowForm(true);
-  }, []);
+  }, [canEditCadastro]);
 
   const formProps = useMemo(
     function() { return buildFormProps(editItem, handleCloseForm, isSelfManaged ? handleCloseForm : handlePersistSubmit); },
@@ -427,26 +498,34 @@ export default function VisualizadorUniversalEntidadeV24({
   // ── exclusão unitária ────────────────────────────────────────────────────────
   const handleDelete = useCallback(async function(item) {
     const label = item.nome || item.razao_social || item.nome_completo || item.descricao || item.id;
-    if (!window.confirm('Confirmar exclusão de "' + label + '"?')) return;
-    try { await base44.entities[ENTITY].delete(item.id); }
+    if (!window.confirm('Regra-Mae: confirma excluir "' + label + '" de ' + TITULO + '? Esta acao sensivel sera auditada.')) return;
+    if (!canDeleteCadastro) {
+      alert("Sem permissÃ£o para excluir.");
+      return;
+    }
+    try { await deleteInContext(ENTITY, item.id); }
     catch (e) { alert("Erro: " + ((e && e.message) || String(e))); return; }
     // Atualiza lastGoodData imediatamente (remove item deletado da lista visível)
     lastGoodData.current = lastGoodData.current.filter(function(i) { return i.id !== item.id; });
     setSelectedIds(function(prev) { const n = new Set(prev); n.delete(item.id); return n; });
     if (items.length <= 1 && page > 1) setPage(function(p) { return Math.max(1, p - 1); });
     invalidateAll(queryClient, ENTITY);
-  }, [ENTITY, queryClient, items.length, page]);
+  }, [ENTITY, queryClient, items.length, page, canDeleteCadastro, deleteInContext]);
 
   // ── exclusão em massa ────────────────────────────────────────────────────────
   const handleDeleteSelected = useCallback(async function() {
+    if (!canDeleteCadastro) {
+      alert("Sem permissÃ£o para excluir.");
+      return;
+    }
     const effCount = crossPageAll
       ? Math.max(0, totalCount - deselectedIds.size)
       : selectedIds.size;
     if (effCount === 0) return;
 
     const msg = (crossPageAll && effCount > items.length)
-      ? "⚠️ Isso irá excluir " + effCount + " registro(s) PERMANENTEMENTE em todas as páginas!\nDeseja continuar?"
-      : "Confirmar exclusão de " + effCount + " registro(s)?";
+      ? "Regra-Mae: isso ira excluir " + effCount + " registro(s) de " + TITULO + " permanentemente em todas as paginas. Esta acao sera auditada.\nDeseja continuar?"
+      : "Regra-Mae: confirmar exclusao de " + effCount + " registro(s) de " + TITULO + "? Esta acao sera auditada.";
     if (!window.confirm(msg)) return;
 
     try {
@@ -475,7 +554,7 @@ export default function VisualizadorUniversalEntidadeV24({
       for (let i = 0; i < idsToDelete.length; i += 20) {
         await Promise.all(
           idsToDelete.slice(i, i + 20).map(function(id) {
-            return base44.entities[ENTITY].delete(id).catch(function() {});
+            return deleteInContext(ENTITY, id).catch(function() {});
           })
         );
       }
@@ -486,7 +565,7 @@ export default function VisualizadorUniversalEntidadeV24({
     setCrossPageAll(false);
     setPage(1);
     invalidateAll(queryClient, ENTITY);
-  }, [ENTITY, crossPageAll, totalCount, selectedIds, deselectedIds, readFilter, queryClient, items.length]);
+  }, [ENTITY, crossPageAll, totalCount, selectedIds, deselectedIds, readFilter, queryClient, items.length, deleteInContext, canDeleteCadastro]);
 
   // ── seleção ──────────────────────────────────────────────────────────────────
   const isItemSelected = useCallback(function(id) {
@@ -544,6 +623,16 @@ export default function VisualizadorUniversalEntidadeV24({
   const showCrossPageBanner = !crossPageAll && selectedIds.size > 0 && allPageSelected && totalCount > items.length;
 
   // ─── RENDER ───────────────────────────────────────────────────────────────────
+  if (!canViewCadastro) {
+    return (
+      <div className="w-full h-full flex items-center justify-center p-6">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Seu perfil nao tem permissao para visualizar {TITULO}.
+        </div>
+      </div>
+    );
+  }
+
   const renderTableBody = function() {
     // Skeleton apenas na carga inicial absoluta (nunca durante sort/paginação)
   const isInitialLoad = isFetching && !everLoadedRef.current && lastGoodData.current.length === 0;
@@ -592,6 +681,9 @@ export default function VisualizadorUniversalEntidadeV24({
                 ref={function(el) { if (el) el.indeterminate = somePageSelected && !allPageSelected; }}
                 checked={allPageSelected}
                 onChange={handleToggleSelectPage}
+                disabled={!canDeleteCadastro}
+                data-permission={`Cadastros.${ENTITY}.excluir`}
+                data-sensitive="true"
                 className="w-4 h-4 cursor-pointer accent-blue-600"
               />
             </th>
@@ -625,6 +717,9 @@ export default function VisualizadorUniversalEntidadeV24({
                     type="checkbox"
                     checked={checked}
                     onChange={function(e) { handleItemCheck(item.id, e.target.checked); }}
+                    disabled={!canDeleteCadastro}
+                    data-permission={`Cadastros.${ENTITY}.excluir`}
+                    data-sensitive="true"
                     className="w-4 h-4 cursor-pointer accent-blue-600"
                   />
                 </td>
@@ -642,7 +737,9 @@ export default function VisualizadorUniversalEntidadeV24({
                         type="button"
                         onClick={function(e) { e.stopPropagation(); handleEditItem(item); }}
                         title="Editar"
-                        disabled={isLoadingEdit}
+                        disabled={isLoadingEdit || !canEditCadastro}
+                        data-permission={`Cadastros.${ENTITY}.editar`}
+                        data-sensitive="true"
                         className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-40"
                       >
                         {isLoadingEdit
@@ -654,6 +751,9 @@ export default function VisualizadorUniversalEntidadeV24({
                       type="button"
                       onClick={function() { handleDelete(item); }}
                       title="Excluir"
+                      disabled={!canDeleteCadastro}
+                      data-permission={`Cadastros.${ENTITY}.excluir`}
+                      data-sensitive="true"
                       className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -689,9 +789,16 @@ export default function VisualizadorUniversalEntidadeV24({
             value={search}
             onChange={function(e) { setSearch(e.target.value); }}
             className="pl-8 h-9 rounded-sm text-sm bg-white border-slate-200"
+            data-permission={`Cadastros.${ENTITY}.visualizar`}
+            data-action={`Cadastros.${ENTITY}.buscar`}
           />
           {search && (
-            <button onClick={function() { setSearch(""); }} className="absolute right-2 top-2.5 text-slate-400 hover:text-slate-600">
+            <button
+              onClick={function() { setSearch(""); }}
+              className="absolute right-2 top-2.5 text-slate-400 hover:text-slate-600"
+              data-permission={`Cadastros.${ENTITY}.visualizar`}
+              data-action={`Cadastros.${ENTITY}.limpar-busca`}
+            >
               <X className="w-3.5 h-3.5" />
             </button>
           )}
@@ -701,6 +808,8 @@ export default function VisualizadorUniversalEntidadeV24({
           value={pageSize}
           onChange={function(e) { setPageSize(Number(e.target.value)); setPage(1); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer shrink-0"
+          data-permission={`Cadastros.${ENTITY}.visualizar`}
+          data-action={`Cadastros.${ENTITY}.alterar-paginacao`}
         >
           {PAGE_SIZES.map(function(ps) { return <option key={ps} value={ps}>{ps}/pág</option>; })}
         </select>
@@ -709,6 +818,8 @@ export default function VisualizadorUniversalEntidadeV24({
           value={sortField + "|" + sortDir}
           onChange={function(e) { handleSortDropdown(e.target.value); }}
           className="border border-slate-200 rounded-sm h-9 px-2 text-sm text-slate-700 bg-white cursor-pointer shrink-0"
+          data-permission={`Cadastros.${ENTITY}.visualizar`}
+          data-action={`Cadastros.${ENTITY}.ordenar`}
         >
           <option value="updated_date|desc">↓ Mais Recentes</option>
           <option value="updated_date|asc">↑ Mais Antigos</option>
@@ -728,18 +839,37 @@ export default function VisualizadorUniversalEntidadeV24({
           onClick={function() { lastGoodData.current = []; everLoadedRef.current = false; invalidateAll(queryClient, ENTITY); }}
           className="h-9 w-9 flex items-center justify-center border border-slate-200 rounded-sm bg-white hover:bg-slate-50 shrink-0"
           title="Recarregar"
+          data-permission={`Cadastros.${ENTITY}.visualizar`}
+          data-action={`Cadastros.${ENTITY}.recarregar`}
         >
           <RefreshCw className={"w-4 h-4 " + (isFetching ? "animate-spin text-blue-500" : "text-slate-500")} />
         </button>
 
         {FormComponent && (
-          <Button size="sm" onClick={handleNewItem} className="h-9 rounded-sm gap-1 shrink-0">
+          <Button
+            size="sm"
+            onClick={handleNewItem}
+            disabled={!contextoValido || !canCreateCadastro}
+            className="h-9 rounded-sm gap-1 shrink-0"
+            data-permission={`Cadastros.${ENTITY}.criar`}
+            data-action={`Cadastros.${ENTITY}.criar`}
+            data-sensitive="true"
+          >
             <Plus className="w-4 h-4" /> Novo
           </Button>
         )}
 
         {effSelectedCount > 0 && (
-          <Button size="sm" variant="destructive" onClick={handleDeleteSelected} className="h-9 rounded-sm gap-1 shrink-0">
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={handleDeleteSelected}
+            disabled={!canDeleteCadastro}
+            className="h-9 rounded-sm gap-1 shrink-0"
+            data-permission={`Cadastros.${ENTITY}.excluir`}
+            data-action={`Cadastros.${ENTITY}.excluir-selecionados`}
+            data-sensitive="true"
+          >
             <Trash2 className="w-4 h-4" />
             Excluir {(effSelectedCount >= totalCount && totalCount > 0) ? "TODOS" : effSelectedCount}
           </Button>
@@ -750,10 +880,19 @@ export default function VisualizadorUniversalEntidadeV24({
       {showCrossPageBanner && (
         <div className="bg-amber-50 border border-amber-200 rounded-sm px-3 py-1.5 text-xs text-amber-800 flex items-center gap-2 flex-wrap shrink-0">
           <span className="font-medium">{selectedIds.size} selecionados nesta página.</span>
-          <button onClick={handleActivateCrossPage} className="text-blue-600 hover:text-blue-800 underline font-semibold">
+          <button
+            onClick={handleActivateCrossPage}
+            className="text-blue-600 hover:text-blue-800 underline font-semibold"
+            data-permission={`Cadastros.${ENTITY}.visualizar`}
+            data-action={`Cadastros.${ENTITY}.selecionar-todos`}
+          >
             Selecionar todos os {totalCount} registros
           </button>
-          <button onClick={handleCancelSelection} className="ml-auto text-slate-500 underline">Cancelar</button>
+          <button
+            onClick={handleCancelSelection}
+            className="ml-auto text-slate-500 underline"
+            data-action={`Cadastros.${ENTITY}.cancelar-selecao`}
+          >Cancelar</button>
         </div>
       )}
       {crossPageAll && (
@@ -763,7 +902,11 @@ export default function VisualizadorUniversalEntidadeV24({
               ? "✓ " + effSelectedCount + " de " + totalCount + " selecionados (" + deselectedIds.size + " desmarcado" + (deselectedIds.size > 1 ? "s" : "") + ")"
               : "✓ Todos os " + totalCount + " registros selecionados"}
           </span>
-          <button onClick={handleCancelSelection} className="ml-auto text-blue-500 underline">Cancelar seleção</button>
+          <button
+            onClick={handleCancelSelection}
+            className="ml-auto text-blue-500 underline"
+            data-action={`Cadastros.${ENTITY}.cancelar-selecao`}
+          >Cancelar seleção</button>
         </div>
       )}
 
@@ -791,12 +934,14 @@ export default function VisualizadorUniversalEntidadeV24({
             onClick={function() { setPage(1); }}
             disabled={page === 1 || isFetching}
             className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40"
+            data-action={`Cadastros.${ENTITY}.primeira-pagina`}
           >«</button>
           <button
             type="button"
             onClick={function() { setPage(function(p) { return Math.max(1, p - 1); }); }}
             disabled={page === 1 || isFetching}
             className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40"
+            data-action={`Cadastros.${ENTITY}.pagina-anterior`}
           >← Ant.</button>
           <span className="flex items-center justify-center h-7 px-2 border border-slate-200 rounded-sm bg-white font-semibold text-slate-700">{page}</span>
           <button
@@ -804,6 +949,7 @@ export default function VisualizadorUniversalEntidadeV24({
             onClick={function() { setPage(function(p) { return p + 1; }); }}
             disabled={items.length < pageSize || isFetching}
             className="h-7 px-2 border border-slate-200 rounded-sm bg-white hover:bg-slate-50 disabled:opacity-40"
+            data-action={`Cadastros.${ENTITY}.proxima-pagina`}
           >Próx. →</button>
         </div>
       </div>
@@ -843,6 +989,7 @@ export default function VisualizadorUniversalEntidadeV24({
                     type="button"
                     onClick={function() { handleCloseForm(false); }}
                     className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                    data-action={`Cadastros.${ENTITY}.fechar-formulario`}
                   >
                     <X className="w-5 h-5" />
                   </button>

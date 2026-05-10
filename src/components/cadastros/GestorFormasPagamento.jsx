@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useWindow } from '@/components/lib/useWindow';
+import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 import { Plus, Edit, Trash2, CreditCard, DollarSign, Zap, CheckCircle2, XCircle, ArrowUpDown, TrendingUp, AlertTriangle, BarChart3, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import FormaPagamentoFormCompleto from './FormaPagamentoFormCompleto';
@@ -21,25 +23,39 @@ export default function GestorFormasPagamento({ windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState('gestao');
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext, deleteInContext } = useContextoVisual();
+  const { canCreate, canEdit, canDelete } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const podeCriar = canCreate('Cadastros', 'FormaPagamento') || canCreate('Cadastros', null);
+  const podeEditar = canEdit('Cadastros', 'FormaPagamento') || canEdit('Cadastros', null);
+  const podeExcluir = canDelete('Cadastros', 'FormaPagamento') || canDelete('Cadastros', null);
 
   const { data: formasPagamento = [], isLoading } = useQuery({
-    queryKey: ['formas-pagamento'],
-    queryFn: () => base44.entities.FormaPagamento.list(),
+    queryKey: ['formas-pagamento', contextKey],
+    queryFn: () => filterInContext('FormaPagamento', {}, 'ordem_exibicao', 200),
+    enabled: contextoValido,
   });
 
   // Buscar dados para analytics
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-analytics'],
-    queryFn: () => base44.entities.Pedido.list('-created_date', 500),
+    queryKey: ['pedidos-analytics', contextKey],
+    queryFn: () => filterInContext('Pedido', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-receber-analytics'],
-    queryFn: () => base44.entities.ContaReceber.list('-created_date', 500),
+    queryKey: ['contas-receber-analytics', contextKey],
+    queryFn: () => filterInContext('ContaReceber', {}, '-created_date', 500),
+    enabled: contextoValido,
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.FormaPagamento.delete(id),
+    mutationFn: (id) => {
+      if (!podeExcluir) throw new Error('Sem permissÃ£o para excluir.');
+      return deleteInContext('FormaPagamento', id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['formas-pagamento'] });
       toast.success('✅ Forma de pagamento excluída!');
@@ -47,7 +63,10 @@ export default function GestorFormasPagamento({ windowMode = false }) {
   });
 
   const toggleAtivaMutation = useMutation({
-    mutationFn: ({ id, ativa }) => base44.entities.FormaPagamento.update(id, { ativa }),
+    mutationFn: ({ id, ativa }) => {
+      if (!contextoValido || !podeEditar) throw new Error('Sem contexto ou permissÃ£o para alterar status.');
+      return updateInContext('FormaPagamento', id, { ativa });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['formas-pagamento'] });
       toast.success('✅ Status atualizado!');
@@ -68,7 +87,8 @@ export default function GestorFormasPagamento({ windowMode = false }) {
       windowMode: true,
       onSubmit: async (data) => {
         try {
-          await base44.entities.FormaPagamento.create(data);
+          if (!contextoValido || !podeCriar) throw new Error('Sem contexto ou permissÃ£o para criar.');
+          await createInContext('FormaPagamento', data);
           queryClient.invalidateQueries({ queryKey: ['formas-pagamento'] });
           toast.success('✅ Forma criada!');
         } catch (error) {
@@ -88,7 +108,8 @@ export default function GestorFormasPagamento({ windowMode = false }) {
       windowMode: true,
       onSubmit: async (data) => {
         try {
-          await base44.entities.FormaPagamento.update(forma.id, data);
+          if (!contextoValido || !podeEditar) throw new Error('Sem contexto ou permissÃ£o para editar.');
+          await updateInContext('FormaPagamento', forma.id, data);
           queryClient.invalidateQueries({ queryKey: ['formas-pagamento'] });
           toast.success('✅ Forma atualizada!');
         } catch (error) {
@@ -158,7 +179,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
           <h2 className="text-2xl font-bold text-slate-900">Formas de Pagamento</h2>
           <p className="text-sm text-slate-600">Configuração centralizada de métodos de pagamento</p>
         </div>
-        <Button onClick={handleNova} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={handleNova} disabled={!contextoValido || !podeCriar} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="w-4 h-4 mr-2" />
           Nova Forma
         </Button>
@@ -313,6 +334,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
                   <TableCell>
                     <button
                       onClick={() => toggleAtivaMutation.mutate({ id: forma.id, ativa: !forma.ativa })}
+                      disabled={!contextoValido || !podeEditar || toggleAtivaMutation.isPending}
                       className="flex items-center gap-1"
                     >
                       {forma.ativa ? (
@@ -334,6 +356,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleEditar(forma)}
+                        disabled={!contextoValido || !podeEditar}
                         title="Editar"
                       >
                         <Edit className="w-4 h-4 text-blue-600" />
@@ -346,6 +369,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
                             deleteMutation.mutate(forma.id);
                           }
                         }}
+                        disabled={!podeExcluir || deleteMutation.isPending}
                         title="Excluir"
                       >
                         <Trash2 className="w-4 h-4 text-red-600" />

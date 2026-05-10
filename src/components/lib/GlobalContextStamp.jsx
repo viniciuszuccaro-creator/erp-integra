@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
@@ -9,10 +9,13 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * - Não altera UI e não renderiza nada
  */
 export default function GlobalContextStamp() {
-  const { getFiltroContexto, carimbarContexto, contexto, empresaAtual, grupoAtual, authChecked, isAuthenticated } = useContextoVisual();
+  const { getFiltroContexto, carimbarContexto, contexto, empresaAtual, grupoAtual } = useContextoVisual();
+  const contextRef = React.useRef({ getFiltroContexto, carimbarContexto });
+
+  contextRef.current = { getFiltroContexto, carimbarContexto };
 
   useEffect(() => {
-    if (!base44?.entities || !authChecked || !isAuthenticated) return;
+    if (!base44?.entities) return;
     const root = base44.entities;
     if (root.__patched_multiempresa) return; // evita patch duplicado
 
@@ -35,7 +38,7 @@ export default function GlobalContextStamp() {
       // create
       if (o.create) {
         api.create = (dados) => {
-          const stamped = carimbarContexto?.(dados) || dados;
+          const stamped = contextRef.current.carimbarContexto?.(dados) || dados;
           return o.create(stamped);
         };
       }
@@ -43,7 +46,7 @@ export default function GlobalContextStamp() {
       // bulkCreate
       if (o.bulkCreate) {
         api.bulkCreate = (lista) => {
-          const stampedList = (lista || []).map((item) => carimbarContexto?.(item) || item);
+          const stampedList = (lista || []).map((item) => contextRef.current.carimbarContexto?.(item) || item);
           return o.bulkCreate(stampedList);
         };
       }
@@ -51,23 +54,23 @@ export default function GlobalContextStamp() {
       // update
       if (o.update) {
         api.update = (id, dados) => {
-          const stamped = carimbarContexto?.(dados) || dados;
+          const stamped = contextRef.current.carimbarContexto?.(dados) || dados;
           return o.update(id, stamped);
         };
       }
 
       // filter
       if (o.filter) {
-        api.filter = async (criterios = {}, order, limit) => {
-          const merged = { ...criterios, ...getFiltroContexto?.() };
+        api.filter = (criterios = {}, order, limit) => {
+          const merged = { ...criterios, ...contextRef.current.getFiltroContexto?.() };
           return o.filter(merged, order, limit);
         };
       }
 
       // list -> direciona para filter com contexto quando possível
       if (o.list) {
-        api.list = async (order, limit) => {
-          const ctx = getFiltroContexto?.() || {};
+        api.list = (order, limit) => {
+          const ctx = contextRef.current.getFiltroContexto?.() || {};
           if (o.filter && ctx && (ctx.group_id || ctx.empresa_id)) {
             return o.filter(ctx, order, limit);
           }
@@ -87,7 +90,7 @@ export default function GlobalContextStamp() {
     } catch (_) {}
 
     // sem cleanup (mantém patch durante a sessão)
-  }, [contexto, empresaAtual?.id, grupoAtual?.id, authChecked, isAuthenticated]);
+  }, []);
 
   return null;
 }

@@ -5,12 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Package } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = tipoFrete || tipo;
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = hasPermission?.("Cadastros.TipoFrete.criar") || hasPermission?.("Logistica.TipoFrete.criar");
+  const podeEditar = hasPermission?.("Cadastros.TipoFrete.editar") || hasPermission?.("Logistica.TipoFrete.editar");
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     descricao: '',
     modalidade: 'CIF',
@@ -28,7 +37,20 @@ export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting,
       alert('Preencha os campos obrigatórios');
       return;
     }
-    onSubmit({ ...formData, nome: formData.descricao });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissão para salvar tipo de frete.');
+      return;
+    }
+    onSubmit({
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      nome: formData.descricao
+    });
   };
 
   const formContent = (
@@ -67,6 +89,9 @@ export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting,
         <Switch
           checked={formData.cobra_frete}
           onCheckedChange={(v) => setFormData({...formData, cobra_frete: v})}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.TipoFrete.editar"
+          data-sensitive="true"
         />
       </div>
 
@@ -103,7 +128,12 @@ export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting,
       )}
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={isSubmitting || !contextoValido || !podeSalvar}
+          data-permission="Cadastros.TipoFrete.salvar"
+          data-sensitive="true"
+        >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {tipo ? 'Atualizar' : 'Criar Tipo de Frete'}
         </Button>

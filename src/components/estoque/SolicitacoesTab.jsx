@@ -14,21 +14,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { useWindow } from "@/components/lib/useWindow";
 import SolicitacaoCompraForm from "@/components/compras/SolicitacaoCompraForm";
 import { useToast } from "@/components/ui/use-toast";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function SolicitacoesTab({ solicitacoes, produtos }) {
   const { openWindow } = useWindow();
   const { toast } = useToast();
+  const { canCreate, canApprove, canEdit } = usePermissions();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
+  const podeCriarSolicitacao = canCreate('Estoque', 'Solicitações Compra') || canCreate('Estoque', 'Solicitacoes Compra') || canCreate('Compras', 'Solicitações') || canCreate('Compras', 'Solicitacoes');
+  const podeAprovarSolicitacao = canApprove('Estoque', 'Solicitações Compra') || canApprove('Estoque', 'Solicitacoes Compra') || canApprove('Compras', 'Solicitações') || canApprove('Compras', 'Solicitacoes') || canEdit('Compras', 'Solicitações') || canEdit('Compras', 'Solicitacoes');
   const [searchTerm, setSearchTerm] = useState("");
 
   const queryClient = useQueryClient();
 
   const aprovarSolicitacaoMutation = useMutation({
     mutationFn: async ({ solicitacao, aprovador }) => {
-      await base44.entities.SolicitacaoCompra.update(solicitacao.id, {
+      if (!podeAprovarSolicitacao) throw new Error("Sem permissao para aprovar solicitacao.");
+      const updated = await updateInContext('SolicitacaoCompra', solicitacao.id, {
         status: 'Aprovada',
         aprovador: aprovador,
         data_aprovacao: new Date().toISOString().split('T')[0]
       });
+      return updated;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['solicitacoes'] });
@@ -37,10 +46,13 @@ export default function SolicitacoesTab({ solicitacoes, produtos }) {
 
   const rejeitarSolicitacaoMutation = useMutation({
     mutationFn: async ({ solicitacao, aprovador, motivo }) => {
-      await base44.entities.SolicitacaoCompra.update(solicitacao.id, {
+      if (!podeAprovarSolicitacao) throw new Error("Sem permissao para rejeitar solicitacao.");
+      const updated = await updateInContext('SolicitacaoCompra', solicitacao.id, {
         status: 'Rejeitada',
-        aprovador: aprovador
+        aprovador: aprovador,
+        motivo_rejeicao: motivo || null
       });
+      return updated;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['solicitacoes'] });
@@ -111,12 +123,13 @@ export default function SolicitacoesTab({ solicitacoes, produtos }) {
         </div>
         <Button 
           className="bg-indigo-600 hover:bg-indigo-700"
+          disabled={!contextoValido || !podeCriarSolicitacao}
           onClick={() => openWindow(SolicitacaoCompraForm, {
             windowMode: true,
             onSubmit: async (data) => {
               try {
                 const user = await base44.auth.me();
-                await base44.entities.SolicitacaoCompra.create({
+                await createInContext('SolicitacaoCompra', {
                   ...data,
                   solicitante: user?.full_name || 'Sistema'
                 });
@@ -179,7 +192,7 @@ export default function SolicitacoesTab({ solicitacoes, produtos }) {
                           size="sm"
                           variant="outline"
                           onClick={() => handleAprovar(sol)}
-                          disabled={aprovarSolicitacaoMutation.isPending}
+                          disabled={aprovarSolicitacaoMutation.isPending || !podeAprovarSolicitacao}
                           className="text-green-600 hover:bg-green-50 text-xs"
                         >
                           Aprovar
@@ -188,7 +201,7 @@ export default function SolicitacoesTab({ solicitacoes, produtos }) {
                           size="sm"
                           variant="outline"
                           onClick={() => handleRejeitar(sol)}
-                          disabled={rejeitarSolicitacaoMutation.isPending}
+                          disabled={rejeitarSolicitacaoMutation.isPending || !podeAprovarSolicitacao}
                           className="text-red-600 hover:bg-red-50 text-xs"
                         >
                           Rejeitar

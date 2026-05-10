@@ -17,6 +17,9 @@ import {
   Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { base44 } from '@/api/base44Client';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V22.0 ETAPA 1 - Validador de Elementos Interativos
@@ -32,6 +35,29 @@ import { toast } from 'sonner';
 export default function ValidadorElementosInterativos() {
   const [scanning, setScanning] = useState(false);
   const [results, setResults] = useState(null);
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { user } = usePermissions();
+  const grupoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === 'grupo' ? null : empresaAtual?.id || null;
+
+  const auditarValidacao = async (acao, dados) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Sistema',
+        usuario_id: user?.id || null,
+        group_id: grupoId,
+        empresa_id: empresaId,
+        acao,
+        modulo: 'Validador UI',
+        entidade: 'ValidadorElementosInterativos',
+        descricao: `${acao} de elementos interativos`,
+        dados_novos: dados,
+        sucesso: true,
+      });
+    } catch (error) {
+      console.warn('[ValidadorElementos] Falha ao auditar:', error);
+    }
+  };
 
   const executarVarredura = () => {
     setScanning(true);
@@ -171,7 +197,7 @@ export default function ValidadorElementosInterativos() {
         ? Math.round((elementosValidos / totalElementos) * 100)
         : 100;
 
-      setResults({
+      const resultado = {
         totalElementos,
         elementosValidos,
         problemas,
@@ -179,6 +205,15 @@ export default function ValidadorElementosInterativos() {
         ultimasAcoes,
         errosRecentes,
         timestamp: new Date().toISOString()
+      };
+
+      setResults(resultado);
+      auditarValidacao('Varredura', {
+        score,
+        totalElementos,
+        elementosValidos,
+        problemas: problemas.length,
+        errosRecentes,
       });
 
       setScanning(false);
@@ -220,6 +255,7 @@ export default function ValidadorElementosInterativos() {
     a.download = `validacao-ui-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    auditarValidacao('Exportacao', relatorio.estatisticas);
     
     toast.success('Relatório exportado!');
   };
@@ -247,6 +283,7 @@ export default function ValidadorElementosInterativos() {
                 onClick={executarVarredura}
                 disabled={scanning}
                 className="bg-blue-600 hover:bg-blue-700"
+                data-action="ValidadorElementos.executar"
               >
                 {scanning ? (
                   <>
@@ -264,6 +301,7 @@ export default function ValidadorElementosInterativos() {
                 <Button
                   variant="outline"
                   onClick={exportarRelatorio}
+                  data-action="ValidadorElementos.exportar"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Exportar

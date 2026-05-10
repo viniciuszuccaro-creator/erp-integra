@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,6 +27,8 @@ import {
 import FormWrapper from "@/components/common/FormWrapper";
 import { useToast } from "@/components/ui/use-toast";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function RepresentanteFormCompleto({ representante: representanteProp, item, data, isOpen, onClose, onSuccess, windowMode = false, onSave, onSubmit }) {
   const representante = representanteProp || item || data || null;
@@ -35,6 +36,21 @@ export default function RepresentanteFormCompleto({ representante: representante
   const [activeTab, setActiveTab] = useState("dados-gerais");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const {
+    empresaAtual,
+    grupoAtual,
+    filterInContext,
+    createInContext,
+    updateInContext,
+    deleteInContext
+  } = useContextoVisual();
+  const { canCreate, canEdit, canDelete } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeCriar = canCreate("Cadastros", "Representante") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "Representante") || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", "Representante") || canDelete("Cadastros", null);
 
   const [formData, setFormData] = useState(representante || {
     tipo_pessoa: "Pessoa Física",
@@ -74,24 +90,27 @@ export default function RepresentanteFormCompleto({ representante: representante
     data_inicio_contrato: "",
     data_fim_contrato: "",
     status: "Ativo",
-    observacoes: ""
+    observacoes: "",
+    empresa_id: empresaAtual?.id,
+    group_id: groupId
   });
 
   const { data: regioes = [] } = useQuery({
-    queryKey: ['regioes'],
-    queryFn: () => base44.entities.RegiaoAtendimento.list()
+    queryKey: ['regioes', contextKey],
+    queryFn: () => filterInContext('RegiaoAtendimento', {}, 'nome', 200),
+    enabled: contextoValido,
   });
 
   const { data: clientesIndicados = [] } = useQuery({
-    queryKey: ['clientes-indicados', representante?.id],
-    queryFn: () => base44.entities.Cliente.filter({ indicador_id: representante.id }),
-    enabled: !!representante?.id
+    queryKey: ['clientes-indicados', representante?.id, contextKey],
+    queryFn: () => filterInContext('Cliente', { indicador_id: representante.id }, 'nome', 200),
+    enabled: !!representante?.id && contextoValido
   });
 
   const { data: pedidosIndicados = [] } = useQuery({
-    queryKey: ['pedidos-indicados', representante?.id],
-    queryFn: () => base44.entities.Pedido.filter({ indicador_id: representante.id }),
-    enabled: !!representante?.id
+    queryKey: ['pedidos-indicados', representante?.id, contextKey],
+    queryFn: () => filterInContext('Pedido', { indicador_id: representante.id }, '-created_date', 200),
+    enabled: !!representante?.id && contextoValido
   });
 
   useEffect(() => {
@@ -107,10 +126,21 @@ export default function RepresentanteFormCompleto({ representante: representante
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      if (representante?.id) {
-        return base44.entities.Representante.update(representante.id, data);
+      if (!contextoValido) {
+        throw new Error("Selecione um grupo ou empresa antes de salvar o representante.");
       }
-      return base44.entities.Representante.create(data);
+      const payload = {
+        ...data,
+        ...(empresaAtual?.id && !data.empresa_id ? { empresa_id: empresaAtual.id } : {}),
+        ...(groupId && !data.group_id ? { group_id: groupId } : {})
+      };
+
+      if (representante?.id) {
+        if (!podeEditar) throw new Error("Seu perfil nao permite editar representantes.");
+        return updateInContext('Representante', representante.id, payload);
+      }
+      if (!podeCriar) throw new Error("Seu perfil nao permite criar representantes.");
+      return createInContext('Representante', payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['representantes'] });
@@ -124,7 +154,10 @@ export default function RepresentanteFormCompleto({ representante: representante
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Representante.delete(id),
+    mutationFn: (id) => {
+      if (!podeExcluir) throw new Error("Seu perfil nao permite excluir representantes.");
+      return deleteInContext('Representante', id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['representantes'] });
       toast({ title: "✅ Representante excluído!" });
@@ -216,16 +249,35 @@ export default function RepresentanteFormCompleto({ representante: representante
           <div className="flex items-center gap-2">
             {representante?.id && (
               <>
-                <Button variant="outline" onClick={handleAlternarStatus} className={formData.status === 'Ativo' ? 'border-orange-300' : 'border-green-300'}>
+                <Button
+                  variant="outline"
+                  onClick={handleAlternarStatus}
+                  disabled={!podeEditar || !contextoValido}
+                  data-permission="Cadastros.Representante.alterarStatus"
+                  data-sensitive
+                  className={formData.status === 'Ativo' ? 'border-orange-300' : 'border-green-300'}
+                >
                   {formData.status === 'Ativo' ? <><PowerOff className="w-4 h-4 mr-2" />Inativar</> : <><Power className="w-4 h-4 mr-2" />Ativar</>}
                 </Button>
-                <Button variant="destructive" onClick={handleExcluir} disabled={deleteMutation.isPending}>
+                <Button
+                  variant="destructive"
+                  onClick={handleExcluir}
+                  disabled={deleteMutation.isPending || !podeExcluir || !contextoValido}
+                  data-permission="Cadastros.Representante.excluir"
+                  data-sensitive
+                >
                   <Trash2 className="w-4 h-4 mr-2" />
                   {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
                 </Button>
               </>
             )}
-            <Button onClick={handleSave} disabled={saveMutation.isPending} className="bg-purple-600 hover:bg-purple-700">
+            <Button
+              onClick={handleSave}
+              disabled={saveMutation.isPending || !contextoValido || (representante?.id ? !podeEditar : !podeCriar)}
+              data-permission="Cadastros.Representante.salvar"
+              data-sensitive
+              className="bg-purple-600 hover:bg-purple-700"
+            >
               <Save className="w-4 h-4 mr-2" />
               {saveMutation.isPending ? 'Salvando...' : 'Salvar'}
             </Button>

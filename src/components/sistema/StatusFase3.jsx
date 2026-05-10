@@ -1,49 +1,61 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Rocket, Building, Users, Package, DollarSign, Truck, Zap } from 'lucide-react';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 export default function StatusFase3() {
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const contextoValido = scopeId !== 'sem-contexto';
+
   const { data: grupos = [] } = useQuery({
-    queryKey: ['gruposEmpresariais'],
-    queryFn: () => base44.entities.GrupoEmpresarial.list()
+    queryKey: ['status-fase3', 'gruposEmpresariais', scopeId, contexto],
+    queryFn: () => grupoAtual?.id ? [grupoAtual] : filterInContext('GrupoEmpresarial', {}, 'nome_grupo', 50),
+    enabled: contextoValido
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list()
+    queryKey: ['status-fase3', 'empresas', scopeId, contexto],
+    queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
+    enabled: contextoValido
   });
 
   const { data: perfis = [] } = useQuery({
-    queryKey: ['perfisAcesso'],
-    queryFn: () => base44.entities.PerfilAcesso.list()
+    queryKey: ['status-fase3', 'perfisAcesso', scopeId, contexto],
+    queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 500),
+    enabled: contextoValido
   });
 
   const { data: contatosB2B = [] } = useQuery({
-    queryKey: ['contatosB2B'],
-    queryFn: () => base44.entities.ContatoB2B.list()
+    queryKey: ['status-fase3', 'contatosB2B', scopeId, contexto],
+    queryFn: () => filterInContext('ContatoB2B', {}, '-updated_date', 500),
+    enabled: contextoValido
   });
 
   const { data: catalogoWeb = [] } = useQuery({
-    queryKey: ['catalogoWeb'],
-    queryFn: () => base44.entities.CatalogoWeb.list()
+    queryKey: ['status-fase3', 'catalogoWeb', scopeId, contexto],
+    queryFn: () => filterInContext('CatalogoWeb', {}, '-updated_date', 500),
+    enabled: contextoValido
   });
 
   const { data: apis = [] } = useQuery({
-    queryKey: ['apisExternas'],
-    queryFn: () => base44.entities.ApiExterna.list()
+    queryKey: ['status-fase3', 'apisExternas', scopeId, contexto],
+    queryFn: () => filterInContext('ApiExterna', {}, '-updated_date', 500),
+    enabled: contextoValido
   });
 
   const { data: jobs = [] } = useQuery({
-    queryKey: ['jobsAgendados'],
-    queryFn: () => base44.entities.JobAgendado.list()
+    queryKey: ['status-fase3', 'jobsAgendados', scopeId, contexto],
+    queryFn: () => filterInContext('JobAgendado', {}, '-updated_date', 500),
+    enabled: contextoValido
   });
 
   const { data: logsIA = [] } = useQuery({
-    queryKey: ['logsIA'],
-    queryFn: () => base44.entities.LogsIA.list('-created_date', 10)
+    queryKey: ['status-fase3', 'logsIA', scopeId, contexto],
+    queryFn: () => filterInContext('LogsIA', {}, '-created_date', 10),
+    enabled: contextoValido
   });
 
   const estruturantes = [

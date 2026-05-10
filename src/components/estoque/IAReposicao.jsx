@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Package, TrendingUp, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * IA de Reposição de Estoque
@@ -15,28 +16,38 @@ import { useToast } from '@/components/ui/use-toast';
 export default function IAReposicao({ empresaId }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext } = useContextoVisual();
+  const { canCreate, canEdit } = usePermissions();
+  const contextKey = empresaId || empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
+  const podeAnalisar = canEdit('Estoque', 'IA Reposição') || canEdit('Estoque', 'IA Reposicao') || canEdit('Estoque', 'Produtos');
+  const podeSolicitar = canCreate('Estoque', 'Solicitações Compra') || canCreate('Estoque', 'Solicitacoes Compra') || canCreate('Compras', 'Solicitações') || canCreate('Compras', 'Solicitacoes');
   const [analisando, setAnalisando] = useState(false);
   const [sugestoes, setSugestoes] = useState([]);
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos-ia-reposicao', contextKey],
+    queryFn: () => filterInContext('Produto', {}, '-updated_date', 1000),
+    enabled: contextoValido,
   });
 
   const { data: movimentacoes = [] } = useQuery({
-    queryKey: ['movimentacoes-estoque'],
-    queryFn: () => base44.entities.MovimentacaoEstoque.list('-data_movimentacao', 500),
+    queryKey: ['movimentacoes-estoque-ia-reposicao', contextKey],
+    queryFn: () => filterInContext('MovimentacaoEstoque', {}, '-data_movimentacao', 500),
+    enabled: contextoValido,
   });
 
   const analisarMutation = useMutation({
     mutationFn: async () => {
+      if (!contextoValido) throw new Error('Selecione um grupo ou empresa antes de analisar reposicao.');
+      if (!podeAnalisar) throw new Error('Sem permissao para executar analise de reposicao.');
       setAnalisando(true);
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       const sugestoesGeradas = [];
 
       produtos
-        .filter(p => p.empresa_id === empresaId && p.status === 'Ativo')
+        .filter(p => (!empresaId || p.empresa_id === empresaId) && p.status === 'Ativo')
         .forEach(produto => {
           const disponivel = (produto.estoque_atual || 0) - (produto.estoque_reservado || 0);
           const minimo = produto.estoque_minimo || 0;
@@ -99,7 +110,8 @@ export default function IAReposicao({ empresaId }) {
 
   const gerarSolicitacaoMutation = useMutation({
     mutationFn: async (sugestao) => {
-      return await base44.entities.SolicitacaoCompra.create({
+      if (!podeSolicitar) throw new Error('Sem permissao para gerar solicitacao de compra.');
+      return await createInContext('SolicitacaoCompra', {
         numero_solicitacao: `SC-${Date.now()}`,
         data_solicitacao: new Date().toISOString().split('T')[0],
         solicitante: 'Sistema IA',
@@ -131,7 +143,7 @@ export default function IAReposicao({ empresaId }) {
         <CardContent className="space-y-4">
           <Button
             onClick={() => analisarMutation.mutate()}
-            disabled={analisando}
+            disabled={analisando || !contextoValido || !podeAnalisar}
             className="w-full bg-purple-600 hover:bg-purple-700"
           >
             {analisando ? (
@@ -190,7 +202,7 @@ export default function IAReposicao({ empresaId }) {
                         <Button
                           size="sm"
                           onClick={() => gerarSolicitacaoMutation.mutate(sug)}
-                          disabled={gerarSolicitacaoMutation.isPending}
+                          disabled={gerarSolicitacaoMutation.isPending || !contextoValido || !podeSolicitar}
                         >
                           <ShoppingCart className="w-4 h-4 mr-1" />
                           Solicitar

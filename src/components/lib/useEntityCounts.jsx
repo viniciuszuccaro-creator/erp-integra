@@ -100,8 +100,6 @@ export function useEntityCounts(entities = []) {
     queryKey,
     queryFn: async () => {
       if (!normalized.length) return {};
-      const authed = await base44.auth.isAuthenticated();
-      if (!authed) return {};
 
       const batchPayload = [];
 

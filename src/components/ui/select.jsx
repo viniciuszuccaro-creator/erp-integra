@@ -9,6 +9,8 @@ const Select = SelectPrimitive.Root
 const SelectGroup = SelectPrimitive.Group
 
 const SelectValue = SelectPrimitive.Value
+const NULL_SELECT_VALUE = "__erp_select_null__"
+const EMPTY_SELECT_VALUE = "__erp_select_empty__"
 
 const SelectTrigger = React.forwardRef(({ className, children, ...props }, ref) => (
   <SelectPrimitive.Trigger
@@ -78,7 +80,7 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
         className={cn(
           "p-1",
           position === "popper" &&
-            "w-full min-w-[var(--radix-select-trigger-width)] max-h-[18rem]"
+            "max-h-[var(--radix-select-content-available-height)] w-full min-w-[var(--radix-select-trigger-width)]"
         )}
       >
         {children}
@@ -98,24 +100,30 @@ const SelectLabel = React.forwardRef(({ className, ...props }, ref) => (
 ))
 SelectLabel.displayName = SelectPrimitive.Label.displayName
 
-const SelectItem = React.forwardRef(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Item
-    ref={ref}
-    className={cn(
-      "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-slate-100 focus:text-slate-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-100 transition-colors",
-      className
-    )}
-    {...props}
-  >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-      <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
-      </SelectPrimitive.ItemIndicator>
-    </span>
+const SelectItem = React.forwardRef(({ className, children, ...props }, ref) => {
+  const normalizedProps = { ...props };
+  if (normalizedProps.value === null || normalizedProps.value === undefined) normalizedProps.value = NULL_SELECT_VALUE;
+  if (normalizedProps.value === "") normalizedProps.value = EMPTY_SELECT_VALUE;
 
-    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-  </SelectPrimitive.Item>
-))
+  return (
+    <SelectPrimitive.Item
+      ref={ref}
+      className={cn(
+        "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-slate-100 focus:text-slate-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-100 transition-colors",
+        className
+      )}
+      {...normalizedProps}
+    >
+      <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        <SelectPrimitive.ItemIndicator>
+          <Check className="h-4 w-4" />
+        </SelectPrimitive.ItemIndicator>
+      </span>
+
+      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    </SelectPrimitive.Item>
+  );
+})
 SelectItem.displayName = SelectPrimitive.Item.displayName
 
 const SelectSeparator = React.forwardRef(({ className, ...props }, ref) => (
@@ -135,25 +143,32 @@ const _Root = _Select;
 
 function withAuditRoot(props) {
   const p = { ...props };
+  if (p.value === null) p.value = undefined;
   if (typeof p.onValueChange === 'function' && !p.__wrapped_audit) {
-    p.onValueChange = uiAuditWrap(p['data-action'] || 'Select.onValueChange', p.onValueChange, { kind: 'select' });
+    const originalOnValueChange = p.onValueChange;
+    p.onValueChange = (value) => {
+      if (value === NULL_SELECT_VALUE) return originalOnValueChange(null);
+      if (value === EMPTY_SELECT_VALUE) return originalOnValueChange("");
+      return originalOnValueChange(value);
+    };
+    const toastSuccess = p['data-toast-success'] === true || p['data-toast-success'] === 'true';
+    p.onValueChange = uiAuditWrap(p['data-action'] || 'Select.onValueChange', p.onValueChange, { kind: 'select', toastSuccess });
     p.__wrapped_audit = true;
   }
   // CORREÇÃO CRÍTICA: Remove __wrapped_audit before passing to Radix UI
-  const cleanProps = { ...p };
-  delete cleanProps.__wrapped_audit;
-  if ('data-action' in cleanProps) delete cleanProps['data-action'];
+  const { __wrapped_audit, ...cleanProps } = p;
+  if ('data-toast-success' in cleanProps) delete cleanProps['data-toast-success'];
   return cleanProps;
 }
 
 const AuditedSelect = (props) => {
-  const { hasPermission } = usePermissions();
+  const { hasPermissionKey } = usePermissions();
   const perm = props?.['data-permission'];
   const p = { ...props };
   if ('data-permission' in p) delete p['data-permission'];
-  const allowed = perm ? (() => { const [m,s,a] = String(perm).split('.'); return hasPermission(m, s || null, a || 'visualizar'); })() : true;
-  if (perm && !allowed) return <span className="inline-flex h-10 items-center rounded-md border border-dashed px-3 text-xs text-slate-400 select-none">Acesso negado</span>;
-  return <_Root {...withAuditRoot(p)} />;
+  const allowed = perm ? hasPermissionKey(perm) : true;
+        if (perm && !allowed) return <span className="inline-flex h-10 items-center rounded-md border border-dashed px-3 text-xs text-slate-400 select-none">Acesso negado</span>;
+        return <_Root {...withAuditRoot(p)} />
 };
 
 export {

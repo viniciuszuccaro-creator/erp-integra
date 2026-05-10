@@ -32,9 +32,14 @@ const IAReposicao = React.lazy(() => import("../components/estoque/IAReposicao")
 export default function Estoque() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const canSeeEstoque = hasPermission('Estoque', null, 'ver');
+  const canExportEstoque = hasPermission('Estoque', null, 'exportar') || hasPermission('Estoque', 'Relatórios', 'exportar') || hasPermission('Estoque', 'Relatorios', 'exportar');
+  const canTransferirEstoque = hasPermission('Estoque', 'Transferências', 'criar') || hasPermission('Estoque', 'Transferencias', 'criar') || hasPermission('Estoque', 'Movimentações', 'criar') || hasPermission('Estoque', 'Movimentacoes', 'criar');
   const { openWindow } = useWindow();
   const { user } = useUser();
-  const { estaNoGrupo, empresaAtual, empresasDoGrupo, filtrarPorContexto, getFiltroContexto } = useContextoVisual();
+  const { estaNoGrupo, empresaAtual, grupoAtual, empresasDoGrupo, filtrarPorContexto, getFiltroContexto } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
   
   // Estados removidos - VisualizadorUniversalEntidade gerencia tudo internamente
 
@@ -42,9 +47,9 @@ export default function Estoque() {
 
   // ✅ Contagens via backend otimizado - CARREGA TUDO para cálculo correto
   const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: loadingContagens, refetch: refetchContagens } = useQuery({
-    queryKey: ['produtos-contagens-dashboard', empresaAtual?.id],
+    queryKey: ['produtos-contagens-dashboard', contextKey],
     queryFn: async () => {
-      const filtroBase = getFiltroContexto('empresa_id');
+      const filtroBase = getFiltroContexto('empresa_id', true);
 
       // Buscar TODOS os produtos para contagem correta
       let todosProdutos = [];
@@ -80,22 +85,21 @@ export default function Estoque() {
     staleTime: Infinity,
     refetchOnWindowFocus: false,
     refetchInterval: false,
-    enabled: canSeeEstoque
+    enabled: canSeeEstoque && contextoValido
   });
 
   // ✅ Real-time update via subscription
   React.useEffect(() => {
     const unsubscribe = base44.entities.Produto.subscribe(() => {
-      refetchContagens();
+      if (contextoValido) refetchContagens();
     });
     return unsubscribe;
-  }, [refetchContagens]);
+  }, [refetchContagens, contextoValido]);
 
   const { data: movimentacoes = [] } = useQuery({
-    queryKey: ['movimentacoes', empresaAtual?.id],
+    queryKey: ['movimentacoes', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('MovimentacaoEstoque', {}, '-data_movimentacao', 50);
       } catch (err) {
         console.error('Erro ao buscar movimentações:', err);
@@ -106,14 +110,13 @@ export default function Estoque() {
     gcTime: 60000,
     refetchOnWindowFocus: false,
     retry: 1,
-    enabled: canSeeEstoque
+    enabled: canSeeEstoque && contextoValido
   });
 
   const { data: solicitacoes = [] } = useQuery({
-    queryKey: ['solicitacoes', empresaAtual?.id],
+    queryKey: ['solicitacoes', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('SolicitacaoCompra', {}, '-data_solicitacao', 50);
       } catch (err) {
         console.error('Erro ao buscar solicitações:', err);
@@ -124,14 +127,13 @@ export default function Estoque() {
     gcTime: 60000,
     refetchOnWindowFocus: false,
     retry: 1,
-    enabled: canSeeEstoque
+    enabled: canSeeEstoque && contextoValido
   });
 
   const { data: ordensCompra = [] } = useQuery({
-    queryKey: ['ordensCompra', empresaAtual?.id],
+    queryKey: ['ordensCompra', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('OrdemCompra', {}, '-data_solicitacao', 50);
       } catch (err) {
         console.error('Erro ao buscar ordens:', err);
@@ -142,15 +144,14 @@ export default function Estoque() {
     gcTime: 60000,
     refetchOnWindowFocus: false,
     retry: 1,
-    enabled: canSeeEstoque
+    enabled: canSeeEstoque && contextoValido
   });
 
   // Buscar produtos simples para KPIs de valor de estoque
   const { data: produtosParaKPIs = [] } = useQuery({
-    queryKey: ['produtos-kpis', empresaAtual?.id],
+    queryKey: ['produtos-kpis', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('Produto', {}, undefined, 5000);
       } catch (err) {
         console.error('Erro ao buscar produtos para KPIs:', err);
@@ -161,7 +162,7 @@ export default function Estoque() {
     gcTime: 120000,
     refetchOnWindowFocus: false,
     retry: 1,
-    enabled: canSeeEstoque
+    enabled: canSeeEstoque && contextoValido
   });
 
   const movimentacoesFiltradas = movimentacoes;
@@ -173,9 +174,10 @@ export default function Estoque() {
 
   // Exportação PDF do estoque de aço (bitolas)
   const handleExportAco = async () => {
+    if (!canExportEstoque) return;
     try {
       const { data } = await base44.functions.invoke('exportEstoqueAco', {
-        filtros: { empresa_id: empresaAtual?.id || null, group_id: null }
+        filtros: { empresa_id: empresaAtual?.id || null, group_id: groupId || null }
       });
       const blob = new Blob([data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
@@ -186,6 +188,20 @@ export default function Estoque() {
       a.click();
       window.URL.revokeObjectURL(url);
       a.remove();
+      try {
+        await base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuario local',
+          usuario_id: user?.id || null,
+          acao: 'Exportacao',
+          modulo: 'Estoque',
+          entidade: 'RelatorioEstoqueAco',
+          empresa_id: empresaAtual?.id || null,
+          group_id: groupId || null,
+          descricao: 'Exportacao de estoque de aco em PDF',
+          sucesso: true,
+          data_hora: new Date().toISOString(),
+        });
+      } catch (_) {}
     } catch (e) {
       console.error('Falha ao exportar estoque de aço:', e);
     }
@@ -331,7 +347,7 @@ export default function Estoque() {
         title="Estoque e Almoxarifado"
         subtitle="Produtos, níveis e movimentações"
         actions={<div className="flex items-center gap-2">
-          <Button onClick={handleExportAco} variant="outline" className="gap-2"><Download className="w-3 h-3" /> Exportar Aço (PDF)</Button>
+          <Button onClick={handleExportAco} disabled={!contextoValido || !canExportEstoque} variant="outline" className="gap-2"><Download className="w-3 h-3" /> Exportar Aço (PDF)</Button>
         </div>}
       >
         <ModuleKPIs>
@@ -357,6 +373,7 @@ export default function Estoque() {
                 height: 600
               })}
               className="bg-purple-600 hover:bg-purple-700 mb-2"
+              disabled={!contextoValido || !canTransferirEstoque}
               size="sm"
             >
               <ArrowLeftRight className="w-3 h-3 mr-2" />

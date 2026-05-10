@@ -19,7 +19,13 @@ import TipoDespesaForm from "@/components/cadastros/TipoDespesaForm";
 import MoedaIndiceForm from "@/components/cadastros/MoedaIndiceForm";
 import OperadorCaixaForm from "@/components/cadastros/OperadorCaixaForm";
 
-export default function Bloco3Financeiro({ allCounts, isLoading }) {
+function filterTiles(tiles, searchTerm) {
+  const q = String(searchTerm || "").trim().toLowerCase();
+  if (!q) return tiles;
+  return tiles.filter(({ k, t }) => `${k} ${t}`.toLowerCase().includes(q));
+}
+
+export default function Bloco3Financeiro({ allCounts, isLoading, searchTerm = "" }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
 
@@ -43,8 +49,13 @@ export default function Bloco3Financeiro({ allCounts, isLoading }) {
     { k: 'TabelaFiscal',                  t: 'Tabelas Fiscais',         i: Blocks,       c: ['nome','nome_regra','cfop','regime_tributario'],           f: TabelaFiscalForm },
     { k: 'CondicaoComercial',             t: 'Condições Comerciais',    i: Banknote,     c: ['nome','nome_condicao','forma_pagamento','ativo'],         f: CondicaoComercialForm },
   ];
+  const filteredTiles = filterTiles(tiles, searchTerm);
 
-  const canView = hasPermission('Financeiro', null, 'visualizar');
+  const canViewEntity = (entidade) =>
+    hasPermission("Cadastros", entidade, "visualizar") ||
+    hasPermission("Cadastros", null, "visualizar") ||
+    hasPermission("Financeiro", entidade, "visualizar") ||
+    hasPermission("Financeiro", null, "visualizar");
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -59,11 +70,13 @@ export default function Bloco3Financeiro({ allCounts, isLoading }) {
         <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
       </Card>
 
-      {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
+      {filteredTiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
         <Card
           key={k}
           className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
-          onClick={canView ? openList(k, t, Icon, c, FormComp) : undefined}
+          onClick={canViewEntity(k) ? openList(k, t, Icon, c, FormComp) : undefined}
+          data-permission={`Cadastros.${k}.visualizar`}
+          data-action={`Cadastros.${k}.abrir`}
         >
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
@@ -78,7 +91,9 @@ export default function Bloco3Financeiro({ allCounts, isLoading }) {
                 size="sm"
                 className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
-                disabled={!canView}
+                disabled={!canViewEntity(k)}
+                data-permission={`Cadastros.${k}.visualizar`}
+                data-action={`Cadastros.${k}.abrir`}
               >
                 Abrir
               </Button>

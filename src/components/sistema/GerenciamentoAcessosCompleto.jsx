@@ -336,33 +336,87 @@ export default function GerenciamentoAcessosCompleto() {
   const [perfilHistorico, setPerfilHistorico] = useState(null);
 
   const queryClient = useQueryClient();
-  const { empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoVisual();
+  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], estaNoGrupo, filterInContext } = useContextoVisual();
   const { hasPermission, isAdmin, user } = usePermissions();
+  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
+  const scopeKey = empresaAtivaId || grupoAtivoId || 'sem-contexto';
+  const contextoValido = scopeKey !== 'sem-contexto';
+
+  const registrarAuditoriaAcesso = async ({ acao, entidade = "PerfilAcesso", registro_id, descricao, dados_anteriores, dados_novos }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Sistema",
+        usuario_id: user?.id || null,
+        empresa_id: empresaAtivaId || null,
+        group_id: grupoAtivoId || null,
+        acao,
+        modulo: "Controle de Acesso",
+        entidade,
+        registro_id: registro_id || null,
+        descricao,
+        dados_anteriores,
+        dados_novos,
+        sucesso: true,
+      });
+    } catch (error) {
+      console.warn("[RBAC] Falha ao registrar auditoria local:", error);
+    }
+  };
+
+  const usuarioNoEscopo = (u) => {
+    if (!u) return false;
+    const vinculadas = (Array.isArray(u.empresas_vinculadas) ? u.empresas_vinculadas : [])
+      .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
+      .filter(Boolean);
+    const temMarcacaoEscopo = u.group_id || u.grupo_id || u.grupo_atual_id || u.empresa_id || u.empresa_atual_id || vinculadas.length > 0;
+    if (!temMarcacaoEscopo) return true;
+    if (contexto === 'grupo') {
+      const empresasIds = empresasDoGrupo.map((e) => e.id);
+      return u.group_id === grupoAtivoId ||
+        u.grupo_id === grupoAtivoId ||
+        u.grupo_atual_id === grupoAtivoId ||
+        vinculadas.some((id) => empresasIds.includes(id));
+    }
+    return u.empresa_id === empresaAtivaId ||
+      u.empresa_atual_id === empresaAtivaId ||
+      vinculadas.includes(empresaAtivaId);
+  };
 
   // Queries
   const { data: perfis = [], isLoading: loadingPerfis } = useQuery({
-    queryKey: ['perfis-acesso'],
-    queryFn: () => base44.entities.PerfilAcesso.list(),
+    queryKey: ['perfis-acesso', scopeKey],
+    queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 500),
+    enabled: contextoValido,
   });
 
   const { data: usuarios = [], isLoading: loadingUsuarios } = useQuery({
-    queryKey: ['usuarios'],
-    queryFn: () => base44.entities.User.list(),
+    queryKey: ['usuarios', scopeKey],
+    queryFn: async () => {
+      const rows = await base44.entities.User.list();
+      return rows.filter(usuarioNoEscopo);
+    },
+    enabled: contextoValido,
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas-acesso'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryKey: ['empresas-acesso', scopeKey],
+    queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
+    enabled: contextoValido,
   });
 
   const { data: permissoesEmpresa = [] } = useQuery({
-    queryKey: ['permissoes-empresa'],
-    queryFn: () => base44.entities.PermissaoEmpresaModulo.list(),
+    queryKey: ['permissoes-empresa', scopeKey],
+    queryFn: () => filterInContext('PermissaoEmpresaModulo', {}, '-updated_date', 500),
+    enabled: contextoValido,
   });
 
   const { data: auditoriaAcessos = [] } = useQuery({
-    queryKey: ['auditoria-acessos'],
-    queryFn: () => base44.entities.AuditoriaAcesso.list('-created_date', 100),
+    queryKey: ['auditoria-acessos', scopeKey],
+    queryFn: () => filterInContext('AuditoriaAcesso', {}, '-created_date', 100),
+    enabled: contextoValido,
   });
 
   // Estado do formulário de perfil
@@ -380,6 +434,16 @@ export default function GerenciamentoAcessosCompleto() {
   // Mutations
   const salvarPerfilMutation = useMutation({
     mutationFn: async (data) => {
+      if (!contextoValido) {
+        throw new Error("Selecione um grupo ou empresa antes de salvar o perfil.");
+      }
+      const perfilId = editingPerfil?.id || data?.id;
+      data = {
+        ...data,
+        id: undefined,
+        empresa_id: empresaAtivaId || null,
+        group_id: grupoAtivoId || null
+      };
       // Contar total de permissões
       let totalAcoes = 0;
       let totalSecoes = 0;
@@ -397,19 +461,19 @@ export default function GerenciamentoAcessosCompleto() {
       console.log("  Ações:", totalAcoes);
       console.log("  Estrutura:", JSON.stringify(data.permissoes, null, 2));
 
-      if (editingPerfil?.id) {
-        console.log("  Modo: UPDATE (ID:", editingPerfil.id, ")");
-        const resultado = await base44.entities.PerfilAcesso.update(editingPerfil.id, data);
+      if (perfilId) {
+        console.log("  Modo: UPDATE (ID:", perfilId, ")");
+        const resultado = await base44.entities.PerfilAcesso.update(perfilId, data);
         console.log("✅ UPDATE concluído:", resultado);
-        return resultado;
+        return { ...resultado, __auditAction: "Edicao", __auditRegistroId: perfilId, __auditDadosAnteriores: editingPerfil || null };
       } else {
         console.log("  Modo: CREATE");
         const resultado = await base44.entities.PerfilAcesso.create(data);
         console.log("✅ CREATE concluído:", resultado);
-        return resultado;
+        return { ...resultado, __auditAction: data.origem_configuracao === "importacao" ? "Importacao" : data.origem_configuracao === "template" ? "Template" : data.origem_configuracao === "clone" ? "Clonagem" : "Criacao" };
       }
     },
-    onSuccess: (result) => {
+    onSuccess: async (result, variables) => {
       console.log("✅✅✅ PERFIL SALVO COM SUCESSO!");
       console.log("  Resultado:", result);
       
@@ -422,7 +486,15 @@ export default function GerenciamentoAcessosCompleto() {
       });
       console.log("  Total ações salvas:", totalSalvo);
       
-      queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
+      queryClient.invalidateQueries({ queryKey: ['perfis-acesso', scopeKey] });
+      queryClient.invalidateQueries({ queryKey: ['audit-config'] });
+      await registrarAuditoriaAcesso({
+        acao: result.__auditAction || (variables?.id ? "Edicao" : "Criacao"),
+        registro_id: result.__auditRegistroId || result.id || variables?.id,
+        descricao: `${result.__auditAction || (variables?.id ? "Edicao" : "Criacao")} do perfil "${result.nome_perfil || variables?.nome_perfil}"`,
+        dados_anteriores: result.__auditDadosAnteriores || null,
+        dados_novos: variables,
+      });
       setPerfilDialogOpen(false);
       setEditingPerfil(null);
       resetFormPerfil();
@@ -436,10 +508,24 @@ export default function GerenciamentoAcessosCompleto() {
 
   const salvarPermissaoEmpresaMutation = useMutation({
     mutationFn: async (data) => {
-      return await base44.entities.PermissaoEmpresaModulo.create(data);
+      if (!contextoValido) {
+        throw new Error("Selecione um grupo ou empresa antes de configurar permissões.");
+      }
+      return await base44.entities.PermissaoEmpresaModulo.create({
+        ...data,
+        empresa_id: data.empresa_id || empresaAtivaId || null,
+        group_id: grupoAtivoId || null
+      });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['permissoes-empresa'] });
+    onSuccess: async (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['permissoes-empresa', scopeKey] });
+      await registrarAuditoriaAcesso({
+        acao: "Permissao por Empresa",
+        entidade: "PermissaoEmpresaModulo",
+        registro_id: variables?.id,
+        descricao: "Configuracao de permissao por empresa/modulo",
+        dados_novos: variables,
+      });
       setPermissaoDialogOpen(false);
       toast.success("Permissão configurada!");
     }
@@ -450,17 +536,28 @@ export default function GerenciamentoAcessosCompleto() {
       return await base44.entities.User.update(id, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+      queryClient.invalidateQueries({ queryKey: ['usuarios', scopeKey] });
       toast.success("Usuário atualizado!");
     }
   });
 
   const excluirPerfilMutation = useMutation({
     mutationFn: async (id) => {
-      return await base44.entities.PerfilAcesso.delete(id);
+      if (!contextoValido) {
+        throw new Error("Selecione um grupo ou empresa antes de excluir o perfil.");
+      }
+      const perfil = perfis.find((p) => p.id === id) || null;
+      const deleted = await base44.entities.PerfilAcesso.delete(id);
+      return { deleted, perfil, id };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
+    onSuccess: async (result) => {
+      queryClient.invalidateQueries({ queryKey: ['perfis-acesso', scopeKey] });
+      await registrarAuditoriaAcesso({
+        acao: "Exclusao",
+        registro_id: result?.id,
+        descricao: `Exclusao do perfil "${result?.perfil?.nome_perfil || result?.id}"`,
+        dados_anteriores: result?.perfil || null,
+      });
       toast.success("🗑️ Perfil excluído com sucesso!");
     },
     onError: (error) => {
@@ -1202,7 +1299,10 @@ Forneça recomendações práticas de segurança.`,
                       perfisImportados.forEach(p => {
                         salvarPerfilMutation.mutate({
                           ...p,
-                          group_id: empresaAtual?.group_id
+                          id: undefined,
+                          group_id: grupoAtivoId || null,
+                          empresa_id: empresaAtivaId || null,
+                          origem_configuracao: "importacao"
                         });
                       });
                     }}
@@ -1694,6 +1794,8 @@ Forneça recomendações práticas de segurança.`,
                               variant="ghost"
                               size="sm"
                               onClick={() => abrirEdicaoPerfil(perfil)}
+                              disabled={!contextoValido}
+                              data-action="RBAC.Perfil.editar"
                               title="Editar Perfil"
                             >
                               <Edit className="w-4 h-4" />
@@ -1702,6 +1804,10 @@ Forneça recomendações práticas de segurança.`,
                               variant="ghost"
                               size="sm"
                               onClick={() => {
+                                if (!contextoValido) {
+                                  toast.error("Selecione um grupo ou empresa antes de alterar permissoes.");
+                                  return;
+                                }
                                 setPerfilParaGranular(perfil);
                                 setPermissoesGranularesOpen(true);
                               }}
@@ -1713,6 +1819,10 @@ Forneça recomendações práticas de segurança.`,
                               variant="ghost"
                               size="sm"
                               onClick={() => {
+                                if (!contextoValido) {
+                                  toast.error("Selecione um grupo ou empresa antes de clonar perfil.");
+                                  return;
+                                }
                                 setPerfilParaClonar(perfil);
                                 setClonarPerfilOpen(true);
                               }}
@@ -1735,6 +1845,10 @@ Forneça recomendações práticas de segurança.`,
                               variant="ghost"
                               size="sm"
                               onClick={() => {
+                                if (!contextoValido) {
+                                  toast.error("Selecione um grupo ou empresa antes de excluir perfil.");
+                                  return;
+                                }
                                 const usuariosUsando = usuarios.filter(u => u.perfil_acesso_id === perfil.id);
                                 if (usuariosUsando.length > 0) {
                                   toast.error(`❌ Não é possível excluir: ${usuariosUsando.length} usuário(s) usando este perfil`);
@@ -1746,6 +1860,8 @@ Forneça recomendações práticas de segurança.`,
                               }}
                               title={usuariosDoPerfil.length > 0 ? "Perfil em uso, não pode ser excluído" : "Excluir perfil"}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              disabled={!contextoValido || excluirPerfilMutation.isPending}
+                              data-action="RBAC.Perfil.excluir"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -2250,8 +2366,18 @@ Forneça recomendações práticas de segurança.`,
         {/* Tab: Templates */}
         <TabsContent value="templates" className="space-y-4 w-full h-full">
           <TemplatesPerfilInteligente
+            disabled={!contextoValido}
             onAplicarTemplate={(template) => {
-              setFormPerfil(template);
+              if (!contextoValido) {
+                toast.error("Selecione um grupo ou empresa antes de aplicar template.");
+                return;
+              }
+              setFormPerfil({
+                ...template,
+                group_id: grupoAtivoId || null,
+                empresa_id: empresaAtivaId || null,
+                origem_configuracao: "template",
+              });
               validarSOD(template.permissoes);
               setPerfilDialogOpen(true);
             }}
@@ -2291,6 +2417,7 @@ Forneça recomendações práticas de segurança.`,
         open={permissoesGranularesOpen}
         onOpenChange={setPermissoesGranularesOpen}
         perfil={perfilParaGranular}
+        disabled={!contextoValido}
         onSave={(perfilAtualizado) => {
           salvarPerfilMutation.mutate(perfilAtualizado);
         }}
@@ -2325,8 +2452,14 @@ Forneça recomendações práticas de segurança.`,
         open={clonarPerfilOpen}
         onOpenChange={setClonarPerfilOpen}
         perfilOriginal={perfilParaClonar}
+        disabled={!contextoValido}
         onClonar={(novoPerfil) => {
-          salvarPerfilMutation.mutate(novoPerfil);
+          salvarPerfilMutation.mutate({
+            ...novoPerfil,
+            group_id: grupoAtivoId || null,
+            empresa_id: empresaAtivaId || null,
+            origem_configuracao: "clone",
+          });
           setClonarPerfilOpen(false);
         }}
       />

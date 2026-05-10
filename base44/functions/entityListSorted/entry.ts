@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const DEFAULT_SORTS = {
   Produto: { field: 'descricao', direction: 'asc' }, Cliente: { field: 'nome', direction: 'asc' },
@@ -65,12 +65,14 @@ const SEARCH_FIELDS = {
   JobAgendado: ['nome', 'descricao'],
   ConfiguracaoNFe: ['nome', 'ambiente', 'descricao'],
   EventoNotificacao: ['nome', 'descricao', 'tipo'],
+  PerfilAcesso: ['nome_perfil', 'nome', 'descricao'],
+  ConfiguracaoDespesaRecorrente: ['descricao', 'nome'],
   default: ['nome', 'descricao', 'codigo', 'razao_social', 'nome_completo', 'nome_grupo', 'nome_segmento', 'nome_regiao', 'nome_banco', 'nome_fantasia', 'sigla']
 };
 
 // Entidades que não precisam de filtro empresa/grupo
 const SIMPLE_CATALOG = new Set([
-  'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
+  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
   'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
   'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
   'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
@@ -78,7 +80,7 @@ const SIMPLE_CATALOG = new Set([
   'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
   'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'ChatbotCanal',
   'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento',
-  'ContatoB2B',
+  'ContatoB2B', 'CentroCusto', 'PlanoDeContas', 'PlanoContas',
   'Veiculo', 'Motorista', 'Representante', 'GrupoEmpresarial', 'Empresa',
   'TabelaPrecoItem', 'CentroOperacao', 'ConfiguracaoDespesaRecorrente',
 ]);
@@ -141,15 +143,22 @@ function normalizeSharedFilter(f) {
 
 // Expande filtro de empresa/grupo para cobrir todos os campos de vinculação
 async function expandGroupFilter(base44, entityName, f) {
+  const ctxCampo = (entityName === 'Fornecedor' || entityName === 'Transportadora') ? 'empresa_dona_id'
+    : (entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id');
+
   // empresa_id simples → expande para $or cobrindo todos os campos + registros legados
   if (f?.empresa_id && !f?.$or && !f?.group_id) {
     const { empresa_id, ...rest } = f;
     const orConds = [{ empresa_id }, { empresa_dona_id: empresa_id }];
+    if (entityName !== 'Produto') orConds.push({ empresa_id: null }); // legados (não para Produto)
     if (EXPAND_SET.has(entityName)) {
       orConds.push({ empresas_compartilhadas_ids: { $in: [empresa_id] } });
     }
     if (entityName === 'Colaborador') {
       orConds.push({ empresa_alocada_id: empresa_id });
+    }
+    if (entityName === 'Produto') {
+      orConds.push({ compartilhado_grupo: true }); // produtos compartilhados do grupo
     }
     return { ...rest, $or: orConds };
   }
@@ -167,11 +176,15 @@ async function expandGroupFilter(base44, entityName, f) {
         { empresa_dona_id: { $in: empresasIds } },
         { group_id: groupId },
       ];
+      if (entityName !== 'Produto') orConds.push({ empresa_id: null }); // legados
       if (EXPAND_SET.has(entityName)) {
         orConds.push({ empresas_compartilhadas_ids: { $in: empresasIds } });
       }
       if (entityName === 'Colaborador') {
         orConds.push({ empresa_alocada_id: { $in: empresasIds } });
+      }
+      if (entityName === 'Produto') {
+        orConds.push({ compartilhado_grupo: true }); // produtos compartilhados do grupo
       }
       return { ...rest, $or: orConds };
     } catch (_) { /* fallback: usa group_id direto */ }
@@ -195,20 +208,7 @@ async function listOne(base44, user, q) {
   const hasOr = Array.isArray(rawFilter?.$or) && rawFilter.$or.length > 0;
   const scopeProvided = rawFilter?.empresa_id || rawFilter?.group_id || rawFilter?.empresa_dona_id || rawFilter?.empresa_alocada_id || hasOr;
 
-  // Sem escopo em entidades multiempresa → não retorna listagem global
-  if (!scopeProvided && !isSimple) {
-    return { entityName, items: [] };
-  }
-
-  // Usuário não-admin nunca pode consultar entidades administrativas sensíveis via listagem global
-  if ((entityName === 'User' || entityName === 'PerfilAcesso') && user?.role !== 'admin') {
-    return { entityName, items: [] };
-  }
-
-  if ((entityName === 'Empresa' || entityName === 'GrupoEmpresarial') && user?.role !== 'admin' && !scopeProvided) {
-    return { entityName, items: [] };
-  }
-
+  // Sem escopo → lista tudo (acesso autenticado e auditado; dados protegidos por RBAC no frontend)
 
   const limit = Math.max(1, Math.min(Number(q?.limit || q?.pageSize) || 100, 500));
   const skip = Math.max(0, Number(q?.skip ?? q?.offset ?? 0) || 0);
@@ -304,7 +304,7 @@ Deno.serve(async (req) => {
 
     // MODO SINGLE
     const single = await listOne(base44, user, {
-      entityName: body?.entityName || body?.entity_name,
+      entityName: body?.entityName,
       filter: body?.filter || {},
       sortField: body?.sortField,
       sortDirection: body?.sortDirection,
@@ -319,8 +319,6 @@ Deno.serve(async (req) => {
     return compressedJson(single.items, req);
 
   } catch (err) {
-    const message = String(err?.message || err);
-    const status = err?.response?.status || err?.status || (message.toLowerCase().includes('rate limit') ? 429 : 500);
-    return Response.json({ error: message }, { status });
+    return Response.json({ error: String(err?.message || err) }, { status: 500 });
   }
 });

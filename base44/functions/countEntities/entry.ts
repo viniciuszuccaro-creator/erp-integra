@@ -1,27 +1,10 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // Entidades com campo empresas_compartilhadas_ids — precisam de $or expandido
 const EXPAND_SET = new Set(['Cliente', 'Fornecedor', 'Transportadora', 'Colaborador', 'Produto']);
 
-const __COUNT_CACHE = globalThis.__countEntitiesCache || (globalThis.__countEntitiesCache = new Map());
-const __GROUP_EMPRESAS_CACHE = globalThis.__countGroupEmpresasCache || (globalThis.__countGroupEmpresasCache = new Map());
-const COUNT_CACHE_TTL_MS = 60_000;
-const GROUP_CACHE_TTL_MS = 300_000;
-
-const stableStringify = (value) => {
-  try {
-    if (!value || typeof value !== 'object') return JSON.stringify(value);
-    const ordered = Array.isArray(value)
-      ? value.map((item) => JSON.parse(stableStringify(item)))
-      : Object.keys(value).sort().reduce((acc, key) => ({ ...acc, [key]: value[key] }), {});
-    return JSON.stringify(ordered);
-  } catch (_) {
-    return String(value);
-  }
-};
-
 const SIMPLE_CATALOG = new Set([
-  'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
+  'Banco', 'FormaPagamento', 'TipoDespesa', 'MoedaIndice', 'TipoFrete',
   'UnidadeMedida', 'Departamento', 'Cargo', 'Turno', 'GrupoProduto', 'Marca',
   'SetorAtividade', 'LocalEstoque', 'TabelaFiscal', 'CentroResultado',
   'OperadorCaixa', 'RotaPadrao', 'ModeloDocumento', 'KitProduto', 'CatalogoWeb',
@@ -29,7 +12,7 @@ const SIMPLE_CATALOG = new Set([
   'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
   'GatewayPagamento', 'ApiExterna', 'Webhook', 'ChatbotIntent', 'ChatbotCanal',
   'JobAgendado', 'EventoNotificacao', 'SegmentoCliente', 'RegiaoAtendimento',
-  'ContatoB2B',
+  'ContatoB2B', 'CentroCusto', 'PlanoDeContas', 'PlanoContas',
   'Veiculo', 'Motorista', 'Representante', 'GrupoEmpresarial', 'Empresa',
   'TabelaPrecoItem', 'CentroOperacao', 'ConfiguracaoDespesaRecorrente',
 ]);
@@ -62,6 +45,12 @@ async function expandGroupFilter(base44, entityName, f) {
       { [ctxCampo]: empresa_id },
       { empresas_compartilhadas_ids: { $in: [empresa_id] } },
     ];
+    // Para Produto: inclui produtos do grupo compartilhados
+    if (entityName === 'Produto') {
+      orConds.push({ compartilhado_grupo: true });
+    } else {
+      orConds.push({ empresa_id: null }); // registros legados sem empresa
+    }
     if (ctxCampo !== 'empresa_id') orConds.push({ empresa_id });
     return { ...rest, $or: orConds };
   }
@@ -69,7 +58,7 @@ async function expandGroupFilter(base44, entityName, f) {
   // Caso 2: demais entidades com empresa_id — inclui legados
   if (!EXPAND_SET.has(entityName) && f?.empresa_id && !f?.$or && !f?.group_id) {
     const { empresa_id, ...rest } = f;
-    return { ...rest, $or: [{ empresa_id }] };
+    return { ...rest, $or: [{ empresa_id }, { empresa_id: null }] };
   }
 
   if (f?.$or && f?.group_id) {
@@ -80,13 +69,8 @@ async function expandGroupFilter(base44, entityName, f) {
   if (f?.group_id && !f?.$or && !f?.empresa_id && !f?.empresa_dona_id && !f?.empresa_alocada_id) {
     try {
       const groupId = f.group_id;
-      const cachedGroup = __GROUP_EMPRESAS_CACHE.get(groupId);
-      let empresasIds = cachedGroup && Date.now() - cachedGroup.ts < GROUP_CACHE_TTL_MS ? cachedGroup.ids : null;
-      if (!empresasIds) {
-        const empresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, '-id', 200);
-        empresasIds = (empresas || []).map(e => e.id).filter(Boolean);
-        __GROUP_EMPRESAS_CACHE.set(groupId, { ids: empresasIds, ts: Date.now() });
-      }
+      const empresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, '-id', 200);
+      const empresasIds = (empresas || []).map(e => e.id).filter(Boolean);
       const rest = { ...f };
       delete rest.group_id;
       if (EXPAND_SET.has(entityName)) {
@@ -96,10 +80,11 @@ async function expandGroupFilter(base44, entityName, f) {
           { empresas_compartilhadas_ids: { $in: empresasIds } },
           { group_id: groupId },
         ];
-
+        if (entityName !== 'Produto') orConds.push({ empresa_id: null }); // legados
+        if (entityName === 'Produto') orConds.push({ compartilhado_grupo: true });
         return { ...rest, $or: orConds };
       }
-      return { ...rest, $or: [{ [ctxCampo]: { $in: empresasIds } }, { group_id: groupId }] };
+      return { ...rest, $or: [{ [ctxCampo]: { $in: empresasIds } }, { group_id: groupId }, { empresa_id: null }] };
     } catch (_) { /* fallback */ }
   }
   return f;
@@ -146,31 +131,17 @@ async function countOne(base44, user, payload) {
   const { entityName, filter = {} } = payload || {};
   if (!entityName) return { entityName, count: 0 };
 
-  const countCacheKey = `${entityName}:${stableStringify(filter || {})}`;
-  const cached = __COUNT_CACHE.get(countCacheKey);
-  if (cached && Date.now() - cached.ts < COUNT_CACHE_TTL_MS) {
-    return { entityName, count: cached.count };
-  }
-
   const isSimple = SIMPLE_CATALOG.has(entityName);
   const hasOr = Array.isArray(filter?.$or) && filter.$or.length > 0;
   const scopeProvided = filter?.empresa_id || filter?.group_id || filter?.empresa_dona_id || filter?.empresa_alocada_id || hasOr;
 
-  // Entidades simples respeitam filtros de grupo/empresa quando enviados
+  // Entidades simples (catálogos) não precisam de escopo — retorna contagem total
   if (isSimple) {
-    if ((entityName === 'User' || entityName === 'PerfilAcesso' || entityName === 'Empresa' || entityName === 'GrupoEmpresarial') && user?.role !== 'admin') {
-      return { entityName, count: 0 };
-    }
-    const simpleFilter = normalizeSharedFilter({ ...(filter || {}) });
-    const simpleCount = await fastCount(base44, entityName, simpleFilter);
+    const simpleCount = await fastCount(base44, entityName, {});
     return { entityName, count: simpleCount };
   }
 
-  // Sem escopo em entidades multiempresa → não expõe contagem global
-  if (!scopeProvided && !isSimple) {
-    return { entityName, count: 0 };
-  }
-
+  // Sem escopo → conta total global (badges indicativos); dados protegidos via entityListSorted
   if (!scopeProvided) {
     const totalCount = await fastCount(base44, entityName, {});
     return { entityName, count: totalCount };
@@ -184,7 +155,6 @@ async function countOne(base44, user, payload) {
   }
 
   const count = await fastCount(base44, entityName, finalFilter);
-  __COUNT_CACHE.set(countCacheKey, { count, ts: Date.now() });
   return { entityName, count };
 }
 
@@ -230,7 +200,7 @@ Deno.serve(async (req) => {
 
     // MODO SINGLE
     const single = await countOne(base44, user, {
-      entityName: body?.entityName || body?.entity_name,
+      entityName: body?.entityName,
       filter: body?.filter || {}
     });
 
@@ -240,8 +210,6 @@ Deno.serve(async (req) => {
     return Response.json({ count: single.count, entityName: single.entityName });
 
   } catch (error) {
-    const message = String(error?.message || error);
-    const status = error?.response?.status || error?.status || (message.toLowerCase().includes('rate limit') ? 429 : 500);
-    return Response.json({ error: message }, { status });
+    return Response.json({ error: String(error?.message || error) }, { status: 500 });
   }
 });

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { 
   CheckCircle2, 
@@ -15,6 +14,7 @@ import {
   Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * Validador Final V21.7
@@ -23,12 +23,17 @@ import { toast } from 'sonner';
 export default function ValidadorFinalV21_7() {
   const [testando, setTestando] = useState(false);
   const [resultados, setResultados] = useState([]);
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const contextoValido = !!(empresaAtual?.id || grupoAtual?.id);
 
   const executarTestes = async () => {
     setTestando(true);
     const novosResultados = [];
 
     try {
+      if (!contextoValido) {
+        throw new Error('Selecione um grupo ou empresa antes de validar.');
+      }
       // Teste 1: UserContext
       try {
         const user = await base44.auth.me();
@@ -47,7 +52,7 @@ export default function ValidadorFinalV21_7() {
 
       // Teste 2: Buscar Empresas
       try {
-        const empresas = await base44.entities.Empresa.list();
+        const empresas = await filterInContext('Empresa', {}, 'nome_fantasia', 500);
         novosResultados.push({
           teste: 'Sistema Multiempresa - Empresas',
           status: empresas.length > 0 ? 'sucesso' : 'aviso',
@@ -63,7 +68,7 @@ export default function ValidadorFinalV21_7() {
 
       // Teste 3: Buscar Grupos
       try {
-        const grupos = await base44.entities.GrupoEmpresarial.list();
+        const grupos = grupoAtual?.id ? [grupoAtual] : await filterInContext('GrupoEmpresarial', {}, 'nome_grupo', 50);
         novosResultados.push({
           teste: 'Sistema Multiempresa - Grupos',
           status: grupos.length > 0 ? 'sucesso' : 'aviso',
@@ -79,7 +84,7 @@ export default function ValidadorFinalV21_7() {
 
       // Teste 4: Pedidos
       try {
-        const pedidos = await base44.entities.Pedido.list();
+        const pedidos = await filterInContext('Pedido', {}, '-created_date', 500);
         novosResultados.push({
           teste: 'Módulo Comercial - Pedidos',
           status: 'sucesso',
@@ -95,7 +100,7 @@ export default function ValidadorFinalV21_7() {
 
       // Teste 5: Clientes
       try {
-        const clientes = await base44.entities.Cliente.list();
+        const clientes = await filterInContext('Cliente', {}, '-created_date', 500);
         novosResultados.push({
           teste: 'Cadastros - Clientes',
           status: 'sucesso',
@@ -111,7 +116,7 @@ export default function ValidadorFinalV21_7() {
 
       // Teste 6: Produtos
       try {
-        const produtos = await base44.entities.Produto.list();
+        const produtos = await filterInContext('Produto', {}, '-created_date', 500);
         novosResultados.push({
           teste: 'Estoque - Produtos',
           status: 'sucesso',
@@ -127,7 +132,7 @@ export default function ValidadorFinalV21_7() {
 
       // Teste 7: OPs
       try {
-        const ops = await base44.entities.OrdemProducao.list();
+        const ops = await filterInContext('OrdemProducao', {}, '-created_date', 500);
         novosResultados.push({
           teste: 'Produção - OPs',
           status: 'sucesso',
@@ -143,7 +148,7 @@ export default function ValidadorFinalV21_7() {
 
       // Teste 8: Entregas
       try {
-        const entregas = await base44.entities.Entrega.list();
+        const entregas = await filterInContext('Entrega', {}, '-created_date', 500);
         novosResultados.push({
           teste: 'Expedição - Entregas',
           status: 'sucesso',
@@ -159,7 +164,7 @@ export default function ValidadorFinalV21_7() {
 
       // Teste 9: Audit Log
       try {
-        const logs = await base44.entities.AuditLog.list('-created_date', 10);
+        const logs = await filterInContext('AuditLog', {}, '-created_date', 10);
         novosResultados.push({
           teste: 'Auditoria - Logs',
           status: 'sucesso',
@@ -175,7 +180,7 @@ export default function ValidadorFinalV21_7() {
 
       // Teste 10: Notificações
       try {
-        const notifs = await base44.entities.Notificacao.list('-created_date', 5);
+        const notifs = await filterInContext('Notificacao', {}, '-created_date', 5);
         novosResultados.push({
           teste: 'Sistema - Notificações',
           status: 'sucesso',
@@ -239,7 +244,8 @@ export default function ValidadorFinalV21_7() {
             </div>
             <Button
               onClick={executarTestes}
-              disabled={testando}
+              disabled={testando || !contextoValido}
+              data-action="ValidadorFinal.executar"
               className="bg-blue-600 hover:bg-blue-700 px-6 py-6 text-lg"
             >
               {testando ? (

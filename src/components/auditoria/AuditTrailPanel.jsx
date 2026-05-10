@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import AuditDetailsDialog from "./AuditDetailsDialog";
 
 export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = null }) {
-  const { getFiltroContexto } = useContextoVisual();
+  const { getFiltroContexto, contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
   const { isAdmin, user } = usePermissions();
   const queryClient = useQueryClient();
   const [escopo, setEscopo] = useState("meus"); // meus | todos
@@ -19,7 +19,32 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
   const [selected, setSelected] = useState(null);
   const [usuarioId, setUsuarioId] = useState('todos');
 
-  const filtroBase = getFiltroContexto("empresa_id") || {};
+  const filtroBase = getFiltroContexto("empresa_id", true) || {};
+  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
+  const scopeKey = empresaAtivaId || grupoAtivoId || 'sem-contexto';
+  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
+    .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
+    .filter(Boolean);
+
+  const usuarioNoEscopo = (u) => {
+    if (!u) return false;
+    const vinculadas = normalizeEmpresaIds(u.empresas_vinculadas);
+    const temMarcacaoEscopo = u.group_id || u.grupo_id || u.grupo_atual_id || u.empresa_id || u.empresa_atual_id || vinculadas.length > 0;
+    if (!temMarcacaoEscopo) return true;
+    if (contexto === 'grupo') {
+      const empresasIds = empresasDoGrupo.map((e) => e.id);
+      return u.group_id === grupoAtivoId ||
+        u.grupo_id === grupoAtivoId ||
+        u.grupo_atual_id === grupoAtivoId ||
+        vinculadas.some((id) => empresasIds.includes(id));
+    }
+    return u.empresa_id === empresaAtivaId ||
+      u.empresa_atual_id === empresaAtivaId ||
+      vinculadas.includes(empresaAtivaId);
+  };
 
   const filtro = useMemo(() => {
     const f = { ...filtroBase };
@@ -34,18 +59,23 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
   }, [filtroBase, modulo, entidade, escopo, user, isAdmin, usuarioId]);
 
   const { data: logs = [] } = useQuery({
-    queryKey: ["audit-logs", filtro, limit],
+    queryKey: ["audit-logs", filtro, limit, scopeKey, contexto],
     queryFn: async () => {
-      const rows = await base44.entities.AuditLog.filter(filtro, "-data_hora", limit);
+      const { group_id, empresa_id, ...criterios } = filtro;
+      const rows = await filterInContext('AuditLog', criterios, "-data_hora", limit);
       return rows;
     },
+    enabled: scopeKey !== 'sem-contexto',
     staleTime: 3000,
   });
 
   const { data: users = [] } = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: async () => base44.entities.User.list(),
-    enabled: isAdmin(),
+    queryKey: ['admin-users', scopeKey],
+    queryFn: async () => {
+      const rows = await base44.entities.User.list();
+      return rows.filter(usuarioNoEscopo);
+    },
+    enabled: isAdmin() && scopeKey !== 'sem-contexto',
     staleTime: 60000,
   });
 
@@ -65,7 +95,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Select value={escopo} onValueChange={setEscopo} disabled={!isAdmin()}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-40" data-action="AuditTrail.filtroEscopo">
               <SelectValue placeholder="Escopo" />
             </SelectTrigger>
             <SelectContent>
@@ -76,7 +106,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
 
           {isAdmin() && escopo === 'todos' && (
             <Select value={usuarioId} onValueChange={setUsuarioId}>
-              <SelectTrigger className="w-56">
+              <SelectTrigger className="w-56" data-action="AuditTrail.filtroUsuario">
                 <SelectValue placeholder="Usuário" />
               </SelectTrigger>
               <SelectContent>
@@ -121,7 +151,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
                   <TableCell className="whitespace-nowrap">{l.usuario}</TableCell>
                   <TableCell className="whitespace-nowrap">
                     {isAdmin() ? (
-                      <Button variant="outline" size="sm" onClick={() => { setSelected(l); setOpen(true); }}>
+                      <Button variant="outline" size="sm" onClick={() => { setSelected(l); setOpen(true); }} data-action="AuditTrail.verDetalhes">
                         Ver {l?.dados_novos?.__sensitive ? <span className="ml-2 inline-flex items-center text-red-600">• sensível</span> : null}
                       </Button>
                     ) : (

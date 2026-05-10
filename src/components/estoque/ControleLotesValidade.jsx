@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, Clock, CheckCircle, Search, Package } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * Controle de Lotes e Validade
@@ -15,17 +15,21 @@ import { AlertTriangle, Clock, CheckCircle, Search, Package } from "lucide-react
 export default function ControleLotesValidade({ empresaId }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filtroAlerta, setFiltroAlerta] = useState("todos");
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const contextKey = empresaId || empresaAtual?.id || grupoAtual?.id || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos-lotes', empresaId],
+    queryKey: ['produtos-lotes', contextKey],
     queryFn: async () => {
-      const todos = await base44.entities.Produto.list();
+      const todos = await filterInContext('Produto', {}, '-updated_date', 1000);
       return todos.filter(p => 
         (empresaId ? p.empresa_id === empresaId : true) &&
         (p.controla_lote || p.controla_validade) &&
         p.status === "Ativo"
       );
     },
+    enabled: contextoValido,
   });
 
   // Processar todos os lotes

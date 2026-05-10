@@ -1,10 +1,9 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { base44, isApiKeyMode, isLocalOnlyMode, localApiUser } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
 const AuthContext = createContext();
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -18,6 +17,26 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAppState = async () => {
+    if (isLocalOnlyMode) {
+      setUser(await base44.auth.me());
+      setIsAuthenticated(true);
+      setAuthError(null);
+      setAppPublicSettings({ id: appParams.appId, public_settings: {} });
+      setIsLoadingPublicSettings(false);
+      setIsLoadingAuth(false);
+      return;
+    }
+
+    if (isApiKeyMode) {
+      setUser(localApiUser);
+      setIsAuthenticated(true);
+      setAuthError(null);
+      setAppPublicSettings({ id: appParams.appId, public_settings: {} });
+      setIsLoadingPublicSettings(false);
+      setIsLoadingAuth(false);
+      return;
+    }
+
     try {
       setIsLoadingPublicSettings(true);
       setAuthError(null);

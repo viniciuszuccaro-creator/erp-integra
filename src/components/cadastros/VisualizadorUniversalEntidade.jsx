@@ -12,6 +12,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -92,6 +93,11 @@ export default function VisualizadorUniversalEntidade({
 
   const queryClient                                    = useQueryClient();
   const { filterInContext, empresaAtual, grupoAtual, deleteInContext } = useContextoVisual();
+  const { hasPermission, canCreate, canEdit, canDelete } = usePermissions();
+  const canViewCadastro = hasPermission("Cadastros", ENTITY, "visualizar") || hasPermission("Cadastros", null, "visualizar");
+  const canCreateCadastro = canCreate("Cadastros", ENTITY) || canCreate("Cadastros", null);
+  const canEditCadastro = canEdit("Cadastros", ENTITY) || canEdit("Cadastros", null);
+  const canDeleteCadastro = canDelete("Cadastros", ENTITY) || canDelete("Cadastros", null);
 
   const [search,          setSearch]          = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -148,7 +154,7 @@ export default function VisualizadorUniversalEntidade({
     gcTime:               120_000,
     refetchOnWindowFocus: false,
     placeholderData:      (prev) => prev,   // ← elimina pulo da tela
-    enabled:              !!ENTITY,
+    enabled:              !!ENTITY && canViewCadastro,
   });
 
   // ── Real-time subscription ──
@@ -219,6 +225,10 @@ export default function VisualizadorUniversalEntidade({
 
   // ── Delete ──
   const handleDelete = useCallback(async (item) => {
+    if (!canDeleteCadastro) {
+      alert("Sem permissao para excluir.");
+      return;
+    }
     if (!window.confirm(`Confirma exclusão de "${item.nome || item.descricao || item.id}"?`)) return;
     try {
       await deleteInContext(ENTITY, item.id);
@@ -226,7 +236,7 @@ export default function VisualizadorUniversalEntidade({
     } catch (e) {
       alert("Erro ao excluir: " + (e?.message || e));
     }
-  }, [ENTITY, deleteInContext, queryClient]);
+  }, [ENTITY, deleteInContext, queryClient, canDeleteCadastro]);
 
   const handleSave = useCallback(() => {
     setShowForm(false);
@@ -241,6 +251,16 @@ export default function VisualizadorUniversalEntidade({
   };
 
   // ── Render ──
+  if (!canViewCadastro) {
+    return (
+      <div className="w-full h-full flex items-center justify-center p-6">
+        <div className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Seu perfil nao tem permissao para visualizar {TITULO}.
+        </div>
+      </div>
+    );
+  }
+
   const content = (
     <div className="flex flex-col h-full gap-3 min-h-0">
 
@@ -280,6 +300,9 @@ export default function VisualizadorUniversalEntidade({
           <Button
             size="sm"
             onClick={() => { setEditItem(null); setShowForm(true); }}
+            disabled={!canCreateCadastro}
+            data-permission={`Cadastros.${ENTITY}.criar`}
+            data-sensitive
             className="h-9 rounded-sm gap-1"
           >
             <Plus className="w-4 h-4" /> Novo
@@ -347,6 +370,9 @@ export default function VisualizadorUniversalEntidade({
                         <button
                           onClick={() => { setEditItem(item); setShowForm(true); }}
                           title="Editar"
+                          disabled={!canEditCadastro}
+                          data-permission={`Cadastros.${ENTITY}.editar`}
+                          data-sensitive="true"
                           className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                         >
                           <Edit className="w-3.5 h-3.5" />
@@ -355,6 +381,9 @@ export default function VisualizadorUniversalEntidade({
                       <button
                         onClick={() => handleDelete(item)}
                         title="Excluir"
+                        disabled={!canDeleteCadastro}
+                        data-permission={`Cadastros.${ENTITY}.excluir`}
+                        data-sensitive="true"
                         className="h-7 w-7 flex items-center justify-center rounded-sm text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

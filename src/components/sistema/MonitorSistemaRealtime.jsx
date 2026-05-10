@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { 
   Activity, 
   Database, 
@@ -23,6 +23,9 @@ import { Progress } from '@/components/ui/progress';
  */
 export default function MonitorSistemaRealtime({ windowMode = false }) {
   const [tempoOnline, setTempoOnline] = useState(0);
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const contextoValido = scopeId !== 'sem-contexto';
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -34,47 +37,60 @@ export default function MonitorSistemaRealtime({ windowMode = false }) {
 
   // Monitorar entidades principais
   const { data: totalPedidos = 0 } = useQuery({
-    queryKey: ['monitor-pedidos'],
+    queryKey: ['monitor-pedidos', scopeId, contexto],
     queryFn: async () => {
-      const list = await base44.entities.Pedido.list();
+      const list = await filterInContext('Pedido', {}, '-created_date', 1000);
       return list.length;
     },
+    enabled: contextoValido,
     refetchInterval: 30000,
   });
 
   const { data: totalClientes = 0 } = useQuery({
-    queryKey: ['monitor-clientes'],
+    queryKey: ['monitor-clientes', scopeId, contexto],
     queryFn: async () => {
-      const list = await base44.entities.Cliente.list();
+      const list = await filterInContext('Cliente', {}, '-created_date', 1000);
       return list.length;
     },
+    enabled: contextoValido,
     refetchInterval: 30000,
   });
 
   const { data: totalProdutos = 0 } = useQuery({
-    queryKey: ['monitor-produtos'],
+    queryKey: ['monitor-produtos', scopeId, contexto],
     queryFn: async () => {
-      const list = await base44.entities.Produto.list();
+      const list = await filterInContext('Produto', {}, '-created_date', 1000);
       return list.length;
     },
+    enabled: contextoValido,
     refetchInterval: 30000,
   });
 
   const { data: totalEmpresas = 0 } = useQuery({
-    queryKey: ['monitor-empresas'],
+    queryKey: ['monitor-empresas', scopeId, contexto],
     queryFn: async () => {
-      const list = await base44.entities.Empresa.list();
+      const list = await filterInContext('Empresa', {}, 'nome_fantasia', 1000);
       return list.filter(e => e.status === 'Ativa').length;
     },
+    enabled: contextoValido,
     refetchInterval: 60000,
   });
 
   const { data: totalUsuarios = 0 } = useQuery({
-    queryKey: ['monitor-usuarios'],
+    queryKey: ['monitor-usuarios', scopeId, contexto],
     queryFn: async () => {
-      const list = await base44.entities.User.list();
-      return list.length;
+      const list = await filterInContext('User', {}, 'full_name', 1000);
+      return list.filter(u => {
+        if (empresaAtual?.id) {
+          return u.empresa_id === empresaAtual.id || u.empresa_atual_id === empresaAtual.id || (u.empresas_vinculadas || []).includes(empresaAtual.id);
+        }
+        if (grupoAtual?.id) {
+          return u.group_id === grupoAtual.id || u.grupo_id === grupoAtual.id || u.grupo_atual_id === grupoAtual.id || (u.empresas_vinculadas || []).some(id => (grupoAtual.empresas_ids || []).includes(id));
+        }
+        return false;
+      }).length;
     },
+    enabled: contextoValido,
     refetchInterval: 60000,
   });
 

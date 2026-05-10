@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -11,6 +10,8 @@ import { CreditCard, QrCode, Link2, CheckCircle2, Copy, X } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import GeradorLinkPagamento from "./GeradorLinkPagamento";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * ETAPA 4 - Modal Gerar Cobrança
@@ -21,16 +22,42 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
   const [tipoCobranca, setTipoCobranca] = useState('pix');
   const [gerando, setGerando] = useState(false);
   const [cobrancaGerada, setCobrancaGerada] = useState(null);
+  const {
+    empresaAtual,
+    grupoAtual,
+    filterInContext,
+    createInContext,
+    updateInContext
+  } = useContextoVisual();
+  const { canCreate, canEdit, hasPermission } = usePermissions();
+
+  const groupId = contaReceber?.group_id || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contaReceber?.empresa_id || empresaAtual?.id || null;
+  const contextKey = empresaId || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeGerarCobranca =
+    canCreate("Financeiro", "Cobrança") ||
+    canCreate("Financeiro", "Cobranca") ||
+    canEdit("Financeiro", "Contas a Receber") ||
+    hasPermission("Financeiro", null, "gerenciar");
 
   const { data: configsCobranca = [] } = useQuery({
-    queryKey: ['configs-cobranca'],
-    queryFn: () => base44.entities.ConfiguracaoCobrancaEmpresa.list(),
+    queryKey: ['configs-cobranca', contextKey],
+    queryFn: () => filterInContext('ConfiguracaoCobrancaEmpresa', {}, '-created_date', 50),
+    enabled: contextoValido,
   });
 
   const config = configsCobranca.find(c => c.empresa_id === contaReceber?.empresa_id);
 
   const gerarBoletoMutation = useMutation({
     mutationFn: async () => {
+      if (!contextoValido) {
+        throw new Error("Selecione um grupo ou empresa antes de gerar cobranca.");
+      }
+      if (!podeGerarCobranca) {
+        throw new Error("Seu perfil nao permite gerar cobrancas.");
+      }
+
       setGerando(true);
 
       const payload = {
@@ -52,9 +79,9 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
         nossoNumero: String(Date.now()).substring(0, 10)
       };
 
-      await base44.entities.LogCobranca.create({
-        group_id: contaReceber.group_id,
-        empresa_id: contaReceber.empresa_id,
+      await createInContext('LogCobranca', {
+        group_id: groupId,
+        empresa_id: empresaId,
         conta_receber_id: contaReceber.id,
         tipo_operacao: "gerar_boleto",
         provedor: config?.provedor_cobranca || "Asaas",
@@ -65,7 +92,9 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
         mensagem: "Boleto gerado em modo simulação"
       });
 
-      await base44.entities.ContaReceber.update(contaReceber.id, {
+      await updateInContext('ContaReceber', contaReceber.id, {
+        group_id: groupId,
+        empresa_id: empresaId,
         forma_cobranca: "Boleto",
         id_cobranca_externa: retornoMock.id,
         boleto_id_integracao: retornoMock.id,
@@ -79,14 +108,25 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
       return retornoMock;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['contasReceber']);
+      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       setCobrancaGerada({ tipo: 'boleto', dados: data });
       toast.success("✅ Boleto gerado!");
+    },
+    onError: (error) => {
+      setGerando(false);
+      toast.error(error.message || "Erro ao gerar boleto");
     }
   });
 
   const gerarPixMutation = useMutation({
     mutationFn: async () => {
+      if (!contextoValido) {
+        throw new Error("Selecione um grupo ou empresa antes de gerar cobranca.");
+      }
+      if (!podeGerarCobranca) {
+        throw new Error("Seu perfil nao permite gerar cobrancas.");
+      }
+
       setGerando(true);
 
       const pixCopiaCola = `00020126580014br.gov.bcb.pix0136${contaReceber.id}52040000530398654${contaReceber.valor.toFixed(2)}5802BR6009SAO PAULO`;
@@ -100,9 +140,9 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
         expirationDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       };
 
-      await base44.entities.LogCobranca.create({
-        group_id: contaReceber.group_id,
-        empresa_id: contaReceber.empresa_id,
+      await createInContext('LogCobranca', {
+        group_id: groupId,
+        empresa_id: empresaId,
         conta_receber_id: contaReceber.id,
         tipo_operacao: "gerar_pix",
         provedor: config?.provedor_cobranca || "Asaas",
@@ -112,7 +152,9 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
         mensagem: "PIX gerado em modo simulação"
       });
 
-      await base44.entities.ContaReceber.update(contaReceber.id, {
+      await updateInContext('ContaReceber', contaReceber.id, {
+        group_id: groupId,
+        empresa_id: empresaId,
         forma_cobranca: "PIX",
         id_cobranca_externa: retornoMock.id,
         pix_id_integracao: retornoMock.id,
@@ -126,9 +168,13 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
       return retornoMock;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['contasReceber']);
+      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       setCobrancaGerada({ tipo: 'pix', dados: data });
       toast.success("✅ PIX gerado!");
+    },
+    onError: (error) => {
+      setGerando(false);
+      toast.error(error.message || "Erro ao gerar PIX");
     }
   });
 
@@ -177,15 +223,15 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
             <>
               <Tabs value={tipoCobranca} onValueChange={setTipoCobranca}>
                 <TabsList className="grid grid-cols-3 w-full">
-                  <TabsTrigger value="pix" disabled={!config?.habilitar_pix}>
+                  <TabsTrigger value="pix" disabled={!config?.habilitar_pix || !contextoValido || !podeGerarCobranca}>
                     <QrCode className="w-4 h-4 mr-2" />
                     PIX
                   </TabsTrigger>
-                  <TabsTrigger value="boleto" disabled={!config?.habilitar_boleto}>
+                  <TabsTrigger value="boleto" disabled={!config?.habilitar_boleto || !contextoValido || !podeGerarCobranca}>
                     <CreditCard className="w-4 h-4 mr-2" />
                     Boleto
                   </TabsTrigger>
-                  <TabsTrigger value="link">
+                  <TabsTrigger value="link" disabled={!contextoValido || !podeGerarCobranca}>
                     <Link2 className="w-4 h-4 mr-2" />
                     Link
                   </TabsTrigger>
@@ -199,7 +245,7 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
                   </Alert>
                   <Button
                     onClick={() => gerarPixMutation.mutate()}
-                    disabled={gerando}
+                    disabled={gerando || !contextoValido || !podeGerarCobranca}
                     className="w-full bg-green-600 hover:bg-green-700"
                   >
                     <QrCode className="w-4 h-4 mr-2" />
@@ -215,7 +261,7 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
                   </Alert>
                   <Button
                     onClick={() => gerarBoletoMutation.mutate()}
-                    disabled={gerando}
+                    disabled={gerando || !contextoValido || !podeGerarCobranca}
                     className="w-full bg-orange-600 hover:bg-orange-700"
                   >
                     <CreditCard className="w-4 h-4 mr-2" />

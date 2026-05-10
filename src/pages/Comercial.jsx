@@ -35,7 +35,13 @@ const MonitoramentoCanaisRealtime = React.lazy(() => import("@/components/comerc
 
 export default function Comercial() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const canSeeComercial = hasPermission('Comercial', null, 'ver');
+  const canViewComercial = (section = null) => (
+    hasPermission('Comercial', section, 'visualizar')
+    || hasPermission('Comercial', section, 'ver')
+    || hasPermission('Comercial', null, 'visualizar')
+    || hasPermission('Comercial', null, 'ver')
+  );
+  const canSeeComercial = canViewComercial();
   const { openWindow, closeWindow } = useWindow();
   const { filterInContext, getFiltroContexto, createInContext, updateInContext, empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
   const { user } = useUser();
@@ -136,7 +142,7 @@ export default function Comercial() {
     },
     staleTime: 60000,
     retry: 1,
-    enabled: canSeeComercial && (empresaAtual?.id || estaNoGrupo)
+    enabled: Boolean(canSeeComercial && (empresaAtual?.id || estaNoGrupo))
   });
 
   const { data: pedidosExternos = [] } = useQuery({
@@ -240,6 +246,7 @@ export default function Comercial() {
   const modules = [
     {
       title: 'Clientes',
+      sectionKey: 'Clientes',
       description: 'Cadastro e gestão',
       icon: Users,
       color: 'blue',
@@ -251,6 +258,7 @@ export default function Comercial() {
     },
     {
       title: 'Pedidos',
+      sectionKey: 'Pedidos',
       description: 'Orçamentos e vendas',
       icon: ShoppingCart,
       color: 'purple',
@@ -273,6 +281,7 @@ export default function Comercial() {
     },
     {
       title: 'Pedidos Retirada',
+      sectionKey: 'Pedidos Retirada',
       description: 'Cliente retira',
       icon: Package,
       color: 'green',
@@ -295,6 +304,7 @@ export default function Comercial() {
     },
     {
       title: 'Notas Fiscais',
+      sectionKey: 'Notas Fiscais',
       description: 'NF-e emitidas',
       icon: FileText,
       color: 'indigo',
@@ -328,6 +338,7 @@ export default function Comercial() {
     },
     {
       title: 'Canais Realtime',
+      sectionKey: 'Canais Realtime',
       description: 'Monitoramento de origem',
       icon: TrendingUp,
       color: 'cyan',
@@ -339,9 +350,15 @@ export default function Comercial() {
     }
   ];
 
-  const allowedModules = modules.filter(m => hasPermission('Comercial', (m.sectionKey || m.title), 'ver'));
+  const allowedModules = modules
+    .map((m) => ({ ...m, permissionKey: `Comercial.${m.sectionKey || m.title}.visualizar` }))
+    .filter(m => canViewComercial(m.sectionKey || m.title));
 
    const handleModuleClick = (module) => {
+    if (!canViewComercial(module.sectionKey || module.title)) {
+      toast.error('Sem permissao para visualizar esta area do Comercial.');
+      return;
+    }
     React.startTransition(() => {
       // Auditoria de abertura de seção (somente se autenticado)
       (async () => {
@@ -354,6 +371,8 @@ export default function Comercial() {
               tipo_auditoria: 'acesso',
               entidade: 'Seção',
               descricao: `Abrir seção: ${module.title}`,
+              empresa_id: empresaAtual?.id || null,
+              group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
               data_hora: new Date().toISOString(),
             });
           }

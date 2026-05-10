@@ -7,6 +7,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,13 @@ export default function CadastrosTableUniversal({
 }) {
   const queryClient = useQueryClient();
   const { filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { canEdit, canDelete, hasPermission } = usePermissions();
+  const podeVisualizar = hasPermission("Cadastros", entityName, "visualizar") || hasPermission("Cadastros", null, "visualizar");
+  const podeEditar = canEdit("Cadastros", entityName) || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", entityName) || canDelete("Cadastros", null);
+  const permissaoVisualizar = `Cadastros.${entityName}.visualizar`;
+  const permissaoEditar = `Cadastros.${entityName}.editar`;
+  const permissaoExcluir = `Cadastros.${entityName}.excluir`;
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortField, setSortField] = useState("-updated_date");
@@ -54,24 +62,22 @@ export default function CadastrosTableUniversal({
 
   // Fetch data server-side
   const { data: items = [], isLoading } = useQuery({
-    queryKey: [entityName, sortField, currentPage, debouncedSearch, empresaAtual?.id, grupoAtual?.id, pageSize],
-    placeholderData: (prev) => prev,
+    queryKey: [entityName, sortField, currentPage, debouncedSearch, empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
-      if (!entityName) return [];
       const skip = (currentPage - 1) * pageSize;
-      return await filterInContext(entityName, { ...searchFilter, __skip: skip }, sortField, pageSize);
+      return await filterInContext(entityName, searchFilter, sortField, pageSize);
     },
+    enabled: podeVisualizar,
     staleTime: 45_000,
     gcTime: 120_000,
     refetchOnWindowFocus: false,
-    networkMode: 'online',
   });
 
   // Real-time updates
   useEffect(() => {
     const api = base44.entities?.[entityName];
     if (!api?.subscribe) return;
-    const unsub = api.subscribe(() => {
+    const unsub = api.subscribe((evt) => {
       queryClient.invalidateQueries({ queryKey: [entityName] });
     });
     return unsub;
@@ -104,7 +110,7 @@ export default function CadastrosTableUniversal({
   );
 
   return (
-    <div className="space-y-4 w-full min-w-0">
+    <div className="space-y-4">
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
@@ -116,18 +122,20 @@ export default function CadastrosTableUniversal({
             setCurrentPage(1);
           }}
           className="pl-10 bg-white border-slate-200"
+          data-permission={permissaoVisualizar}
+          data-action={`Cadastros.${entityName}.buscar`}
         />
       </div>
 
       {/* Table */}
-      <Card className="rounded-sm border-slate-200 shadow-sm overflow-hidden w-full min-w-0">
+      <Card className="rounded-sm border-slate-200 shadow-sm overflow-hidden">
         <CardContent className="p-0">
           {isLoading ? (
             renderLoading()
           ) : items.length === 0 ? (
             <div className="p-8 text-center text-slate-500">Nenhum registro encontrado</div>
           ) : (
-            <div className="w-full overflow-x-auto">
+            <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
                   <tr>
@@ -158,7 +166,7 @@ export default function CadastrosTableUniversal({
                     <th className="px-4 py-3 text-center font-medium text-slate-700 w-24">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 break-words">
+                <tbody className="divide-y divide-slate-100">
                   {items.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
                       {columns.map((col) => (
@@ -176,15 +184,16 @@ export default function CadastrosTableUniversal({
                         </td>
                       ))}
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-1 flex-nowrap">
+                        <div className="flex items-center justify-center gap-1">
                           {onView && (
                             <Button
                               size="sm"
                               variant="ghost"
-                              data-permission="Cadastros.visualizar.ver"
                               onClick={() => onView(item)}
                               className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-sm"
                               title="Visualizar"
+                              data-permission={permissaoVisualizar}
+                              data-action={`Cadastros.${entityName}.visualizar`}
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -193,10 +202,13 @@ export default function CadastrosTableUniversal({
                             <Button
                               size="sm"
                               variant="ghost"
-                              data-permission="Cadastros.editar.editar"
                               onClick={() => onEdit(item)}
+                              disabled={!podeEditar}
                               className="h-8 w-8 p-0 text-slate-600 hover:text-green-600 hover:bg-green-50 rounded-sm"
                               title="Editar"
+                              data-permission={permissaoEditar}
+                              data-action={`Cadastros.${entityName}.editar`}
+                              data-sensitive="true"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -205,14 +217,17 @@ export default function CadastrosTableUniversal({
                             <Button
                               size="sm"
                               variant="ghost"
-                              data-permission="Cadastros.excluir.excluir"
                               onClick={() => {
-                                if (window.confirm("Tem certeza que deseja deletar?")) {
+                                if (window.confirm(`Regra-Mae: confirma excluir este registro de ${entityName}? Esta acao sera auditada.`)) {
                                   onDelete(item);
                                 }
                               }}
+                              disabled={!podeExcluir}
                               className="h-8 w-8 p-0 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-sm"
                               title="Deletar"
+                              data-permission={permissaoExcluir}
+                              data-action={`Cadastros.${entityName}.excluir`}
+                              data-sensitive="true"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>

@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 // auditEntityEvents: registra em AuditLog todos os eventos de entidade (create/update/delete)
 // Payload recebido por automação de entidade:

@@ -1,19 +1,11 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  FileEdit, 
-  FilePlus, 
-  Trash2, 
-  Clock, 
-  User,
-  Filter,
-  Calendar
-} from "lucide-react";
+import { FileEdit, FilePlus, Trash2, Clock, User, Calendar } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * GLOBAL AUDIT LOG V21.0
@@ -21,20 +13,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
  * Regra-Mãe: Transparência Total + Rastreabilidade Completa
  */
 export default function GlobalAuditLog({ limite = 20, mostrarFiltros = true }) {
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const contextoValido = scopeId !== 'sem-contexto';
   const [filtroEntidade, setFiltroEntidade] = useState('todas');
   const [filtroAcao, setFiltroAcao] = useState('todas');
 
   const { data: logs = [], isLoading } = useQuery({
-    queryKey: ['audit-logs', limite],
-    queryFn: () => base44.entities.AuditLog.list('-created_date', limite),
+    queryKey: ['audit-logs-global', limite, scopeId, contexto],
+    queryFn: () => filterInContext('AuditLog', {}, '-created_date', limite),
+    enabled: contextoValido,
   });
+
+  const normalizarAcao = (acao) => {
+    const valor = String(acao || '').toLowerCase();
+    if (['criacao', 'criação', 'create', 'convite', 'seed'].some((v) => valor.includes(v))) return 'create';
+    if (['exclusao', 'exclusão', 'delete', 'remocao', 'remoção'].some((v) => valor.includes(v))) return 'delete';
+    return 'update';
+  };
 
   const logsProcessados = logs.map(log => {
     let descricao = log.descricao || '';
-    let entidade = log.entity_name || 'Desconhecido';
-    let acao = log.action || 'update';
-    let usuario = log.created_by || 'Sistema';
-    let data = log.created_date;
+    let entidade = log.entidade || log.entity_name || 'Desconhecido';
+    let acaoOriginal = log.acao || log.action || 'update';
+    let acao = normalizarAcao(acaoOriginal);
+    let usuario = log.usuario || log.created_by || 'Sistema';
+    let data = log.data_hora || log.created_date;
 
     // Tentar extrair informações dos campos
     if (log.changes) {
@@ -50,6 +54,7 @@ export default function GlobalAuditLog({ limite = 20, mostrarFiltros = true }) {
       descricao,
       entidade,
       acao,
+      acaoOriginal,
       usuario,
       data
     };
@@ -80,7 +85,7 @@ export default function GlobalAuditLog({ limite = 20, mostrarFiltros = true }) {
   };
 
   return (
-    <Card className="border-2 border-slate-300">
+    <Card className="border-2 border-slate-300 w-full h-full">
       <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
@@ -88,9 +93,9 @@ export default function GlobalAuditLog({ limite = 20, mostrarFiltros = true }) {
             Global Audit Log - Últimas {limite} Alterações
           </CardTitle>
           {mostrarFiltros && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Select value={filtroEntidade} onValueChange={setFiltroEntidade}>
-                <SelectTrigger className="w-32 h-8">
+                <SelectTrigger className="w-32 h-8" data-action="GlobalAuditLog.filtroEntidade">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -103,7 +108,7 @@ export default function GlobalAuditLog({ limite = 20, mostrarFiltros = true }) {
               </Select>
 
               <Select value={filtroAcao} onValueChange={setFiltroAcao}>
-                <SelectTrigger className="w-32 h-8">
+                <SelectTrigger className="w-32 h-8" data-action="GlobalAuditLog.filtroAcao">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -130,11 +135,14 @@ export default function GlobalAuditLog({ limite = 20, mostrarFiltros = true }) {
                   <div className="mt-1">
                     {getIconeAcao(log.acao)}
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <Badge className={getCorAcao(log.acao)}>
                         {log.acao === 'create' ? 'Criação' : log.acao === 'update' ? 'Edição' : 'Exclusão'}
                       </Badge>
+                      {log.acaoOriginal && log.acaoOriginal !== log.acao && (
+                        <Badge variant="outline" className="text-xs">{log.acaoOriginal}</Badge>
+                      )}
                       <Badge variant="outline" className="text-xs">{log.entidade}</Badge>
                     </div>
                     <p className="text-sm text-slate-700">{log.descricao}</p>

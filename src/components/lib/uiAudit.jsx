@@ -15,7 +15,8 @@ async function getUserSafe() {
 function getContextSafe() {
   try {
     const empresa_id = typeof localStorage !== 'undefined' ? localStorage.getItem('empresa_atual_id') : null;
-    return { empresa_id };
+    const group_id = typeof localStorage !== 'undefined' ? localStorage.getItem('group_atual_id') : null;
+    return { empresa_id, group_id };
   } catch (_) {
     return {};
   }
@@ -42,6 +43,7 @@ export function logUIAction({ component, action, status, meta }) {
         usuario: u?.full_name || u?.email || 'Usuário',
         usuario_id: u?.id,
         empresa_id: ctx?.empresa_id || null,
+        group_id: ctx?.group_id || null,
         acao: "Interação",
         modulo: "Sistema",
         entidade: "UI",
@@ -67,6 +69,7 @@ export function logUIIssue({ component, issue, severity = "warn", meta }) {
         usuario: u?.full_name || u?.email || 'Usuário',
         usuario_id: u?.id,
         empresa_id: ctx?.empresa_id || null,
+        group_id: ctx?.group_id || null,
         acao: "Auditoria",
         modulo: "Sistema",
         entidade: "UI",
@@ -96,9 +99,17 @@ function sanitizeMeta(meta) {
 // Fase 4: auditoria completa (verbose) por padrão
 const AUDIT_VERBOSE = false;
 
+function shouldPersistUIAudit(actionName, baseMeta = {}) {
+  const kind = baseMeta?.kind;
+  if (kind === 'input' || kind === 'textarea') return false;
+  if (!actionName) return false;
+  if (String(actionName).includes('.onChange')) return false;
+  return true;
+}
+
 // CORREÇÃO CRÍTICA: Wrap não-bloqueante para handlers de UI
 // Não usa async/await para evitar delays imperceptíveis que interferem na digitação
-export function uiAuditWrap(actionName, handler, baseMeta = {}) {
+function uiAuditWrapLegacy(actionName, handler, baseMeta = {}) {
   return function wrapped(...args) {
     // Log assíncrono não-bloqueante (fire-and-forget)
     Promise.resolve().then(() => {
@@ -131,11 +142,58 @@ export function uiAuditWrap(actionName, handler, baseMeta = {}) {
   };
 }
 
+export function uiAuditWrap(actionName, handler, baseMeta = {}) {
+  return function wrapped(...args) {
+    Promise.resolve().then(() => {
+      if (AUDIT_VERBOSE) logUIAction({ component: inferComponent(actionName), action: actionName, status: "start", meta: baseMeta });
+    });
+
+    const logSuccess = () => {
+      if (AUDIT_VERBOSE || shouldPersistUIAudit(actionName, baseMeta)) {
+        logUIAction({ component: inferComponent(actionName), action: actionName, status: "success", meta: baseMeta });
+      }
+      if (baseMeta?.toastSuccess) {
+        try { toast.success(baseMeta.successMessage || `${actionName} concluido`); } catch (_) {}
+      }
+    };
+
+    const logError = (error) => {
+      const msg = String(error?.message || error) || 'Erro';
+      try { toast.error(`Falha: ${actionName}`, { description: msg }); } catch (_) {}
+      if (AUDIT_VERBOSE || shouldPersistUIAudit(actionName, baseMeta)) {
+        logUIAction({ component: inferComponent(actionName), action: actionName, status: "error", meta: { ...baseMeta, error: msg } });
+      }
+    };
+
+    try {
+      const res = handler ? handler(...args) : undefined;
+
+      if (res && typeof res.then === 'function') {
+        return res.then((value) => {
+          Promise.resolve().then(logSuccess);
+          return value;
+        }).catch((error) => {
+          Promise.resolve().then(() => logError(error));
+          throw error;
+        });
+      }
+
+      Promise.resolve().then(logSuccess);
+      return res;
+    } catch (error) {
+      Promise.resolve().then(() => logError(error));
+      throw error;
+    }
+  };
+}
+
 function inferComponent(actionName) {
   if (!actionName) return "UI";
   if (actionName.startsWith("Button")) return "Button";
   if (actionName.startsWith("Input")) return "Input";
   if (actionName.startsWith("Checkbox")) return "Checkbox";
   if (actionName.startsWith("Select")) return "Select";
+  if (actionName.startsWith("Switch")) return "Switch";
+  if (actionName.startsWith("RadioGroup")) return "RadioGroup";
   return "UI";
 }

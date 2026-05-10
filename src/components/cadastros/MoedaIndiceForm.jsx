@@ -5,9 +5,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { TrendingUp } from 'lucide-react';
+import usePermissions from '@/components/lib/usePermissions';
 
 export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubmit, onSave, onClose, windowMode = false }) {
   const dadosIniciais = item || data || moedaIndice || moeda;
+  const { canCreate, canEdit } = usePermissions();
+  const podeCriar = canCreate("Cadastros", "MoedaIndice") || canCreate("Financeiro", "MoedaIndice") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "MoedaIndice") || canEdit("Financeiro", "MoedaIndice") || canEdit("Cadastros", null);
   const [formData, setFormData] = useState(dadosIniciais || {
     codigo: '',
     nome: '',
@@ -26,6 +30,14 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (dadosIniciais?.id && !podeEditar) {
+      alert("Sem permissao para editar moedas e indices.");
+      return;
+    }
+    if (!dadosIniciais?.id && !podeCriar) {
+      alert("Sem permissao para criar moedas e indices.");
+      return;
+    }
     if (onSubmit) {
       onSubmit(formData);
     } else {
@@ -88,7 +100,13 @@ export default function MoedaIndiceForm({ moeda, moedaIndice, item, data, onSubm
         />
       </div>
 
-      <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700">
+      <Button
+        type="submit"
+        className="w-full bg-emerald-600 hover:bg-emerald-700"
+        disabled={dadosIniciais?.id ? !podeEditar : !podeCriar}
+        data-permission="Cadastros.MoedaIndice.salvar"
+        data-sensitive
+      >
         {dadosIniciais ? 'Atualizar' : 'Criar Moeda/Índice'}
       </Button>
     </form>

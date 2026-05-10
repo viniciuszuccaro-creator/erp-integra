@@ -1,13 +1,9 @@
 import { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isApiKeyMode, isLocalOnlyMode, localApiUser } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-const CTX_CACHE_TTL = 120000;
-const __ctxRuntime = typeof window !== 'undefined'
-  ? (window.__ctxRuntime || (window.__ctxRuntime = { promise: null, data: null, ts: 0 }))
-  : { promise: null, data: null, ts: 0 };
-
 export function useContextoGrupoEmpresa() {
+  const isRemoteApiKeyMode = isApiKeyMode && !isLocalOnlyMode;
   const [user, setUser] = useState(null);
   const [contexto, setContexto] = useState(() => {
     try {
@@ -16,119 +12,100 @@ export function useContextoGrupoEmpresa() {
       return 'empresa';
     }
   });
+  const [isLoadingContexto, setIsLoadingContexto] = useState(true);
   const [grupoAtual, setGrupoAtual] = useState(null);
   const [empresaAtual, setEmpresaAtual] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [contextoCarregado, setContextoCarregado] = useState(false);
   const queryClient = useQueryClient();
+
+  const carregarGrupoPorIdOuPadrao = async (currentUser) => {
+    const grupoId = currentUser?.grupo_atual_id || currentUser?.grupo_padrao_id || localStorage.getItem('group_atual_id');
+    if (grupoId) {
+      const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
+      if (grupos[0]) {
+        setGrupoAtual(grupos[0]);
+        try { localStorage.setItem('group_atual_id', grupos[0].id); } catch {}
+        return grupos[0];
+      }
+    }
+
+    if (isRemoteApiKeyMode || currentUser?.role === 'admin') {
+      const todos = await base44.entities.GrupoEmpresarial.list();
+      const ativo = todos.find(g => g.status === 'Ativo') || todos[0];
+      if (ativo) {
+        setGrupoAtual(ativo);
+        try { localStorage.setItem('group_atual_id', ativo.id); } catch {}
+        return ativo;
+      }
+    }
+
+    return null;
+  };
 
   useEffect(() => {
     carregarContextoInicial();
   }, []);
 
   const carregarContextoInicial = async () => {
+    setIsLoadingContexto(true);
     try {
-      const cached = __ctxRuntime.data;
-      if (cached && Date.now() - __ctxRuntime.ts < CTX_CACHE_TTL) {
-        setIsAuthenticated(cached.isAuthenticated);
-        setUser(cached.user);
-        setContexto(cached.contexto || 'empresa');
-        setGrupoAtual(cached.grupoAtual || null);
-        setEmpresaAtual(cached.empresaAtual || null);
-        setContextoCarregado(true);
-        setAuthChecked(true);
-        return;
-      }
-
-      if (__ctxRuntime.promise) {
-        const cachedResult = await __ctxRuntime.promise;
-        setIsAuthenticated(cachedResult.isAuthenticated);
-        setUser(cachedResult.user);
-        setContexto(cachedResult.contexto || 'empresa');
-        setGrupoAtual(cachedResult.grupoAtual || null);
-        setEmpresaAtual(cachedResult.empresaAtual || null);
-        setContextoCarregado(true);
-        setAuthChecked(true);
-        return;
-      }
-
-      const loadContext = async () => {
-        const authed = await base44.auth.isAuthenticated();
-        if (!authed) {
-          return { isAuthenticated: false, user: null, contexto: 'empresa', grupoAtual: null, empresaAtual: null };
-        }
-        const currentUser = await base44.auth.me();
+      const currentUser = isRemoteApiKeyMode ? localApiUser : await base44.auth.me();
+      setUser(currentUser);
 
       // Detecta contexto: prioridade user.contexto_atual, senão localStorage
       const ctxPersistido = (() => {
         try { return localStorage.getItem('contexto_atual'); } catch { return null; }
       })();
-        const ctx = currentUser.contexto_atual || ctxPersistido || 'empresa';
-        let loadedGrupo = null;
-        let loadedEmpresa = null;
-        try { localStorage.setItem('contexto_atual', ctx); } catch {}
+      const ctx = currentUser.contexto_atual || ctxPersistido || 'empresa';
+      setContexto(ctx);
+      try { localStorage.setItem('contexto_atual', ctx); } catch {}
 
-        if (ctx === 'grupo') {
+      if (ctx === 'grupo') {
         // Tenta user > localStorage
-        const grupoId = currentUser.grupo_atual_id || currentUser.grupo_padrao_id || localStorage.getItem('group_atual_id');
-        if (grupoId) {
-          const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
-          if (grupos[0]) loadedGrupo = grupos[0];
-        } else if (currentUser.role === 'admin' && !localStorage.getItem('group_atual_id')) {
-          // Admin fallback: selecionar automaticamente um grupo ativo
-          const todos = await base44.entities.GrupoEmpresarial.list();
-          const ativo = todos.find(g => g.status === 'Ativo') || todos[0];
-          if (ativo) {
-            loadedGrupo = ativo;
-            try { localStorage.setItem('group_atual_id', ativo.id); } catch {}
-          }
-        }
+        await carregarGrupoPorIdOuPadrao(currentUser);
       } else {
+        // Mesmo no contexto Empresa, manter o Grupo ativo para herança de configurações.
+        await carregarGrupoPorIdOuPadrao(currentUser);
+
         const empresaId = currentUser.empresa_atual_id || currentUser.empresa_padrao_id || localStorage.getItem('empresa_atual_id');
         if (empresaId) {
           const empresas = await base44.entities.Empresa.filter({ id: empresaId });
-          if (empresas[0]) loadedEmpresa = empresas[0];
+          if (empresas[0]) {
+            setEmpresaAtual(empresas[0]);
+          } else if (isRemoteApiKeyMode || currentUser?.role === 'admin') {
+            const todasEmpresas = await base44.entities.Empresa.list();
+            const ativa = todasEmpresas.find(e => e.status === 'Ativa') || todasEmpresas[0];
+            if (ativa) {
+              setEmpresaAtual(ativa);
+              try { localStorage.setItem('empresa_atual_id', ativa.id); } catch {}
+            }
+          }
+        } else if (isRemoteApiKeyMode || currentUser?.role === 'admin') {
+          const empresas = await base44.entities.Empresa.list();
+          const ativa = empresas.find(e => e.status === 'Ativa') || empresas[0];
+          if (ativa) {
+            setEmpresaAtual(ativa);
+            try { localStorage.setItem('empresa_atual_id', ativa.id); } catch {}
+          }
         }
       }
-
-        return { isAuthenticated: true, user: currentUser, contexto: ctx, grupoAtual: loadedGrupo, empresaAtual: loadedEmpresa };
-      };
-
-      __ctxRuntime.promise = loadContext();
-      const result = await __ctxRuntime.promise;
-      __ctxRuntime.data = result;
-      __ctxRuntime.ts = Date.now();
-      __ctxRuntime.promise = null;
-
-      setIsAuthenticated(result.isAuthenticated);
-      setUser(result.user);
-      setContexto(result.contexto || 'empresa');
-      setGrupoAtual(result.grupoAtual || null);
-      setEmpresaAtual(result.empresaAtual || null);
-      setContextoCarregado(true);
-      setAuthChecked(true);
     } catch (error) {
-      __ctxRuntime.promise = null;
-      const status = error?.response?.status || error?.status;
-      if (status === 429 && __ctxRuntime.data) {
-        const cached = __ctxRuntime.data;
-        setIsAuthenticated(cached.isAuthenticated);
-        setUser(cached.user);
-        setContexto(cached.contexto || 'empresa');
-        setGrupoAtual(cached.grupoAtual || null);
-        setEmpresaAtual(cached.empresaAtual || null);
-      } else {
-        setIsAuthenticated(false);
+      console.error("Erro ao carregar contexto:", error);
+      if (isRemoteApiKeyMode) {
+        setUser(localApiUser);
+        setContexto('empresa');
       }
-      if (status !== 429) console.error("Erro ao carregar contexto:", error);
-      setContextoCarregado(true);
-      setAuthChecked(true);
+    } finally {
+      setIsLoadingContexto(false);
     }
   };
 
   const trocarParaGrupo = useMutation({
     mutationFn: async (grupoId) => {
+      if (isRemoteApiKeyMode) {
+        const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
+        return grupos[0] || null;
+      }
+
       // V21.7 FIX: Verificar se usuário tem acesso ao grupo
       const temAcesso = user?.role === 'admin' || 
         user?.grupos_vinculados?.some(v => v.grupo_id === grupoId && v.ativo);
@@ -161,12 +138,10 @@ export function useContextoGrupoEmpresa() {
       setContexto('grupo');
       setGrupoAtual(grupo);
       setEmpresaAtual(null);
+      setUser((prev) => prev ? { ...prev, contexto_atual: 'grupo', grupo_atual_id: grupo?.id || prev.grupo_atual_id } : prev);
       try { localStorage.setItem('contexto_atual', 'grupo'); } catch {}
       try { if (grupo?.id) localStorage.setItem('group_atual_id', grupo.id); } catch {}
-      __ctxRuntime.data = null;
-      __ctxRuntime.ts = 0;
-      queryClient.invalidateQueries({ refetchType: 'none' });
-      queryClient.refetchQueries({ queryKey: ['empresas-grupo'] });
+      queryClient.invalidateQueries();
       // Evitar reload completo; atualizar queries e deixar GuardRails liberar
     },
     onError: (error) => {
@@ -178,6 +153,11 @@ export function useContextoGrupoEmpresa() {
 
   const trocarParaEmpresa = useMutation({
     mutationFn: async (empresaId) => {
+      if (isRemoteApiKeyMode) {
+        const empresas = await base44.entities.Empresa.filter({ id: empresaId });
+        return empresas[0] || null;
+      }
+
       // V21.7 FIX: Verificar se usuário tem acesso à empresa
       const temAcesso = user?.role === 'admin' || 
         user?.empresas_vinculadas?.some(v => v.empresa_id === empresaId && v.ativo);
@@ -209,13 +189,10 @@ export function useContextoGrupoEmpresa() {
     onSuccess: (empresa) => {
       setContexto('empresa');
       setEmpresaAtual(empresa);
-      setGrupoAtual(null);
+      setUser((prev) => prev ? { ...prev, contexto_atual: 'empresa', empresa_atual_id: empresa?.id || prev.empresa_atual_id } : prev);
       try { localStorage.setItem('contexto_atual', 'empresa'); } catch {}
       try { if (empresa?.id) localStorage.setItem('empresa_atual_id', empresa.id); } catch {}
-      __ctxRuntime.data = null;
-      __ctxRuntime.ts = 0;
-      queryClient.invalidateQueries({ refetchType: 'none' });
-      queryClient.refetchQueries({ queryKey: ['empresas'] });
+      queryClient.invalidateQueries();
       // Sem reload completo
     },
     onError: (error) => {
@@ -230,16 +207,11 @@ export function useContextoGrupoEmpresa() {
     queryFn: async () => {
       if (!grupoAtual?.id) return [];
       return await base44.entities.Empresa.filter({
-        group_id: grupoAtual.id,
+        grupo_id: grupoAtual.id,
         status: 'Ativa'
       });
     },
-    enabled: authChecked && contextoCarregado && !!user && !!grupoAtual?.id && contexto === 'grupo',
-    staleTime: 300000,
-    gcTime: 600000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: 1,
+    enabled: !!grupoAtual && contexto === 'grupo',
   });
 
   const obterPoliticaPadrao = async (tipoDocumento) => {
@@ -401,10 +373,7 @@ export function useContextoGrupoEmpresa() {
     ratearDocumento,
     sincronizarBaixaParaEmpresas,
     sincronizarBaixaParaGrupo,
-    isLoading: !authChecked,
-    authChecked,
-    isAuthenticated,
-    contextoCarregado
+    isLoading: isLoadingContexto || !user
   };
 }
 

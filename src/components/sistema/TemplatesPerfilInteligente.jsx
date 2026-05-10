@@ -217,10 +217,15 @@ const TEMPLATES_PREDEFINIDOS = [
   }
 ];
 
-export default function TemplatesPerfilInteligente({ onAplicarTemplate }) {
+export default function TemplatesPerfilInteligente({ onAplicarTemplate, disabled = false }) {
   const [templateSelecionado, setTemplateSelecionado] = useState(null);
 
   const aplicarTemplate = (template) => {
+    if (disabled) {
+      toast.error("Selecione um grupo ou empresa antes de aplicar template.");
+      return;
+    }
+
     if (onAplicarTemplate) {
       onAplicarTemplate({
         nome_perfil: template.nome,
@@ -281,6 +286,7 @@ export default function TemplatesPerfilInteligente({ onAplicarTemplate }) {
                     </span>
                     <Button
                       size="sm"
+                      disabled={disabled}
                       onClick={(e) => {
                         e.stopPropagation();
                         aplicarTemplate(template);

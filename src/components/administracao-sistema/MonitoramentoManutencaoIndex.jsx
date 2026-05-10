@@ -9,19 +9,42 @@ import ConfiguracaoBackup from "@/components/sistema/ConfiguracaoBackup";
 import ConfiguracaoMonitoramento from "@/components/sistema/ConfiguracaoMonitoramento";
 import MonitorAcessoRealtimeSection from "@/components/administracao-sistema/seguranca-governanca/MonitorAcessoRealtimeSection";
 import PainelGovernancaSection from "@/components/administracao-sistema/seguranca-governanca/PainelGovernancaSection";
+import { base44 } from "@/api/base44Client";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function MonitoramentoManutencaoIndex({ initialTab = "monitoramento" }) {
   const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { user } = useUser();
   const [tab, setTab] = React.useState(initialTab);
+  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+
+  const handleTabChange = (next) => {
+    setTab(next);
+    try {
+      base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: empresaAtual?.id || null,
+        group_id: grupoAtivoId || null,
+        acao: "Visualizacao",
+        modulo: "Monitoramento",
+        entidade: "AdministracaoSistema",
+        descricao: `Aba de monitoramento visualizada: ${next}`,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar aba de monitoramento:", error);
+    }
+  };
 
   return (
     <div className="w-full h-full flex flex-col">
-      <Tabs value={tab} onValueChange={setTab} className="w-full h-full">
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2">
-          <TabsTrigger value="monitoramento">Monitoramento</TabsTrigger>
-          <TabsTrigger value="backup">Backup</TabsTrigger>
-          <TabsTrigger value="acesso">Acesso em Tempo Real</TabsTrigger>
-          <TabsTrigger value="governanca">Governança</TabsTrigger>
+          <TabsTrigger value="monitoramento" data-action="Monitoramento.tab.monitoramento">Monitoramento</TabsTrigger>
+          <TabsTrigger value="backup" data-action="Monitoramento.tab.backup">Backup</TabsTrigger>
+          <TabsTrigger value="acesso" data-action="Monitoramento.tab.acesso">Acesso em Tempo Real</TabsTrigger>
+          <TabsTrigger value="governanca" data-action="Monitoramento.tab.governanca">Governança</TabsTrigger>
         </TabsList>
 
         <TabsContent value="monitoramento" className="mt-4">

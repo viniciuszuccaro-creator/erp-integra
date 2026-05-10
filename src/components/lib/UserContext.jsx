@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isApiKeyMode, isLocalOnlyMode, localApiUser } from "@/api/base44Client";
 
 const UserContext = createContext(null);
 
@@ -13,15 +13,7 @@ export function UserProvider({ children }) {
     
     const loadUser = async () => {
       try {
-        const authed = await base44.auth.isAuthenticated();
-        if (!authed) {
-          if (mounted) {
-            setUser(null);
-            setError(null);
-          }
-          return;
-        }
-        const currentUser = await base44.auth.me();
+        const currentUser = isApiKeyMode && !isLocalOnlyMode ? localApiUser : await base44.auth.me();
         if (mounted) {
           setUser(currentUser);
           setError(null);
@@ -48,13 +40,7 @@ export function UserProvider({ children }) {
 
   const refreshUser = async () => {
     try {
-      const authed = await base44.auth.isAuthenticated();
-      if (!authed) {
-        setUser(null);
-        setError(null);
-        return;
-      }
-      const currentUser = await base44.auth.me();
+      const currentUser = isApiKeyMode && !isLocalOnlyMode ? localApiUser : await base44.auth.me();
       setUser(currentUser);
       setError(null);
     } catch (err) {

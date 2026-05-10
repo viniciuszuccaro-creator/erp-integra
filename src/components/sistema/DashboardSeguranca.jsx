@@ -27,17 +27,21 @@ export default function DashboardSeguranca({
 }) {
   // Últimas atividades
   const ultimasAtividades = auditoriaAcessos.slice(0, 10);
+  const getAcao = (atividade) => String(atividade?.acao || atividade?.action || "").toLowerCase();
+  const getDataAtividade = (atividade) => atividade?.data_hora || atividade?.created_date || atividade?.updated_date;
+  const getUsuarioAtividade = (atividade) => atividade?.usuario || atividade?.usuario_nome || atividade?.created_by || "Sistema";
+  const getDetalhesAtividade = (atividade) => atividade?.descricao || atividade?.detalhes || atividade?.details || "";
   
   // Tentativas de acesso negado
   const acessosNegados = auditoriaAcessos.filter(a => 
-    a.acao === 'acesso_negado' || a.detalhes?.includes('negado')
+    getAcao(a).includes('negado') || getDetalhesAtividade(a).toLowerCase().includes('negado')
   ).length;
 
   // Usuários mais ativos
   const usuariosAtivos = usuarios
     .map(u => ({
       ...u,
-      acessos: auditoriaAcessos.filter(a => a.created_by === u.email).length
+      acessos: auditoriaAcessos.filter(a => getUsuarioAtividade(a) === u.email || a.usuario_id === u.id).length
     }))
     .sort((a, b) => b.acessos - a.acessos)
     .slice(0, 5);
@@ -117,28 +121,31 @@ export default function DashboardSeguranca({
         </CardHeader>
         <CardContent className="p-0">
           <ScrollArea className="h-[300px]">
-            {ultimasAtividades.map(atividade => (
+            {ultimasAtividades.map(atividade => {
+              const acao = getAcao(atividade);
+              const dataAtividade = getDataAtividade(atividade);
+              return (
               <div key={atividade.id} className="p-3 border-b hover:bg-slate-50">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-sm">{atividade.usuario_nome || atividade.created_by}</span>
+                  <span className="font-medium text-sm">{getUsuarioAtividade(atividade)}</span>
                   <Badge className={
-                    atividade.acao === 'criar' ? 'bg-green-100 text-green-700' :
-                    atividade.acao === 'editar' ? 'bg-blue-100 text-blue-700' :
-                    atividade.acao === 'excluir' ? 'bg-red-100 text-red-700' :
+                    acao.includes('cria') || acao.includes('create') ? 'bg-green-100 text-green-700' :
+                    acao.includes('edit') || acao.includes('atualiza') ? 'bg-blue-100 text-blue-700' :
+                    acao.includes('excl') || acao.includes('delete') ? 'bg-red-100 text-red-700' :
                     'bg-slate-100 text-slate-700'
                   }>
-                    {atividade.acao}
+                    {atividade.acao || atividade.action || "registro"}
                   </Badge>
                 </div>
-                <p className="text-xs text-slate-600">{atividade.detalhes}</p>
+                <p className="text-xs text-slate-600">{getDetalhesAtividade(atividade)}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <Clock className="w-3 h-3 text-slate-400" />
                   <span className="text-xs text-slate-500">
-                    {new Date(atividade.created_date).toLocaleString('pt-BR')}
+                    {dataAtividade ? new Date(dataAtividade).toLocaleString('pt-BR') : "Sem data"}
                   </span>
                 </div>
               </div>
-            ))}
+            );})}
           </ScrollArea>
         </CardContent>
       </Card>

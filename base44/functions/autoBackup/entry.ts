@@ -1,23 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 // Util: decode secret (base64 ou hex) para Uint8Array
-async function isConfigEnabled(base44, { chave, empresa_id = null, group_id = null, aliases = [], fallback = false }) {
-  const keys = [chave, ...aliases].filter(Boolean);
-  const configs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, '-updated_date', 300).catch(() => []);
-  const matches = configs.filter((c) => keys.includes(c?.chave));
-  const ranked = matches.map((item) => {
-    let score = 4;
-    if (empresa_id && group_id && item?.empresa_id === empresa_id && item?.group_id === group_id) score = 1;
-    else if (empresa_id && item?.empresa_id === empresa_id) score = 2;
-    else if (group_id && item?.group_id === group_id) score = 3;
-    else if (!item?.empresa_id && !item?.group_id) score = 4;
-    return { item, score };
-  }).sort((a, b) => a.score - b.score);
-  const config = ranked[0]?.item || null;
-  if (!config) return fallback;
-  return typeof config.ativa === 'boolean' ? config.ativa : fallback;
-}
-
 function decodeKey(str) {
   if (!str) throw new Error('BACKUP_ENCRYPTION_KEY ausente');
   try {
@@ -57,16 +40,6 @@ Deno.serve(async (req) => {
 
     let body = {}; try { body = await req.json(); } catch { body = {}; }
     const filtros = body?.filtros || {};
-
-    const backupEnabled = await isConfigEnabled(base44, {
-      chave: 'cc_backup_automatico',
-      empresa_id: filtros?.empresa_id || null,
-      group_id: filtros?.group_id || null,
-      fallback: true,
-    });
-    if (!backupEnabled) {
-      return Response.json({ ok: true, skipped: true, reason: 'backup_disabled_by_config' });
-    }
 
     // Entidades principais (multiempresa aplicada via filtros opcionais)
     const where = (extra = {}) => ({ ...(filtros?.empresa_id ? { empresa_id: filtros.empresa_id } : {}), ...(filtros?.group_id ? { group_id: filtros.group_id } : {}), ...extra });

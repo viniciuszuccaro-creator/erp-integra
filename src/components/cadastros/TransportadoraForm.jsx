@@ -10,6 +10,8 @@ import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useToast } from "@/components/ui/use-toast";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2: Transportadora Form - Adaptado para Window Mode
@@ -18,6 +20,13 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
   const transportadora = transportadoraProp || item || data || null;
   const onCloseNorm = onClose || onSave;
   const { toast } = useToast();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { canCreate, canEdit, canDelete } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId);
+  const podeCriar = canCreate("Cadastros", "Transportadora") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "Transportadora") || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", "Transportadora") || canDelete("Cadastros", null);
   
   const [formData, setFormData] = useState(transportadora || {
     razao_social: '',
@@ -51,11 +60,35 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
   }, [transportadora?.id]);
 
   const handleSubmit = async () => {
-    if (onSubmit) onSubmit(formData);
+    if (!contextoValido) {
+      toast({ title: "Selecione um grupo ou empresa antes de salvar.", variant: "destructive" });
+      return;
+    }
+    if (transportadora?.id && !podeEditar) {
+      toast({ title: "Seu perfil nao permite editar transportadoras.", variant: "destructive" });
+      return;
+    }
+    if (!transportadora?.id && !podeCriar) {
+      toast({ title: "Seu perfil nao permite criar transportadoras.", variant: "destructive" });
+      return;
+    }
+    if (onSubmit) {
+      await onSubmit({
+        ...formData,
+        ...(empresaAtual?.id && !formData.empresa_id ? { empresa_id: empresaAtual.id } : {}),
+        ...(empresaAtual?.id && !formData.empresa_dona_id ? { empresa_dona_id: formData.empresa_id || empresaAtual.id } : {}),
+        ...(groupId && !formData.group_id ? { group_id: groupId } : {})
+      });
+      return;
+    }
     if (onCloseNorm) onCloseNorm();
   };
 
   const handleExcluir = () => {
+    if (!podeExcluir) {
+      toast({ title: "Seu perfil nao permite excluir transportadoras.", variant: "destructive" });
+      return;
+    }
     if (!window.confirm(`Tem certeza que deseja excluir a transportadora "${formData.razao_social}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
@@ -316,6 +349,9 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
               type="button"
               variant="outline"
               onClick={handleAlternarStatus}
+              disabled={!podeEditar || !contextoValido}
+              data-permission="Cadastros.Transportadora.alterarStatus"
+              data-sensitive
               className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
             >
               {formData.status === 'Ativo' ? (
@@ -334,13 +370,22 @@ export default function TransportadoraForm({ transportadora: transportadoraProp,
               type="button"
               variant="destructive"
               onClick={handleExcluir}
+              disabled={!podeExcluir || !contextoValido}
+              data-permission="Cadastros.Transportadora.excluir"
+              data-sensitive
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Excluir
             </Button>
           </>
         )}
-        <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
+        <Button
+          type="submit"
+          className="bg-orange-600 hover:bg-orange-700"
+          disabled={!contextoValido || (transportadora?.id ? !podeEditar : !podeCriar)}
+          data-permission="Cadastros.Transportadora.salvar"
+          data-sensitive
+        >
           <Save className="w-4 h-4 mr-2" />
           {transportadora ? 'Atualizar' : 'Criar'} Transportadora
         </Button>

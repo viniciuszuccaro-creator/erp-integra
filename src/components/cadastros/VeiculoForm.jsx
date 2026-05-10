@@ -7,12 +7,22 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, Truck } from "lucide-react";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { toast } from "sonner";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function VeiculoForm({ veiculo, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || veiculo;
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = hasPermission?.("Cadastros.Veiculo.criar") || hasPermission?.("Logistica.Veiculo.criar");
+  const podeEditar = hasPermission?.("Cadastros.Veiculo.editar") || hasPermission?.("Logistica.Veiculo.editar");
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = React.useState(dadosIniciais || {
     placa: '',
     modelo: '',
@@ -43,7 +53,19 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
   });
 
   const handleSubmit = async () => {
-    onSubmit(formData);
+    if (!contextoValido) {
+      toast.error("Selecione um grupo ou empresa antes de salvar.");
+      return;
+    }
+    if (!podeSalvar) {
+      toast.error("Sem permissão para salvar veículo.");
+      return;
+    }
+    onSubmit({
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id
+    });
   };
 
   const formContent = (
@@ -162,11 +184,19 @@ export default function VeiculoForm({ veiculo, item, data, initialData, defaultV
         <Switch
           checked={formData.rastreador_instalado}
           onCheckedChange={(v) => setFormData({...formData, rastreador_instalado: v})}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.Veiculo.editar"
+          data-sensitive="true"
         />
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={isSubmitting || !contextoValido || !podeSalvar}
+          data-permission="Cadastros.Veiculo.salvar"
+          data-sensitive="true"
+        >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? 'Atualizar Veículo' : 'Cadastrar Veículo'}
         </Button>

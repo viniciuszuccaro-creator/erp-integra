@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { useWindow } from "@/components/lib/useWindow";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { Repeat, Plus, Edit2, Trash2, Play, Pause, TrendingUp, Calendar } from "lucide-react";
 import ConfiguracaoDespesaRecorrenteForm from "./ConfiguracaoDespesaRecorrenteForm";
 
@@ -21,16 +23,26 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext, deleteInContext } = useContextoVisual();
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeCriar = canCreate("Cadastros", "ConfiguracaoDespesaRecorrente") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "ConfiguracaoDespesaRecorrente") || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", "ConfiguracaoDespesaRecorrente") || canDelete("Cadastros", null);
 
   const { data: configuracoes = [] } = useQuery({
-    queryKey: ['configuracoes-despesas-recorrentes'],
-    queryFn: () => base44.entities.ConfiguracaoDespesaRecorrente.list(),
+    queryKey: ['configuracoes-despesas-recorrentes', contextKey],
+    queryFn: () => filterInContext('ConfiguracaoDespesaRecorrente', {}, '-created_date', 200),
+    enabled: contextoValido,
   });
 
   const toggleAtivaMutation = useMutation({
     mutationFn: async ({ id, ativa }) => {
-      await base44.entities.ConfiguracaoDespesaRecorrente.update(id, { ativa: !ativa });
+      if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissÃ£o para alterar.");
+      await updateInContext('ConfiguracaoDespesaRecorrente', id, { ativa: !ativa });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['configuracoes-despesas-recorrentes'] });
@@ -39,7 +51,10 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.ConfiguracaoDespesaRecorrente.delete(id),
+    mutationFn: (id) => {
+      if (!podeExcluir) throw new Error("Sem permissÃ£o para excluir.");
+      return deleteInContext('ConfiguracaoDespesaRecorrente', id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['configuracoes-despesas-recorrentes'] });
       toast({ title: "✅ Configuração excluída!" });
@@ -106,7 +121,8 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                   windowMode: true,
                   onSubmit: async (data) => {
                     try {
-                      await base44.entities.ConfiguracaoDespesaRecorrente.create(data);
+                      if (!contextoValido || !podeCriar) throw new Error("Sem contexto ou permissÃ£o para criar.");
+                      await createInContext('ConfiguracaoDespesaRecorrente', data);
                       queryClient.invalidateQueries({ queryKey: ['configuracoes-despesas-recorrentes'] });
                       toast({ title: "✅ Configuração criada!" });
                     } catch (error) {
@@ -118,6 +134,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                   width: 900,
                   height: 650
                 })}
+                disabled={!contextoValido || !podeCriar}
                 className="bg-purple-600 hover:bg-purple-700"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -167,6 +184,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                         variant="ghost"
                         size="icon"
                         onClick={() => toggleAtivaMutation.mutate({ id: config.id, ativa: config.ativa })}
+                        disabled={!contextoValido || !podeEditar || toggleAtivaMutation.isPending}
                         title={config.ativa ? "Desativar" : "Ativar"}
                       >
                         {config.ativa ? (
@@ -183,7 +201,8 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                           windowMode: true,
                           onSubmit: async (data) => {
                             try {
-                              await base44.entities.ConfiguracaoDespesaRecorrente.update(config.id, data);
+                              if (!contextoValido || !podeEditar) throw new Error("Sem contexto ou permissÃ£o para editar.");
+                              await updateInContext('ConfiguracaoDespesaRecorrente', config.id, data);
                               queryClient.invalidateQueries({ queryKey: ['configuracoes-despesas-recorrentes'] });
                               toast({ title: "✅ Configuração atualizada!" });
                             } catch (error) {
@@ -195,6 +214,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                           width: 900,
                           height: 650
                         })}
+                        disabled={!contextoValido || !podeEditar}
                         title="Editar"
                       >
                         <Edit2 className="w-4 h-4 text-blue-600" />
@@ -207,6 +227,7 @@ export default function GestorDespesasRecorrentes({ windowMode = false }) {
                             deleteMutation.mutate(config.id);
                           }
                         }}
+                        disabled={!podeExcluir || deleteMutation.isPending}
                         title="Excluir"
                       >
                         <Trash2 className="w-4 h-4 text-red-600" />

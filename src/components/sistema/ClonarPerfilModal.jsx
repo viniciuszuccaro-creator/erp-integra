@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,11 +7,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Copy, CheckCircle } from "lucide-react";
 
-export default function ClonarPerfilModal({ open, onOpenChange, perfilOriginal, onClonar }) {
+export default function ClonarPerfilModal({ open, onOpenChange, perfilOriginal, onClonar, disabled = false }) {
   const [nome, setNome] = useState(perfilOriginal?.nome_perfil ? `${perfilOriginal.nome_perfil} (Cópia)` : "");
   const [descricao, setDescricao] = useState(perfilOriginal?.descricao || "");
 
+  useEffect(() => {
+    setNome(perfilOriginal?.nome_perfil ? `${perfilOriginal.nome_perfil} (Copia)` : "");
+    setDescricao(perfilOriginal?.descricao || "");
+  }, [perfilOriginal]);
+
   const handleClonar = () => {
+    if (disabled) {
+      toast.error("Selecione um grupo ou empresa antes de clonar perfil.");
+      return;
+    }
+
     if (!nome) {
       toast.error("Informe o nome do novo perfil");
       return;
@@ -51,6 +61,8 @@ export default function ClonarPerfilModal({ open, onOpenChange, perfilOriginal, 
               onChange={(e) => setNome(e.target.value)}
               placeholder="Ex: Vendedor Pleno"
               className="mt-1"
+              data-action="RBAC.Perfil.clonar.nome"
+              disabled={disabled}
             />
           </div>
 
@@ -62,6 +74,8 @@ export default function ClonarPerfilModal({ open, onOpenChange, perfilOriginal, 
               placeholder="Descrição do perfil clonado"
               className="mt-1"
               rows={3}
+              data-action="RBAC.Perfil.clonar.descricao"
+              disabled={disabled}
             />
           </div>
 
@@ -76,10 +90,10 @@ export default function ClonarPerfilModal({ open, onOpenChange, perfilOriginal, 
         </div>
 
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} data-action="RBAC.Perfil.clonar.cancelar">
             Cancelar
           </Button>
-          <Button onClick={handleClonar} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleClonar} disabled={disabled || !nome} className="bg-blue-600 hover:bg-blue-700" data-action="RBAC.Perfil.clonar.confirmar">
             <CheckCircle className="w-4 h-4 mr-2" />
             Clonar Perfil
           </Button>

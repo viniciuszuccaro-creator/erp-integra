@@ -5,9 +5,18 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { MapPin } from 'lucide-react';
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode = false }) {
   const dadosIniciais = rotaPadrao || rota;
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = hasPermission?.("Cadastros.RotaPadrao.criar") || hasPermission?.("Logistica.RotaPadrao.criar");
+  const podeEditar = hasPermission?.("Cadastros.RotaPadrao.editar") || hasPermission?.("Logistica.RotaPadrao.editar");
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_rota: '',
     descricao: '',
@@ -20,7 +29,20 @@ export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ ...formData, nome: formData.nome_rota || formData.nome || '' });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissão para salvar rota padrão.');
+      return;
+    }
+    onSubmit({
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      nome: formData.nome_rota || formData.nome || ''
+    });
   };
 
   const content = (
@@ -85,11 +107,20 @@ export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode 
         <Label className="font-semibold">Rota Ativa</Label>
         <Switch
           checked={formData.ativo}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.RotaPadrao.alterarStatus"
+          data-sensitive="true"
           onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
         />
       </div>
 
-      <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
+      <Button
+        type="submit"
+        className="w-full bg-orange-600 hover:bg-orange-700"
+        disabled={!contextoValido || !podeSalvar}
+        data-permission="Cadastros.RotaPadrao.salvar"
+        data-sensitive="true"
+      >
         {dadosIniciais ? 'Atualizar' : 'Criar Rota Padrão'}
       </Button>
     </form>

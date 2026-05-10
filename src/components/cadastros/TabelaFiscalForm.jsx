@@ -12,6 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import { Receipt, Calculator, AlertCircle, Sparkles, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * FORMULÁRIO DE TABELA FISCAL V21.2 - FASE 2
@@ -24,6 +26,15 @@ export default function TabelaFiscalForm({
   onSubmit,
   onCancel 
 }) {
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || tabela?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || tabela?.empresa_id || tabela?.group_id);
+  const podeCriar = hasPermission?.("Cadastros.TabelaFiscal.criar") || hasPermission?.("Financeiro.TabelaFiscal.criar");
+  const podeEditar = hasPermission?.("Cadastros.TabelaFiscal.editar") || hasPermission?.("Financeiro.TabelaFiscal.editar");
+  const podeUsarIA = hasPermission?.("Cadastros.TabelaFiscal.ia") || hasPermission?.("Financeiro.TabelaFiscal.ia") || podeEditar || podeCriar;
+  const podeSalvar = tabela?.id ? podeEditar : podeCriar;
+
   const [formData, setFormData] = useState({
     nome_regra: "",
     empresa_id: "",
@@ -57,6 +68,10 @@ export default function TabelaFiscalForm({
   const [sugestaoIA, setSugestaoIA] = useState(null);
 
   const handleValidarIA = async () => {
+    if (!podeUsarIA) {
+      toast.error("Sem permissão para validar tabela fiscal com IA.");
+      return;
+    }
     setValidandoIA(true);
     try {
       const resultado = await base44.integrations.Core.InvokeLLM({
@@ -107,6 +122,10 @@ Seja preciso e cite a legislação aplicável.`,
 
   const handleAplicarSugestaoIA = () => {
     if (!sugestaoIA) return;
+    if (!podeSalvar) {
+      toast.error("Sem permissão para aplicar sugestões na tabela fiscal.");
+      return;
+    }
 
     setFormData(prev => ({
       ...prev,
@@ -131,8 +150,22 @@ Seja preciso e cite a legislação aplicável.`,
       toast.error("Preencha os campos obrigatórios");
       return;
     }
+    if (!contextoValido) {
+      toast.error("Selecione um grupo ou empresa antes de salvar.");
+      return;
+    }
+    if (!podeSalvar) {
+      toast.error("Sem permissão para salvar tabela fiscal.");
+      return;
+    }
     if (onSubmit) {
-      onSubmit({ ...formData, nome: formData.nome_regra, descricao: formData.cfop + ' - ' + formData.regime_tributario });
+      onSubmit({
+        ...formData,
+        empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+        group_id: groupId || formData.group_id,
+        nome: formData.nome_regra,
+        descricao: formData.cfop + ' - ' + formData.regime_tributario
+      });
     }
   };
 
@@ -174,6 +207,9 @@ Seja preciso e cite a legislação aplicável.`,
                     type="button"
                     size="sm"
                     onClick={handleAplicarSugestaoIA}
+                    disabled={!podeSalvar}
+                    data-permission="Cadastros.TabelaFiscal.ia"
+                    data-sensitive="true"
                     className="ml-4 bg-purple-600 hover:bg-purple-700"
                   >
                     Aplicar Sugestões
@@ -491,7 +527,9 @@ Seja preciso e cite a legislação aplicável.`,
                   <Button
                     type="button"
                     onClick={handleValidarIA}
-                    disabled={validandoIA}
+                    disabled={validandoIA || !podeUsarIA}
+                    data-permission="Cadastros.TabelaFiscal.ia"
+                    data-sensitive="true"
                     className="w-full"
                     variant="outline"
                   >
@@ -548,6 +586,9 @@ Seja preciso e cite a legislação aplicável.`,
               <Switch
                 checked={formData.regra_ativa}
                 onCheckedChange={(checked) => setFormData({ ...formData, regra_ativa: checked })}
+                disabled={!podeSalvar}
+                data-permission="Cadastros.TabelaFiscal.alterarStatus"
+                data-sensitive="true"
               />
               <Label>Regra Ativa</Label>
             </div>
@@ -558,7 +599,13 @@ Seja preciso e cite a legislação aplicável.`,
                   Cancelar
                 </Button>
               )}
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              <Button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={!contextoValido || !podeSalvar}
+                data-permission="Cadastros.TabelaFiscal.salvar"
+                data-sensitive="true"
+              >
                 <Receipt className="w-4 h-4 mr-2" />
                 {tabela ? 'Atualizar' : 'Criar'} Tabela Fiscal
               </Button>

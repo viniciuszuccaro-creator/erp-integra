@@ -13,9 +13,9 @@ export default function AuditoriaLogsIndex() {
     <div className="w-full h-full flex flex-col">
       <Tabs defaultValue="painel" className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2">
-          <TabsTrigger value="painel">Painel</TabsTrigger>
-          <TabsTrigger value="logs">Logs</TabsTrigger>
-          <TabsTrigger value="global">Global</TabsTrigger>
+          <TabsTrigger value="painel" data-action="AuditoriaLogs.tab.painel">Painel</TabsTrigger>
+          <TabsTrigger value="logs" data-action="AuditoriaLogs.tab.logs">Logs</TabsTrigger>
+          <TabsTrigger value="global" data-action="AuditoriaLogs.tab.global">Global</TabsTrigger>
         </TabsList>
 
         <TabsContent value="painel" className="mt-4 h-full">
@@ -23,7 +23,7 @@ export default function AuditoriaLogsIndex() {
             <CardContent className="p-4 space-y-3 h-full">
               <div className="flex items-center gap-2">
                 <Select value={entidade} onValueChange={setEntidade}>
-                  <SelectTrigger className="w-56">
+                  <SelectTrigger className="w-56" data-action="AuditoriaLogs.filtroEntidade">
                     <SelectValue placeholder="Entidade" />
                   </SelectTrigger>
                   <SelectContent>

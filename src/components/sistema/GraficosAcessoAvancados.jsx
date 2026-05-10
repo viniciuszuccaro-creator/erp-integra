@@ -15,6 +15,9 @@ const COLORS = {
 };
 
 export default function GraficosAcessoAvancados({ perfis = [], usuarios = [], auditoriaAcessos = [] }) {
+  const getDataAuditoria = (registro) => registro?.data_hora || registro?.created_date || registro?.updated_date;
+  const getModuloAuditoria = (registro) => registro?.modulo || registro?.module || registro?.entidade || registro?.entity_name || 'outros';
+
   // Usuários por perfil
   const usuariosPorPerfil = useMemo(() => {
     return perfis.map(p => ({
@@ -27,7 +30,7 @@ export default function GraficosAcessoAvancados({ perfis = [], usuarios = [], au
   const atividadesPorModulo = useMemo(() => {
     const modulos = {};
     auditoriaAcessos.forEach(a => {
-      const mod = a.modulo || 'outros';
+      const mod = getModuloAuditoria(a);
       modulos[mod] = (modulos[mod] || 0) + 1;
     });
     return Object.entries(modulos)
@@ -46,7 +49,10 @@ export default function GraficosAcessoAvancados({ perfis = [], usuarios = [], au
 
     return dias.map(dia => {
       const count = auditoriaAcessos.filter(a => {
-        const dataAcesso = new Date(a.created_date);
+        const dataRaw = getDataAuditoria(a);
+        if (!dataRaw) return false;
+        const dataAcesso = new Date(dataRaw);
+        if (Number.isNaN(dataAcesso.getTime())) return false;
         return dataAcesso.toDateString() === dia.toDateString();
       }).length;
 

@@ -6,12 +6,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Package, Trash2, Power, PowerOff } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false, closeSelf }) {
   const dadosIniciais = item || data || initialData || defaultValues || grupoProduto || grupo;
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = hasPermission?.("Cadastros.GrupoProduto.criar") || hasPermission?.("Cadastros.Produto.criar");
+  const podeEditar = hasPermission?.("Cadastros.GrupoProduto.editar") || hasPermission?.("Cadastros.Produto.editar");
+  const podeExcluir = hasPermission?.("Cadastros.GrupoProduto.excluir") || hasPermission?.("Cadastros.Produto.excluir");
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_grupo: '',
     codigo: '',
@@ -35,11 +45,28 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
       alert('Preencha os campos obrigatórios');
       return;
     }
-    onSubmit({ ...formData, nome: formData.nome_grupo });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissão para salvar grupo de produto.');
+      return;
+    }
+    onSubmit({
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      nome: formData.nome_grupo
+    });
     if (typeof closeSelf === 'function') closeSelf();
   };
 
   const handleExcluir = () => {
+    if (!podeExcluir) {
+      alert('Sem permissão para excluir grupo de produto.');
+      return;
+    }
     if (!window.confirm(`Tem certeza que deseja excluir o grupo "${formData.nome_grupo}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
@@ -115,6 +142,9 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
         <Switch
           checked={formData.ativo}
           onCheckedChange={(v) => setFormData({...formData, ativo: v})}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.GrupoProduto.alterarStatus"
+          data-sensitive="true"
         />
       </div>
 
@@ -125,6 +155,9 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
               type="button"
               variant="outline"
               onClick={handleAlternarStatus}
+              disabled={!podeSalvar}
+              data-permission="Cadastros.GrupoProduto.alterarStatus"
+              data-sensitive="true"
               className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
             >
               {formData.ativo ? (
@@ -133,12 +166,24 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, item, data, init
                 <><Power className="w-4 h-4 mr-2" />Ativar</>
               )}
             </Button>
-            <Button type="button" variant="destructive" onClick={handleExcluir}>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleExcluir}
+              disabled={!podeExcluir}
+              data-permission="Cadastros.GrupoProduto.excluir"
+              data-sensitive="true"
+            >
               <Trash2 className="w-4 h-4 mr-2" />Excluir
             </Button>
           </>
         )}
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={isSubmitting || !contextoValido || !podeSalvar}
+          data-permission="Cadastros.GrupoProduto.salvar"
+          data-sensitive="true"
+        >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? 'Atualizar' : 'Criar Grupo'}
         </Button>

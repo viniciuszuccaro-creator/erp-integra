@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
 import { useToast } from "@/components/ui/use-toast";
 import { useWindow } from "@/components/lib/useWindow";
 import ConfiguracaoNFeForm from "@/components/cadastros/ConfiguracaoNFeForm";
@@ -12,50 +13,104 @@ import ConfiguracaoBoletosForm from "@/components/cadastros/ConfiguracaoBoletosF
 import ConfiguracaoWhatsAppForm from "@/components/cadastros/ConfiguracaoWhatsAppForm";
 import SincronizacaoMarketplaces from "@/components/integracoes/SincronizacaoMarketplaces";
 import BancosOpenBankingWIP from "@/components/integracoes/BancosOpenBankingWIP";
-import { 
-  CheckCircle, 
-  XCircle, 
-  Loader2, 
-  Link2, 
-  CreditCard, 
+import {
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Link2,
+  CreditCard,
   FileText,
   MessageCircle,
   ShoppingCart,
-  TrendingUp
+  TrendingUp,
 } from "lucide-react";
 
 export default function CentralIntegracoes() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { user } = useUser();
   const { openWindow } = useWindow();
+  const [salvandoKey, setSalvandoKey] = React.useState(null);
+
+  const grupoAtivoId = grupoAtual?.id
+    || empresaAtual?.group_id
+    || empresaAtual?.grupo_id
+    || user?.grupo_atual_id
+    || user?.grupo_padrao_id
+    || (() => {
+      try { return localStorage.getItem("group_atual_id"); } catch { return null; }
+    })();
+
+  const scopeId = empresaAtual?.id || grupoAtivoId || null;
+  const scope = empresaAtual?.id
+    ? { empresa_id: empresaAtual.id }
+    : grupoAtivoId
+      ? { group_id: grupoAtivoId }
+      : {};
+  const scopeLabel = empresaAtual?.id ? "empresa atual" : grupoAtivoId ? "grupo atual" : "contexto atual";
+  const chaveIntegracoes = scopeId ? `integracoes_${scopeId}` : null;
 
   const { data: configs = [] } = useQuery({
-    queryKey: ["configuracao-integracao-marketplace"],
-    queryFn: () => base44.entities.ConfiguracaoIntegracaoMarketplace.list(),
+    queryKey: ["configuracao-integracao-marketplace", scopeId || "sem-contexto"],
+    enabled: !!scopeId,
+    queryFn: () => base44.entities.ConfiguracaoIntegracaoMarketplace.filter(scope, undefined, 500),
   });
 
-  const chaveIntegracoes = empresaAtual?.id ? `integracoes_${empresaAtual.id}` : null;
   const { data: cfgIntegracoes } = useQuery({
-    queryKey: ["cfg-integracoes", chaveIntegracoes],
+    queryKey: ["cfg-integracoes", chaveIntegracoes, scopeId || "sem-contexto"],
     enabled: !!chaveIntegracoes,
     queryFn: async () => {
-      const existentes = await base44.entities.ConfiguracaoSistema.filter({ chave: chaveIntegracoes }, undefined, 1);
+      const existentes = await base44.entities.ConfiguracaoSistema.filter({ chave: chaveIntegracoes, ...scope }, undefined, 1);
       return existentes?.[0] || null;
-    }
+    },
   });
 
   const setAtivo = async (key, ativo) => {
-    if (!chaveIntegracoes) return;
-    const existentes = await base44.entities.ConfiguracaoSistema.filter({ chave: chaveIntegracoes }, undefined, 1);
-    const payload = { chave: chaveIntegracoes, categoria: 'Integracoes', [key]: { ...(existentes?.[0]?.[key] || {}), ativo } };
-    if (existentes && existentes.length > 0) {
-      await base44.entities.ConfiguracaoSistema.update(existentes[0].id, { ...existentes[0], ...payload });
-    } else {
-      await base44.entities.ConfiguracaoSistema.create(payload);
+    if (!chaveIntegracoes) {
+      toast({ title: "Selecione um grupo ou empresa", variant: "destructive" });
+      return;
     }
-    toast({ title: ativo ? 'Integração ativada' : 'Integração desativada' });
-    queryClient.invalidateQueries({ queryKey: ["cfg-integracoes", chaveIntegracoes] });
+
+    setSalvandoKey(key);
+    try {
+      const existentes = await base44.entities.ConfiguracaoSistema.filter({ chave: chaveIntegracoes, ...scope }, undefined, 1);
+      const payload = {
+        chave: chaveIntegracoes,
+        categoria: "Integracoes",
+        ...scope,
+        [key]: { ...(existentes?.[0]?.[key] || {}), ativo },
+      };
+
+      if (existentes && existentes.length > 0) {
+        await base44.entities.ConfiguracaoSistema.update(existentes[0].id, { ...existentes[0], ...payload });
+      } else {
+        await base44.entities.ConfiguracaoSistema.create(payload);
+      }
+
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Sistema",
+        usuario_id: user?.id || null,
+        empresa_id: scope?.empresa_id || null,
+        group_id: scope?.group_id || null,
+        acao: ativo ? "Ativacao" : "Desativacao",
+        modulo: "Integracoes",
+        entidade: "ConfiguracaoSistema",
+        registro_id: existentes?.[0]?.id || null,
+        descricao: `${ativo ? "Ativacao" : "Desativacao"} de integracao`,
+        dados_novos: { chave: key, ativo },
+        sucesso: true,
+        data_hora: new Date().toISOString(),
+      });
+
+      toast({ title: ativo ? `Integracao ativada no ${scopeLabel}` : `Integracao desativada no ${scopeLabel}` });
+      await queryClient.invalidateQueries({ queryKey: ["cfg-integracoes", chaveIntegracoes, scopeId || "sem-contexto"] });
+      await queryClient.invalidateQueries({ queryKey: ["configuracaoSistema"] });
+    } catch (error) {
+      toast({ title: "Erro ao salvar integracao", description: String(error?.message || error), variant: "destructive" });
+    } finally {
+      setSalvandoKey(null);
+    }
   };
 
   const isAtivo = (key) => Boolean(cfgIntegracoes?.[key]?.ativo);
@@ -67,10 +122,10 @@ export default function CentralIntegracoes() {
       status: "Configurado",
       icon: FileText,
       cor: "text-blue-600",
-      descricao: "Emissão e validação de NF-e",
-      key: 'integracao_nfe',
+      descricao: "Emissao e validacao de NF-e",
+      key: "integracao_nfe",
       cmp: ConfiguracaoNFeForm,
-      win: { title: '⚙️ Configuração NF-e', width: 1100, height: 700 }
+      win: { title: "Configuracao NF-e", width: 1100, height: 700 },
     },
     {
       nome: "Boletos & Pagamentos",
@@ -78,21 +133,21 @@ export default function CentralIntegracoes() {
       status: "Configurado",
       icon: CreditCard,
       cor: "text-green-600",
-      descricao: "Geração de boletos e links de pagamento",
-      key: 'integracao_boletos',
+      descricao: "Geracao de boletos e links de pagamento",
+      key: "integracao_boletos",
       cmp: ConfiguracaoBoletosForm,
-      win: { title: '💳 Configuração de Boletos', width: 1000, height: 700 }
+      win: { title: "Configuracao de Boletos", width: 1000, height: 700 },
     },
     {
       nome: "WhatsApp Business",
-      tipo: "Comunicação",
+      tipo: "Comunicacao",
       status: "Ativo",
       icon: MessageCircle,
       cor: "text-green-600",
-      descricao: "Chatbot e notificações automáticas",
-      key: 'integracao_whatsapp',
+      descricao: "Chatbot e notificacoes automaticas",
+      key: "integracao_whatsapp",
       cmp: ConfiguracaoWhatsAppForm,
-      win: { title: '💬 Configuração WhatsApp Business', width: 900, height: 680 }
+      win: { title: "Configuracao WhatsApp Business", width: 900, height: 680 },
     },
     {
       nome: "Marketplaces",
@@ -101,9 +156,9 @@ export default function CentralIntegracoes() {
       icon: ShoppingCart,
       cor: "text-purple-600",
       descricao: "Mercado Livre, Shopee, Amazon",
-      key: 'integracao_marketplaces',
+      key: "integracao_marketplaces",
       cmp: SincronizacaoMarketplaces,
-      win: { title: '🛒 Sincronização de Marketplaces', width: 1200, height: 720 }
+      win: { title: "Sincronizacao de Marketplaces", width: 1200, height: 720 },
     },
     {
       nome: "Bancos (Open Banking)",
@@ -111,38 +166,50 @@ export default function CentralIntegracoes() {
       status: "Em Desenvolvimento",
       icon: TrendingUp,
       cor: "text-indigo-600",
-      descricao: "Conciliação automática de extratos",
-      key: 'integracao_bancos',
+      descricao: "Conciliacao automatica de extratos",
+      key: "integracao_bancos",
       cmp: BancosOpenBankingWIP,
-      win: { title: '🏦 Bancos (Open Banking)', width: 900, height: 600 }
+      win: { title: "Bancos (Open Banking)", width: 900, height: 600 },
     },
   ];
 
-  const getStatusIcon = (status) => {
-    switch(status) {
-      case "Ativo":
-      case "Configurado":
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
-      case "Inativo":
-        return <XCircle className="w-5 h-5 text-red-600" />;
-      default:
-        return <Loader2 className="w-5 h-5 text-yellow-600 animate-spin" />;
+  const getStatusIcon = (integracao) => {
+    const active = integracao.key && isAtivo(integracao.key);
+    if (active || integracao.status === "Ativo" || integracao.status === "Configurado") {
+      return <CheckCircle className="w-5 h-5 text-green-600" />;
     }
+    if (integracao.status === "Inativo") return <XCircle className="w-5 h-5 text-red-600" />;
+    return <Loader2 className="w-5 h-5 text-yellow-600 animate-spin" />;
+  };
+
+  const getBadgeClass = (integracao) => {
+    if ((integracao.key && isAtivo(integracao.key)) || integracao.status === "Ativo" || integracao.status === "Configurado") {
+      return "bg-green-100 text-green-800";
+    }
+    if (integracao.status === "Inativo") return "bg-red-100 text-red-800";
+    return "bg-yellow-100 text-yellow-800";
+  };
+
+  const getBadgeLabel = (integracao) => {
+    if (integracao.key && isAtivo(integracao.key)) return "Ativo";
+    return integracao.status;
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">Central de Integrações</h2>
-        <p className="text-sm text-slate-600 mt-1">Gerencie todas as integrações do sistema</p>
+        <h2 className="text-2xl font-bold text-slate-900">Central de Integracoes</h2>
+        <p className="text-sm text-slate-600 mt-1">Gerencie todas as integracoes do sistema no {scopeLabel}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {integracoesDisponiveis.map((integracao, idx) => {
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {integracoesDisponiveis.map((integracao) => {
           const Icon = integracao.icon;
-          
+          const ativo = integracao.key ? isAtivo(integracao.key) : false;
+          const salvando = salvandoKey === integracao.key;
+
           return (
-            <Card key={idx} className="hover:shadow-lg transition-shadow">
+            <Card key={integracao.key || integracao.nome} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -154,30 +221,28 @@ export default function CentralIntegracoes() {
                       <p className="text-xs text-slate-500 mt-1">{integracao.tipo}</p>
                     </div>
                   </div>
-                  
-                  {getStatusIcon(integracao.status)}
+
+                  {getStatusIcon(integracao)}
                 </div>
               </CardHeader>
 
               <CardContent>
                 <p className="text-sm text-slate-600 mb-3">{integracao.descricao}</p>
-                
+
                 <div className="flex items-center gap-2">
-                  <Badge 
-                    className={
-                      (integracao.key && isAtivo(integracao.key)) || integracao.status === "Ativo" || integracao.status === "Configurado" 
-                        ? "bg-green-100 text-green-800" 
-                        : integracao.status === "Inativo"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }
-                  >
-                    {(integracao.key && isAtivo(integracao.key)) ? 'Ativo' : integracao.status}
+                  <Badge className={getBadgeClass(integracao)}>
+                    {getBadgeLabel(integracao)}
                   </Badge>
 
                   {integracao.key && (
-                    <Button size="sm" variant="outline" onClick={() => setAtivo(integracao.key, !isAtivo(integracao.key))}>
-                      {isAtivo(integracao.key) ? 'Desativar' : 'Ativar'}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setAtivo(integracao.key, !ativo)}
+                      disabled={!chaveIntegracoes || salvando}
+                      data-action={`Integracoes.${integracao.key}.toggle`}
+                    >
+                      {salvando ? "Salvando..." : ativo ? "Desativar" : "Ativar"}
                     </Button>
                   )}
 
@@ -185,11 +250,29 @@ export default function CentralIntegracoes() {
                     size="sm"
                     variant="outline"
                     className="ml-auto"
+                    disabled={!chaveIntegracoes}
+                    data-action={`Integracoes.${integracao.key || integracao.nome}.configurar`}
                     onClick={() => {
+                      if (!chaveIntegracoes) {
+                        toast({ title: "Selecione um grupo ou empresa", variant: "destructive" });
+                        return;
+                      }
                       if (integracao.cmp) {
-                        openWindow(integracao.cmp, { windowMode: true }, integracao.win || { title: 'Configuração', width: 1000, height: 700 });
+                        openWindow(
+                          integracao.cmp,
+                          {
+                            windowMode: true,
+                            empresaId: empresaAtual?.id || null,
+                            groupId: grupoAtivoId || null,
+                            scope,
+                          },
+                          integracao.win || { title: "Configuracao", width: 1000, height: 700 }
+                        );
                       } else {
-                        toast({ title: 'Configuração indisponível', description: 'Esta integração ainda não possui tela de configuração.' });
+                        toast({
+                          title: "Configuracao indisponivel",
+                          description: "Esta integracao ainda nao possui tela de configuracao.",
+                        });
                       }
                     }}
                   >
@@ -208,9 +291,9 @@ export default function CentralIntegracoes() {
           <div className="flex items-start gap-3">
             <TrendingUp className="w-5 h-5 text-blue-600 mt-0.5" />
             <div>
-              <p className="font-semibold text-blue-900">Hub de Integrações Futuro</p>
+              <p className="font-semibold text-blue-900">Hub de Integracoes Futuro</p>
               <p className="text-sm text-blue-700 mt-1">
-                Em breve: Open Banking, ERPs externos, CRMs, automações avançadas e muito mais!
+                Em breve: Open Banking, ERPs externos, CRMs, automacoes avancadas e muito mais!
               </p>
             </div>
           </div>

@@ -5,12 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Landmark } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function BancoForm({ banco, item, data, initialData, defaultValues, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || banco;
+  const { canCreate, canEdit } = usePermissions();
+  const podeCriar = canCreate("Cadastros", "Banco") || canCreate("Financeiro", "Banco") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "Banco") || canEdit("Financeiro", "Banco") || canEdit("Cadastros", null);
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_banco: '',
     codigo_banco: '',
@@ -40,6 +44,14 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (dadosIniciais?.id && !podeEditar) {
+      alert("Sem permissao para editar bancos.");
+      return;
+    }
+    if (!dadosIniciais?.id && !podeCriar) {
+      alert("Sem permissao para criar bancos.");
+      return;
+    }
     if (!formData.nome_banco || !formData.agencia || !formData.conta) {
       alert('Preencha os campos obrigatórios');
       return;
@@ -204,7 +216,12 @@ export default function BancoForm({ banco, item, data, initialData, defaultValue
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={isSubmitting || (dadosIniciais?.id ? !podeEditar : !podeCriar)}
+          data-permission="Cadastros.Banco.salvar"
+          data-sensitive
+        >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? 'Atualizar Banco' : 'Criar Banco'}
         </Button>

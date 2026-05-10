@@ -8,9 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Receipt } from 'lucide-react';
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import usePermissions from '@/components/lib/usePermissions';
 
 export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmit, onSave, onClose, windowMode = false }) {
   const dadosIniciais = item || data || tipoDespesa || tipo;
+  const { canCreate, canEdit } = usePermissions();
+  const podeCriar = canCreate("Cadastros", "TipoDespesa") || canCreate("Financeiro", "TipoDespesa") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "TipoDespesa") || canEdit("Financeiro", "TipoDespesa") || canEdit("Cadastros", null);
   const [formData, setFormData] = useState(dadosIniciais || {
     codigo: '', nome: '', categoria: 'Operacional',
     conta_contabil_padrao_id: '', conta_contabil_padrao_nome: '',
@@ -42,6 +46,14 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (dadosIniciais?.id && !podeEditar) {
+      alert("Sem permissao para editar tipos de despesa.");
+      return;
+    }
+    if (!dadosIniciais?.id && !podeCriar) {
+      alert("Sem permissao para criar tipos de despesa.");
+      return;
+    }
     if (onSubmit) {
       onSubmit(formData);
     } else {
@@ -130,7 +142,13 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, item, data, onSubmi
         <Switch checked={!!formData.ativo} onCheckedChange={(v) => setFormData({ ...formData, ativo: v })} />
       </div>
 
-      <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
+      <Button
+        type="submit"
+        className="w-full bg-purple-600 hover:bg-purple-700"
+        disabled={dadosIniciais?.id ? !podeEditar : !podeCriar}
+        data-permission="Cadastros.TipoDespesa.salvar"
+        data-sensitive
+      >
         {dadosIniciais ? 'Atualizar Tipo' : 'Criar Tipo de Despesa'}
       </Button>
     </form>

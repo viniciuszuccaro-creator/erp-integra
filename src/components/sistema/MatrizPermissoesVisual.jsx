@@ -27,6 +27,10 @@ import {
   Filter,
   Download
 } from "lucide-react";
+import { toast } from "sonner";
+import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 const MODULOS_ICONES = {
   dashboard: LayoutDashboard,
@@ -51,6 +55,13 @@ export default function MatrizPermissoesVisual({ perfis = [], estruturaSistema }
   const [busca, setBusca] = useState("");
   const [perfilDetalhesOpen, setPerfilDetalhesOpen] = useState(false);
   const [perfilSelecionado, setPerfilSelecionado] = useState(null);
+  const { contexto, empresaAtual, grupoAtual } = useContextoVisual();
+  const { user } = usePermissions();
+  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem("group_atual_id"); } catch { return null; }
+  })();
+  const empresaAtivaId = contexto === "grupo" ? null : empresaAtual?.id;
+  const contextoValido = !!(grupoAtivoId || empresaAtivaId);
 
   const perfisAtivos = Array.isArray(perfis) ? perfis.filter(p => p.ativo !== false) : [];
   const estruturaValida = estruturaSistema && typeof estruturaSistema === 'object' ? estruturaSistema : {};
@@ -74,6 +85,54 @@ export default function MatrizPermissoesVisual({ perfis = [], estruturaSistema }
     return { nivel: "baixo", label: "Baixo", cor: "orange" };
   };
 
+  const exportarMatriz = async () => {
+    if (!contextoValido) {
+      toast.error("Selecione um grupo ou empresa antes de exportar a matriz.");
+      return;
+    }
+
+    const linhas = [];
+    linhas.push(["Modulo", "Perfil", "Nivel", "Status", "Acesso"].join(";"));
+    modulosFiltrados.forEach(([moduloId, modulo]) => {
+      perfisAtivos.forEach((perfil) => {
+        const acesso = calcularNivelAcesso(perfil, moduloId, modulo);
+        linhas.push([
+          `"${modulo?.nome || moduloId}"`,
+          `"${perfil.nome_perfil || ""}"`,
+          `"${perfil.nivel_perfil || ""}"`,
+          perfil.ativo !== false ? "Ativo" : "Inativo",
+          acesso.label,
+        ].join(";"));
+      });
+    });
+
+    const blob = new Blob([linhas.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `matriz-permissoes-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Sistema",
+        usuario_id: user?.id || null,
+        empresa_id: empresaAtivaId || null,
+        group_id: grupoAtivoId || null,
+        acao: "Exportacao",
+        modulo: "Controle de Acesso",
+        entidade: "MatrizPermissoes",
+        descricao: "Exportacao CSV da matriz de permissoes",
+        dados_novos: { perfis: perfisAtivos.length, modulos: modulosFiltrados.length, formato: "csv" },
+        sucesso: true,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn("[RBAC] Falha ao auditar exportacao da matriz:", error);
+    }
+  };
+
   return (
     <div className="w-full h-full space-y-4">
       {/* Busca */}
@@ -85,9 +144,10 @@ export default function MatrizPermissoesVisual({ perfis = [], estruturaSistema }
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="pl-9"
+            data-action="RBAC.Matriz.buscarModulo"
           />
         </div>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={exportarMatriz} disabled={perfisAtivos.length === 0 || !contextoValido} data-action="RBAC.Matriz.exportar">
           <Download className="w-4 h-4 mr-2" />
           Exportar
         </Button>
@@ -111,6 +171,7 @@ export default function MatrizPermissoesVisual({ perfis = [], estruturaSistema }
                         setPerfilSelecionado(p);
                         setPerfilDetalhesOpen(true);
                       }}
+                      data-action={`RBAC.Matriz.perfil.${p.id}`}
                     >
                       <div className="text-sm font-medium">{p.nome_perfil}</div>
                       <Badge variant="outline" className="text-xs mt-1">
@@ -148,7 +209,7 @@ export default function MatrizPermissoesVisual({ perfis = [], estruturaSistema }
                         
                         return (
                           <td key={perfil.id} className="border p-3 text-center">
-                            <Badge className={`${badgeClass} cursor-pointer`}>
+                            <Badge className={`${badgeClass} cursor-pointer`} data-action={`RBAC.Matriz.acesso.${perfil.id}.${moduloId}`}>
                               {label}
                             </Badge>
                           </td>

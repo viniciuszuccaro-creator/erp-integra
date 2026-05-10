@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,6 +20,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
 export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp, item, data, isOpen, onClose, onSuccess, windowMode = false, onSubmit, onSave }) {
@@ -30,7 +30,19 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
+  const {
+    empresaAtual,
+    grupoAtual,
+    createInContext,
+    updateInContext,
+    deleteInContext
+  } = useContextoVisual();
+  const { canCreate, canEdit, canDelete } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId);
+  const podeCriar = canCreate("Cadastros", "Fornecedor") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "Fornecedor") || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", "Fornecedor") || canDelete("Cadastros", null);
 
   const [formData, setFormData] = useState(fornecedor || {
     nome: "",
@@ -55,16 +67,30 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
     avaliacoes: [],
     nota_media: 0,
     empresa_id: empresaAtual?.id,
-    group_id: empresaAtual?.grupo_id
+    empresa_dona_id: empresaAtual?.id,
+    group_id: groupId
   });
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      if (fornecedor?.id) {
-        return base44.entities.Fornecedor.update(fornecedor.id, data);
-      } else {
-        return base44.entities.Fornecedor.create(data);
+      if (!contextoValido) {
+        throw new Error("Selecione um grupo ou empresa antes de salvar o fornecedor.");
       }
+
+      const payload = {
+        ...data,
+        ...(empresaAtual?.id && !data.empresa_id ? { empresa_id: empresaAtual.id } : {}),
+        ...(empresaAtual?.id && !data.empresa_dona_id ? { empresa_dona_id: data.empresa_id || empresaAtual.id } : {}),
+        ...(groupId && !data.group_id ? { group_id: groupId } : {})
+      };
+
+      if (fornecedor?.id) {
+        if (!podeEditar) throw new Error("Seu perfil nao permite editar fornecedores.");
+        return updateInContext('Fornecedor', fornecedor.id, payload, 'empresa_dona_id');
+      }
+
+      if (!podeCriar) throw new Error("Seu perfil nao permite criar fornecedores.");
+      return createInContext('Fornecedor', payload, 'empresa_dona_id');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
@@ -84,7 +110,8 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      return base44.entities.Fornecedor.delete(id);
+      if (!podeExcluir) throw new Error("Seu perfil nao permite excluir fornecedores.");
+      return deleteInContext('Fornecedor', id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
@@ -229,7 +256,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
                   data-permission="Cadastros.Fornecedor.excluir"
                   data-sensitive
                   onClick={handleExcluir}
-                  disabled={deleteMutation.isPending}
+                  disabled={deleteMutation.isPending || !podeExcluir || !contextoValido}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
@@ -240,7 +267,7 @@ export default function CadastroFornecedorCompleto({ fornecedor: fornecedorProp,
               onClick={handleSave} 
               data-permission="Cadastros.Fornecedor.salvar"
               data-sensitive
-              disabled={saveMutation.isPending}
+              disabled={saveMutation.isPending || !contextoValido || (fornecedor?.id ? !podeEditar : !podeCriar)}
               className="bg-cyan-600 hover:bg-cyan-700"
             >
               <Save className="w-4 h-4 mr-2" />

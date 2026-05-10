@@ -1,147 +1,181 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle, XCircle, AlertCircle, Rocket } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 export default function ValidadorFase3() {
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const contextoValido = scopeId !== 'sem-contexto';
+  const queryEntidade = (entityName, order = '-updated_date', limit = 500) => (
+    filterInContext(entityName, {}, order, limit)
+  );
+
   // Buscar todas as entidades necessárias
   const { data: grupos = [] } = useQuery({
-    queryKey: ['gruposEmpresariais'],
-    queryFn: () => base44.entities.GrupoEmpresarial.list()
+    queryKey: ['validador-fase3', 'gruposEmpresariais', scopeId, contexto],
+    queryFn: () => grupoAtual?.id ? [grupoAtual] : queryEntidade('GrupoEmpresarial', 'nome_grupo', 50),
+    enabled: contextoValido
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list()
+    queryKey: ['validador-fase3', 'empresas', scopeId, contexto],
+    queryFn: () => queryEntidade('Empresa', 'nome_fantasia'),
+    enabled: contextoValido
   });
 
   const { data: perfis = [] } = useQuery({
-    queryKey: ['perfisAcesso'],
-    queryFn: () => base44.entities.PerfilAcesso.list()
+    queryKey: ['validador-fase3', 'perfisAcesso', scopeId, contexto],
+    queryFn: () => queryEntidade('PerfilAcesso'),
+    enabled: contextoValido
   });
 
   const { data: departamentos = [] } = useQuery({
-    queryKey: ['departamentos'],
-    queryFn: () => base44.entities.Departamento.list()
+    queryKey: ['validador-fase3', 'departamentos', scopeId, contexto],
+    queryFn: () => queryEntidade('Departamento'),
+    enabled: contextoValido
   });
 
   const { data: cargos = [] } = useQuery({
-    queryKey: ['cargos'],
-    queryFn: () => base44.entities.Cargo.list()
+    queryKey: ['validador-fase3', 'cargos', scopeId, contexto],
+    queryFn: () => queryEntidade('Cargo'),
+    enabled: contextoValido
   });
 
   const { data: turnos = [] } = useQuery({
-    queryKey: ['turnos'],
-    queryFn: () => base44.entities.Turno.list()
+    queryKey: ['validador-fase3', 'turnos', scopeId, contexto],
+    queryFn: () => queryEntidade('Turno'),
+    enabled: contextoValido
   });
 
   const { data: contatosB2B = [] } = useQuery({
-    queryKey: ['contatosB2B'],
-    queryFn: () => base44.entities.ContatoB2B.list()
+    queryKey: ['validador-fase3', 'contatosB2B', scopeId, contexto],
+    queryFn: () => queryEntidade('ContatoB2B'),
+    enabled: contextoValido
   });
 
   const { data: segmentos = [] } = useQuery({
-    queryKey: ['segmentosCliente'],
-    queryFn: () => base44.entities.SegmentoCliente.list()
+    queryKey: ['validador-fase3', 'segmentosCliente', scopeId, contexto],
+    queryFn: () => queryEntidade('SegmentoCliente'),
+    enabled: contextoValido
   });
 
   const { data: condicoesComerciais = [] } = useQuery({
-    queryKey: ['condicoesComerciais'],
-    queryFn: () => base44.entities.CondicaoComercial.list()
+    queryKey: ['validador-fase3', 'condicoesComerciais', scopeId, contexto],
+    queryFn: () => queryEntidade('CondicaoComercial'),
+    enabled: contextoValido
   });
 
   const { data: unidades = [] } = useQuery({
-    queryKey: ['unidadesMedida'],
-    queryFn: () => base44.entities.UnidadeMedida.list()
+    queryKey: ['validador-fase3', 'unidadesMedida', scopeId, contexto],
+    queryFn: () => queryEntidade('UnidadeMedida'),
+    enabled: contextoValido
   });
 
   const { data: servicos = [] } = useQuery({
-    queryKey: ['servicos'],
-    queryFn: () => base44.entities.Servico.list()
+    queryKey: ['validador-fase3', 'servicos', scopeId, contexto],
+    queryFn: () => queryEntidade('Servico'),
+    enabled: contextoValido
   });
 
   const { data: kits = [] } = useQuery({
-    queryKey: ['kitsProduto'],
-    queryFn: () => base44.entities.KitProduto.list()
+    queryKey: ['validador-fase3', 'kitsProduto', scopeId, contexto],
+    queryFn: () => queryEntidade('KitProduto'),
+    enabled: contextoValido
   });
 
   const { data: catalogoWeb = [] } = useQuery({
-    queryKey: ['catalogoWeb'],
-    queryFn: () => base44.entities.CatalogoWeb.list()
+    queryKey: ['validador-fase3', 'catalogoWeb', scopeId, contexto],
+    queryFn: () => queryEntidade('CatalogoWeb'),
+    enabled: contextoValido
   });
 
   const { data: bancos = [] } = useQuery({
-    queryKey: ['bancos'],
-    queryFn: () => base44.entities.Banco.list()
+    queryKey: ['validador-fase3', 'bancos', scopeId, contexto],
+    queryFn: () => queryEntidade('Banco'),
+    enabled: contextoValido
   });
 
   const { data: contasBancarias = [] } = useQuery({
-    queryKey: ['contasBancarias'],
-    queryFn: () => base44.entities.ContaBancariaEmpresa.list()
+    queryKey: ['validador-fase3', 'contasBancarias', scopeId, contexto],
+    queryFn: () => queryEntidade('ContaBancariaEmpresa'),
+    enabled: contextoValido
   });
 
   const { data: centrosResultado = [] } = useQuery({
-    queryKey: ['centrosResultado'],
-    queryFn: () => base44.entities.CentroResultado.list()
+    queryKey: ['validador-fase3', 'centrosResultado', scopeId, contexto],
+    queryFn: () => queryEntidade('CentroResultado'),
+    enabled: contextoValido
   });
 
   const { data: tiposDespesa = [] } = useQuery({
-    queryKey: ['tiposDespesa'],
-    queryFn: () => base44.entities.TipoDespesa.list()
+    queryKey: ['validador-fase3', 'tiposDespesa', scopeId, contexto],
+    queryFn: () => queryEntidade('TipoDespesa'),
+    enabled: contextoValido
   });
 
   const { data: planoContas = [] } = useQuery({
-    queryKey: ['planoContas'],
-    queryFn: () => base44.entities.PlanoDeContas.list()
+    queryKey: ['validador-fase3', 'planoContas', scopeId, contexto],
+    queryFn: () => queryEntidade('PlanoDeContas'),
+    enabled: contextoValido
   });
 
   const { data: veiculos = [] } = useQuery({
-    queryKey: ['veiculos'],
-    queryFn: () => base44.entities.Veiculo.list()
+    queryKey: ['validador-fase3', 'veiculos', scopeId, contexto],
+    queryFn: () => queryEntidade('Veiculo'),
+    enabled: contextoValido
   });
 
   const { data: motoristas = [] } = useQuery({
-    queryKey: ['motoristas'],
-    queryFn: () => base44.entities.Motorista.list()
+    queryKey: ['validador-fase3', 'motoristas', scopeId, contexto],
+    queryFn: () => queryEntidade('Motorista'),
+    enabled: contextoValido
   });
 
   const { data: tiposFrete = [] } = useQuery({
-    queryKey: ['tiposFrete'],
-    queryFn: () => base44.entities.TipoFrete.list()
+    queryKey: ['validador-fase3', 'tiposFrete', scopeId, contexto],
+    queryFn: () => queryEntidade('TipoFrete'),
+    enabled: contextoValido
   });
 
   const { data: rotasPadrao = [] } = useQuery({
-    queryKey: ['rotasPadrao'],
-    queryFn: () => base44.entities.RotaPadrao.list()
+    queryKey: ['validador-fase3', 'rotasPadrao', scopeId, contexto],
+    queryFn: () => queryEntidade('RotaPadrao'),
+    enabled: contextoValido
   });
 
   const { data: webhooks = [] } = useQuery({
-    queryKey: ['webhooks'],
-    queryFn: () => base44.entities.Webhook.list()
+    queryKey: ['validador-fase3', 'webhooks', scopeId, contexto],
+    queryFn: () => queryEntidade('Webhook'),
+    enabled: contextoValido
   });
 
   const { data: chatbotIntents = [] } = useQuery({
-    queryKey: ['chatbotIntents'],
-    queryFn: () => base44.entities.ChatbotIntent.list()
+    queryKey: ['validador-fase3', 'chatbotIntents', scopeId, contexto],
+    queryFn: () => queryEntidade('ChatbotIntent'),
+    enabled: contextoValido
   });
 
   const { data: chatbotCanais = [] } = useQuery({
-    queryKey: ['chatbotCanais'],
-    queryFn: () => base44.entities.ChatbotCanal.list()
+    queryKey: ['validador-fase3', 'chatbotCanais', scopeId, contexto],
+    queryFn: () => queryEntidade('ChatbotCanal'),
+    enabled: contextoValido
   });
 
   const { data: jobs = [] } = useQuery({
-    queryKey: ['jobsAgendados'],
-    queryFn: () => base44.entities.JobAgendado.list()
+    queryKey: ['validador-fase3', 'jobsAgendados', scopeId, contexto],
+    queryFn: () => queryEntidade('JobAgendado'),
+    enabled: contextoValido
   });
 
   const { data: apis = [] } = useQuery({
-    queryKey: ['apisExternas'],
-    queryFn: () => base44.entities.ApiExterna.list()
+    queryKey: ['validador-fase3', 'apisExternas', scopeId, contexto],
+    queryFn: () => queryEntidade('ApiExterna'),
+    enabled: contextoValido
   });
 
   // Validações

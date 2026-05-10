@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import GerenciarContatosClienteForm from "./GerenciarContatosClienteForm";
 import GerenciarEnderecosClienteForm from "./GerenciarEnderecosClienteForm";
 
@@ -48,7 +49,21 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
+  const {
+    empresaAtual,
+    grupoAtual,
+    filterInContext,
+    createInContext,
+    updateInContext,
+    deleteInContext
+  } = useContextoVisual();
+  const { canCreate, canEdit, canDelete } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeCriar = canCreate("Cadastros", "Cliente") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "Cliente") || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", "Cliente") || canDelete("Cadastros", null);
 
   const [formData, setFormData] = useState(cliente || {
     tipo: "Pessoa Física",
@@ -98,32 +113,37 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
     vendedor_responsavel_id: "",
     observacoes: "",
     empresa_id: empresaAtual?.id,
-    group_id: empresaAtual?.grupo_id
+    group_id: groupId
   });
 
   const { data: tabelasPreco = [] } = useQuery({
-    queryKey: ['tabelas-preco'],
-    queryFn: () => base44.entities.TabelaPreco.list(),
+    queryKey: ['tabelas-preco', contextKey],
+    queryFn: () => filterInContext('TabelaPreco', {}, 'nome', 200),
+    enabled: contextoValido,
   });
 
   const { data: formasPagamento = [] } = useQuery({
-    queryKey: ['formas-pagamento'],
-    queryFn: () => base44.entities.FormaPagamento.list(),
+    queryKey: ['formas-pagamento', contextKey],
+    queryFn: () => filterInContext('FormaPagamento', {}, 'nome', 200),
+    enabled: contextoValido,
   });
 
   const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.filter({ status: 'Ativo' }),
+    queryKey: ['colaboradores', contextKey],
+    queryFn: () => filterInContext('Colaborador', { status: 'Ativo' }, 'nome_completo', 200),
+    enabled: contextoValido,
   });
 
   const { data: regioes = [] } = useQuery({
-    queryKey: ['regioes'],
-    queryFn: () => base44.entities.RegiaoAtendimento.list()
+    queryKey: ['regioes', contextKey],
+    queryFn: () => filterInContext('RegiaoAtendimento', {}, 'nome', 200),
+    enabled: contextoValido,
   });
 
   const { data: representantes = [] } = useQuery({
-    queryKey: ['representantes'],
-    queryFn: () => base44.entities.Representante.filter({ status: 'Ativo' })
+    queryKey: ['representantes', contextKey],
+    queryFn: () => filterInContext('Representante', { status: 'Ativo' }, 'nome', 200),
+    enabled: contextoValido,
   });
 
   const [usuarioLogado, setUsuarioLogado] = useState(null);
@@ -154,18 +174,30 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
   }, [colaboradores, cliente?.id]);
 
   const { data: ultimaNF } = useQuery({
-    queryKey: ['ultima-nf-cliente', cliente?.id],
-    queryFn: () => base44.entities.NotaFiscal.filter({ cliente_fornecedor_id: cliente.id }, '-data_emissao', 1),
-    enabled: !!cliente?.id,
+    queryKey: ['ultima-nf-cliente', cliente?.id, contextKey],
+    queryFn: () => filterInContext('NotaFiscal', { cliente_fornecedor_id: cliente.id }, '-data_emissao', 1, 'empresa_faturamento_id'),
+    enabled: !!cliente?.id && contextoValido,
   });
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
-      if (cliente?.id) {
-        return base44.entities.Cliente.update(cliente.id, data);
-      } else {
-        return base44.entities.Cliente.create(data);
+      if (!contextoValido) {
+        throw new Error("Selecione um grupo ou empresa antes de salvar o cliente.");
       }
+
+      const payload = {
+        ...data,
+        ...(empresaAtual?.id && !data.empresa_id ? { empresa_id: empresaAtual.id } : {}),
+        ...(groupId && !data.group_id ? { group_id: groupId } : {})
+      };
+
+      if (cliente?.id) {
+        if (!podeEditar) throw new Error("Seu perfil nao permite editar clientes.");
+        return updateInContext('Cliente', cliente.id, payload);
+      }
+
+      if (!podeCriar) throw new Error("Seu perfil nao permite criar clientes.");
+      return createInContext('Cliente', payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
@@ -185,7 +217,8 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      return base44.entities.Cliente.delete(id);
+      if (!podeExcluir) throw new Error("Seu perfil nao permite excluir clientes.");
+      return deleteInContext('Cliente', id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
@@ -399,7 +432,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                                     data-permission="Cadastros.Cliente.excluir"
                                     data-sensitive
                                     onClick={handleExcluir}
-                                    disabled={deleteMutation.isPending}
+                                    disabled={deleteMutation.isPending || !podeExcluir || !contextoValido}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
                     {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
@@ -410,7 +443,7 @@ export default function CadastroClienteCompleto({ cliente: clienteProp, item, da
                 onClick={handleSave}
                 data-permission="Cadastros.Cliente.salvar"
                 data-sensitive
-                disabled={saveMutation.isPending}
+                disabled={saveMutation.isPending || !contextoValido || (cliente?.id ? !podeEditar : !podeCriar)}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 <Save className="w-4 h-4 mr-2" />

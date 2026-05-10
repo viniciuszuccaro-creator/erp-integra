@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { toast } from "sonner";
-import { validateAdminControlExecution } from "@/components/administracao-sistema/fase1/adminActionGuards";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
 import HerancaConfigNotice from "@/components/administracao-sistema/common/HerancaConfigNotice";
+import IntegracoesPanel from "@/components/administracao-sistema/configuracoes-gerais/IntegracoesPanel";
 import TesteNFe from "@/components/integracoes/TesteNFe";
 import TesteBoletos from "@/components/integracoes/TesteBoletos";
 import ConfigWhatsAppBusiness from "@/components/integracoes/ConfigWhatsAppBusiness";
@@ -14,20 +13,64 @@ import TesteGoogleMaps from "@/components/integracoes/TesteGoogleMaps";
 import StatusIntegracoes from "@/components/integracoes/StatusIntegracoes";
 
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import useConfiguracaoSistema from "@/components/lib/useConfiguracaoSistema";
 import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
 import { FileText, DollarSign, MessageCircle, Truck, Globe, ShoppingCart, CheckCircle2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import SincronizacaoMarketplacesAtiva from "@/components/integracoes/SincronizacaoMarketplacesAtiva";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function IntegracoesIndex({ initialTab }) {
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const { user } = useUser();
+  const { isAdmin, hasPermission } = usePermissions();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState(initialTab || "gerenciamento");
-  const integracoesBase = useConfiguracaoSistema({ chave: empresaAtual?.id ? `integracoes_${empresaAtual.id}` : null, categoria: 'Integracoes', empresaId: empresaAtual?.id, grupoId: grupoAtual?.id });
-  const auditoriaDetalhada = useConfiguracaoSistema({ chave: 'seg_auditoria_detalhada', aliases: ['cc_auditoria_automatica'], categoria: 'Seguranca', empresaId: empresaAtual?.id, grupoId: grupoAtual?.id });
-  const auditoriaAtiva = auditoriaDetalhada.isEnabled(false);
+  const [criandoBase, setCriandoBase] = useState(false);
+  const [testandoWebhook, setTestandoWebhook] = useState(null);
+
+  const grupoAtivoId = grupoAtual?.id
+    || empresaAtual?.group_id
+    || empresaAtual?.grupo_id
+    || user?.grupo_atual_id
+    || user?.grupo_padrao_id
+    || (() => {
+      try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+    })();
+  const scopeId = empresaAtual?.id || grupoAtivoId || null;
+  const scope = empresaAtual?.id
+    ? { empresa_id: empresaAtual.id }
+    : grupoAtivoId
+      ? { group_id: grupoAtivoId }
+      : {};
+  const scopeLabel = empresaAtual?.id ? "empresa atual" : grupoAtivoId ? "grupo atual" : "contexto atual";
+  const integracoesKey = scopeId ? `integracoes_${scopeId}` : null;
+  const integracoesQueryKey = ["configuracaoSistema", "integracoes", scopeId || "sem-contexto"];
+  const contextoValido = !!scopeId;
+  const podeEditarIntegracoes = isAdmin() || hasPermission("Sistema", "Integrações", "editar") || hasPermission("Sistema", "Integracoes", "editar");
+  const podeCriarIntegracoes = isAdmin() || hasPermission("Sistema", "Integrações", "criar") || hasPermission("Sistema", "Integracoes", "criar");
+
+  const auditIntegracao = async ({ acao, descricao, dadosNovos }) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Usuario local",
+        usuario_id: user?.id || null,
+        empresa_id: empresaAtual?.id || null,
+        group_id: grupoAtivoId || null,
+        acao,
+        modulo: "Integracoes",
+        entidade: "ConfiguracaoSistema",
+        registro_id: integracoesKey || null,
+        descricao,
+        dados_novos: dadosNovos || null,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn("Falha ao auditar integracao:", error);
+    }
+  };
 
   const handleTabChange = (next) => {
     setTab(next);
@@ -36,6 +79,7 @@ export default function IntegracoesIndex({ initialTab }) {
         usuario: user?.full_name || user?.email || "Usuário",
         usuario_id: user?.id,
         empresa_id: empresaAtual?.id || null,
+        group_id: grupoAtivoId || null,
         acao: "Visualização",
         modulo: "Sistema",
         entidade: "Integrações",
@@ -45,107 +89,163 @@ export default function IntegracoesIndex({ initialTab }) {
     } catch {}
   };
 
-  const configuracao = integracoesBase.config || null;
+  const { data: configuracao } = useQuery({
+    queryKey: integracoesQueryKey,
+    queryFn: async () => {
+      if (!integracoesKey) return null;
+      try {
+        const res = await base44.functions.invoke('getEntityRecord', {
+          entityName: 'ConfiguracaoSistema',
+          filter: { chave: integracoesKey, ...scope },
+          limit: 1,
+        });
+        const list = Array.isArray(res?.data) ? res.data : [];
+        return list[0] || null;
+      } catch (_) { return null; }
+    },
+    enabled: !!integracoesKey,
+    staleTime: 60000,
+  });
 
   const nfeOk = !!configuracao?.integracao_nfe?.api_key;
   const boletosOk = !!configuracao?.integracao_boletos?.api_key;
   const webhookUrl = `${window?.location?.origin || ''}/functions/legacyIntegrationsMirror`;
-  const auditoriaExecucoesAtiva = auditoriaAtiva || user?.role === 'admin';
 
   const handleCriarBase = async () => {
-    if (!empresaAtual?.id) return;
+    if (!integracoesKey) {
+      toast.error("Selecione um grupo ou empresa para criar a base de integracoes.");
+      return;
+    }
+
+    setCriandoBase(true);
     try {
-      const guard = await validateAdminControlExecution({ controlId: 'integracoes_empresa_base', empresaId: empresaAtual.id, grupoId: grupoAtual?.id || null });
-      if (!guard.allowed) throw new Error(guard.reason);
-      const chave = `integracoes_${empresaAtual.id}`;
-      await base44.functions.invoke('upsertConfig', {
-        chave,
+      const payload = {
+        chave: integracoesKey,
         data: {
-          chave,
+          chave: integracoesKey,
           categoria: 'Integracoes',
           integracao_nfe: { provedor: null, api_url: null, api_key: null, cnpj_emitente: null, ambiente: 'homologacao' },
           integracao_boletos: { provedor: null, api_url: null, api_key: null, customer_id_default: null, customers_map: {} }
         },
-        scope: { empresa_id: empresaAtual.id }
+        scope
+      };
+      await base44.functions.invoke('upsertConfig', payload);
+      await auditIntegracao({
+        acao: "Criacao Base",
+        descricao: `Estrutura base de integracoes criada para ${scopeLabel}`,
+        dadosNovos: payload
       });
-      toast.success('Estrutura base criada com sucesso.');
-    } catch (error) {
-      toast.error(error?.message || 'Não foi possível criar a estrutura base.');
+      await queryClient.invalidateQueries({ queryKey: integracoesQueryKey, exact: true });
+      toast.success(`Estrutura base criada para ${scopeLabel}.`);
+    } catch (err) {
+      toast.error("Erro ao criar estrutura base", { description: String(err?.message || err) });
+    } finally {
+      setCriandoBase(false);
     }
   };
 
   const handleTestWebhookAsaasPago = async () => {
-    if (!empresaAtual?.id) return;
+    if (!scopeId) {
+      toast.error("Selecione um grupo ou empresa para testar o webhook.");
+      return;
+    }
+    setTestandoWebhook("asaas");
     try {
-      const guard = await validateAdminControlExecution({ controlId: 'integracoes_webhook_asaas', empresaId: empresaAtual.id, grupoId: grupoAtual?.id || null });
-      if (!guard.allowed) throw new Error(guard.reason);
-      await base44.functions.invoke('legacyIntegrationsMirror', {
+      const payload = {
         provider: 'asaas',
-        empresa_id: empresaAtual.id,
+        ...scope,
         payment: { id: 'test_payment', status: 'RECEIVED', value: 10 }
+      };
+      await base44.functions.invoke('legacyIntegrationsMirror', payload);
+      await auditIntegracao({
+        acao: "Teste Webhook",
+        descricao: `Webhook Asaas simulado para ${scopeLabel}`,
+        dadosNovos: payload
       });
-      toast.success('Webhook Asaas simulado com sucesso.');
-    } catch (error) {
-      toast.error(error?.message || 'Falha ao simular webhook Asaas.');
+      toast.success(`Webhook Asaas simulado para ${scopeLabel}.`);
+    } catch (err) {
+      toast.error("Erro ao simular webhook Asaas", { description: String(err?.message || err) });
+    } finally {
+      setTestandoWebhook(null);
     }
   };
 
   const handleTestWebhookNFeAutorizada = async () => {
-    if (!empresaAtual?.id) return;
+    if (!scopeId) {
+      toast.error("Selecione um grupo ou empresa para testar o webhook.");
+      return;
+    }
+    setTestandoWebhook("nfe");
     try {
-      const guard = await validateAdminControlExecution({ controlId: 'integracoes_webhook_nfe', empresaId: empresaAtual.id, grupoId: grupoAtual?.id || null });
-      if (!guard.allowed) throw new Error(guard.reason);
-      await base44.functions.invoke('legacyIntegrationsMirror', {
+      const payload = {
         provider: 'enotas',
-        empresa_id: empresaAtual.id,
+        ...scope,
         nfeId: 'test_nf',
         status: 'autorizada'
+      };
+      await base44.functions.invoke('legacyIntegrationsMirror', payload);
+      await auditIntegracao({
+        acao: "Teste Webhook",
+        descricao: `Webhook NF-e simulado para ${scopeLabel}`,
+        dadosNovos: payload
       });
-      toast.success('NF-e autorizada simulada com sucesso.');
-    } catch (error) {
-      toast.error(error?.message || 'Falha ao simular NF-e autorizada.');
+      toast.success(`Webhook NF-e simulado para ${scopeLabel}.`);
+    } catch (err) {
+      toast.error("Erro ao simular webhook NF-e", { description: String(err?.message || err) });
+    } finally {
+      setTestandoWebhook(null);
     }
   };
 
   const handleCopy = async (text) => {
-    try { await navigator.clipboard.writeText(text); } catch (_) {}
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("URL copiada.");
+    } catch (_) {
+      toast.error("Nao foi possivel copiar a URL.");
+    }
   };
 
    return (
-    <div className="w-full h-full min-w-0 flex flex-col overflow-hidden">
-      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full min-w-0 overflow-hidden">
-        <div className="w-full overflow-x-auto pb-1"><TabsList className="inline-flex min-w-max flex-nowrap gap-2 h-auto">
-          <TabsTrigger value="gerenciamento"><CheckCircle2 className="w-4 h-4 mr-2" />Gerenciamento</TabsTrigger>
-          <TabsTrigger value="status"><CheckCircle2 className="w-4 h-4 mr-2" />Status</TabsTrigger>
-          <TabsTrigger value="nfe"><FileText className="w-4 h-4 mr-2" />NF-e</TabsTrigger>
-          <TabsTrigger value="boletos"><DollarSign className="w-4 h-4 mr-2" />Boletos/PIX</TabsTrigger>
-          <TabsTrigger value="whatsapp"><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</TabsTrigger>
-          <TabsTrigger value="transportadoras"><Truck className="w-4 h-4 mr-2" />Transportadoras</TabsTrigger>
-          <TabsTrigger value="maps"><Globe className="w-4 h-4 mr-2" />Maps</TabsTrigger>
-          <TabsTrigger value="marketplaces"><ShoppingCart className="w-4 h-4 mr-2" />Marketplaces</TabsTrigger>
-        </TabsList></div>
+    <div className="w-full h-full flex flex-col">
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full">
+        <TabsList className="flex flex-wrap gap-2 h-auto">
+          <TabsTrigger value="gerenciamento" data-action="Integracoes.tab.gerenciamento"><CheckCircle2 className="w-4 h-4 mr-2" />Gerenciamento</TabsTrigger>
+          <TabsTrigger value="status" data-action="Integracoes.tab.status"><CheckCircle2 className="w-4 h-4 mr-2" />Status</TabsTrigger>
+          <TabsTrigger value="nfe" data-action="Integracoes.tab.nfe"><FileText className="w-4 h-4 mr-2" />NF-e</TabsTrigger>
+          <TabsTrigger value="boletos" data-action="Integracoes.tab.boletos"><DollarSign className="w-4 h-4 mr-2" />Boletos/PIX</TabsTrigger>
+          <TabsTrigger value="whatsapp" data-action="Integracoes.tab.whatsapp"><MessageCircle className="w-4 h-4 mr-2" />WhatsApp</TabsTrigger>
+          <TabsTrigger value="transportadoras" data-action="Integracoes.tab.transportadoras"><Truck className="w-4 h-4 mr-2" />Transportadoras</TabsTrigger>
+          <TabsTrigger value="maps" data-action="Integracoes.tab.maps"><Globe className="w-4 h-4 mr-2" />Maps</TabsTrigger>
+          <TabsTrigger value="marketplaces" data-action="Integracoes.tab.marketplaces"><ShoppingCart className="w-4 h-4 mr-2" />Marketplaces</TabsTrigger>
+        </TabsList>
 
-        <TabsContent value="gerenciamento" className="mt-4 min-w-0">
+        <TabsContent value="gerenciamento" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
               <div className="w-full mb-3 space-y-2">
                 <ContextoConfigBanner />
                 <HerancaConfigNotice />
               </div>
-              <div className="w-full mb-4 space-y-3">
-                <div className="rounded-lg border bg-slate-50 p-3 text-sm text-slate-700">
-                  Auditoria detalhada para integrações: <strong>{auditoriaAtiva ? 'ativa antes das execuções' : 'inativa para execuções detalhadas'}</strong>
-                </div>
+              <div className="w-full mb-4">
+                <IntegracoesPanel />
               </div>
 
               {/* Checklist de Implantação Global */}
               <Card className="w-full mb-4">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold mb-2">Checklist de Implantação (empresa atual)</h3>
+                    <h3 className="font-semibold mb-2">Checklist de Implantacao ({scopeLabel})</h3>
                     {!configuracao && (
-                      <Button variant="outline" onClick={handleCriarBase} disabled={!empresaAtual?.id || !auditoriaExecucoesAtiva}>
-                        Criar estrutura base
+                      <Button
+                        variant="outline"
+                        onClick={handleCriarBase}
+                        disabled={criandoBase || !contextoValido || !podeCriarIntegracoes}
+                        data-action="Integracoes.criarEstruturaBase"
+                        data-permission="Sistema.Integracoes.criar"
+                        data-sensitive="true"
+                      >
+                        {criandoBase ? "Criando..." : "Criar estrutura base"}
                       </Button>
                     )}
                   </div>
@@ -156,7 +256,7 @@ export default function IntegracoesIndex({ initialTab }) {
                       ) : (
                         <AlertCircle className="w-4 h-4 text-amber-600" />
                       )}
-                      <span>NF-e: provedor e API key {nfeOk ? 'configurados' : 'pendentes'} em ConfiguracaoSistema → chave integracoes_{'{empresaId}'}</span>
+                      <span>NF-e: provedor e API key {nfeOk ? 'configurados' : 'pendentes'} em ConfiguracaoSistema para o {scopeLabel}</span>
                     </li>
                     <li className="flex items-center gap-2">
                       {boletosOk ? (
@@ -184,43 +284,48 @@ export default function IntegracoesIndex({ initialTab }) {
                   <h3 className="font-semibold">Webhooks & Testes Rápidos</h3>
                   <div className="flex items-center gap-2 text-xs">
                     <code className="px-2 py-1 bg-slate-100 rounded flex-1 overflow-x-auto">{webhookUrl}</code>
-                    <Button size="sm" variant="outline" onClick={() => handleCopy(webhookUrl)}>Copiar URL</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleCopy(webhookUrl)} data-action="Integracoes.webhook.copiarUrl" data-permission="Sistema.Integracoes.visualizar">Copiar URL</Button>
                   </div>
                   <div className="text-xs text-slate-600">Header: x-internal-token: <span className="font-mono">DEPLOY_AUDIT_TOKEN</span></div>
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" onClick={handleTestWebhookAsaasPago} disabled={!empresaAtual?.id || !auditoriaExecucoesAtiva}>Testar webhook Asaas (pago)</Button>
-                    <Button size="sm" onClick={handleTestWebhookNFeAutorizada} disabled={!empresaAtual?.id || !auditoriaExecucoesAtiva}>Simular NF-e autorizada</Button>
+                    <Button size="sm" onClick={handleTestWebhookAsaasPago} disabled={testandoWebhook === "asaas" || !contextoValido || !podeEditarIntegracoes} data-action="Integracoes.webhook.testarAsaasPago" data-permission="Sistema.Integracoes.editar" data-sensitive="true">
+                      {testandoWebhook === "asaas" ? "Testando..." : "Testar webhook Asaas (pago)"}
+                    </Button>
+                    <Button size="sm" onClick={handleTestWebhookNFeAutorizada} disabled={testandoWebhook === "nfe" || !contextoValido || !podeEditarIntegracoes} data-action="Integracoes.webhook.simularNFeAutorizada" data-permission="Sistema.Integracoes.editar" data-sensitive="true">
+                      {testandoWebhook === "nfe" ? "Simulando..." : "Simular NF-e autorizada"}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
 
+              {/* Atalho para Cadastros Gerais — evita duplicação */}
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-                💡 <strong>Este módulo está focado em status, checklist, webhooks e testes técnicos</strong>, evitando duplicação com configurações já centralizadas no sistema.
+                💡 <strong>Configurações de NF-e, Boletos, WhatsApp, APIs Externas e Webhooks</strong> estão centralizadas em <strong>Cadastros Gerais → Tecnologia, IA & Parâmetros</strong>. Use os links das abas acima (NF-e, Boletos/PIX, WhatsApp, etc.) para testes e configurações técnicas.
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="status" className="mt-4 min-w-0">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><StatusIntegracoes empresaId={empresaAtual?.id} /></CardContent></Card>
+        <TabsContent value="status" className="mt-4">
+          <Card className="w-full"><CardContent className="p-4"><StatusIntegracoes empresaId={empresaAtual?.id} groupId={grupoAtivoId} /></CardContent></Card>
         </TabsContent>
-        <TabsContent value="nfe" className="mt-4 min-w-0">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><TesteNFe configuracao={configuracao} /></CardContent></Card>
+        <TabsContent value="nfe" className="mt-4">
+          <Card className="w-full"><CardContent className="p-4"><TesteNFe configuracao={configuracao} /></CardContent></Card>
         </TabsContent>
-        <TabsContent value="boletos" className="mt-4 min-w-0">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><TesteBoletos configuracao={configuracao} /></CardContent></Card>
+        <TabsContent value="boletos" className="mt-4">
+          <Card className="w-full"><CardContent className="p-4"><TesteBoletos configuracao={configuracao} /></CardContent></Card>
         </TabsContent>
-        <TabsContent value="whatsapp" className="mt-4 min-w-0">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><ConfigWhatsAppBusiness empresaId={empresaAtual?.id} /></CardContent></Card>
+        <TabsContent value="whatsapp" className="mt-4">
+          <Card className="w-full"><CardContent className="p-4"><ConfigWhatsAppBusiness empresaId={empresaAtual?.id} /></CardContent></Card>
         </TabsContent>
-        <TabsContent value="transportadoras" className="mt-4 min-w-0">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><TesteTransportadoras configuracao={configuracao} /></CardContent></Card>
+        <TabsContent value="transportadoras" className="mt-4">
+          <Card className="w-full"><CardContent className="p-4"><TesteTransportadoras configuracao={configuracao} /></CardContent></Card>
         </TabsContent>
-        <TabsContent value="maps" className="mt-4 min-w-0">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><TesteGoogleMaps configuracao={configuracao} /></CardContent></Card>
+        <TabsContent value="maps" className="mt-4">
+          <Card className="w-full"><CardContent className="p-4"><TesteGoogleMaps configuracao={configuracao} /></CardContent></Card>
         </TabsContent>
-        <TabsContent value="marketplaces" className="mt-4 min-w-0">
-          <Card className="w-full min-w-0"><CardContent className="p-4 min-w-0 overflow-x-auto"><SincronizacaoMarketplacesAtiva /></CardContent></Card>
+        <TabsContent value="marketplaces" className="mt-4">
+          <Card className="w-full"><CardContent className="p-4"><SincronizacaoMarketplacesAtiva /></CardContent></Card>
         </TabsContent>
       </Tabs>
     </div>

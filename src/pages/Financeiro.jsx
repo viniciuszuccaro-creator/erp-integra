@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Wallet } from "lucide-react";
@@ -8,13 +8,16 @@ import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
+import HeaderFinanceiroCompacto from "@/components/financeiro/HeaderFinanceiroCompacto";
 import ModuleLayout from "@/components/layout/ModuleLayout";
 import ModuleKPIs from "@/components/layout/ModuleKPIs";
 import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
 import KPIsFinanceiroLaunchpad from "@/components/financeiro/KPIsFinanceiroLaunchpad";
 import MetricasSecundariasLaunchpad from "@/components/financeiro/MetricasSecundariasLaunchpad";
+
 import ModulosGridFinanceiro from "@/components/financeiro/ModulosGridFinanceiro";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import useFinanceiroDerivedData from "@/components/financeiro/hooks/useFinanceiroDerivedData";
 
 const CaixaCentralLiquidacao = React.lazy(() => import("../components/financeiro/CaixaCentralLiquidacao"));
@@ -40,15 +43,19 @@ export default function Financeiro() {
   const {
     contexto,
     estaNoGrupo,
+    grupoAtual,
     empresaAtual,
     empresasDoGrupo,
     filtrarPorContexto,
     adicionarColunasContexto,
     getFiltroContexto
   } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || empresasDoGrupo?.[0]?.group_id || null;
+  const contextKey = empresaAtual?.id || groupId || 'sem-contexto';
+  const contextoValido = contextKey !== 'sem-contexto';
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber', empresaAtual?.id],
+    queryKey: ['contasReceber', contextKey],
     queryFn: async () => {
       try {
         return await filtrarPorContexto('ContaReceber', {}, 'data_vencimento', 100);
@@ -58,15 +65,12 @@ export default function Financeiro() {
       }
     },
     staleTime: 120000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
     retry: 2,
-    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
+    enabled: canSeeFinanceiro && contextoValido
   });
 
   const { data: totalContasReceber = 0 } = useQuery({
-    queryKey: ['contas-receber-count', empresaAtual?.id],
+    queryKey: ['contas-receber-count', contextKey],
     queryFn: async () => {
       try {
         const response = await base44.functions.invoke('countEntities', {
@@ -80,10 +84,11 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
+    enabled: canSeeFinanceiro && contextoValido
   });
+
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contasPagar', empresaAtual?.id],
+    queryKey: ['contasPagar', contextKey],
     queryFn: async () => {
       try {
         return await filtrarPorContexto('ContaPagar', {}, 'data_vencimento', 100);
@@ -93,15 +98,12 @@ export default function Financeiro() {
       }
     },
     staleTime: 120000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
     retry: 2,
-    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
+    enabled: canSeeFinanceiro && contextoValido
   });
 
   const { data: totalContasPagar = 0 } = useQuery({
-    queryKey: ['contas-pagar-count', empresaAtual?.id],
+    queryKey: ['contas-pagar-count', contextKey],
     queryFn: async () => {
       try {
         const response = await base44.functions.invoke('countEntities', {
@@ -115,10 +117,11 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
+    enabled: canSeeFinanceiro && contextoValido
   });
+
   const { data: rateios = [] } = useQuery({
-    queryKey: ['rateios', empresaAtual?.id],
+    queryKey: ['rateios', contextKey],
     queryFn: async () => {
       try {
         return await filtrarPorContexto('RateioFinanceiro', {}, '-created_date', 50);
@@ -129,10 +132,11 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
+    enabled: canSeeFinanceiro && contextoValido
   });
+
   const { data: extratosBancarios = [] } = useQuery({
-    queryKey: ['extratos', empresaAtual?.id],
+    queryKey: ['extratos', contextKey],
     queryFn: async () => {
       try {
         return await filtrarPorContexto('ExtratoBancario', {}, '-data_movimento', 100);
@@ -143,10 +147,11 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
+    enabled: canSeeFinanceiro && contextoValido
   });
+
   const { data: configsGateway = [] } = useQuery({
-    queryKey: ['configs-gateway', empresaAtual?.id],
+    queryKey: ['configs-gateway', contextKey],
     queryFn: async () => {
       try {
         return await filtrarPorContexto('ConfiguracaoGatewayPagamento', {}, '-created_date', 9999);
@@ -157,10 +162,11 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
+    enabled: canSeeFinanceiro && contextoValido
   });
+
   const { data: ordensLiquidacao = [] } = useQuery({
-    queryKey: ['caixa-ordens-liquidacao', empresaAtual?.id],
+    queryKey: ['caixa-ordens-liquidacao', contextKey],
     queryFn: async () => {
       try {
         return await filtrarPorContexto('CaixaOrdemLiquidacao', {}, '-created_date', 50);
@@ -171,10 +177,11 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
+    enabled: canSeeFinanceiro && contextoValido
   });
+
   const { data: pedidosPendentesAprovacao = [] } = useQuery({
-    queryKey: ['pedidos-pendentes-aprovacao', empresaAtual?.id],
+    queryKey: ['pedidos-pendentes-aprovacao', contextKey],
     queryFn: async () => {
       try {
         return await filtrarPorContexto('Pedido', { status_aprovacao: 'pendente' }, '-created_date', 50);
@@ -185,8 +192,9 @@ export default function Financeiro() {
     },
     staleTime: 120000,
     retry: 1,
-    enabled: canSeeFinanceiro && !!(empresaAtual?.id || estaNoGrupo)
+    enabled: canSeeFinanceiro && contextoValido
   });
+
   // Dados já vêm filtrados do servidor
   const contasReceberFiltradas = contasReceber;
   const contasPagarFiltradas = contasPagar;
@@ -372,7 +380,7 @@ export default function Financeiro() {
 
   const allModules = [...modules, ...grupoModules];
 
-  const allowedAllModules = allModules.filter(m => hasPermission('Financeiro', (m.sectionKey || m.title), 'ver') || hasPermission('Financeiro', null, 'ver'));
+  const allowedAllModules = allModules.filter(m => hasPermission('Financeiro', (m.sectionKey || m.title), 'ver'));
 
    const handleModuleClick = (module) => {
     React.startTransition(() => {
@@ -407,34 +415,30 @@ export default function Financeiro() {
     <ProtectedSection module="Financeiro" action="visualizar">
     <ErrorBoundary>
       <ModuleLayout title="Financeiro e Contábil" subtitle="Pagamentos, recebimentos e conciliação">
-        <div className="w-full h-full min-w-0 flex flex-col gap-4 overflow-x-hidden overflow-y-auto">
-          <ModuleKPIs>
-            <KPIsFinanceiroLaunchpad
-              receberPendente={receberPendente}
-              pagarPendente={pagarPendente}
-              saldo={saldo}
-              contasReceberVencidas={contasReceberVencidas}
-              contasPagarVencidas={contasPagarVencidas}
-            />
-          </ModuleKPIs>
-          <ModuleContent>
-            <div className="w-full min-w-0 overflow-x-auto">
-              <MetricasSecundariasLaunchpad
-                titulosComBoleto={titulosComBoleto}
-                titulosComPix={titulosComPix}
-                empresasComGateway={empresasComGateway}
-                rateiosCount={rateios.length}
-                extratosNaoConciliados={extratosNaoConciliados}
-                valorNaoConciliado={valorNaoConciliado}
-                ordensLiquidacaoPendentes={ordensLiquidacaoPendentes}
-                totalPendentesAprovacao={totalPendentesAprovacao}
-              />
-            </div>
-            <ModuleTabs
-              listagem={<ModulosGridFinanceiro modules={allowedAllModules} onModuleClick={handleModuleClick} />}
-            />
-          </ModuleContent>
-        </div>
+        <ModuleKPIs>
+          <KPIsFinanceiroLaunchpad
+            receberPendente={receberPendente}
+            pagarPendente={pagarPendente}
+            saldo={saldo}
+            contasReceberVencidas={contasReceberVencidas}
+            contasPagarVencidas={contasPagarVencidas}
+          />
+        </ModuleKPIs>
+        <ModuleContent>
+          <MetricasSecundariasLaunchpad
+            titulosComBoleto={titulosComBoleto}
+            titulosComPix={titulosComPix}
+            empresasComGateway={empresasComGateway}
+            rateiosCount={rateios.length}
+            extratosNaoConciliados={extratosNaoConciliados}
+            valorNaoConciliado={valorNaoConciliado}
+            ordensLiquidacaoPendentes={ordensLiquidacaoPendentes}
+            totalPendentesAprovacao={totalPendentesAprovacao}
+          />
+          <ModuleTabs
+            listagem={<ModulosGridFinanceiro modules={allowedAllModules} onModuleClick={handleModuleClick} />}
+          />
+        </ModuleContent>
       </ModuleLayout>
     </ErrorBoundary>
     </ProtectedSection>

@@ -16,7 +16,13 @@ import WebhookForm from "@/components/cadastros/WebhookForm";
 import ConfiguracaoNFeForm from "@/components/cadastros/ConfiguracaoNFeForm";
 import EventoNotificacaoForm from "@/components/cadastros/EventoNotificacaoForm";
 
-export default function Bloco6Tecnologia({ allCounts, isLoading }) {
+function filterTiles(tiles, searchTerm) {
+  const q = String(searchTerm || "").trim().toLowerCase();
+  if (!q) return tiles;
+  return tiles.filter(({ k, t }) => `${k} ${t}`.toLowerCase().includes(q));
+}
+
+export default function Bloco6Tecnologia({ allCounts, isLoading, searchTerm = "" }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
 
@@ -38,6 +44,12 @@ export default function Bloco6Tecnologia({ allCounts, isLoading }) {
     { k: 'ConfiguracaoNFe',    t: 'Configurações NF-e',     i: Settings,      c: ['nome','provedor','ambiente','ativo'],              f: ConfiguracaoNFeForm },
     { k: 'EventoNotificacao',   t: 'Eventos & Notificações', i: Bell,          c: ['nome_evento','tipo_evento','prioridade','ativo'],  f: EventoNotificacaoForm },
   ];
+  const filteredTiles = filterTiles(tiles, searchTerm);
+  const canViewEntity = (entidade) =>
+    hasPermission("Cadastros", entidade, "visualizar") ||
+    hasPermission("Cadastros", null, "visualizar") ||
+    hasPermission("Sistema", entidade, "visualizar") ||
+    hasPermission("Sistema", null, "visualizar");
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -52,11 +64,13 @@ export default function Bloco6Tecnologia({ allCounts, isLoading }) {
         <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
       </Card>
 
-      {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
+      {filteredTiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
         <Card 
           key={k} 
           className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
-          onClick={hasPermission('Sistema', null, 'visualizar') ? openList(k, t, Icon, c, FormComp) : undefined}
+          onClick={canViewEntity(k) ? openList(k, t, Icon, c, FormComp) : undefined}
+          data-permission={`Cadastros.${k}.visualizar`}
+          data-action={`Cadastros.${k}.abrir`}
         >
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
@@ -71,7 +85,9 @@ export default function Bloco6Tecnologia({ allCounts, isLoading }) {
                 size="sm" 
                 className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                 onClick={(e) => { e.stopPropagation(); openList(k, t, Icon, c, FormComp)(); }}
-                disabled={!hasPermission('Sistema', null, 'visualizar')}
+                disabled={!canViewEntity(k)}
+                data-permission={`Cadastros.${k}.visualizar`}
+                data-action={`Cadastros.${k}.abrir`}
               >
                 Abrir
               </Button>

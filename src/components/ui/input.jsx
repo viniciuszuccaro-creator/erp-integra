@@ -1,4 +1,5 @@
 import * as React from "react"
+
 import { cn } from "@/lib/utils"
 import { uiAuditWrap, logUIIssue } from "@/components/lib/uiAudit";
 import usePermissions from "@/components/lib/usePermissions";
@@ -8,7 +9,7 @@ const Input = React.forwardRef(({ className, type, onChange, onBlur, ...props },
     if (!onChange) {
       logUIIssue({ component: 'Input', issue: 'Sem onChange associado', severity: 'warn', meta: { name: props?.name } });
     }
-  }, [onChange, props?.name]);
+  }, []);
 
   const auditedOnChange = typeof onChange === 'function' ? uiAuditWrap('Input.onChange', onChange, { name: props?.name }) : undefined;
   const auditedOnBlur = typeof onBlur === 'function' ? uiAuditWrap('Input.onBlur', onBlur, { name: props?.name }) : undefined;
@@ -17,11 +18,11 @@ const Input = React.forwardRef(({ className, type, onChange, onBlur, ...props },
   const { __wrapped_audit, ...cleanProps } = props;
 
   // RBAC visual automático: data-permission
-  const { hasPermission } = usePermissions();
+  const { hasPermissionKey } = usePermissions();
   const perm = props?.['data-permission'];
   const forwardedProps = { ...cleanProps };
   if ('data-permission' in forwardedProps) delete forwardedProps['data-permission'];
-  const isAllowed = perm ? (() => { const [m,s,a] = String(perm).split('.'); return hasPermission(m, s || null, a || 'visualizar'); })() : true;
+  const isAllowed = perm ? hasPermissionKey(perm) : true;
   if (perm && !isAllowed) {
     return (
       <input

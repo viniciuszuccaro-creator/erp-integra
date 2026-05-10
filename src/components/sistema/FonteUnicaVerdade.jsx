@@ -1,5 +1,4 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +11,7 @@ import {
   TrendingUp,
   Link2
 } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * FONTE ÚNICA DE VERDADE - DASHBOARD V21.0
@@ -19,19 +19,26 @@ import {
  * Regra-Mãe: Single Source of Truth + Zero Duplicação
  */
 export default function FonteUnicaVerdade() {
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const contextoValido = scopeId !== 'sem-contexto';
+
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['fonte-unica', 'produtos', scopeId, contexto],
+    queryFn: () => filterInContext('Produto', {}, '-created_date', 1000),
+    enabled: contextoValido,
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryKey: ['fonte-unica', 'clientes', scopeId, contexto],
+    queryFn: () => filterInContext('Cliente', {}, '-created_date', 1000),
+    enabled: contextoValido,
   });
 
   const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores'],
-    queryFn: () => base44.entities.Fornecedor.list(),
+    queryKey: ['fonte-unica', 'fornecedores', scopeId, contexto],
+    queryFn: () => filterInContext('Fornecedor', {}, '-created_date', 1000),
+    enabled: contextoValido,
   });
 
   // Validações de integridade

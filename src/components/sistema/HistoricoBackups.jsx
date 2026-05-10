@@ -21,6 +21,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * Histórico de Backups
@@ -29,13 +30,18 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
   const [detalhesOpen, setDetalhesOpen] = useState(false);
   const [backupSelecionado, setBackupSelecionado] = useState(null);
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaAtivaId = empresaId || empresaAtual?.id || null;
+  const scopeId = empresaAtivaId || grupoAtivoId || 'sem-contexto';
+  const contextoValido = scopeId !== 'sem-contexto';
 
   const { data: backups = [], isLoading } = useQuery({
-    queryKey: ['backups', empresaId || grupoId],
+    queryKey: ['backups', scopeId],
     queryFn: async () => {
-      const filter = empresaId 
-        ? { empresa_id: empresaId }
-        : { group_id: grupoId };
+      const filter = empresaAtivaId 
+        ? { empresa_id: empresaAtivaId }
+        : { group_id: grupoAtivoId };
       
       const result = await base44.entities.BackupAutomatico.filter(
         filter,
@@ -44,10 +50,15 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
       );
       return result;
     },
+    enabled: contextoValido,
   });
 
   const restaurarMutation = useMutation({
     mutationFn: async (backup) => {
+      if (!contextoValido) {
+        throw new Error('Selecione um grupo ou empresa antes de restaurar backup.');
+      }
+
       // Simular restauração
       toast.success('🔄 Iniciando restauração...', {
         description: 'Este processo pode levar alguns minutos'
@@ -66,10 +77,28 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
         restauracoes
       });
 
+      try {
+        const me = await base44.auth.me();
+        await base44.entities.AuditLog.create({
+          usuario: me?.full_name || me?.email || 'Usuario',
+          usuario_id: me?.id || null,
+          acao: 'Restauracao',
+          modulo: 'Backup',
+          entidade: 'BackupAutomatico',
+          registro_id: backup.id,
+          empresa_id: empresaAtivaId || null,
+          group_id: grupoAtivoId || null,
+          descricao: `Restauracao solicitada para backup ${backup.numero_backup || backup.id}`,
+          dados_novos: { restauracoes },
+          sucesso: true,
+          data_hora: new Date().toISOString()
+        });
+      } catch {}
+
       return backup;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backups'] });
+      queryClient.invalidateQueries({ queryKey: ['backups', scopeId] });
       toast.success('✅ Restauração concluída!', {
         description: 'Dados restaurados com sucesso'
       });
@@ -83,13 +112,37 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
 
   const excluirMutation = useMutation({
     mutationFn: async (backupId) => {
+      if (!contextoValido) {
+        throw new Error('Selecione um grupo ou empresa antes de expirar backup.');
+      }
+
       await base44.entities.BackupAutomatico.update(backupId, {
         status: 'Expirado'
       });
+      try {
+        const me = await base44.auth.me();
+        await base44.entities.AuditLog.create({
+          usuario: me?.full_name || me?.email || 'Usuario',
+          usuario_id: me?.id || null,
+          acao: 'Expiracao',
+          modulo: 'Backup',
+          entidade: 'BackupAutomatico',
+          registro_id: backupId,
+          empresa_id: empresaAtivaId || null,
+          group_id: grupoAtivoId || null,
+          descricao: 'Backup marcado como expirado',
+          sucesso: true,
+          data_hora: new Date().toISOString()
+        });
+      } catch {}
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backups'] });
+      queryClient.invalidateQueries({ queryKey: ['backups', scopeId] });
       toast.success('✅ Backup excluído');
+    },
+    onError: (error) => {
+      console.error('Erro ao expirar backup:', error);
+      toast.error(error.message || 'Erro ao expirar backup');
     },
   });
 
@@ -103,6 +156,16 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
 
   const backupsAtivos = backups.filter(b => b.status !== 'Expirado' && b.status !== 'Cancelado');
   const espacoTotal = backupsAtivos.reduce((sum, b) => sum + (b.tamanho_comprimido_mb || 0), 0) / 1024;
+  const formatarDataBackup = (valor) => {
+    if (!valor) return '-';
+    const data = new Date(valor);
+    return Number.isNaN(data.getTime()) ? '-' : data.toLocaleString('pt-BR');
+  };
+  const formatarDataBackupCurta = (valor) => {
+    if (!valor) return 'Nunca';
+    const data = new Date(valor);
+    return Number.isNaN(data.getTime()) ? 'Nunca' : data.toLocaleDateString('pt-BR');
+  };
 
   return (
     <div className="space-y-6">
@@ -156,7 +219,7 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
                 <p className="text-xs text-orange-700">Último Backup</p>
                 <p className="text-sm font-semibold text-orange-900">
                   {backupsAtivos.length > 0 
-                    ? new Date(backupsAtivos[0].data_hora_inicio).toLocaleDateString('pt-BR')
+                    ? formatarDataBackupCurta(backupsAtivos[0].data_hora_inicio)
                     : 'Nunca'
                   }
                 </p>
@@ -192,7 +255,7 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
               {backupsAtivos.map((backup) => (
                 <TableRow key={backup.id} className="hover:bg-slate-50">
                   <TableCell className="text-sm">
-                    {new Date(backup.data_hora_inicio).toLocaleString('pt-BR')}
+                    {formatarDataBackup(backup.data_hora_inicio)}
                   </TableCell>
                   <TableCell className="font-mono text-xs">
                     {backup.numero_backup}
@@ -243,6 +306,7 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
                           setDetalhesOpen(true);
                         }}
                         title="Ver detalhes"
+                        data-action="Backup.Historico.verDetalhes"
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
@@ -258,6 +322,8 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
                             }}
                             title="Restaurar"
                             className="text-blue-600 hover:text-blue-700"
+                            data-action="Backup.Historico.restaurar"
+                            disabled={restaurarMutation.isPending || !contextoValido}
                           >
                             <RefreshCw className="w-4 h-4" />
                           </Button>
@@ -271,6 +337,8 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
                             }}
                             title="Excluir"
                             className="text-red-600 hover:text-red-700"
+                            data-action="Backup.Historico.expirar"
+                            disabled={excluirMutation.isPending || !contextoValido}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
@@ -485,7 +553,7 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
                               )}
                             </p>
                             <p className="text-xs text-slate-600">
-                              {new Date(rest.data_hora).toLocaleString('pt-BR')} • {rest.usuario}
+                              {formatarDataBackup(rest.data_hora)} • {rest.usuario}
                             </p>
                             {rest.observacoes && (
                               <p className="text-xs text-slate-500 mt-1">{rest.observacoes}</p>
@@ -507,7 +575,7 @@ export default function HistoricoBackups({ empresaId, grupoId }) {
                         restaurarMutation.mutate(backupSelecionado);
                       }
                     }}
-                    disabled={restaurarMutation.isPending}
+                    disabled={restaurarMutation.isPending || !contextoValido}
                     className="bg-orange-600 hover:bg-orange-700"
                   >
                     {restaurarMutation.isPending ? (

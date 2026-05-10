@@ -76,7 +76,7 @@ const PERMISSOES_GRANULARES = {
   }
 };
 
-export default function PermissoesGranularesModal({ open, onOpenChange, perfil, onSave }) {
+export default function PermissoesGranularesModal({ open, onOpenChange, perfil, onSave, disabled = false }) {
   const [permissoesGranulares, setPermissoesGranulares] = useState({});
 
   useEffect(() => {
@@ -86,6 +86,10 @@ export default function PermissoesGranularesModal({ open, onOpenChange, perfil, 
   }, [perfil]);
 
   const togglePermissao = (modulo, funcionalidade, permissao) => {
+    if (disabled) {
+      toast.error("Selecione um grupo ou empresa antes de alterar permissoes.");
+      return;
+    }
     setPermissoesGranulares(prev => {
       const novo = { ...prev };
       if (!novo[modulo]) novo[modulo] = {};
@@ -97,6 +101,10 @@ export default function PermissoesGranularesModal({ open, onOpenChange, perfil, 
   };
 
   const handleSalvar = () => {
+    if (disabled) {
+      toast.error("Selecione um grupo ou empresa antes de salvar permissoes.");
+      return;
+    }
     if (onSave) {
       onSave({ ...perfil, permissoes: permissoesGranulares });
       toast.success("Permissões granulares atualizadas!");
@@ -117,7 +125,7 @@ export default function PermissoesGranularesModal({ open, onOpenChange, perfil, 
         <Tabs defaultValue="comercial" className="flex-1 overflow-hidden flex flex-col">
           <TabsList className="grid grid-cols-3 md:grid-cols-6 gap-1">
             {Object.keys(PERMISSOES_GRANULARES).map(mod => (
-              <TabsTrigger key={mod} value={mod} className="text-xs">
+              <TabsTrigger key={mod} value={mod} className="text-xs" data-action={`RBAC.PermissoesGranulares.tab.${mod}`}>
                 {mod.charAt(0).toUpperCase() + mod.slice(1)}
               </TabsTrigger>
             ))}
@@ -135,8 +143,10 @@ export default function PermissoesGranularesModal({ open, onOpenChange, perfil, 
                           <div key={permId} className="flex items-center justify-between">
                             <span className="text-sm">{label}</span>
                             <Switch
+                              data-action={`RBAC.PermissoesGranulares.${modulo}.${funcId}.${permId}`}
                               checked={permissoesGranulares?.[modulo]?.[funcId]?.[permId] || false}
                               onCheckedChange={() => togglePermissao(modulo, funcId, permId)}
+                              disabled={disabled}
                             />
                           </div>
                         ))}
@@ -150,10 +160,10 @@ export default function PermissoesGranularesModal({ open, onOpenChange, perfil, 
         </Tabs>
 
         <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} data-action="RBAC.PermissoesGranulares.cancelar">
             Cancelar
           </Button>
-          <Button onClick={handleSalvar} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleSalvar} disabled={disabled} className="bg-blue-600 hover:bg-blue-700" data-action="RBAC.PermissoesGranulares.salvar">
             <CheckCircle className="w-4 h-4 mr-2" />
             Salvar Permissões
           </Button>

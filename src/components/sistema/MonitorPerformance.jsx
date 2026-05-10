@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -13,6 +12,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * Monitor de Performance do Sistema
@@ -20,10 +20,14 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
  */
 export default function MonitorPerformance() {
   const [metricas, setMetricas] = useState([]);
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const contextoValido = scopeId !== 'sem-contexto';
 
   const { data: monitoramento = [] } = useQuery({
-    queryKey: ['monitoramento-sistema'],
-    queryFn: () => base44.entities.MonitoramentoSistema.list('-timestamp', 60),
+    queryKey: ['monitoramento-sistema', scopeId, contexto],
+    queryFn: () => filterInContext('MonitoramentoSistema', {}, '-timestamp', 60),
+    enabled: contextoValido,
     refetchInterval: 60000 // Atualiza a cada 60s
   });
 

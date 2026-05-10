@@ -65,13 +65,12 @@ export default function ERPDataTable({
     }
   }, [columns]);
 
-  const { hasPermission } = usePermissions();
+  const { hasPermissionKey } = usePermissions();
   const visibleColumns = useMemo(() =>
     columns.filter(c => {
       if (hiddenColumns.has(c.key)) return false;
       if (c.permission) {
-        const [m, s, a] = String(c.permission).split('.');
-        try { if (!hasPermission(m, s || null, a || null)) return false; } catch {}
+        try { if (!hasPermissionKey(c.permission)) return false; } catch {}
       }
       return true;
     })
@@ -175,8 +174,7 @@ export default function ERPDataTable({
 
   // RBAC Visual Automático por prop permission
   if (permission) {
-    const [m,s,a] = String(permission).split('.');
-    const allowed = hasPermission(m, s || null, a || null);
+    const allowed = hasPermissionKey(permission);
     if (!allowed) {
       return (
         <div className="w-full h-full flex flex-col items-center justify-center border border-dashed rounded-lg text-slate-400 p-8">

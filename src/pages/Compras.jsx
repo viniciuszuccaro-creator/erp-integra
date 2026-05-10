@@ -23,18 +23,22 @@ const OrdensCompraTab = React.lazy(() => import("../components/compras/OrdensCom
 const SolicitacoesCompraTab = React.lazy(() => import("../components/compras/SolicitacoesCompraTab"));
 const CotacoesTab = React.lazy(() => import("../components/compras/CotacoesTab"));
 const ImportacaoNFeRecebimento = React.lazy(() => import("../components/compras/ImportacaoNFeRecebimento"));
+const OrdemCompraForm = React.lazy(() => import("../components/compras/OrdemCompraForm"));
 
 export default function Compras() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { filtrarPorContexto, getFiltroContexto, empresaAtual } = useContextoVisual();
+  const { filtrarPorContexto, getFiltroContexto, empresaAtual, grupoAtual, createInContext } = useContextoVisual();
   const { user } = useUser();
   const { openWindow } = useWindow();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeCriarOC = hasPermission("Compras", "Ordens de Compra", "criar") || hasPermission("Compras", "Ordens Compra", "criar");
 
   const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores', empresaAtual?.id],
+    queryKey: ['fornecedores', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
         return await filtrarPorContexto('Fornecedor', {}, '-created_date', 100, 'empresa_dona_id');
       } catch (err) {
         console.error('Erro ao buscar fornecedores:', err);
@@ -42,16 +46,17 @@ export default function Compras() {
       }
     },
     staleTime: 30000,
-    retry: 2
+    retry: 2,
+    enabled: contextoValido
   });
 
   const { data: totalFornecedores = 0 } = useQuery({
-    queryKey: ['fornecedores-count-compras', empresaAtual?.id],
+    queryKey: ['fornecedores-count-compras', contextKey],
     queryFn: async () => {
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Fornecedor',
-          filter: getFiltroContexto('empresa_dona_id')
+          filter: getFiltroContexto('empresa_dona_id', true)
         });
         return response.data?.count || fornecedores.length;
       } catch {
@@ -59,14 +64,14 @@ export default function Compras() {
       }
     },
     staleTime: 60000,
-    retry: 1
+    retry: 1,
+    enabled: contextoValido
   });
 
   const { data: ordensCompra = [] } = useQuery({
-    queryKey: ['ordensCompra', empresaAtual?.id],
+    queryKey: ['ordensCompra', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('OrdemCompra', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar ordens de compra:', err);
@@ -74,14 +79,14 @@ export default function Compras() {
       }
     },
     staleTime: 30000,
-    retry: 2
+    retry: 2,
+    enabled: contextoValido
   });
 
   const { data: solicitacoes = [] } = useQuery({
-    queryKey: ['solicitacoes-compra', empresaAtual?.id],
+    queryKey: ['solicitacoes-compra', contextKey],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await filtrarPorContexto('SolicitacaoCompra', {}, '-data_solicitacao', 100);
       } catch (err) {
         console.error('Erro ao buscar solicitações:', err);
@@ -89,11 +94,12 @@ export default function Compras() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: contextoValido
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas', empresaAtual?.id],
+    queryKey: ['empresas', contextKey],
     queryFn: async () => {
       try {
         return await filtrarPorContexto('Empresa', {}, '-created_date', 9999);
@@ -103,7 +109,8 @@ export default function Compras() {
       }
     },
     staleTime: 60000,
-    retry: 1
+    retry: 1,
+    enabled: contextoValido
   });
 
   // Dados já vêm filtrados do servidor
@@ -216,7 +223,7 @@ export default function Compras() {
   return (
     <ProtectedSection module="Compras" action="visualizar">
     <ErrorBoundary>
-      <ModuleLayout title="Compras e Suprimentos" subtitle="Fornecedores, OCs e recebimento" actions={<div className="flex items-center gap-2"><Button size="sm" onClick={() => base44.analytics.track({ eventName: 'compras_primary_action' })}>Nova OC</Button></div>}>
+      <ModuleLayout title="Compras e Suprimentos" subtitle="Fornecedores, OCs e recebimento" actions={<div className="flex items-center gap-2"><Button size="sm" disabled={!contextoValido || !podeCriarOC} onClick={() => openWindow(OrdemCompraForm, { windowMode: true, onSubmit: (data) => createInContext('OrdemCompra', data) }, { title: 'Nova Ordem de Compra', width: 1200, height: 780 })}>Nova OC</Button></div>}>
         <ModuleKPIs>
           <KPIsCompras
             totalFornecedores={totalFornecedores}

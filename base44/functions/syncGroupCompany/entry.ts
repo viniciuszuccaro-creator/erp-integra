@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { z } from 'npm:zod@3.24.2';
 
 function pickAllowed(entityName, data) {

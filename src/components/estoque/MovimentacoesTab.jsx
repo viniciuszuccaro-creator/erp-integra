@@ -20,14 +20,17 @@ import { toast } from "sonner";
 import { useUser } from "@/components/lib/UserContext";
 
 export default function MovimentacoesTab({ movimentacoes, produtos }) {
-  const { data: movsBackend = [] } = useEntityListSorted('MovimentacaoEstoque', {}, { sortField: 'data_movimentacao', sortDirection: 'desc', limit: 500 });
-  const movList = Array.isArray(movimentacoes) && movimentacoes.length ? movimentacoes : movsBackend;
   const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
-  const { empresaAtual, createInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, grupoAtual, getFiltroContexto, createInContext, updateInContext } = useContextoVisual();
   const { canCreate } = usePermissions();
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
+  const canCreateMovimentacao = canCreate('Estoque', 'Movimentações') || canCreate('Estoque', 'Movimentacoes');
+  const filtroMovimentacoes = getFiltroContexto('empresa_id', true) || {};
+  const { data: movsBackend = [] } = useEntityListSorted('MovimentacaoEstoque', filtroMovimentacoes, { sortField: 'data_movimentacao', sortDirection: 'desc', limit: 500, enabled: contextoValido });
+  const movList = Array.isArray(movimentacoes) && movimentacoes.length ? movimentacoes : movsBackend;
   const [novaMovimentacao, setNovaMovimentacao] = useState({
     tipo_movimentacao: "",
     produto_id: "",
@@ -70,6 +73,9 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
+      if (!canCreateMovimentacao) {
+        throw new Error("Sem permissao para criar movimentacao de estoque.");
+      }
       const movimentacaoData = {
         tipo_movimentacao: data.tipo_movimentacao,
         empresa_id: data.empresa_id || empresaAtual?.id,
@@ -181,12 +187,14 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
             className="pl-10"
           />
         </div>
-        {canCreate('Estoque', 'Movimentacoes') && (
+        {canCreateMovimentacao && (
           <Button 
             className="bg-indigo-600 hover:bg-indigo-700"
             data-permission="Estoque.Movimentacoes.criar"
+            disabled={!contextoValido}
             onClick={() => openWindow(MovimentacaoForm, {
             windowMode: true,
+            canSubmit: canCreateMovimentacao && contextoValido,
             onSubmit: async (data) => {
               try {
                 const user = await base44.auth.me();

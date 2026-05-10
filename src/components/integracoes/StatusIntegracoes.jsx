@@ -30,10 +30,12 @@ import { useToast } from '@/components/ui/use-toast';
  * Mostra status de NF-e, Boletos/PIX e WhatsApp
  */
 // Component helper para botões de configuração
-function IntegrationConfigButtons({ integracao, empresaId }) {
+function IntegrationConfigButtons({ integracao, empresaId, groupId }) {
   const { openWindow } = useWindow();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const scopeId = empresaId || groupId || null;
+  const scope = empresaId ? { empresa_id: empresaId } : groupId ? { group_id: groupId } : {};
 
   const handleConfigurar = () => {
     const entityMap = {
@@ -62,17 +64,19 @@ function IntegrationConfigButtons({ integracao, empresaId }) {
 
     const handleSubmit = async (data) => {
       try {
-        const chave = `integracoes_${empresaId}`;
-        const existentes = await base44.entities.ConfiguracaoSistema.filter({ chave }, undefined, 1);
-        const payload = { chave, categoria: 'Integracoes', [cfg.key]: data };
+        if (!scopeId) throw new Error('Selecione um grupo ou empresa.');
+        const chave = `integracoes_${scopeId}`;
+        const existentes = await base44.entities.ConfiguracaoSistema.filter({ chave, ...scope }, undefined, 1);
+        const payload = { chave, categoria: 'Integracoes', ...scope, [cfg.key]: data };
         if (existentes && existentes.length > 0) {
-          await base44.entities.ConfiguracaoSistema.update(existentes[0].id, payload);
+          await base44.entities.ConfiguracaoSistema.update(existentes[0].id, { ...existentes[0], ...payload });
           toast({ title: `✅ Integração atualizada!` });
         } else {
           await base44.entities.ConfiguracaoSistema.create(payload);
           toast({ title: `✅ Integração criada!` });
         }
         queryClient.invalidateQueries({ queryKey: [cfg.queryKey] });
+        queryClient.invalidateQueries({ queryKey: ['status-integracoes', scopeId] });
       } catch (error) {
         toast({ title: `❌ Erro ao salvar`, description: error.message, variant: "destructive" });
       }
@@ -80,7 +84,10 @@ function IntegrationConfigButtons({ integracao, empresaId }) {
 
     openWindow(cfg.form, { 
       windowMode: true,
-      onSubmit: handleSubmit
+      onSubmit: handleSubmit,
+      empresaId: empresaId || null,
+      groupId: groupId || null,
+      scope,
     }, {
       title: cfg.title,
       width: 1000,
@@ -96,6 +103,7 @@ function IntegrationConfigButtons({ integracao, empresaId }) {
         onClick={integracao.onVerificar}
         disabled={integracao.verificando}
         className="flex-1"
+        data-action={`IntegracoesStatus.${integracao.id}.verificar`}
       >
         {integracao.verificando ? 'Verificando...' : 'Verificar'}
       </Button>
@@ -103,6 +111,7 @@ function IntegrationConfigButtons({ integracao, empresaId }) {
         size="sm"
         onClick={handleConfigurar}
         className="flex-1"
+        data-action={`IntegracoesStatus.${integracao.id}.configurar`}
       >
         <Settings className="w-4 h-4 mr-1" />
         Configurar
@@ -111,7 +120,7 @@ function IntegrationConfigButtons({ integracao, empresaId }) {
   );
 }
 
-export default function StatusIntegracoes({ empresaId }) {
+export default function StatusIntegracoes({ empresaId, groupId }) {
   const [verificandoNFe, setVerificandoNFe] = useState(false);
   const [verificandoBoleto, setVerificandoBoleto] = useState(false);
   const [verificandoWhatsApp, setVerificandoWhatsApp] = useState(false);
@@ -119,12 +128,23 @@ export default function StatusIntegracoes({ empresaId }) {
   const [statusNFe, setStatusNFe] = useState(null);
   const [statusBoleto, setStatusBoleto] = useState(null);
   const [statusWhatsApp, setStatusWhatsApp] = useState(null);
+  const scopeId = empresaId || groupId || null;
+  const scope = empresaId ? { empresa_id: empresaId } : groupId ? { group_id: groupId } : {};
+
+  const verificarConfigLocal = async (key) => {
+    if (!scopeId) return { configurado: false, erro: 'Selecione um grupo ou empresa.' };
+    const chave = `integracoes_${scopeId}`;
+    const rows = await base44.entities.ConfiguracaoSistema.filter({ chave, ...scope }, undefined, 1);
+    const cfg = rows?.[0]?.[key];
+    const configurado = !!(cfg?.ativo || cfg?.api_key || cfg?.api_url || cfg?.provedor);
+    return { configurado, conectado: configurado, integracao: cfg || null };
+  };
 
   // Verificar NFe
   const handleVerificarNFe = async () => {
     setVerificandoNFe(true);
     try {
-      const resultado = await integracaoNFe.verificarConfiguracao(empresaId);
+      const resultado = empresaId ? await integracaoNFe.verificarConfiguracao(empresaId) : await verificarConfigLocal('integracao_nfe');
       setStatusNFe(resultado);
     } catch (error) {
       setStatusNFe({ configurado: false, erro: error.message });
@@ -137,7 +157,7 @@ export default function StatusIntegracoes({ empresaId }) {
   const handleVerificarBoleto = async () => {
     setVerificandoBoleto(true);
     try {
-      const resultado = await integracaoBoletos.verificarConfiguracao(empresaId);
+      const resultado = empresaId ? await integracaoBoletos.verificarConfiguracao(empresaId) : await verificarConfigLocal('integracao_boletos');
       setStatusBoleto(resultado);
     } catch (error) {
       setStatusBoleto({ configurado: false, erro: error.message });
@@ -150,7 +170,7 @@ export default function StatusIntegracoes({ empresaId }) {
   const handleVerificarWhatsApp = async () => {
     setVerificandoWhatsApp(true);
     try {
-      const resultado = await integracaoWhatsApp.verificarConexao(empresaId);
+      const resultado = empresaId ? await integracaoWhatsApp.verificarConexao(empresaId) : await verificarConfigLocal('integracao_whatsapp');
       setStatusWhatsApp(resultado);
     } catch (error) {
       setStatusWhatsApp({ conectado: false, erro: error.message });
@@ -160,12 +180,12 @@ export default function StatusIntegracoes({ empresaId }) {
   };
 
   useEffect(() => {
-    if (empresaId) {
+    if (scopeId) {
       handleVerificarNFe();
       handleVerificarBoleto();
       handleVerificarWhatsApp();
     }
-  }, [empresaId]);
+  }, [scopeId]);
 
   const integracoes = [
     {
@@ -292,7 +312,7 @@ export default function StatusIntegracoes({ empresaId }) {
                 </div>
 
                 {/* Botões */}
-                <IntegrationConfigButtons integracao={integracao} empresaId={empresaId} />
+                <IntegrationConfigButtons integracao={integracao} empresaId={empresaId} groupId={groupId} />
               </CardContent>
             </Card>
           );

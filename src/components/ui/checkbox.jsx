@@ -4,7 +4,6 @@ import { Check } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import usePermissions from "@/components/lib/usePermissions";
-import { uiAuditWrap } from "@/components/lib/uiAudit";
 
  const Checkbox = React.forwardRef(({ className, ...props }, ref) => (
    <CheckboxPrimitive.Root
@@ -21,24 +20,24 @@ import { uiAuditWrap } from "@/components/lib/uiAudit";
 ))
 Checkbox.displayName = CheckboxPrimitive.Root.displayName
 
+import { uiAuditWrap } from "@/components/lib/uiAudit";
+
 // decorate onCheckedChange if present
 const _orig = Checkbox; // keep ref
 const WrappedCheckbox = React.forwardRef((props, ref) => {
-  const { hasPermission } = usePermissions();
+  const { hasPermissionKey } = usePermissions();
   const p = { ...props };
   if (typeof p.onCheckedChange === 'function' && !p.__wrapped_audit) {
-    const original = p.onCheckedChange;
-    p.onCheckedChange = uiAuditWrap(p['data-action'] || 'Checkbox.onCheckedChange', (value) => original(value), { kind: 'checkbox' });
+    const toastSuccess = p['data-toast-success'] === true || p['data-toast-success'] === 'true';
+    p.onCheckedChange = uiAuditWrap(p['data-action'] || 'Checkbox.onCheckedChange', p.onCheckedChange, { kind: 'checkbox', toastSuccess });
     p.__wrapped_audit = true;
   }
-  const cleanProps = { ...p };
-  delete cleanProps.__wrapped_audit;
+  const { __wrapped_audit, ...cleanProps } = p;
   const perm = cleanProps?.['data-permission'];
   if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
-  if ('data-action' in cleanProps) delete cleanProps['data-action'];
+  if ('data-toast-success' in cleanProps) delete cleanProps['data-toast-success'];
   if (perm) {
-    const [m,s,a] = String(perm).split('.');
-    const allowed = hasPermission(m, s || null, a || 'visualizar');
+    const allowed = hasPermissionKey(perm);
     if (!allowed) {
       return (
         <span className="inline-flex h-4 items-center rounded border border-dashed px-1 text-[10px] text-slate-400 select-none">Acesso negado</span>

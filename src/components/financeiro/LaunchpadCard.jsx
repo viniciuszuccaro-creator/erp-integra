@@ -9,7 +9,9 @@ export default function LaunchpadCard({
   onClick,
   color = 'blue',
   badge,
-  badgeVariant = 'default'
+  badgeVariant = 'default',
+  dataPermission,
+  dataAction
 }) {
   const colorClasses = {
     blue: 'from-blue-500 to-blue-600 hover:shadow-blue-200',
@@ -26,6 +28,8 @@ export default function LaunchpadCard({
   return (
     <Card
       onClick={onClick}
+      data-permission={dataPermission}
+      data-action={dataAction}
       className={`
         min-w-[280px] min-h-[140px] 
         cursor-pointer 

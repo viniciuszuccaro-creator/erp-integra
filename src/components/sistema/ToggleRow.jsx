@@ -2,14 +2,20 @@ import React from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw } from 'lucide-react';
+import usePermissions from '@/components/lib/usePermissions';
+import { canEditConfigByPermission, getConfigPermissionKey } from '@/components/lib/useToggleConfig';
 
 /**
  * ToggleRow — componente reutilizável para configurações on/off.
  * Compatível com useToggleConfig (optimistic UI + persistência banco).
  */
-export default function ToggleRow({ configs, chave, categoria, label, desc, saving, isFetching, onToggle, getToggleValue, accentColor = 'green' }) {
+export default function ToggleRow({ configs, chave, categoria, label, desc, saving, isFetching, onToggle, getToggleValue, accentColor = 'green', disabled = false }) {
   const val = getToggleValue(configs, chave);
   const isSaving = !!saving[chave];
+  const { hasPermission } = usePermissions();
+  const canEdit = canEditConfigByPermission(hasPermission, chave, categoria);
+  const permissionKey = getConfigPermissionKey(chave, categoria);
+  const blocked = disabled || !canEdit || isSaving || isFetching;
 
   const badgeClass = isSaving
     ? 'bg-blue-100 text-blue-700 border-blue-200 text-[10px]'
@@ -27,13 +33,15 @@ export default function ToggleRow({ configs, chave, categoria, label, desc, savi
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         {isSaving && <RefreshCw className="w-3 h-3 text-blue-500 animate-spin" />}
-        <Badge className={badgeClass}>
+        <Badge className={badgeClass} title={!canEdit ? 'Sem permissao para editar' : undefined}>
           {isSaving ? 'Salvando…' : val ? 'Ativo' : 'Inativo'}
         </Badge>
         <Switch
           checked={val}
-          disabled={isSaving || isFetching}
-          data-action={`ToggleRow.${chave}`}
+          disabled={blocked}
+          aria-label={`${label}: ${val ? 'ativo' : 'inativo'}`}
+          data-permission={permissionKey}
+          data-action={`ConfigToggle.${chave}`}
           onCheckedChange={(checked) => onToggle(chave, categoria, checked)}
         />
       </div>

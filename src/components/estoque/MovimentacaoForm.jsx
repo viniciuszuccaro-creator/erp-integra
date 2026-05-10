@@ -16,11 +16,13 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 /**
  * V21.1.2: Movimentação Form - Adaptado para Window Mode
  */
-export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = false }) {
+export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = false, canSubmit = true }) {
   const { user: authUser } = useUser();
-  const { getFiltroContexto, carimbarContexto, filterInContext, empresaAtual } = useContextoVisual();
+  const { getFiltroContexto, carimbarContexto, filterInContext, empresaAtual, grupoAtual } = useContextoVisual();
 
   const defaultEmpresaId = (getFiltroContexto('empresa_id') || {}).empresa_id || '';
+  const contextoValido = Boolean(defaultEmpresaId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id);
+  const controlesDesabilitados = !canSubmit || !contextoValido;
   const [formData, setFormData] = useState(movimentacao || {
     tipo_movimento: '',
     produto_id: '',
@@ -63,6 +65,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
   };
 
   const handleSubmit = async () => {
+    if (controlesDesabilitados) return;
     const payload = {
       ...formData,
       empresa_id: formData.empresa_id || defaultEmpresaId,
@@ -86,6 +89,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
               <Label>Tipo de Movimentação *</Label>
               <Select
                 value={formData.tipo_movimento}
+                disabled={controlesDesabilitados}
                 onValueChange={(v) => setFormData({ ...formData, tipo_movimento: v })}
                 required
               >
@@ -116,6 +120,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
               <Label>Produto *</Label>
               <Select
                 value={formData.produto_id}
+                disabled={controlesDesabilitados}
                 onValueChange={handleProdutoChange}
                 required
               >
@@ -139,6 +144,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
                   type="number"
                   step="0.01"
                   value={formData.quantidade}
+                  disabled={controlesDesabilitados}
                   onChange={(e) => setFormData({ ...formData, quantidade: parseFloat(e.target.value) || 0 })}
                   required
                   className="flex-1"
@@ -156,6 +162,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
               <Input
                 type="date"
                 value={formData.data_movimentacao}
+                disabled={controlesDesabilitados}
                 onChange={(e) => setFormData({ ...formData, data_movimentacao: e.target.value })}
                 required
               />
@@ -165,6 +172,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
               <Label>Nº Documento</Label>
               <Input
                 value={formData.documento_referencia}
+                disabled={controlesDesabilitados}
                 onChange={(e) => setFormData({ ...formData, documento_referencia: e.target.value })}
                 placeholder="NF, OC, OP..."
               />
@@ -174,6 +182,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
               <Label>Responsável</Label>
               <Input
                 value={formData.responsavel}
+                disabled={controlesDesabilitados}
                 onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
                 placeholder="Nome"
               />
@@ -183,6 +192,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
               <Label>Observações</Label>
               <Textarea
                 value={formData.observacoes}
+                disabled={controlesDesabilitados}
                 onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
                 rows={3}
               />
@@ -192,7 +202,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
       </Card>
 
       <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
-        <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
+        <Button type="submit" disabled={controlesDesabilitados} className="bg-indigo-600 hover:bg-indigo-700">
           <Save className="w-4 h-4 mr-2" />
           Registrar Movimentação
         </Button>

@@ -60,38 +60,118 @@ export default function CentralPerfisAcesso() {
   const [formPerfil, setFormPerfil] = useState({ nome_perfil: "", descricao: "", nivel_perfil: "Operacional", permissoes: {}, ativo: true });
 
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
-  const { user } = usePermissions();
+  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
+  const { user, hasPermission, isAdmin } = usePermissions();
+  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
+  const scopeKey = empresaAtivaId || grupoAtivoId || 'sem-contexto';
+  const contextoValido = scopeKey !== 'sem-contexto';
+  const podeCriarPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'criar');
+  const podeEditarPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'editar');
+  const podeExcluirPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'excluir');
+  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
+    .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
+    .filter(Boolean);
 
-  const { data: perfis = [] } = useQuery({ queryKey: ['perfis-acesso'], queryFn: () => base44.entities.PerfilAcesso.list() });
-  const { data: usuarios = [] } = useQuery({ queryKey: ['usuarios'], queryFn: () => base44.entities.User.list() });
+  const { data: perfis = [] } = useQuery({
+    queryKey: ['perfis-acesso', scopeKey],
+    queryFn: async () => {
+      const scoped = contextoValido ? await filterInContext('PerfilAcesso', {}, '-updated_date', 500) : [];
+      if (scoped.length) return scoped;
+      return base44.entities.PerfilAcesso.list('-updated_date', 500);
+    },
+    enabled: true,
+  });
+  const usuarioNoEscopo = (u) => {
+    if (!u) return false;
+    const vinculadas = normalizeEmpresaIds(u.empresas_vinculadas);
+    const temMarcacaoEscopo = u.group_id || u.grupo_id || u.grupo_atual_id || u.empresa_id || u.empresa_atual_id || vinculadas.length > 0;
+    if (!temMarcacaoEscopo) return true;
+    if (contexto === 'grupo') {
+      const empresasIds = empresasDoGrupo.map((e) => e.id);
+      return u.group_id === grupoAtivoId ||
+        u.grupo_id === grupoAtivoId ||
+        u.grupo_atual_id === grupoAtivoId ||
+        vinculadas.some((id) => empresasIds.includes(id));
+    }
+    return u.empresa_id === empresaAtivaId ||
+      u.empresa_atual_id === empresaAtivaId ||
+      vinculadas.includes(empresaAtivaId);
+  };
+
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ['usuarios', scopeKey],
+    queryFn: async () => {
+      const rows = await base44.entities.User.list();
+      return rows.filter(usuarioNoEscopo);
+    },
+    enabled: contextoValido,
+  });
 
   const salvarPerfilMutation = useMutation({
     mutationFn: async (data) => {
+      if (!contextoValido) {
+        throw new Error('Selecione um grupo ou empresa antes de salvar o perfil.');
+      }
+
       const perfilId = perfilAberto?.id;
       if (perfilId && !perfilAberto.novo) return base44.entities.PerfilAcesso.update(perfilId, data);
       return base44.entities.PerfilAcesso.create(data);
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
+      queryClient.invalidateQueries({ queryKey: ['perfis-acesso', scopeKey] });
       const foiCriacao = perfilAberto?.novo;
-      toast.success(foiCriacao ? "✅ Perfil criado com sucesso!" : "✅ Perfil atualizado com sucesso!");
+      toast.success(foiCriacao ? "Perfil criado com sucesso!" : "Perfil atualizado com sucesso!");
       try {
-        base44.entities.AuditLog.create({ usuario: user?.full_name || user?.email || 'Usuário', usuario_id: user?.id, empresa_id: empresaAtual?.id || null, acao: foiCriacao ? 'Criação' : 'Edição', modulo: 'Controle de Acesso', entidade: 'PerfilAcesso', registro_id: result?.id || perfilAberto?.id, descricao: (foiCriacao ? 'Criação' : 'Atualização') + ` do perfil "${result?.nome_perfil || formPerfil.nome_perfil}"`, dados_novos: result || formPerfil });
+        base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuario',
+          usuario_id: user?.id || null,
+          empresa_id: empresaAtivaId || null,
+          group_id: grupoAtivoId || null,
+          acao: foiCriacao ? 'Criacao' : 'Edicao',
+          modulo: 'Controle de Acesso',
+          entidade: 'PerfilAcesso',
+          registro_id: result?.id || perfilAberto?.id,
+          descricao: (foiCriacao ? 'Criacao' : 'Atualizacao') + ` do perfil "${result?.nome_perfil || formPerfil.nome_perfil}"`,
+          dados_novos: result || formPerfil,
+          sucesso: true,
+          data_hora: new Date().toISOString()
+        });
       } catch {}
       setTimeout(() => { setPerfilAberto(null); resetForm(); }, 300);
     },
-    onError: (error) => toast.error("❌ Erro ao salvar: " + error.message),
+    onError: (error) => toast.error("Erro ao salvar: " + error.message),
   });
 
   const excluirPerfilMutation = useMutation({
-    mutationFn: (id) => base44.entities.PerfilAcesso.delete(id),
-    onSuccess: (_res, id) => {
-      queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
-      toast.success("🗑️ Perfil excluído!");
-      try { base44.entities.AuditLog.create({ acao: 'Exclusão', modulo: 'Controle de Acesso', entidade: 'PerfilAcesso', registro_id: id, descricao: 'Perfil de acesso excluído' }); } catch {}
+    mutationFn: (id) => {
+      if (!contextoValido) {
+        throw new Error('Selecione um grupo ou empresa antes de excluir o perfil.');
+      }
+      return base44.entities.PerfilAcesso.delete(id);
     },
-    onError: (error) => toast.error("❌ Erro: " + error.message),
+    onSuccess: (_res, id) => {
+      queryClient.invalidateQueries({ queryKey: ['perfis-acesso', scopeKey] });
+      toast.success("Perfil excluido!");
+      try {
+        base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuario',
+          usuario_id: user?.id || null,
+          acao: 'Exclusao',
+          modulo: 'Controle de Acesso',
+          entidade: 'PerfilAcesso',
+          registro_id: id,
+          empresa_id: empresaAtivaId || null,
+          group_id: grupoAtivoId || null,
+          descricao: 'Perfil de acesso excluido',
+          sucesso: true,
+          data_hora: new Date().toISOString()
+        });
+      } catch {}
+    },
+    onError: (error) => toast.error("Erro: " + error.message),
   });
 
 
@@ -99,6 +179,7 @@ export default function CentralPerfisAcesso() {
   const resetForm = () => setFormPerfil({ nome_perfil: "", descricao: "", nivel_perfil: "Operacional", permissoes: {}, ativo: true });
 
   const togglePermissao = (modulo, secao, acao) => {
+    if (!canManageOpenProfile) { toast.error('Sem permissao para alterar permissoes deste perfil.'); return; }
     setFormPerfil(prev => {
       const novasPerms = { ...prev.permissoes };
       if (!novasPerms[modulo]) novasPerms[modulo] = {};
@@ -110,6 +191,7 @@ export default function CentralPerfisAcesso() {
   };
 
   const selecionarTudoSecao = (modulo, secao) => {
+    if (!canManageOpenProfile) { toast.error('Sem permissao para alterar permissoes deste perfil.'); return; }
     setFormPerfil(prev => {
       const novasPerms = { ...prev.permissoes };
       if (!novasPerms[modulo]) novasPerms[modulo] = {};
@@ -121,6 +203,7 @@ export default function CentralPerfisAcesso() {
   };
 
   const selecionarTudoModulo = (modulo) => {
+    if (!canManageOpenProfile) { toast.error('Sem permissao para alterar permissoes deste perfil.'); return; }
     setFormPerfil(prev => {
       const novasPerms = { ...prev.permissoes };
       const todasAcoes = ACOES.map(a => a.id);
@@ -133,6 +216,7 @@ export default function CentralPerfisAcesso() {
   };
 
   const selecionarTudoGlobal = () => {
+    if (!canManageOpenProfile) { toast.error('Sem permissao para alterar permissoes deste perfil.'); return; }
     setFormPerfil(prev => {
       const todasAcoes = ACOES.map(a => a.id);
       const algumVazio = Object.keys(ESTRUTURA_SISTEMA).some(m => Object.keys(ESTRUTURA_SISTEMA[m].secoes).some(s => !prev.permissoes?.[m]?.[s] || prev.permissoes[m][s].length < todasAcoes.length));
@@ -160,6 +244,7 @@ export default function CentralPerfisAcesso() {
   }, [perfis, usuarios]);
 
   const perfisFiltrados = perfis.filter(p => !busca || p.nome_perfil?.toLowerCase().includes(busca.toLowerCase()));
+  const canManageOpenProfile = perfilAberto?.novo ? podeCriarPerfil : podeEditarPerfil;
 
   return (
     <div className="w-full space-y-4">
@@ -184,7 +269,7 @@ export default function CentralPerfisAcesso() {
 
       <div className="space-y-3">
           <div className="flex justify-end">
-            <Button onClick={() => { resetForm(); setPerfilAberto({ novo: true }); }} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={() => { resetForm(); setPerfilAberto({ novo: true }); }} disabled={!contextoValido || !podeCriarPerfil} className="bg-blue-600 hover:bg-blue-700" data-action="RBAC.Perfil.novo" data-permission="Sistema.Controle de Acesso.criar" data-sensitive="true">
               <Plus className="w-4 h-4 mr-2" />Novo Perfil
             </Button>
           </div>
@@ -213,13 +298,13 @@ export default function CentralPerfisAcesso() {
                     <div className="flex items-center justify-between flex-wrap gap-2">
                       <Badge className="bg-purple-100 text-purple-700 text-xs">{usuarios.filter(u => u.perfil_acesso_id === perfil.id).length} usuários</Badge>
                       <div className="flex gap-1">
-                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => abrirEdicaoPerfil(perfil)}>
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" disabled={!podeEditarPerfil} onClick={() => abrirEdicaoPerfil(perfil)} data-action="RBAC.Perfil.editar" data-permission="Sistema.Controle de Acesso.editar" data-sensitive="true">
                           <Edit className="w-3 h-3 mr-1" />Editar
                         </Button>
-                        <Button size="sm" variant="destructive" className="h-7 px-2" onClick={() => {
+                        <Button size="sm" variant="destructive" className="h-7 px-2" disabled={excluirPerfilMutation.isPending || !contextoValido || !podeExcluirPerfil} data-action="RBAC.Perfil.excluir" data-permission="Sistema.Controle de Acesso.excluir" data-sensitive="true" onClick={() => {
                           const using = usuarios.filter(u => u.perfil_acesso_id === perfil.id);
                           if (using.length > 0) { toast.error(`❌ ${using.length} usuário(s) usando este perfil`); return; }
-                          if (confirm(`Confirma exclusão do perfil "${perfil.nome_perfil}"?`)) excluirPerfilMutation.mutate(perfil.id);
+                          if (confirm(`Regra-Mae: confirma exclusao do perfil "${perfil.nome_perfil || perfil.nome}"? Esta acao sensivel sera auditada e nao pode remover funcionalidades do sistema.`)) excluirPerfilMutation.mutate(perfil.id);
                         }}>
                           <Trash2 className="w-3 h-3" />
                         </Button>
@@ -242,26 +327,31 @@ export default function CentralPerfisAcesso() {
               <h3 className="font-bold">{perfilAberto.novo ? 'Novo Perfil' : `Editar: ${perfilAberto.nome_perfil}`}</h3>
               {contarPermissoesTotal() > 0 && <Badge className="bg-blue-600 text-white">{contarPermissoesTotal()} perm.</Badge>}
             </div>
-            <Button variant="ghost" size="sm" onClick={() => setPerfilAberto(null)}>✕</Button>
+            <Button variant="ghost" size="sm" onClick={() => setPerfilAberto(null)} data-action="RBAC.Perfil.fechar">✕</Button>
           </div>
           <div className="flex-1 overflow-auto p-4">
             <form onSubmit={(e) => {
               e.preventDefault();
               if (!formPerfil.nome_perfil) { toast.error("Nome é obrigatório"); return; }
-              salvarPerfilMutation.mutate({ ...formPerfil, group_id: empresaAtual?.group_id || null });
+              salvarPerfilMutation.mutate({
+                ...formPerfil,
+                group_id: grupoAtivoId || null,
+                grupo_id: grupoAtivoId || null,
+                ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
+              });
             }} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div><Label className="text-xs">Nome *</Label><Input value={formPerfil.nome_perfil} onChange={(e) => setFormPerfil({ ...formPerfil, nome_perfil: e.target.value })} placeholder="Ex: Vendedor" className="mt-1" required /></div>
+                <div><Label className="text-xs">Nome *</Label><Input value={formPerfil.nome_perfil} onChange={(e) => setFormPerfil({ ...formPerfil, nome_perfil: e.target.value })} placeholder="Ex: Vendedor" className="mt-1" required disabled={!canManageOpenProfile} data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} /></div>
                 <div><Label className="text-xs">Nível</Label>
                   <Select value={formPerfil.nivel_perfil} onValueChange={(v) => setFormPerfil({ ...formPerfil, nivel_perfil: v })}>
-                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="mt-1" disabled={!canManageOpenProfile} data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"}><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {["Administrador","Gerencial","Operacional","Consulta","Personalizado"].map(n => (<SelectItem key={n} value={n}>{n}</SelectItem>))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div><Label className="text-xs">Status</Label>
-                  <div className="flex items-center gap-2 mt-2"><Switch checked={formPerfil.ativo} onCheckedChange={(v) => setFormPerfil({ ...formPerfil, ativo: v })} /><span className="text-sm">{formPerfil.ativo ? 'Ativo' : 'Inativo'}</span></div>
+                  <div className="flex items-center gap-2 mt-2"><Switch checked={formPerfil.ativo} disabled={!canManageOpenProfile} data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-action="RBAC.Perfil.status" onCheckedChange={(v) => setFormPerfil({ ...formPerfil, ativo: v })} /><span className="text-sm">{formPerfil.ativo ? 'Ativo' : 'Inativo'}</span></div>
                 </div>
               </div>
               <div><Label className="text-xs">Descrição</Label><Textarea value={formPerfil.descricao} onChange={(e) => setFormPerfil({ ...formPerfil, descricao: e.target.value })} placeholder="Responsabilidades do perfil" className="mt-1" rows={2} /></div>
@@ -269,7 +359,7 @@ export default function CentralPerfisAcesso() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <Label className="font-bold">Permissões Granulares</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={selecionarTudoGlobal}><CheckSquare className="w-3 h-3 mr-1" />Tudo/Nada</Button>
+                  <Button type="button" variant="outline" size="sm" disabled={!canManageOpenProfile} onClick={selecionarTudoGlobal} data-action="RBAC.Permissoes.tudoNada" data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-sensitive="true"><CheckSquare className="w-3 h-3 mr-1" />Tudo/Nada</Button>
                 </div>
                 <Alert className="mb-3 border-blue-200 bg-blue-50 py-2"><Info className="w-3 h-3 text-blue-600" /><AlertDescription className="text-xs text-blue-800">{contarPermissoesTotal()} permissões selecionadas</AlertDescription></Alert>
                 <div className="border rounded-lg bg-slate-50 max-h-[50vh] overflow-auto">
@@ -284,7 +374,7 @@ export default function CentralPerfisAcesso() {
                               <Icone className={`w-4 h-4 ${COR_CLASS[mod.cor] || 'text-gray-600'}`} />
                               <span className="text-sm font-medium">{mod.nome}</span>
                               {qtd > 0 && <Badge className="bg-blue-100 text-blue-700 text-xs">{qtd}</Badge>}
-                              <Button type="button" variant="ghost" size="sm" className="ml-auto h-5 px-2 text-xs" onClick={(e) => { e.stopPropagation(); selecionarTudoModulo(modId); }}><CheckSquare className="w-3 h-3 mr-1" />Tudo</Button>
+                              <Button type="button" variant="ghost" size="sm" className="ml-auto h-5 px-2 text-xs" disabled={!canManageOpenProfile} data-action={`RBAC.Permissoes.modulo.${modId}`} data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-sensitive="true" onClick={(e) => { e.stopPropagation(); selecionarTudoModulo(modId); }}><CheckSquare className="w-3 h-3 mr-1" />Tudo</Button>
                             </div>
                           </AccordionTrigger>
                           <AccordionContent className="px-3 pb-3">
@@ -301,7 +391,7 @@ export default function CentralPerfisAcesso() {
                                         </div>
                                         <div className="flex items-center gap-1">
                                           {qtdSec > 0 && <Badge className="bg-green-100 text-green-700 text-xs">{qtdSec}</Badge>}
-                                          <Button type="button" size="sm" variant="ghost" className="h-5 px-2 text-xs" onClick={() => selecionarTudoSecao(modId, secId)}><CheckSquare className="w-3 h-3" /></Button>
+                                          <Button type="button" size="sm" variant="ghost" className="h-5 px-2 text-xs" disabled={!canManageOpenProfile} data-action={`RBAC.Permissoes.secao.${modId}.${secId}`} data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-sensitive="true" onClick={() => selecionarTudoSecao(modId, secId)}><CheckSquare className="w-3 h-3" /></Button>
                                         </div>
                                       </div>
                                     </CardHeader>
@@ -312,7 +402,7 @@ export default function CentralPerfisAcesso() {
                                           const IconeAcao = acao.icone;
                                           return (
                                             <label key={acao.id} className={`flex items-center gap-1 cursor-pointer px-2 py-1 rounded border text-xs transition-all ${marcado ? 'bg-blue-100 border-blue-300 text-blue-700 font-semibold' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
-                                              <Checkbox checked={marcado} onCheckedChange={() => togglePermissao(modId, secId, acao.id)} />
+                                              <Checkbox checked={marcado} disabled={!canManageOpenProfile} data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-action={`RBAC.Permissao.${modId}.${secId}.${acao.id}`} onCheckedChange={() => togglePermissao(modId, secId, acao.id)} />
                                               <IconeAcao className="w-3 h-3" />
                                               {acao.nome}
                                             </label>
@@ -335,8 +425,8 @@ export default function CentralPerfisAcesso() {
               <div className="flex justify-between items-center pt-3 border-t">
                 <Badge className="bg-slate-100 text-slate-700 text-xs">{contarPermissoesTotal()} perm. • {Object.keys(formPerfil.permissoes).length} módulos</Badge>
                 <div className="flex gap-2">
-                  <Button type="button" variant="outline" onClick={() => setPerfilAberto(null)}>Cancelar</Button>
-                  <Button type="submit" disabled={salvarPerfilMutation.isPending || !formPerfil.nome_perfil} className="bg-blue-600 hover:bg-blue-700">
+                  <Button type="button" variant="outline" onClick={() => setPerfilAberto(null)} data-action="RBAC.Perfil.cancelar">Cancelar</Button>
+                  <Button type="submit" disabled={salvarPerfilMutation.isPending || !formPerfil.nome_perfil || !contextoValido || !(perfilAberto?.novo ? podeCriarPerfil : podeEditarPerfil)} className="bg-blue-600 hover:bg-blue-700" data-action="RBAC.Perfil.salvar" data-permission={perfilAberto?.novo ? "Sistema.Controle de Acesso.criar" : "Sistema.Controle de Acesso.editar"} data-sensitive="true">
                     {salvarPerfilMutation.isPending ? <><RefreshCw className="w-4 h-4 mr-1 animate-spin" />Salvando...</> : <><CheckCircle className="w-4 h-4 mr-1" />Salvar</>}
                   </Button>
                 </div>
@@ -349,3 +439,5 @@ export default function CentralPerfisAcesso() {
     </div>
   );
 }
+
+

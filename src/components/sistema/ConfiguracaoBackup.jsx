@@ -25,6 +25,8 @@ import {
   Bolt
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * Configuração de Backup Automático
@@ -32,13 +34,22 @@ import { toast } from 'sonner';
 export default function ConfiguracaoBackup({ empresaId, grupoId }) {
   const [salvando, setSalvando] = useState(false);
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
+  const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = empresaId || empresaAtual?.id || null;
+  const scopeId = empresaAtivaId || grupoAtivoId || 'sem-contexto';
+  const scope = empresaAtivaId ? { empresa_id: empresaAtivaId } : grupoAtivoId ? { group_id: grupoAtivoId } : {};
+  const contextoValido = scopeId !== 'sem-contexto';
+  const podeEditarBackup = isAdmin() || hasPermission('Sistema', 'Configurações', 'editar') || hasPermission('Sistema', 'Configuracoes', 'editar') || hasPermission('Sistema', 'Backup', 'editar');
+  const podeExecutarBackup = isAdmin() || hasPermission('Sistema', 'Configurações', 'executar') || hasPermission('Sistema', 'Configuracoes', 'executar') || hasPermission('Sistema', 'Backup', 'executar');
 
   const { data: config, isLoading } = useQuery({
-    queryKey: ['config-backup', empresaId || grupoId],
+    queryKey: ['config-backup', scopeId],
     queryFn: async () => {
-      const configs = await base44.entities.ConfiguracaoBackup.filter({
-        ...(empresaId ? { empresa_id: empresaId } : { group_id: grupoId })
-      });
+      const configs = await base44.entities.ConfiguracaoBackup.filter(scope);
       
       if (configs.length > 0) {
         return configs[0];
@@ -46,21 +57,32 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
       
       // Config padrão
       return {
-        empresa_id: empresaId,
-        group_id: grupoId,
+        empresa_id: empresaAtivaId || null,
+        group_id: grupoAtivoId || null,
         ativo: true,
         frequencia: 'Diário',
         horario_execucao: '02:00',
+        dia_semana: 'Domingo',
+        dia_mes: 1,
         tipo_backup_padrao: 'Completo',
         retencao_dias: 30,
         provider_storage: 'Base44 Cloud',
         criptografia_ativa: true,
+        algoritmo_criptografia: 'AES-256-GCM',
         compressao_ativa: true,
+        algoritmo_compressao: 'gzip',
+        nivel_compressao: 6,
+        incluir_anexos: true,
+        incluir_logs: true,
+        validar_integridade: true,
+        replicacao_geografica: false,
         notificar_email: true,
+        notificar_apenas_erro: false,
         emails_notificacao: [],
         modulos_incluir: []
       };
     },
+    enabled: contextoValido,
   });
 
   const [formData, setFormData] = useState(config || {});
@@ -73,21 +95,38 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
 
   const salvarMutation = useMutation({
     mutationFn: async (data) => {
-      const stamped = { ...data, empresa_id: empresaId || null, group_id: grupoId || null };
-      if (config?.id) {
-        return await base44.entities.ConfiguracaoBackup.update(config.id, stamped);
-      } else {
-        return await base44.entities.ConfiguracaoBackup.create(stamped);
-      }
+      const stamped = { ...data, empresa_id: empresaAtivaId || null, group_id: grupoAtivoId || null };
+      const result = config?.id
+        ? await base44.entities.ConfiguracaoBackup.update(config.id, stamped)
+        : await base44.entities.ConfiguracaoBackup.create(stamped);
+      try {
+        const me = await base44.auth.me();
+        await base44.entities.AuditLog.create({
+          usuario: me?.full_name || me?.email || 'Usuario',
+          usuario_id: me?.id || null,
+          acao: config?.id ? 'Edicao' : 'Criacao',
+          modulo: 'Backup',
+          entidade: 'ConfiguracaoBackup',
+          registro_id: result?.id || config?.id,
+          empresa_id: empresaAtivaId || null,
+          group_id: grupoAtivoId || null,
+          descricao: 'Configuracao de backup atualizada',
+          dados_novos: stamped,
+          sucesso: true,
+          data_hora: new Date().toISOString()
+        });
+      } catch {}
+      return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['config-backup', empresaId || grupoId] });
+      queryClient.invalidateQueries({ queryKey: ['config-backup', scopeId] });
       toast.success('✅ Configuração salva com sucesso!');
     },
     onError: (error) => {
       console.error('Erro ao salvar:', error);
       toast.error('❌ Erro ao salvar configuração');
-    }
+    },
+    onSettled: () => setSalvando(false)
   });
 
   const executarBackupManualMutation = useMutation({
@@ -96,10 +135,10 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
       
       // Simular backup
       const backup = await base44.entities.BackupAutomatico.create({
-        group_id: grupoId,
-        empresa_id: empresaId,
+        group_id: grupoAtivoId,
+        empresa_id: empresaAtivaId,
         tipo_backup: 'Completo',
-        escopo: empresaId ? 'empresa' : 'grupo',
+        escopo: empresaAtivaId ? 'empresa' : 'grupo',
         numero_backup: numeroBackup,
         data_hora_inicio: new Date().toISOString(),
         status: 'Em Progresso',
@@ -110,6 +149,24 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
         automatico: false,
         executado_por: 'Sistema'
       });
+
+      try {
+        const me = await base44.auth.me();
+        await base44.entities.AuditLog.create({
+          usuario: me?.full_name || me?.email || 'Usuario',
+          usuario_id: me?.id || null,
+          acao: 'Execucao',
+          modulo: 'Backup',
+          entidade: 'BackupAutomatico',
+          registro_id: backup?.id,
+          empresa_id: empresaAtivaId || null,
+          group_id: grupoAtivoId || null,
+          descricao: `Backup manual iniciado (${numeroBackup})`,
+          dados_novos: backup,
+          sucesso: true,
+          data_hora: new Date().toISOString()
+        });
+      } catch {}
 
       // Simular conclusão após 3 segundos
       setTimeout(async () => {
@@ -122,7 +179,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
           tamanho_comprimido_mb: 12.8,
           taxa_compressao: 71.7,
           hash_integridade: 'sha256:' + Math.random().toString(36).substring(2, 15),
-          arquivo_path: `/backups/${empresaId || grupoId}/${numeroBackup}.json.gz`,
+          arquivo_path: `/backups/${empresaAtivaId || grupoAtivoId}/${numeroBackup}.json.gz`,
           validacao_integridade: {
             validado: true,
             hash_valido: true,
@@ -131,7 +188,25 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
           }
         });
 
-        queryClient.invalidateQueries({ queryKey: ['backups'] });
+        try {
+          const me = await base44.auth.me();
+          await base44.entities.AuditLog.create({
+            usuario: me?.full_name || me?.email || 'Usuario',
+            usuario_id: me?.id || null,
+            acao: 'Conclusao',
+            modulo: 'Backup',
+            entidade: 'BackupAutomatico',
+            registro_id: backup?.id,
+            empresa_id: empresaAtivaId || null,
+            group_id: grupoAtivoId || null,
+            descricao: `Backup manual concluido (${numeroBackup})`,
+            dados_novos: { status: 'Concluido', numero_backup: numeroBackup },
+            sucesso: true,
+            data_hora: new Date().toISOString()
+          });
+        } catch {}
+
+        queryClient.invalidateQueries({ queryKey: ['backups', scopeId] });
         toast.success('✅ Backup concluído com sucesso!');
       }, 3000);
 
@@ -149,12 +224,27 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
   });
 
   const handleSalvar = () => {
+    if (!contextoValido) {
+      toast.error('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeEditarBackup) {
+      toast.error('Sem permissao para editar configuracoes de backup.');
+      return;
+    }
     setSalvando(true);
     salvarMutation.mutate(formData);
-    setTimeout(() => setSalvando(false), 1000);
   };
 
   const handleExecutarBackup = () => {
+    if (!contextoValido) {
+      toast.error('Selecione um grupo ou empresa antes de executar backup.');
+      return;
+    }
+    if (!podeExecutarBackup) {
+      toast.error('Sem permissao para executar backup manual.');
+      return;
+    }
     executarBackupManualMutation.mutate();
   };
 
@@ -202,9 +292,12 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
             <div className="flex gap-2">
               <Button
                 onClick={handleExecutarBackup}
-                disabled={executarBackupManualMutation.isPending}
+                disabled={executarBackupManualMutation.isPending || !contextoValido || !podeExecutarBackup}
                 variant="outline"
                 className="bg-white"
+                data-action="Backup.executarManual"
+                data-permission="Sistema.Backup.executar"
+                data-sensitive="true"
               >
                 {executarBackupManualMutation.isPending ? (
                   <>
@@ -225,19 +318,19 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
 
       <Tabs defaultValue="geral" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="geral">
+          <TabsTrigger value="geral" data-action="Backup.tab.geral">
             <Settings className="w-4 h-4 mr-2" />
             Geral
           </TabsTrigger>
-          <TabsTrigger value="armazenamento">
+          <TabsTrigger value="armazenamento" data-action="Backup.tab.armazenamento">
             <Cloud className="w-4 h-4 mr-2" />
             Armazenamento
           </TabsTrigger>
-          <TabsTrigger value="seguranca">
+          <TabsTrigger value="seguranca" data-action="Backup.tab.seguranca">
             <Shield className="w-4 h-4 mr-2" />
             Segurança
           </TabsTrigger>
-          <TabsTrigger value="notificacoes">
+          <TabsTrigger value="notificacoes" data-action="Backup.tab.notificacoes">
             <Mail className="w-4 h-4 mr-2" />
             Notificações
           </TabsTrigger>
@@ -256,6 +349,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                   <p className="text-sm text-slate-600">Ativar backup automático agendado</p>
                 </div>
                 <Switch
+                  data-action="Backup.automatico.ativo"
                   checked={formData.ativo}
                   onCheckedChange={(checked) => setFormData({...formData, ativo: checked})}
                 />
@@ -268,7 +362,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                     value={formData.frequencia}
                     onValueChange={(value) => setFormData({...formData, frequencia: value})}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger data-action="Backup.frequencia">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -296,7 +390,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                       value={formData.dia_semana}
                       onValueChange={(value) => setFormData({...formData, dia_semana: value})}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger data-action="Backup.diaSemana">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -331,7 +425,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                     value={formData.tipo_backup_padrao}
                     onValueChange={(value) => setFormData({...formData, tipo_backup_padrao: value})}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger data-action="Backup.tipoBackupPadrao">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -364,6 +458,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                     <p className="text-xs text-slate-600">PDFs, imagens, arquivos de projetos</p>
                   </div>
                   <Switch
+                    data-action="Backup.incluirAnexos"
                     checked={formData.incluir_anexos}
                     onCheckedChange={(checked) => setFormData({...formData, incluir_anexos: checked})}
                   />
@@ -375,6 +470,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                     <p className="text-xs text-slate-600">Histórico de ações dos usuários</p>
                   </div>
                   <Switch
+                    data-action="Backup.incluirLogs"
                     checked={formData.incluir_logs}
                     onCheckedChange={(checked) => setFormData({...formData, incluir_logs: checked})}
                   />
@@ -386,6 +482,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                     <p className="text-xs text-slate-600">Verificar integridade após backup</p>
                   </div>
                   <Switch
+                    data-action="Backup.validarIntegridade"
                     checked={formData.validar_integridade}
                     onCheckedChange={(checked) => setFormData({...formData, validar_integridade: checked})}
                   />
@@ -411,7 +508,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                   value={formData.provider_storage}
                   onValueChange={(value) => setFormData({...formData, provider_storage: value})}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger data-action="Backup.providerStorage">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -523,6 +620,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                   <p className="text-xs text-slate-600">Replicar em múltiplas regiões</p>
                 </div>
                 <Switch
+                  data-action="Backup.replicacaoGeografica"
                   checked={formData.replicacao_geografica}
                   onCheckedChange={(checked) => setFormData({...formData, replicacao_geografica: checked})}
                 />
@@ -547,6 +645,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                   <p className="text-sm text-slate-600">Criptografar backups (recomendado)</p>
                 </div>
                 <Switch
+                  data-action="Backup.criptografiaAtiva"
                   checked={formData.criptografia_ativa}
                   onCheckedChange={(checked) => setFormData({...formData, criptografia_ativa: checked})}
                 />
@@ -572,6 +671,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                     <p className="text-sm text-slate-600">Reduz tamanho dos backups</p>
                   </div>
                   <Switch
+                    data-action="Backup.compressaoAtiva"
                     checked={formData.compressao_ativa}
                     onCheckedChange={(checked) => setFormData({...formData, compressao_ativa: checked})}
                   />
@@ -585,7 +685,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                         value={formData.algoritmo_compressao}
                         onValueChange={(value) => setFormData({...formData, algoritmo_compressao: value})}
                       >
-                        <SelectTrigger className="text-sm">
+                        <SelectTrigger className="text-sm" data-action="Backup.algoritmoCompressao">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -630,6 +730,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                   <p className="text-sm text-slate-600">Enviar e-mail ao concluir backup</p>
                 </div>
                 <Switch
+                  data-action="Backup.notificarEmail"
                   checked={formData.notificar_email}
                   onCheckedChange={(checked) => setFormData({...formData, notificar_email: checked})}
                 />
@@ -658,6 +759,7 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
                   <p className="text-sm text-slate-600">Enviar e-mail apenas se houver erro</p>
                 </div>
                 <Switch
+                  data-action="Backup.notificarApenasErro"
                   checked={formData.notificar_apenas_erro}
                   onCheckedChange={(checked) => setFormData({...formData, notificar_apenas_erro: checked})}
                 />
@@ -671,8 +773,11 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
       <div className="flex justify-end gap-3">
         <Button
           onClick={handleSalvar}
-          disabled={salvando || salvarMutation.isPending}
+          disabled={salvando || salvarMutation.isPending || !contextoValido || !podeEditarBackup}
           className="bg-blue-600 hover:bg-blue-700"
+          data-action="Backup.Configuracao.salvar"
+          data-permission="Sistema.Backup.editar"
+          data-sensitive="true"
         >
           {salvando || salvarMutation.isPending ? (
             <>

@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 import { useToast } from '@/components/ui/use-toast';
 import { 
   TrendingUp, 
@@ -21,31 +22,41 @@ import {
 } from 'lucide-react';
 
 export default function LiquidarReceberPagar() {
-  const { filterInContext, empresaAtual, carimbarContexto } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual, createInContext } = useContextoVisual();
+  const { canCreate, hasPermission } = usePermissions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [abaAtiva, setAbaAtiva] = useState("receber");
   const [titulosSelecionadosReceber, setTitulosSelecionadosReceber] = useState([]);
   const [titulosSelecionadosPagar, setTitulosSelecionadosPagar] = useState([]);
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeEnviarCaixa = canCreate('Financeiro', 'Caixa') ||
+    canCreate('Financeiro', 'Caixa Central') ||
+    hasPermission('Financeiro', null, 'baixar');
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber-liquidacao', empresaAtual?.id],
+    queryKey: ['contasReceber-liquidacao', contextKey],
     queryFn: () => filterInContext('ContaReceber', { 
       status: { $in: ['Pendente', 'Atrasado'] }
     }, '-data_vencimento'),
+    enabled: contextoValido,
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contasPagar-liquidacao', empresaAtual?.id],
+    queryKey: ['contasPagar-liquidacao', contextKey],
     queryFn: () => filterInContext('ContaPagar', { 
       status: { $in: ['Pendente', 'Aprovado'] }
     }, '-data_vencimento'),
+    enabled: contextoValido,
   });
 
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async ({ titulos, tipo }) => {
+      if (!contextoValido || !podeEnviarCaixa) throw new Error("Sem contexto ou permissÃ£o para enviar ao caixa.");
       const ordens = await Promise.all(titulos.map(async (titulo) => {
-        const ordemData = carimbarContexto({
+        const ordemData = {
           tipo_operacao: tipo === 'receber' ? 'Recebimento' : 'Pagamento',
           origem: tipo === 'receber' ? 'Contas a Receber' : 'Contas a Pagar',
           valor_total: titulo.valor,
@@ -58,9 +69,11 @@ export default function LiquidarReceberPagar() {
             cliente_fornecedor_nome: tipo === 'receber' ? titulo.cliente : titulo.fornecedor,
             valor_titulo: titulo.valor
           }],
-          data_ordem: new Date().toISOString()
-        });
-        return await base44.entities.CaixaOrdemLiquidacao.create(ordemData);
+          data_ordem: new Date().toISOString(),
+          ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
+          ...(groupId ? { group_id: groupId } : {})
+        };
+        return await createInContext('CaixaOrdemLiquidacao', ordemData);
       }));
       return ordens;
     },
@@ -100,7 +113,7 @@ export default function LiquidarReceberPagar() {
                     titulos: contasReceber.filter(c => titulosSelecionadosReceber.includes(c.id)), 
                     tipo: 'receber' 
                   })}
-                  disabled={enviarParaCaixaMutation.isPending}
+                  disabled={!contextoValido || !podeEnviarCaixa || enviarParaCaixaMutation.isPending}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <Send className="w-4 h-4 mr-2" />
@@ -119,6 +132,7 @@ export default function LiquidarReceberPagar() {
                       <Checkbox
                         checked={titulosSelecionadosReceber.length === contasReceber.length && contasReceber.length > 0}
                         onCheckedChange={(checked) => setTitulosSelecionadosReceber(checked ? contasReceber.map(c => c.id) : [])}
+                        disabled={!contextoValido || !podeEnviarCaixa}
                       />
                     </TableHead>
                     <TableHead>Cliente</TableHead>
@@ -140,6 +154,7 @@ export default function LiquidarReceberPagar() {
                               prev.includes(conta.id) ? prev.filter(id => id !== conta.id) : [...prev, conta.id]
                             );
                           }}
+                          disabled={!contextoValido || !podeEnviarCaixa}
                         />
                       </TableCell>
                       <TableCell className="font-medium">{conta.cliente}</TableCell>
@@ -156,7 +171,7 @@ export default function LiquidarReceberPagar() {
                           size="sm"
                           variant="outline"
                           onClick={() => enviarParaCaixaMutation.mutate({ titulos: [conta], tipo: 'receber' })}
-                          disabled={enviarParaCaixaMutation.isPending}
+                          disabled={!contextoValido || !podeEnviarCaixa || enviarParaCaixaMutation.isPending}
                         >
                           <ArrowRight className="w-4 h-4 mr-1" />
                           Enviar
@@ -190,7 +205,7 @@ export default function LiquidarReceberPagar() {
                     titulos: contasPagar.filter(c => titulosSelecionadosPagar.includes(c.id)), 
                     tipo: 'pagar' 
                   })}
-                  disabled={enviarParaCaixaMutation.isPending}
+                  disabled={!contextoValido || !podeEnviarCaixa || enviarParaCaixaMutation.isPending}
                   className="bg-red-600 hover:bg-red-700"
                 >
                   <Send className="w-4 h-4 mr-2" />
@@ -209,6 +224,7 @@ export default function LiquidarReceberPagar() {
                       <Checkbox
                         checked={titulosSelecionadosPagar.length === contasPagar.length && contasPagar.length > 0}
                         onCheckedChange={(checked) => setTitulosSelecionadosPagar(checked ? contasPagar.map(c => c.id) : [])}
+                        disabled={!contextoValido || !podeEnviarCaixa}
                       />
                     </TableHead>
                     <TableHead>Fornecedor</TableHead>
@@ -230,6 +246,7 @@ export default function LiquidarReceberPagar() {
                               prev.includes(conta.id) ? prev.filter(id => id !== conta.id) : [...prev, conta.id]
                             );
                           }}
+                          disabled={!contextoValido || !podeEnviarCaixa}
                         />
                       </TableCell>
                       <TableCell className="font-medium">{conta.fornecedor}</TableCell>
@@ -246,7 +263,7 @@ export default function LiquidarReceberPagar() {
                           size="sm"
                           variant="outline"
                           onClick={() => enviarParaCaixaMutation.mutate({ titulos: [conta], tipo: 'pagar' })}
-                          disabled={enviarParaCaixaMutation.isPending}
+                          disabled={!contextoValido || !podeEnviarCaixa || enviarParaCaixaMutation.isPending}
                         >
                           <ArrowRight className="w-4 h-4 mr-1" />
                           Enviar

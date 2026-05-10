@@ -10,39 +10,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import useContextoVisual from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 import { useToast } from '@/components/ui/use-toast';
 import { Clock, TrendingUp, TrendingDown, CheckCircle2, XCircle, Wallet } from 'lucide-react';
 
 export default function OrdensLiquidacaoPendentes() {
-  const { filterInContext, empresaAtual } = useContextoVisual();
+  const { filterInContext, empresaAtual, grupoAtual, updateInContext } = useContextoVisual();
+  const { canEdit, hasPermission } = usePermissions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [liquidacaoDialogOpen, setLiquidacaoDialogOpen] = useState(false);
   const [ordemSelecionada, setOrdemSelecionada] = useState(null);
   const [formaPagamentoLiquidacao, setFormaPagamentoLiquidacao] = useState("");
   const [observacoesLiquidacao, setObservacoesLiquidacao] = useState("");
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeLiquidar = canEdit('Financeiro', 'Caixa') || canEdit('Financeiro', 'Caixa Central') || hasPermission('Financeiro', null, 'baixar');
 
   const { data: ordensLiquidacao = [], isLoading } = useQuery({
-    queryKey: ['caixa-ordens-liquidacao', empresaAtual?.id],
+    queryKey: ['caixa-ordens-liquidacao', contextKey],
     queryFn: () => filterInContext('CaixaOrdemLiquidacao', {}, '-created_date'),
-    enabled: !!empresaAtual?.id
+    enabled: contextoValido
   });
 
   const liquidarOrdemMutation = useMutation({
     mutationFn: async ({ ordemId, dados }) => {
       const ordem = ordensLiquidacao.find(o => o.id === ordemId);
+      if (!contextoValido || !podeLiquidar) throw new Error("Sem contexto ou permissÃ£o para liquidar.");
       
       if (ordem.titulos_vinculados && ordem.titulos_vinculados.length > 0) {
         for (const titulo of ordem.titulos_vinculados) {
           if (ordem.tipo_operacao === 'Recebimento') {
-            await base44.entities.ContaReceber.update(titulo.titulo_id, {
+            await updateInContext('ContaReceber', titulo.titulo_id, {
               status: 'Recebido',
               data_recebimento: new Date().toISOString(),
               valor_recebido: titulo.valor_titulo,
               forma_recebimento: dados.forma_pagamento
             });
           } else if (ordem.tipo_operacao === 'Pagamento') {
-            await base44.entities.ContaPagar.update(titulo.titulo_id, {
+            await updateInContext('ContaPagar', titulo.titulo_id, {
               status: 'Pago',
               data_pagamento: new Date().toISOString(),
               valor_pago: titulo.valor_titulo,
@@ -52,7 +59,7 @@ export default function OrdensLiquidacaoPendentes() {
         }
       }
 
-      await base44.entities.CaixaOrdemLiquidacao.update(ordemId, {
+      await updateInContext('CaixaOrdemLiquidacao', ordemId, {
         status: "Liquidado",
         data_processamento: new Date().toISOString(),
         usuario_processou_id: dados.usuario_id,
@@ -77,7 +84,8 @@ export default function OrdensLiquidacaoPendentes() {
 
   const cancelarOrdemMutation = useMutation({
     mutationFn: async (ordemId) => {
-      await base44.entities.CaixaOrdemLiquidacao.update(ordemId, {
+      if (!contextoValido || !podeLiquidar) throw new Error("Sem contexto ou permissÃ£o para cancelar.");
+      await updateInContext('CaixaOrdemLiquidacao', ordemId, {
         status: "Cancelado",
         data_cancelamento: new Date().toISOString()
       });
@@ -172,7 +180,7 @@ export default function OrdensLiquidacaoPendentes() {
                     <TableCell><Badge className="bg-blue-100 text-blue-700">{ordem.forma_pagamento_pretendida}</Badge></TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={() => handleLiquidar(ordem)} className="bg-emerald-600 hover:bg-emerald-700">
+                        <Button size="sm" disabled={!contextoValido || !podeLiquidar || liquidarOrdemMutation.isPending} onClick={() => handleLiquidar(ordem)} className="bg-emerald-600 hover:bg-emerald-700">
                           <CheckCircle2 className="w-4 h-4 mr-1" />
                           Liquidar
                         </Button>
@@ -181,7 +189,7 @@ export default function OrdensLiquidacaoPendentes() {
                           variant="outline" 
                           onClick={() => cancelarOrdemMutation.mutate(ordem.id)} 
                           className="border-red-300 text-red-600"
-                          disabled={cancelarOrdemMutation.isPending}
+                          disabled={!contextoValido || !podeLiquidar || cancelarOrdemMutation.isPending}
                         >
                           <XCircle className="w-4 h-4" />
                         </Button>
@@ -255,7 +263,7 @@ export default function OrdensLiquidacaoPendentes() {
               <div className="space-y-4">
                 <div>
                   <Label>Forma de Pagamento *</Label>
-                  <Select value={formaPagamentoLiquidacao} onValueChange={setFormaPagamentoLiquidacao}>
+                  <Select value={formaPagamentoLiquidacao} onValueChange={setFormaPagamentoLiquidacao} disabled={!contextoValido || !podeLiquidar || liquidarOrdemMutation.isPending}>
                     <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Dinheiro">💵 Dinheiro</SelectItem>
@@ -284,7 +292,7 @@ export default function OrdensLiquidacaoPendentes() {
                 <Button
                   className="bg-emerald-600 hover:bg-emerald-700"
                   onClick={confirmarLiquidacao}
-                  disabled={liquidarOrdemMutation.isPending}
+                  disabled={!contextoValido || !podeLiquidar || liquidarOrdemMutation.isPending}
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                   {liquidarOrdemMutation.isPending ? "Liquidando..." : "Confirmar Liquidação"}

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 
 /**
  * V22.0 - Validador de Event Listeners Globais
@@ -15,10 +16,16 @@ export default function ValidadorEventListeners() {
   const escanearListeners = () => {
     setScanning(true);
     const found = [];
+    const readEventListeners = typeof window !== 'undefined' && typeof window.getEventListeners === 'function'
+      ? window.getEventListeners
+      : null;
 
     try {
+      if (!readEventListeners) {
+        throw new Error('getEventListeners() nao disponivel neste navegador/contexto.');
+      }
       // Escanear listeners no document
-      const docListeners = (window.getEventListeners?.(document)) || {};
+      const docListeners = readEventListeners(document) || {};
       Object.entries(docListeners).forEach(([eventType, handlers]) => {
         if (handlers.length > 0) {
           found.push({
@@ -34,7 +41,7 @@ export default function ValidadorEventListeners() {
       });
 
       // Escanear listeners no window
-      const winListeners = (window.getEventListeners?.(window)) || {};
+      const winListeners = readEventListeners(window) || {};
       Object.entries(winListeners).forEach(([eventType, handlers]) => {
         if (handlers.length > 0) {
           found.push({
@@ -52,7 +59,7 @@ export default function ValidadorEventListeners() {
       // Escanear inputs ativos
       const inputs = document.querySelectorAll('input, textarea');
       inputs.forEach((input, idx) => {
-        const inputListeners = (window.getEventListeners?.(input)) || {};
+        const inputListeners = readEventListeners(input) || {};
         const relevantEvents = ['input', 'change', 'keydown', 'keyup', 'mousedown', 'click'];
         relevantEvents.forEach(eventType => {
           if (inputListeners[eventType]?.length > 0) {
@@ -81,6 +88,7 @@ export default function ValidadorEventListeners() {
 
     setListeners(found);
     setScanning(false);
+    toast.info(`Varredura de listeners concluida: ${found.length} registro(s).`);
   };
 
   useEffect(() => {
@@ -102,7 +110,7 @@ export default function ValidadorEventListeners() {
             <AlertCircle className="w-5 h-5 text-blue-600" />
             Validador de Event Listeners
           </div>
-          <Button variant="outline" size="sm" onClick={escanearListeners} disabled={scanning}>
+          <Button variant="outline" size="sm" onClick={escanearListeners} disabled={scanning} data-action="ValidadorEventListeners.reescanear">
             <RefreshCw className={`w-4 h-4 mr-2 ${scanning ? 'animate-spin' : ''}`} />
             Reescanear
           </Button>

@@ -28,6 +28,8 @@ import {
   Filter
 } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 
 /**
@@ -37,6 +39,14 @@ import { toast } from "sonner";
 export default function CaixaCentral({ windowMode = false }) {
   const { user } = useUser();
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
+  const { canEdit, hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeLiquidar = canEdit("Financeiro", "Caixa") ||
+    canEdit("Financeiro", "Caixa Central") ||
+    hasPermission("Financeiro", null, "baixar");
   const [filtros, setFiltros] = useState({
     tipo: "todos", // 'todos', 'Recebimento', 'Pagamento'
     origem: "todos",
@@ -54,22 +64,24 @@ export default function CaixaCentral({ windowMode = false }) {
 
   // Buscar ordens de liquidação pendentes
   const { data: ordensLiquidacao = [], isLoading } = useQuery({
-    queryKey: ['caixa-ordens', filtros],
+    queryKey: ['caixa-ordens', filtros, contextKey],
     queryFn: async () => {
-      const ordens = await base44.entities.CaixaOrdemLiquidacao.list();
+      const ordens = await filterInContext('CaixaOrdemLiquidacao', {}, '-created_date', 200);
       return ordens.filter(o => {
         if (filtros.status !== "todos" && o.status !== filtros.status) return false;
         if (filtros.tipo !== "todos" && o.tipo_operacao !== filtros.tipo) return false;
         if (filtros.origem !== "todos" && o.origem !== filtros.origem) return false;
         return true;
       });
-    }
+    },
+    enabled: contextoValido
   });
 
   // Mutation para liquidar ordens
   const liquidarOrdens = useMutation({
     mutationFn: async ({ ordensIds, dados }) => {
       const resultados = [];
+      if (!contextoValido || !podeLiquidar) throw new Error("Sem contexto ou permissÃ£o para liquidar.");
       
       for (const ordemId of ordensIds) {
         const ordem = ordensLiquidacao.find(o => o.id === ordemId);
@@ -78,7 +90,7 @@ export default function CaixaCentral({ windowMode = false }) {
         const valorLiquido = dados.valor_recebido + dados.acrescimo - dados.desconto;
         
         // Atualizar ordem
-        await base44.entities.CaixaOrdemLiquidacao.update(ordemId, {
+        await updateInContext('CaixaOrdemLiquidacao', ordemId, {
           status: "Liquidado",
           usuario_liquidacao_id: user.id,
           data_liquidacao: new Date().toISOString()
@@ -87,7 +99,7 @@ export default function CaixaCentral({ windowMode = false }) {
         // Baixar títulos vinculados
         for (const titulo of ordem.titulos_vinculados) {
           if (titulo.tipo_titulo === "ContaReceber") {
-            await base44.entities.ContaReceber.update(titulo.titulo_id, {
+            await updateInContext('ContaReceber', titulo.titulo_id, {
               status: "Pago",
               data_pagamento: new Date().toISOString(),
               valor_pago: valorLiquido,
@@ -95,7 +107,7 @@ export default function CaixaCentral({ windowMode = false }) {
               usuario_baixa_id: user.id
             });
           } else if (titulo.tipo_titulo === "ContaPagar") {
-            await base44.entities.ContaPagar.update(titulo.titulo_id, {
+            await updateInContext('ContaPagar', titulo.titulo_id, {
               status: "Pago",
               data_pagamento: new Date().toISOString(),
               valor_pago: valorLiquido,
@@ -283,7 +295,7 @@ export default function CaixaCentral({ windowMode = false }) {
                     .toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                 </p>
               </div>
-              <Button onClick={iniciarLiquidacao} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={iniciarLiquidacao} disabled={!contextoValido || !podeLiquidar} className="bg-blue-600 hover:bg-blue-700">
                 <CheckCircle2 className="w-4 h-4 mr-2" />
                 Liquidar Selecionadas
               </Button>
@@ -302,7 +314,7 @@ export default function CaixaCentral({ windowMode = false }) {
             } ${
               ordem.status === "Liquidado" ? 'opacity-60' : ''
             }`}
-            onClick={() => ordem.status === "Pendente" && toggleOrdemSelecionada(ordem.id)}
+            onClick={() => ordem.status === "Pendente" && podeLiquidar && toggleOrdemSelecionada(ordem.id)}
           >
             <CardContent className="py-4">
               <div className="flex items-center justify-between">
@@ -399,6 +411,7 @@ export default function CaixaCentral({ windowMode = false }) {
                   <Select 
                     value={dadosLiquidacao.forma_pagamento}
                     onValueChange={(v) => setDadosLiquidacao({...dadosLiquidacao, forma_pagamento: v})}
+                    disabled={!contextoValido || !podeLiquidar || liquidarOrdens.isPending}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
@@ -422,6 +435,7 @@ export default function CaixaCentral({ windowMode = false }) {
                     step="0.01"
                     value={dadosLiquidacao.valor_recebido}
                     onChange={(e) => setDadosLiquidacao({...dadosLiquidacao, valor_recebido: parseFloat(e.target.value) || 0})}
+                    disabled={!contextoValido || !podeLiquidar || liquidarOrdens.isPending}
                   />
                 </div>
               </div>
@@ -434,6 +448,7 @@ export default function CaixaCentral({ windowMode = false }) {
                     step="0.01"
                     value={dadosLiquidacao.acrescimo}
                     onChange={(e) => setDadosLiquidacao({...dadosLiquidacao, acrescimo: parseFloat(e.target.value) || 0})}
+                    disabled={!contextoValido || !podeLiquidar || liquidarOrdens.isPending}
                   />
                 </div>
                 
@@ -444,6 +459,7 @@ export default function CaixaCentral({ windowMode = false }) {
                     step="0.01"
                     value={dadosLiquidacao.desconto}
                     onChange={(e) => setDadosLiquidacao({...dadosLiquidacao, desconto: parseFloat(e.target.value) || 0})}
+                    disabled={!contextoValido || !podeLiquidar || liquidarOrdens.isPending}
                   />
                 </div>
               </div>
@@ -486,6 +502,7 @@ export default function CaixaCentral({ windowMode = false }) {
                   value={dadosLiquidacao.observacoes}
                   onChange={(e) => setDadosLiquidacao({...dadosLiquidacao, observacoes: e.target.value})}
                   rows={3}
+                  disabled={!contextoValido || !podeLiquidar || liquidarOrdens.isPending}
                 />
               </div>
 
@@ -500,7 +517,7 @@ export default function CaixaCentral({ windowMode = false }) {
                 <Button 
                   onClick={confirmarLiquidacao}
                   className="flex-1 bg-green-600 hover:bg-green-700"
-                  disabled={liquidarOrdens.isPending}
+                  disabled={!contextoValido || !podeLiquidar || liquidarOrdens.isPending}
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
                   Confirmar Liquidação

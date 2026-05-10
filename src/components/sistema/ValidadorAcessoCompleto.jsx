@@ -6,6 +6,8 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import {
   CheckCircle,
   XCircle,
@@ -24,23 +26,52 @@ import { toast } from "sonner";
 export default function ValidadorAcessoCompleto() {
   const [validando, setValidando] = useState(false);
   const [resultado, setResultado] = useState(null);
+  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
+  const { user } = usePermissions();
+  const scopeId = empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const contextoValido = scopeId !== 'sem-contexto';
+  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
+    .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
+    .filter(Boolean);
+
+  const usuarioNoEscopo = (u) => {
+    if (!u) return false;
+    const vinculadas = normalizeEmpresaIds(u.empresas_vinculadas);
+    const temMarcacaoEscopo = u.group_id || u.grupo_id || u.grupo_atual_id || u.empresa_id || u.empresa_atual_id || vinculadas.length > 0;
+    if (!temMarcacaoEscopo) return true;
+    if (contexto === 'grupo') {
+      const empresasIds = empresasDoGrupo.map((e) => e.id);
+      return u.group_id === grupoAtual?.id || u.grupo_id === grupoAtual?.id || u.grupo_atual_id === grupoAtual?.id || vinculadas.some((id) => empresasIds.includes(id));
+    }
+    return u.empresa_id === empresaAtual?.id || u.empresa_atual_id === empresaAtual?.id || vinculadas.includes(empresaAtual?.id);
+  };
 
   const { data: perfis = [] } = useQuery({
-    queryKey: ['perfis-validacao'],
-    queryFn: () => base44.entities.PerfilAcesso.list(),
+    queryKey: ['perfis-validacao', scopeId, contexto],
+    queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 500),
+    enabled: contextoValido,
   });
 
   const { data: usuarios = [] } = useQuery({
-    queryKey: ['usuarios-validacao'],
-    queryFn: () => base44.entities.User.list(),
+    queryKey: ['usuarios-validacao', scopeId, contexto],
+    queryFn: async () => {
+      const rows = await base44.entities.User.list();
+      return rows.filter(usuarioNoEscopo);
+    },
+    enabled: contextoValido,
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas-validacao'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryKey: ['empresas-validacao', scopeId, contexto],
+    queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
+    enabled: contextoValido,
   });
 
   const executarValidacao = async () => {
+    if (!contextoValido) {
+      toast.error("Selecione um grupo ou empresa antes de validar.");
+      return;
+    }
     setValidando(true);
     
     const validacoes = {
@@ -97,7 +128,7 @@ export default function ValidadorAcessoCompleto() {
     }
 
     // -15 pontos se menos de 30% dos usuários tem 2FA
-    const percentual2FA = (validacoes.usuarios.com2FA / validacoes.usuarios.total) * 100;
+    const percentual2FA = validacoes.usuarios.total > 0 ? (validacoes.usuarios.com2FA / validacoes.usuarios.total) * 100 : 100;
     if (percentual2FA < 30) {
       score -= 15;
       problemas.push({
@@ -131,6 +162,22 @@ export default function ValidadorAcessoCompleto() {
 
     setResultado(validacoes);
     setValidando(false);
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Sistema",
+        usuario_id: user?.id || null,
+        empresa_id: contexto === "grupo" ? null : empresaAtual?.id || null,
+        group_id: grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null,
+        acao: "Validacao",
+        modulo: "Controle de Acesso",
+        entidade: "ValidadorAcesso",
+        descricao: `Validacao de acesso concluida com score ${validacoes.seguranca.scoreGeral}`,
+        dados_novos: validacoes,
+        sucesso: true,
+      });
+    } catch (error) {
+      console.warn("[RBAC] Falha ao auditar validacao:", error);
+    }
     toast.success("Validação completa!");
   };
 
@@ -164,7 +211,8 @@ export default function ValidadorAcessoCompleto() {
         <CardContent className="p-6">
           <Button
             onClick={executarValidacao}
-            disabled={validando}
+            disabled={validando || !contextoValido}
+            data-action="ValidadorAcesso.executar"
             className="w-full bg-purple-600 hover:bg-purple-700 h-12"
           >
             {validando ? (

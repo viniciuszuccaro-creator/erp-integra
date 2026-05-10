@@ -4,9 +4,47 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Download, FileText, Eye, Shield, Users, Building2 } from "lucide-react";
 import { toast } from "sonner";
+import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function RelatorioPermissoes({ perfis = [], usuarios = [], empresas = [] }) {
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const { user, isAdmin, hasPermission } = usePermissions();
+  const grupoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const empresaId = contexto === "grupo" ? null : empresaAtual?.id || null;
+  const contextoValido = !!(grupoId || empresaId);
+  const podeExportar = isAdmin() || hasPermission("Sistema", "Controle de Acesso", "exportar");
+
+  const auditarExportacao = async (formato, resumo) => {
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || "Sistema",
+        usuario_id: user?.id || null,
+        group_id: grupoId,
+        empresa_id: empresaId,
+        acao: "Exportacao",
+        modulo: "Controle de Acesso",
+        entidade: "RelatorioPermissoes",
+        descricao: `Exportacao de relatorio de permissoes em ${formato}`,
+        dados_novos: resumo,
+        sucesso: true,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn("[RBAC] Falha ao auditar exportacao:", error);
+    }
+  };
   const gerarRelatorio = () => {
+    if (!contextoValido) {
+      toast.error("Selecione um grupo ou empresa antes de exportar.");
+      return;
+    }
+    if (!podeExportar) {
+      toast.error("Sem permissao para exportar relatorio de permissoes.");
+      return;
+    }
+
     const relatorio = {
       data_geracao: new Date().toISOString(),
       resumo: {
@@ -37,11 +75,22 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
     a.href = url;
     a.download = `relatorio-permissoes-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
+    URL.revokeObjectURL(url);
+    auditarExportacao("JSON", relatorio.resumo);
     
     toast.success("Relatório exportado!");
   };
 
   const gerarRelatorioSimplificado = () => {
+    if (!contextoValido) {
+      toast.error("Selecione um grupo ou empresa antes de exportar.");
+      return;
+    }
+    if (!podeExportar) {
+      toast.error("Sem permissao para exportar relatorio de permissoes.");
+      return;
+    }
+
     let texto = `RELATÓRIO DE PERMISSÕES E ACESSOS\n`;
     texto += `Gerado em: ${new Date().toLocaleString('pt-BR')}\n\n`;
     texto += `====================\n`;
@@ -78,6 +127,12 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
     a.href = url;
     a.download = `relatorio-permissoes-${new Date().toISOString().split('T')[0]}.txt`;
     a.click();
+    URL.revokeObjectURL(url);
+    auditarExportacao("TXT", {
+      total_perfis: perfis.length,
+      total_usuarios: usuarios.length,
+      total_empresas: empresas.length,
+    });
     
     toast.success("Relatório TXT exportado!");
   };
@@ -114,6 +169,8 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
             onClick={gerarRelatorio}
             className="w-full justify-start"
             variant="outline"
+            disabled={!contextoValido || !podeExportar}
+            data-action="RBAC.Relatorio.exportarJson"
           >
             <Download className="w-4 h-4 mr-2" />
             Exportar Relatório Completo (JSON)
@@ -123,6 +180,8 @@ export default function RelatorioPermissoes({ perfis = [], usuarios = [], empres
             onClick={gerarRelatorioSimplificado}
             className="w-full justify-start"
             variant="outline"
+            disabled={!contextoValido || !podeExportar}
+            data-action="RBAC.Relatorio.exportarTxt"
           >
             <FileText className="w-4 h-4 mr-2" />
             Exportar Relatório Simplificado (TXT)

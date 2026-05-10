@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,33 +8,45 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Brain, TrendingUp, TrendingDown, DollarSign, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplicada }) {
   const [analisando, setAnalisando] = React.useState(false);
   const [sugestoes, setSugestoes] = React.useState(null);
   const queryClient = useQueryClient();
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
+  const contextoValido = !!(empresaAtivaId || grupoAtivoId);
 
   const { data: produto } = useQuery({
     queryKey: ['produto', produtoId],
-    queryFn: () => base44.entities.Produto.filter({ id: produtoId }),
-    enabled: !!produtoId,
+    queryFn: () => filterInContext('Produto', { id: produtoId }, undefined, 1),
+    enabled: !!produtoId && contextoValido,
     select: (data) => data[0]
   });
 
   const { data: tabelaPreco } = useQuery({
     queryKey: ['tabelaPreco', tabelaPrecoId],
-    queryFn: () => base44.entities.TabelaPreco.filter({ id: tabelaPrecoId }),
-    enabled: !!tabelaPrecoId,
+    queryFn: () => filterInContext('TabelaPreco', { id: tabelaPrecoId }, undefined, 1),
+    enabled: !!tabelaPrecoId && contextoValido,
     select: (data) => data[0]
   });
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date', 100)
+    queryFn: () => filterInContext('Pedido', {}, '-created_date', 100),
+    enabled: contextoValido,
   });
 
   const analisarPrecoMutation = useMutation({
     mutationFn: async () => {
+      if (!contextoValido) {
+        throw new Error('Selecione um grupo ou empresa antes de analisar preco com IA.');
+      }
+
       setAnalisando(true);
       
       const custoMedio = produto?.custo_medio || 0;
@@ -53,19 +65,19 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
       }, 0);
 
       const prompt = `
-        Analise os dados de precificação do produto e sugira o preço ideal:
+        Analise os dados de precificaÃ§Ã£o do produto e sugira o preÃ§o ideal:
         - Produto: ${produto?.descricao}
-        - Custo Médio: R$ ${custoMedio.toFixed(2)}
-        - Preço Atual: R$ ${precoAtual.toFixed(2)}
+        - Custo MÃ©dio: R$ ${custoMedio.toFixed(2)}
+        - PreÃ§o Atual: R$ ${precoAtual.toFixed(2)}
         - Margem Atual: ${margemAtual.toFixed(2)}%
-        - Margem Mínima Desejada: ${margemMinima}%
-        - Total Vendido (últimos 30 pedidos): ${totalVendido} unidades
+        - Margem MÃ­nima Desejada: ${margemMinima}%
+        - Total Vendido (Ãºltimos 30 pedidos): ${totalVendido} unidades
         
         Sugira:
-        1. Preço ideal para manter margem mínima
-        2. Preço competitivo baseado na curva de vendas
-        3. Oportunidades de aumento de preço (se margem está muito alta e vendas estáveis)
-        4. Alertas se margem está abaixo do mínimo
+        1. PreÃ§o ideal para manter margem mÃ­nima
+        2. PreÃ§o competitivo baseado na curva de vendas
+        3. Oportunidades de aumento de preÃ§o (se margem estÃ¡ muito alta e vendas estÃ¡veis)
+        4. Alertas se margem estÃ¡ abaixo do mÃ­nimo
       `;
 
       const resultado = await base44.integrations.Core.InvokeLLM({
@@ -88,32 +100,34 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
         contexto_execucao: 'Comercial',
         entidade_relacionada: 'Produto',
         entidade_id: produtoId,
-        acao_sugerida: `Análise de precificação para ${produto?.descricao}`,
-        resultado: 'Automático',
+        acao_sugerida: `AnÃ¡lise de precificaÃ§Ã£o para ${produto?.descricao}`,
+        resultado: 'AutomÃ¡tico',
         confianca_ia: 85,
         dados_entrada: { custo_medio: custoMedio, preco_atual: precoAtual, margem_atual: margemAtual },
-        dados_saida: resultado
+        dados_saida: resultado,
+        empresa_id: produto?.empresa_id || empresaAtivaId || null,
+        group_id: produto?.group_id || grupoAtivoId || null,
       });
 
       setAnalisando(false);
       setSugestoes(resultado);
       return resultado;
     },
-    onError: () => {
+    onError: (error) => {
       setAnalisando(false);
-      toast.error('Erro ao analisar preço');
+      toast.error(String(error?.message || 'Erro ao analisar preco'));
     }
   });
 
   const aplicarSugestao = async (precoSugerido) => {
     if (onSugestaoAplicada) {
       onSugestaoAplicada(precoSugerido);
-      toast.success('Preço sugerido aplicado!');
+      toast.success('PreÃ§o sugerido aplicado!');
     }
   };
 
   if (!produto) {
-    return <div className="p-4 text-slate-500">Selecione um produto para análise</div>;
+    return <div className="p-4 text-slate-500">Selecione um produto para anÃ¡lise</div>;
   }
 
   const margemAtual = produto.custo_medio > 0 
@@ -127,19 +141,19 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Brain className="w-5 h-5 text-purple-500" />
-            Análise Inteligente de Preço
+            AnÃ¡lise Inteligente de PreÃ§o
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label className="text-xs text-slate-600">Custo Médio</Label>
+              <Label className="text-xs text-slate-600">Custo MÃ©dio</Label>
               <p className="text-lg font-bold text-slate-900">
                 R$ {produto.custo_medio?.toFixed(2) || '0.00'}
               </p>
             </div>
             <div>
-              <Label className="text-xs text-slate-600">Preço Atual</Label>
+              <Label className="text-xs text-slate-600">PreÃ§o Atual</Label>
               <p className="text-lg font-bold text-blue-600">
                 R$ {produto.preco_venda?.toFixed(2) || '0.00'}
               </p>
@@ -156,9 +170,9 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-red-600 mt-0.5" />
               <div>
-                <p className="text-sm font-semibold text-red-900">Margem Abaixo do Mínimo</p>
+                <p className="text-sm font-semibold text-red-900">Margem Abaixo do MÃ­nimo</p>
                 <p className="text-xs text-red-700">
-                  Margem mínima configurada: {produto.margem_minima_percentual}%
+                  Margem mÃ­nima configurada: {produto.margem_minima_percentual}%
                 </p>
               </div>
             </div>
@@ -166,8 +180,9 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
 
           <Button
             onClick={() => analisarPrecoMutation.mutate()}
-            disabled={analisando}
+            disabled={analisando || !contextoValido}
             className="w-full bg-purple-600 hover:bg-purple-700"
+            data-action="IA.PriceBrain.analisar"
           >
             {analisando ? (
               <>
@@ -177,29 +192,29 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
             ) : (
               <>
                 <Brain className="w-4 h-4 mr-2" />
-                Analisar Preço com IA
+                Analisar PreÃ§o com IA
               </>
             )}
           </Button>
 
           {sugestoes && (
             <div className="space-y-3 mt-4 pt-4 border-t">
-              <h4 className="font-semibold text-slate-900">Sugestões da IA</h4>
+              <h4 className="font-semibold text-slate-900">SugestÃµes da IA</h4>
               
               <div className="grid grid-cols-3 gap-3">
                 <div className="border rounded-lg p-3 cursor-pointer hover:bg-slate-50" onClick={() => aplicarSugestao(sugestoes.preco_sugerido_minimo)}>
-                  <Label className="text-xs text-slate-600">Preço Mínimo</Label>
+                  <Label className="text-xs text-slate-600">PreÃ§o MÃ­nimo</Label>
                   <p className="text-lg font-bold text-orange-600">R$ {sugestoes.preco_sugerido_minimo?.toFixed(2)}</p>
                 </div>
                 
                 <div className="border rounded-lg p-3 cursor-pointer hover:bg-slate-50 bg-blue-50" onClick={() => aplicarSugestao(sugestoes.preco_sugerido_ideal)}>
-                  <Label className="text-xs text-slate-600">Preço Ideal</Label>
+                  <Label className="text-xs text-slate-600">PreÃ§o Ideal</Label>
                   <p className="text-lg font-bold text-blue-600">R$ {sugestoes.preco_sugerido_ideal?.toFixed(2)}</p>
                   <Badge className="mt-1 bg-blue-600">Recomendado</Badge>
                 </div>
                 
                 <div className="border rounded-lg p-3 cursor-pointer hover:bg-slate-50" onClick={() => aplicarSugestao(sugestoes.preco_sugerido_competitivo)}>
-                  <Label className="text-xs text-slate-600">Preço Competitivo</Label>
+                  <Label className="text-xs text-slate-600">PreÃ§o Competitivo</Label>
                   <p className="text-lg font-bold text-green-600">R$ {sugestoes.preco_sugerido_competitivo?.toFixed(2)}</p>
                 </div>
               </div>
@@ -236,3 +251,4 @@ export default function IAPriceBrain({ tabelaPrecoId, produtoId, onSugestaoAplic
     </div>
   );
 }
+

@@ -5,9 +5,13 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Target } from 'lucide-react';
+import usePermissions from '@/components/lib/usePermissions';
 
 export default function CentroResultadoForm({ centro, centroResultado, item, data, onSubmit, onSave, onClose, windowMode = false }) {
   const dadosIniciais = item || data || centroResultado || centro;
+  const { canCreate, canEdit } = usePermissions();
+  const podeCriar = canCreate("Cadastros", "CentroResultado") || canCreate("Financeiro", "CentroResultado") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "CentroResultado") || canEdit("Financeiro", "CentroResultado") || canEdit("Cadastros", null);
   const [formData, setFormData] = useState(dadosIniciais || {
     codigo: '', nome: '', descricao: '', ativo: true
   });
@@ -18,6 +22,14 @@ export default function CentroResultadoForm({ centro, centroResultado, item, dat
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (dadosIniciais?.id && !podeEditar) {
+      alert("Sem permissao para editar centros de resultado.");
+      return;
+    }
+    if (!dadosIniciais?.id && !podeCriar) {
+      alert("Sem permissao para criar centros de resultado.");
+      return;
+    }
     if (onSubmit) {
       onSubmit(formData);
     } else {
@@ -49,7 +61,13 @@ export default function CentroResultadoForm({ centro, centroResultado, item, dat
         <Switch checked={!!formData.ativo} onCheckedChange={(v) => setFormData({ ...formData, ativo: v })} />
       </div>
 
-      <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700">
+      <Button
+        type="submit"
+        className="w-full bg-teal-600 hover:bg-teal-700"
+        disabled={dadosIniciais?.id ? !podeEditar : !podeCriar}
+        data-permission="Cadastros.CentroResultado.salvar"
+        data-sensitive
+      >
         {dadosIniciais ? 'Atualizar' : 'Criar Centro de Resultado'}
       </Button>
     </form>

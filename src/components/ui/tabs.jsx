@@ -10,7 +10,7 @@ const TabsList = React.forwardRef(({ className, ...props }, ref) => (
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-9 max-w-full items-center justify-start overflow-x-auto rounded-lg bg-muted p-1 text-muted-foreground", 
+      "inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground",
       className
     )}
     {...props} />
@@ -18,14 +18,14 @@ const TabsList = React.forwardRef(({ className, ...props }, ref) => (
 TabsList.displayName = TabsPrimitive.List.displayName
 
 const TabsTrigger = React.forwardRef(({ className, ...props }, ref) => {
-  const { hasPermission } = usePermissions();
+  const { hasPermissionKey } = usePermissions();
   const p = { ...props };
   const perm = p?.['data-permission'];
   if ('data-permission' in p) delete p['data-permission'];
-  const allowed = perm ? (() => { const [m,s,a] = String(perm).split('.'); return hasPermission(m, s || null, a || null); })() : true;
+  const allowed = perm ? hasPermissionKey(perm) : true;
   if (perm && !allowed) {
     return (
-      <span className="inline-flex shrink-0 items-center rounded-md border border-dashed px-3 py-1 text-xs text-slate-400 select-none whitespace-nowrap">Acesso negado</span>
+      <span className="inline-flex items-center rounded-md border border-dashed px-3 py-1 text-xs text-slate-400 select-none">Acesso negado</span>
     );
   }
   return (

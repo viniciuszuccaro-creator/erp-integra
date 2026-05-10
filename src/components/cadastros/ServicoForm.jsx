@@ -6,12 +6,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Stars } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = servico;
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = hasPermission?.("Cadastros.Servico.criar") || hasPermission?.("Cadastros.Produto.criar");
+  const podeEditar = hasPermission?.("Cadastros.Servico.editar") || hasPermission?.("Cadastros.Produto.editar");
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     descricao: '',
     codigo_servico: '',
@@ -33,7 +42,20 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
       alert('Preencha os campos obrigatórios');
       return;
     }
-    onSubmit({ ...formData, nome: formData.descricao });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissão para salvar serviço.');
+      return;
+    }
+    onSubmit({
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      nome: formData.descricao
+    });
   };
 
   const formContent = (
@@ -114,11 +136,19 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
         <Switch
           checked={formData.ativo}
           onCheckedChange={(v) => setFormData({...formData, ativo: v})}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.Servico.alterarStatus"
+          data-sensitive="true"
         />
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={isSubmitting || !contextoValido || !podeSalvar}
+          data-permission="Cadastros.Servico.salvar"
+          data-sensitive="true"
+        >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? 'Atualizar' : 'Criar Serviço'}
         </Button>

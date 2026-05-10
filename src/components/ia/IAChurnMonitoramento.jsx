@@ -6,22 +6,37 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, TrendingDown, Phone, Mail, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import { useUser } from '@/components/lib/UserContext';
 
 export default function IAChurnMonitoramento() {
   const queryClient = useQueryClient();
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { user } = useUser();
+  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
+  const contextoValido = !!(empresaAtivaId || grupoAtivoId);
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list()
+    queryKey: ['clientes', 'ia-churn', empresaAtivaId || 'sem', grupoAtivoId || 'sem'],
+    queryFn: () => filterInContext('Cliente', {}, 'nome', 1000),
+    enabled: contextoValido,
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list()
+    queryKey: ['pedidos', 'ia-churn', empresaAtivaId || 'sem', grupoAtivoId || 'sem'],
+    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 1000),
+    enabled: contextoValido,
   });
 
   const calcularChurnMutation = useMutation({
     mutationFn: async () => {
+      if (!contextoValido) {
+        throw new Error('Selecione um grupo ou empresa antes de executar a analise de churn.');
+      }
+
       const clientesEmRisco = [];
       const hoje = new Date();
 
@@ -48,7 +63,9 @@ export default function IAChurnMonitoramento() {
         await base44.entities.Cliente.update(cliente.id, {
           dias_sem_comprar: diasSemComprar,
           risco_churn: riscoChurn,
-          score_saude_cliente: Math.round(novoScore)
+          score_saude_cliente: Math.round(novoScore),
+          empresa_id: cliente.empresa_id || empresaAtivaId || null,
+          group_id: cliente.group_id || grupoAtivoId || null,
         });
 
         if (riscoChurn === 'Alto' || riscoChurn === 'Crítico') {
@@ -69,7 +86,9 @@ export default function IAChurnMonitoramento() {
             origem: 'IA - Detecção de Churn',
             status: 'Nova',
             responsavel_id: cliente.vendedor_responsavel_id,
-            proxima_acao: 'Ligar para o cliente e entender motivo da inatividade'
+            proxima_acao: 'Ligar para o cliente e entender motivo da inatividade',
+            empresa_id: cliente.empresa_id || empresaAtivaId || null,
+            group_id: cliente.group_id || grupoAtivoId || null,
           });
 
           // Log da IA
@@ -81,10 +100,26 @@ export default function IAChurnMonitoramento() {
             acao_sugerida: `Cliente ${cliente.nome} identificado com risco ${riscoChurn} de churn`,
             resultado: 'Automático',
             confianca_ia: 88,
-            dados_saida: { dias_sem_comprar: diasSemComprar, score: Math.round(novoScore) }
+            dados_saida: { dias_sem_comprar: diasSemComprar, score: Math.round(novoScore) },
+            empresa_id: cliente.empresa_id || empresaAtivaId || null,
+            group_id: cliente.group_id || grupoAtivoId || null,
           });
         }
       }
+
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Sistema',
+        usuario_id: user?.id || null,
+        empresa_id: empresaAtivaId || null,
+        group_id: grupoAtivoId || null,
+        acao: 'Analise',
+        modulo: 'IA',
+        entidade: 'IA_Churn',
+        descricao: 'Analise de churn executada',
+        dados_novos: { clientes_analisados: clientes.length, clientes_em_risco: clientesEmRisco.length },
+        sucesso: true,
+        data_hora: new Date().toISOString(),
+      });
 
       return clientesEmRisco;
     },
@@ -92,6 +127,9 @@ export default function IAChurnMonitoramento() {
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
       toast.success(`Análise concluída: ${clientesEmRisco.length} clientes em risco identificados`);
+    },
+    onError: (error) => {
+      toast.error(String(error?.message || error));
     }
   });
 
@@ -109,8 +147,9 @@ export default function IAChurnMonitoramento() {
         </div>
         <Button
           onClick={() => calcularChurnMutation.mutate()}
-          disabled={calcularChurnMutation.isPending}
+          disabled={calcularChurnMutation.isPending || !contextoValido}
           className="bg-orange-600 hover:bg-orange-700"
+          data-action="IA.Churn.executar"
         >
           {calcularChurnMutation.isPending ? 'Calculando...' : 'Executar Análise'}
         </Button>

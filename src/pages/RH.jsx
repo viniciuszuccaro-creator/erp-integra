@@ -88,7 +88,7 @@ export default function RH() {
         const filtro = { ...(filtroBase || {}), status: 'Ativo' };
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Colaborador',
-          filter: filtro
+          filter
         });
         return response.data?.count ?? null;
       } catch {

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
+import {
   Activity, 
   Bolt, 
   AlertTriangle,
@@ -19,6 +19,7 @@ import {
   HardDrive
 } from 'lucide-react';
 import { calcularMetricas } from '../lib/usePerformanceMonitor';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * Dashboard de Performance e APM
@@ -26,6 +27,13 @@ import { calcularMetricas } from '../lib/usePerformanceMonitor';
 export default function DashboardPerformance({ empresaId, grupoId }) {
   const [periodo, setPeriodo] = useState('24h');
   const [moduloFiltro, setModuloFiltro] = useState('todos');
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = empresaId || empresaAtual?.id || null;
+  const scopeId = empresaAtivaId || grupoAtivoId || 'sem-contexto';
+  const contextoValido = scopeId !== 'sem-contexto';
 
   const dataInicio = new Date();
   if (periodo === '1h') dataInicio.setHours(dataInicio.getHours() - 1);
@@ -35,12 +43,12 @@ export default function DashboardPerformance({ empresaId, grupoId }) {
 
   // Logs de performance
   const { data: logs = [], isLoading } = useQuery({
-    queryKey: ['logs-performance', empresaId || grupoId, periodo],
+    queryKey: ['logs-performance', scopeId, periodo],
     queryFn: async () => {
-      const filter = empresaId 
-        ? { empresa_id: empresaId }
-        : grupoId 
-          ? { group_id: grupoId }
+      const filter = empresaAtivaId 
+        ? { empresa_id: empresaAtivaId }
+        : grupoAtivoId 
+          ? { group_id: grupoAtivoId }
           : {};
 
       const result = await base44.entities.LogPerformance.filter(
@@ -51,15 +59,16 @@ export default function DashboardPerformance({ empresaId, grupoId }) {
       
       return result.filter(log => new Date(log.timestamp) >= dataInicio);
     },
+    enabled: contextoValido,
     refetchInterval: 30000 // 30 segundos
   });
 
   // Alertas ativos
   const { data: alertas = [] } = useQuery({
-    queryKey: ['alertas-performance', empresaId || grupoId],
+    queryKey: ['alertas-performance', scopeId],
     queryFn: async () => {
       const filter = {
-        ...(empresaId ? { empresa_id: empresaId } : { group_id: grupoId }),
+        ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : { group_id: grupoAtivoId }),
         status: { $in: ['Novo', 'Investigando', 'Em Correção'] }
       };
 
@@ -71,6 +80,7 @@ export default function DashboardPerformance({ empresaId, grupoId }) {
       
       return result;
     },
+    enabled: contextoValido,
     refetchInterval: 30000
   });
 
@@ -175,6 +185,7 @@ export default function DashboardPerformance({ empresaId, grupoId }) {
           value={periodo}
           onChange={(e) => setPeriodo(e.target.value)}
           className="px-3 py-2 border rounded-lg text-sm"
+          data-action="Performance.filtro.periodo"
         >
           <option value="1h">Última Hora</option>
           <option value="24h">Últimas 24h</option>
@@ -186,6 +197,7 @@ export default function DashboardPerformance({ empresaId, grupoId }) {
           value={moduloFiltro}
           onChange={(e) => setModuloFiltro(e.target.value)}
           className="px-3 py-2 border rounded-lg text-sm"
+          data-action="Performance.filtro.modulo"
         >
           <option value="todos">Todos os Módulos</option>
           <option value="Comercial">Comercial</option>
@@ -278,19 +290,19 @@ export default function DashboardPerformance({ empresaId, grupoId }) {
 
       <Tabs defaultValue="queries" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="queries">
+          <TabsTrigger value="queries" data-action="Performance.tab.queries">
             <Database className="w-4 h-4 mr-2" />
             Queries Lentas
           </TabsTrigger>
-          <TabsTrigger value="modulos">
+          <TabsTrigger value="modulos" data-action="Performance.tab.modulos">
             <BarChart3 className="w-4 h-4 mr-2" />
             Por Módulo
           </TabsTrigger>
-          <TabsTrigger value="erros">
+          <TabsTrigger value="erros" data-action="Performance.tab.erros">
             <AlertTriangle className="w-4 h-4 mr-2" />
             Erros ({erros.length})
           </TabsTrigger>
-          <TabsTrigger value="alertas">
+          <TabsTrigger value="alertas" data-action="Performance.tab.alertas">
             <Activity className="w-4 h-4 mr-2" />
             Alertas ({alertas.length})
           </TabsTrigger>

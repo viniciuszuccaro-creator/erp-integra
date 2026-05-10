@@ -40,16 +40,23 @@ const buttonVariants = cva(
 
 const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
   const Comp = asChild ? Slot : "button";
-  const { hasPermission } = usePermissions();
+  const { hasPermissionKey } = usePermissions();
   const perm = props?.['data-permission'];
   let isAllowed = true;
   if (perm) {
-    const [mod, sec, act] = String(perm).split('.');
-    try { isAllowed = hasPermission(mod, sec || null, act || 'visualizar'); } catch { isAllowed = true; }
+    try { isAllowed = hasPermissionKey(perm); } catch { isAllowed = true; }
   }
-  const passProps = { ...props, __perm: perm, __sensitive: props?.['data-sensitive'] };
+  const passProps = {
+    ...props,
+    __perm: perm,
+    __sensitive: props?.['data-sensitive'],
+    __toastSuccess: props?.['data-toast-success'],
+    __successMessage: props?.['data-success-message'],
+  };
   if ('data-permission' in passProps) delete passProps['data-permission'];
   if ('data-sensitive' in passProps) delete passProps['data-sensitive'];
+  if ('data-toast-success' in passProps) delete passProps['data-toast-success'];
+  if ('data-success-message' in passProps) delete passProps['data-success-message'];
 
   if (perm && !isAllowed) {
     return (
@@ -93,7 +100,7 @@ function withUIAudit(props) {
 
   const wrapIfDenied = (onClick) => async (e) => {
     try {
-      if (isSensitive) {
+      if (false && isSensitive) {
         const path = typeof window !== 'undefined' ? window.location.pathname : '';
         const page = (path.split('/').pop() || '').replace(/^\//,'');
         const pageToModule = { CRM: 'CRM', Comercial: 'Comercial', Estoque: 'Estoque', Compras: 'Compras', Financeiro: 'Financeiro', Fiscal: 'Fiscal', RH: 'RH', Expedicao: 'Expedição', Producao: 'Produção' };
@@ -120,7 +127,8 @@ function withUIAudit(props) {
   if (typeof p.onClick === 'function' && !p.__wrapped_audit) {
     p.onClick = wrapIfDenied(p.onClick);
 
-    const meta = { kind: 'button', toastSuccess: true };
+    const toastSuccess = p.__toastSuccess === true || p.__toastSuccess === 'true';
+    const meta = { kind: 'button', toastSuccess, successMessage: p.__successMessage };
     p.onClick = uiAuditWrap(p['data-action'] || 'Button.onClick', p.onClick, meta);
     p.__wrapped_audit = true;
   }
@@ -128,6 +136,8 @@ function withUIAudit(props) {
   delete p.__wrapped_audit;
   if ('__perm' in p) delete p.__perm;
   if ('__sensitive' in p) delete p.__sensitive;
+  if ('__toastSuccess' in p) delete p.__toastSuccess;
+  if ('__successMessage' in p) delete p.__successMessage;
   return p;
 }
 

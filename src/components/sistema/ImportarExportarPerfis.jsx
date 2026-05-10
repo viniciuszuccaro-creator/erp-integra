@@ -80,6 +80,7 @@ export default function ImportarExportarPerfis({ perfis, onImportar }) {
             onClick={exportarPerfis}
             className="w-full justify-start bg-blue-600 hover:bg-blue-700"
             disabled={perfis.length === 0}
+            data-action="RBAC.Perfil.exportar"
           >
             <Download className="w-4 h-4 mr-2" />
             Exportar {perfis.length} Perfis
@@ -89,6 +90,7 @@ export default function ImportarExportarPerfis({ perfis, onImportar }) {
             onClick={() => fileInputRef.current?.click()}
             variant="outline"
             className="w-full justify-start"
+            data-action="RBAC.Perfil.importar.abrirArquivo"
           >
             <Upload className="w-4 h-4 mr-2" />
             Importar Perfis
@@ -101,6 +103,7 @@ export default function ImportarExportarPerfis({ perfis, onImportar }) {
           accept=".json"
           onChange={importarPerfis}
           className="hidden"
+          data-action="RBAC.Perfil.importar.arquivo"
         />
       </CardContent>
     </Card>

@@ -19,6 +19,8 @@ import {
   Save
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * Configuração de Monitoramento de Performance
@@ -26,13 +28,21 @@ import { toast } from 'sonner';
 export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
   const [salvando, setSalvando] = useState(false);
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { isAdmin, hasPermission } = usePermissions();
+  const grupoAtivoId = grupoId || grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = empresaId || empresaAtual?.id || null;
+  const scopeId = empresaAtivaId || grupoAtivoId || 'sem-contexto';
+  const scope = empresaAtivaId ? { empresa_id: empresaAtivaId } : grupoAtivoId ? { group_id: grupoAtivoId } : {};
+  const contextoValido = scopeId !== 'sem-contexto';
+  const podeEditarMonitoramento = isAdmin() || hasPermission('Sistema', 'Configurações', 'editar') || hasPermission('Sistema', 'Configuracoes', 'editar') || hasPermission('Sistema', 'Monitoramento', 'editar');
 
   const { data: config, isLoading } = useQuery({
-    queryKey: ['config-monitoramento', empresaId || grupoId],
+    queryKey: ['config-monitoramento', scopeId],
     queryFn: async () => {
-      const configs = await base44.entities.ConfiguracaoMonitoramento.filter({
-        ...(empresaId ? { empresa_id: empresaId } : { group_id: grupoId })
-      });
+      const configs = await base44.entities.ConfiguracaoMonitoramento.filter(scope);
       
       if (configs.length > 0) {
         return configs[0];
@@ -40,8 +50,8 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
       
       // Config padrão
       return {
-        empresa_id: empresaId,
-        group_id: grupoId,
+        empresa_id: empresaAtivaId || null,
+        group_id: grupoAtivoId || null,
         ativo: true,
         nivel_monitoramento: 'Intermediário',
         coleta_automatica: true,
@@ -66,9 +76,16 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
         gerar_alertas_automaticos: true,
         notificar_email: true,
         emails_notificacao: [],
-        agrupar_alertas_similares: true
+        agrupar_alertas_similares: true,
+        janela_agrupamento_minutos: 15,
+        alertar_apenas_criticos: false,
+        ia_confianca_minima: 80,
+        profiling_ativo: false,
+        samplear_requisicoes: false,
+        taxa_amostragem_percent: 100
       };
     },
+    enabled: contextoValido,
   });
 
   const [formData, setFormData] = useState(config || {});
@@ -81,27 +98,51 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
 
   const salvarMutation = useMutation({
     mutationFn: async (data) => {
-      const stamped = { ...data, empresa_id: empresaId || null, group_id: grupoId || null };
-      if (config?.id) {
-        return await base44.entities.ConfiguracaoMonitoramento.update(config.id, stamped);
-      } else {
-        return await base44.entities.ConfiguracaoMonitoramento.create(stamped);
-      }
+      const stamped = { ...data, empresa_id: empresaAtivaId || null, group_id: grupoAtivoId || null };
+      const result = config?.id
+        ? await base44.entities.ConfiguracaoMonitoramento.update(config.id, stamped)
+        : await base44.entities.ConfiguracaoMonitoramento.create(stamped);
+      try {
+        const me = await base44.auth.me();
+        await base44.entities.AuditLog.create({
+          usuario: me?.full_name || me?.email || 'Usuario',
+          usuario_id: me?.id || null,
+          acao: config?.id ? 'Edicao' : 'Criacao',
+          modulo: 'Monitoramento',
+          entidade: 'ConfiguracaoMonitoramento',
+          registro_id: result?.id || config?.id,
+          empresa_id: empresaAtivaId || null,
+          group_id: grupoAtivoId || null,
+          descricao: 'Configuracao de monitoramento atualizada',
+          dados_novos: stamped,
+          sucesso: true,
+          data_hora: new Date().toISOString()
+        });
+      } catch {}
+      return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['config-monitoramento', empresaId || grupoId] });
+      queryClient.invalidateQueries({ queryKey: ['config-monitoramento', scopeId] });
       toast.success('✅ Configuração salva!');
     },
     onError: (error) => {
       console.error('Erro ao salvar:', error);
       toast.error('❌ Erro ao salvar configuração');
-    }
+    },
+    onSettled: () => setSalvando(false)
   });
 
   const handleSalvar = () => {
+    if (!contextoValido) {
+      toast.error('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeEditarMonitoramento) {
+      toast.error('Sem permissao para editar configuracoes de monitoramento.');
+      return;
+    }
     setSalvando(true);
     salvarMutation.mutate(formData);
-    setTimeout(() => setSalvando(false), 1000);
   };
 
   if (isLoading) {
@@ -136,19 +177,19 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
 
       <Tabs defaultValue="geral" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="geral">
+          <TabsTrigger value="geral" data-action="Monitoramento.tab.geral">
             <Settings className="w-4 h-4 mr-2" />
             Geral
           </TabsTrigger>
-          <TabsTrigger value="thresholds">
+          <TabsTrigger value="thresholds" data-action="Monitoramento.tab.thresholds">
             <Bolt className="w-4 h-4 mr-2" />
             Thresholds
           </TabsTrigger>
-          <TabsTrigger value="alertas">
+          <TabsTrigger value="alertas" data-action="Monitoramento.tab.alertas">
             <Mail className="w-4 h-4 mr-2" />
             Alertas
           </TabsTrigger>
-          <TabsTrigger value="avancado">
+          <TabsTrigger value="avancado" data-action="Monitoramento.tab.avancado">
             <Database className="w-4 h-4 mr-2" />
             Avançado
           </TabsTrigger>
@@ -167,6 +208,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
                   <p className="text-sm text-slate-600">Ativar monitoramento de performance</p>
                 </div>
                 <Switch
+                  data-action="Monitoramento.ativo"
                   checked={formData.ativo}
                   onCheckedChange={(checked) => setFormData({...formData, ativo: checked})}
                 />
@@ -178,7 +220,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
                   value={formData.nivel_monitoramento}
                   onValueChange={(value) => setFormData({...formData, nivel_monitoramento: value})}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger data-action="Monitoramento.nivel">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -224,6 +266,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
                     <p className="text-xs text-slate-600">Rastrear queries do banco</p>
                   </div>
                   <Switch
+                    data-action="Monitoramento.monitorarQueries"
                     checked={formData.monitorar_queries}
                     onCheckedChange={(checked) => setFormData({...formData, monitorar_queries: checked})}
                   />
@@ -235,6 +278,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
                     <p className="text-xs text-slate-600">Rastrear chamadas de API</p>
                   </div>
                   <Switch
+                    data-action="Monitoramento.monitorarApis"
                     checked={formData.monitorar_apis}
                     onCheckedChange={(checked) => setFormData({...formData, monitorar_apis: checked})}
                   />
@@ -246,6 +290,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
                     <p className="text-xs text-slate-600">Rastrear integrações externas</p>
                   </div>
                   <Switch
+                    data-action="Monitoramento.monitorarIntegracao"
                     checked={formData.monitorar_integracao}
                     onCheckedChange={(checked) => setFormData({...formData, monitorar_integracao: checked})}
                   />
@@ -257,6 +302,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
                     <p className="text-xs text-slate-600">Rastrear PDF/Excel</p>
                   </div>
                   <Switch
+                    data-action="Monitoramento.monitorarExports"
                     checked={formData.monitorar_exports}
                     onCheckedChange={(checked) => setFormData({...formData, monitorar_exports: checked})}
                   />
@@ -406,6 +452,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
                   <p className="text-sm text-slate-600">Criar alertas quando thresholds forem excedidos</p>
                 </div>
                 <Switch
+                  data-action="Monitoramento.alertasAutomaticos"
                   checked={formData.gerar_alertas_automaticos}
                   onCheckedChange={(checked) => setFormData({...formData, gerar_alertas_automaticos: checked})}
                 />
@@ -417,6 +464,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
                   <p className="text-sm text-slate-600">Enviar e-mail quando alertas forem gerados</p>
                 </div>
                 <Switch
+                  data-action="Monitoramento.notificarEmail"
                   checked={formData.notificar_email}
                   onCheckedChange={(checked) => setFormData({...formData, notificar_email: checked})}
                 />
@@ -445,6 +493,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
                   <p className="text-sm text-slate-600">Evitar spam de alertas duplicados</p>
                 </div>
                 <Switch
+                  data-action="Monitoramento.agruparAlertas"
                   checked={formData.agrupar_alertas_similares}
                   onCheckedChange={(checked) => setFormData({...formData, agrupar_alertas_similares: checked})}
                 />
@@ -469,6 +518,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
                   <p className="text-sm text-slate-600">Notificar apenas alertas de severidade Critical</p>
                 </div>
                 <Switch
+                  data-action="Monitoramento.alertarApenasCriticos"
                   checked={formData.alertar_apenas_criticos}
                   onCheckedChange={(checked) => setFormData({...formData, alertar_apenas_criticos: checked})}
                 />
@@ -493,6 +543,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
                   <p className="text-sm text-slate-600">Usar IA para detectar padrões anormais</p>
                 </div>
                 <Switch
+                  data-action="Monitoramento.ia.detectarAnomalias"
                   checked={formData.detectar_anomalias_ia}
                   onCheckedChange={(checked) => setFormData({...formData, detectar_anomalias_ia: checked})}
                 />
@@ -517,6 +568,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
                   <p className="text-sm text-slate-600">Profiling detalhado de funções</p>
                 </div>
                 <Switch
+                  data-action="Monitoramento.profilingAtivo"
                   checked={formData.profiling_ativo}
                   onCheckedChange={(checked) => setFormData({...formData, profiling_ativo: checked})}
                 />
@@ -528,6 +580,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
                   <p className="text-sm text-slate-600">Monitorar apenas % das requisições (economia)</p>
                 </div>
                 <Switch
+                  data-action="Monitoramento.samplearRequisicoes"
                   checked={formData.samplear_requisicoes}
                   onCheckedChange={(checked) => setFormData({...formData, samplear_requisicoes: checked})}
                 />
@@ -557,8 +610,11 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
       <div className="flex justify-end gap-3">
         <Button
           onClick={handleSalvar}
-          disabled={salvando || salvarMutation.isPending}
+          disabled={salvando || salvarMutation.isPending || !contextoValido || !podeEditarMonitoramento}
           className="bg-blue-600 hover:bg-blue-700"
+          data-action="Monitoramento.Configuracao.salvar"
+          data-permission="Sistema.Monitoramento.editar"
+          data-sensitive="true"
         >
           {salvando || salvarMutation.isPending ? (
             <>

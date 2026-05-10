@@ -35,10 +35,7 @@ export function usePrefetchModuleData() {
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual } = useContextoVisual();
 
-  const prefetch = useCallback(async (moduleTitle) => {
-    const authed = await base44.auth.isAuthenticated();
-    if (!authed) return;
-
+  const prefetch = useCallback((moduleTitle) => {
     const specs = MODULE_PREFETCH[moduleTitle];
     if (!specs || !specs.length) return;
 
@@ -64,8 +61,6 @@ export function usePrefetchModuleData() {
         queryKey: qKey,
         queryFn: async () => {
           try {
-            const authed = await base44.auth.isAuthenticated();
-            if (!authed) return [];
             const res = await base44.functions.invoke('entityListSorted', {
               entityName,
               filter: ctxFilter,

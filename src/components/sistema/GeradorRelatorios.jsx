@@ -20,6 +20,7 @@ import {
   Settings
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import {
   exportarPedidosExcel,
   exportarClientesExcel,
@@ -49,11 +50,18 @@ import {
 export default function GeradorRelatorios({ empresaId }) {
   const [gerando, setGerando] = useState(null);
   const { toast } = useToast();
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const scopeId = empresaId || empresaAtual?.id || grupoAtual?.id || 'sem-contexto';
+  const contextoValido = scopeId !== 'sem-contexto';
+
+  const listar = (entityName, order, limit, campo) => (
+    filterInContext(entityName, {}, order, limit, campo)
+  );
 
   const { data: empresa } = useQuery({
-    queryKey: ['empresa', empresaId],
-    queryFn: () => base44.entities.Empresa.filter({ id: empresaId }),
-    enabled: !!empresaId,
+    queryKey: ['empresa', empresaId, empresaAtual?.id, grupoAtual?.id, contexto],
+    queryFn: () => filterInContext('Empresa', empresaId ? { id: empresaId } : {}, 'nome_fantasia', 1),
+    enabled: contextoValido,
     select: (data) => data[0]
   });
 
@@ -65,7 +73,7 @@ export default function GeradorRelatorios({ empresaId }) {
       icon: FileText,
       cor: 'blue',
       exportaExcel: async () => {
-        const pedidos = await base44.entities.Pedido.list('-data_pedido');
+        const pedidos = await listar('Pedido', '-data_pedido', 9999);
         exportarPedidosExcel(pedidos);
       }
     },
@@ -76,7 +84,7 @@ export default function GeradorRelatorios({ empresaId }) {
       icon: Users,
       cor: 'purple',
       exportaExcel: async () => {
-        const clientes = await base44.entities.Cliente.list();
+        const clientes = await listar('Cliente', '-created_date', 9999);
         exportarClientesExcel(clientes);
       }
     },
@@ -87,7 +95,7 @@ export default function GeradorRelatorios({ empresaId }) {
       icon: DollarSign,
       cor: 'green',
       exportaExcel: async () => {
-        const contas = await base44.entities.ContaReceber.list('-data_vencimento');
+        const contas = await listar('ContaReceber', '-data_vencimento', 9999);
         exportarContasReceberExcel(contas);
       }
     },
@@ -98,7 +106,7 @@ export default function GeradorRelatorios({ empresaId }) {
       icon: DollarSign,
       cor: 'red',
       exportaExcel: async () => {
-        const contas = await base44.entities.ContaPagar.list('-data_vencimento');
+        const contas = await listar('ContaPagar', '-data_vencimento', 9999);
         exportarContasPagarExcel(contas);
       }
     },
@@ -109,7 +117,7 @@ export default function GeradorRelatorios({ empresaId }) {
       icon: Package,
       cor: 'orange',
       exportaExcel: async () => {
-        const produtos = await base44.entities.Produto.list();
+        const produtos = await listar('Produto', '-created_date', 9999);
         exportarEstoqueExcel(produtos);
       }
     },
@@ -120,7 +128,7 @@ export default function GeradorRelatorios({ empresaId }) {
       icon: TrendingUp,
       cor: 'cyan',
       exportaExcel: async () => {
-        const movs = await base44.entities.MovimentacaoEstoque.list('-data_movimentacao', 1000);
+        const movs = await listar('MovimentacaoEstoque', '-data_movimentacao', 1000);
         exportarMovimentacoesExcel(movs);
       }
     },
@@ -131,7 +139,7 @@ export default function GeradorRelatorios({ empresaId }) {
       icon: Settings,
       cor: 'indigo',
       exportaExcel: async () => {
-        const ops = await base44.entities.OrdemProducao.list('-data_emissao');
+        const ops = await listar('OrdemProducao', '-data_emissao', 9999);
         exportarOrdensProducaoExcel(ops);
       }
     },
@@ -142,7 +150,7 @@ export default function GeradorRelatorios({ empresaId }) {
       icon: Truck,
       cor: 'pink',
       exportaExcel: async () => {
-        const entregas = await base44.entities.Entrega.list('-created_date');
+        const entregas = await listar('Entrega', '-created_date', 9999);
         exportarEntregasExcel(entregas);
       }
     },
@@ -153,7 +161,7 @@ export default function GeradorRelatorios({ empresaId }) {
       icon: FileText,
       cor: 'teal',
       exportaExcel: async () => {
-        const nfes = await base44.entities.NotaFiscal.list('-data_emissao');
+        const nfes = await listar('NotaFiscal', '-data_emissao', 9999, 'empresa_faturamento_id');
         exportarNotasFiscaisExcel(nfes);
       }
     },
@@ -164,7 +172,7 @@ export default function GeradorRelatorios({ empresaId }) {
       icon: Building,
       cor: 'slate',
       exportaExcel: async () => {
-        const fornecedores = await base44.entities.Fornecedor.list();
+        const fornecedores = await listar('Fornecedor', '-created_date', 9999);
         exportarFornecedoresExcel(fornecedores);
       }
     },
@@ -175,7 +183,7 @@ export default function GeradorRelatorios({ empresaId }) {
       icon: Users,
       cor: 'violet',
       exportaExcel: async () => {
-        const colaboradores = await base44.entities.Colaborador.list();
+        const colaboradores = await listar('Colaborador', '-created_date', 9999, 'empresa_alocada_id');
         exportarColaboradoresExcel(colaboradores);
       }
     },
@@ -186,7 +194,7 @@ export default function GeradorRelatorios({ empresaId }) {
       icon: FileSpreadsheet,
       cor: 'emerald',
       exportaExcel: async () => {
-        const dres = await base44.entities.DRE.list('-periodo');
+        const dres = await listar('DRE', '-periodo', 9999);
         if (dres.length > 0) {
           exportarDREExcel(dres[0]);
         } else {
@@ -199,7 +207,20 @@ export default function GeradorRelatorios({ empresaId }) {
   const handleExportarExcel = async (relatorio) => {
     setGerando(relatorio.id);
     try {
+      if (!contextoValido) {
+        throw new Error('Selecione um grupo ou empresa antes de exportar.');
+      }
       await relatorio.exportaExcel();
+      await base44.entities.AuditLog.create({
+        acao: 'exportar_relatorio',
+        modulo: 'sistema',
+        entidade: 'Relatorio',
+        entidade_id: relatorio.id,
+        descricao: `Relatorio exportado: ${relatorio.titulo}`,
+        empresa_id: empresaAtual?.id || empresaId || null,
+        group_id: grupoAtual?.id || empresaAtual?.group_id || null,
+        contexto
+      });
       toast({ 
         title: '✅ Excel Exportado!',
         description: `${relatorio.titulo} exportado com sucesso`
@@ -276,6 +297,7 @@ export default function GeradorRelatorios({ empresaId }) {
                   <Button
                     onClick={() => handleExportarExcel(relatorio)}
                     disabled={isGerando}
+                    data-action={`Relatorios.exportar.${relatorio.id}`}
                     className={`flex-1 ${
                 relatorio.cor === 'blue' ? 'bg-blue-600 hover:bg-blue-700' :
                 relatorio.cor === 'purple' ? 'bg-purple-600 hover:bg-purple-700' :

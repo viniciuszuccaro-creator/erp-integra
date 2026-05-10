@@ -7,14 +7,13 @@ import { logUIIssue } from "@/components/lib/uiAudit";
 
 export default function BootstrapGuard({ children }) {
   const { user, isLoading: loadingUser } = useUser();
-  const { empresaAtual, isLoading: loadingCtx, authChecked, isAuthenticated } = useContextoVisual();
+  const { empresaAtual, isLoading: loadingCtx } = useContextoVisual();
+  const [bootTimeoutReached, setBootTimeoutReached] = React.useState(false);
 
   const { data: iaConfigs, isLoading: loadingIA } = useQuery({
     queryKey: ["ia-config"],
     queryFn: async () => {
       try {
-        const authed = await base44.auth.isAuthenticated();
-        if (!authed) return [];
         return await base44.entities.IAConfig.list();
       } catch (e) {
         logUIIssue({ component: "BootstrapGuard", issue: "Falha ao carregar IAConfig", severity: "error", meta: { error: String(e?.message || e) } });
@@ -22,7 +21,6 @@ export default function BootstrapGuard({ children }) {
       }
     },
     initialData: [],
-    enabled: authChecked && isAuthenticated && !!user && !!empresaAtual,
   });
 
   React.useEffect(() => {
@@ -31,7 +29,20 @@ export default function BootstrapGuard({ children }) {
     }
   }, [loadingIA, iaConfigs?.length]);
 
-  const booting = loadingUser || loadingCtx || (authChecked && isAuthenticated && !!user && !!empresaAtual && loadingIA);
+  React.useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setBootTimeoutReached(true);
+      logUIIssue({
+        component: "BootstrapGuard",
+        issue: "Timeout de inicializacao atingido; liberando interface com dados locais disponiveis",
+        severity: "warning",
+        meta: { loadingUser, loadingIA, loadingCtx }
+      });
+    }, 8000);
+    return () => window.clearTimeout(timeout);
+  }, []);
+
+  const booting = !bootTimeoutReached && (loadingUser || loadingIA || loadingCtx);
 
   if (booting) {
     return (

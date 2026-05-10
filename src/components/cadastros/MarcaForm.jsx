@@ -6,12 +6,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Award, Trash2, Power, PowerOff } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function MarcaForm({ marca, item, data, initialData, defaultValues, onSubmit, isSubmitting, windowMode = false }) {
   const dadosIniciais = item || data || initialData || defaultValues || marca;
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = hasPermission?.("Cadastros.Marca.criar") || hasPermission?.("Cadastros.Produto.criar");
+  const podeEditar = hasPermission?.("Cadastros.Marca.editar") || hasPermission?.("Cadastros.Produto.editar");
+  const podeExcluir = hasPermission?.("Cadastros.Marca.excluir") || hasPermission?.("Cadastros.Produto.excluir");
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_marca: '',
     descricao: '',
@@ -36,10 +46,27 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
       alert('Preencha o nome da marca');
       return;
     }
-    onSubmit({ ...formData, nome: formData.nome_marca });
+    if (!contextoValido) {
+      alert('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      alert('Sem permissão para salvar marca.');
+      return;
+    }
+    onSubmit({
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id,
+      nome: formData.nome_marca
+    });
   };
 
   const handleExcluir = () => {
+    if (!podeExcluir) {
+      alert('Sem permissão para excluir marca.');
+      return;
+    }
     if (!window.confirm(`Tem certeza que deseja excluir a marca "${formData.nome_marca}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
@@ -122,6 +149,9 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
         <Switch
           checked={formData.ativo}
           onCheckedChange={(v) => setFormData({...formData, ativo: v})}
+          disabled={!podeSalvar}
+          data-permission="Cadastros.Marca.alterarStatus"
+          data-sensitive="true"
         />
       </div>
 
@@ -132,6 +162,9 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
               type="button"
               variant="outline"
               onClick={handleAlternarStatus}
+              disabled={!podeSalvar}
+              data-permission="Cadastros.Marca.alterarStatus"
+              data-sensitive="true"
               className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
             >
               {formData.ativo ? (
@@ -140,12 +173,24 @@ export default function MarcaForm({ marca, item, data, initialData, defaultValue
                 <><Power className="w-4 h-4 mr-2" />Ativar</>
               )}
             </Button>
-            <Button type="button" variant="destructive" onClick={handleExcluir}>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleExcluir}
+              disabled={!podeExcluir}
+              data-permission="Cadastros.Marca.excluir"
+              data-sensitive="true"
+            >
               <Trash2 className="w-4 h-4 mr-2" />Excluir
             </Button>
           </>
         )}
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={isSubmitting || !contextoValido || !podeSalvar}
+          data-permission="Cadastros.Marca.salvar"
+          data-sensitive="true"
+        >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {dadosIniciais ? 'Atualizar' : 'Criar Marca'}
         </Button>

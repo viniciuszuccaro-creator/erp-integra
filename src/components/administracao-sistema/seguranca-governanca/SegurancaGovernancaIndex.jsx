@@ -10,72 +10,56 @@ import ConfiguracaoSeguranca from "@/components/sistema/ConfiguracaoSeguranca";
 
 
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import useConfiguracaoSistema from "@/components/lib/useConfiguracaoSistema";
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
 import HerancaConfigNotice from "@/components/administracao-sistema/common/HerancaConfigNotice";
 
 export default function SegurancaGovernancaIndex() {
   const { isAdmin } = usePermissions();
   const { empresaAtual, grupoAtual } = useContextoVisual();
-  const mfaConfig = useConfiguracaoSistema({ chave: 'seg_login_duplo_fator', aliases: ['cc_exigir_mfa'], empresaId: empresaAtual?.id, grupoId: grupoAtual?.id, categoria: 'Seguranca' });
-  const auditConfig = useConfiguracaoSistema({ chave: 'seg_auditoria_detalhada', aliases: ['cc_auditoria_automatica'], empresaId: empresaAtual?.id, grupoId: grupoAtual?.id, categoria: 'Seguranca' });
-  const iaSecurityConfig = useConfiguracaoSistema({ chave: 'seg_ia_seguranca', aliases: ['cc_ia_seguranca_ativa'], empresaId: empresaAtual?.id, grupoId: grupoAtual?.id, categoria: 'Sistema' });
-  const mfaGate = mfaConfig.isEnabled(false);
-  const auditGate = auditConfig.isEnabled(false);
-  const iaGate = iaSecurityConfig.isEnabled(false);
   const params = new URLSearchParams(window.location.search);
   const segTab = params.get('segTab') || 'politicas';
+  const [activeTab, setActiveTab] = React.useState(segTab);
+
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    const nextParams = new URLSearchParams(window.location.search);
+    nextParams.set('tab', 'seguranca');
+    nextParams.set('segTab', value);
+    window.history.replaceState(null, '', `${window.location.pathname}?${nextParams.toString()}`);
+  };
+
   if (!isAdmin()) return <div className="p-4 text-sm text-slate-500">Acesso restrito.</div>;
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <Tabs defaultValue={segTab} className="w-full h-full">
+    <div className="w-full h-full min-h-0 flex flex-col overflow-auto">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full h-full min-h-0">
         <TabsList className="flex flex-wrap gap-2">
-          <TabsTrigger value="politicas">Políticas</TabsTrigger>
-          <TabsTrigger value="manutencao">Monitoramento & Manutenção</TabsTrigger>
-          <TabsTrigger value="compliance">Compliance IA</TabsTrigger>
+          <TabsTrigger value="politicas" data-action="Seguranca.tab.politicas">Políticas</TabsTrigger>
+          <TabsTrigger value="manutencao" data-action="Seguranca.tab.manutencao">Monitoramento & Manutenção</TabsTrigger>
+          <TabsTrigger value="compliance" data-action="Seguranca.tab.compliance">Compliance IA</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="politicas" className="mt-4">
-          <Card className="w-full">
+        <TabsContent value="politicas" className="mt-4 w-full h-full min-h-0">
+          <Card className="w-full h-full">
             <CardContent className="p-4">
               <ContextoConfigBanner />
               <HerancaConfigNotice />
-              <div className="grid gap-3 md:grid-cols-3 mb-4">
-                <div className="rounded-lg border bg-slate-50 p-3 text-sm">
-                  <div className="text-slate-500">MFA</div>
-                  <div className="font-semibold text-slate-900">{mfaGate ? 'Ativo' : 'Inativo'}</div>
-                </div>
-                <div className="rounded-lg border bg-slate-50 p-3 text-sm">
-                  <div className="text-slate-500">Auditoria detalhada</div>
-                  <div className="font-semibold text-slate-900">{auditGate ? 'Ativa' : 'Inativa'}</div>
-                </div>
-                <div className="rounded-lg border bg-slate-50 p-3 text-sm">
-                  <div className="text-slate-500">IA de segurança</div>
-                  <div className="font-semibold text-slate-900">{iaGate ? 'Ativa' : 'Inativa'}</div>
-                </div>
-              </div>
-              <ConfiguracaoSeguranca empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
-              <div className="mb-4 rounded-lg border bg-slate-50 p-3 text-xs text-slate-600">
-                MFA no login: <strong>{mfaGate ? 'obrigatório no fluxo' : 'desligado no fluxo'}</strong> •
-                Auditoria detalhada: <strong>{auditGate ? 'registrador detalhado liberado' : 'registrador detalhado bloqueado'}</strong> •
-                IA de segurança: <strong>{iaGate ? 'análise permitida' : 'análise bloqueada'}</strong>
-              </div>
+              <ConfiguracaoSeguranca empresaId={empresaAtual?.id || null} grupoId={grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null} />
               <SegurancaDashboard />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="manutencao" className="mt-4">
-          <Card className="w-full">
+        <TabsContent value="manutencao" className="mt-4 w-full h-full min-h-0">
+          <Card className="w-full h-full">
             <CardContent className="p-4">
               <MonitoramentoManutencaoIndex />
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="compliance" className="mt-4">
-          <Card className="w-full">
+        <TabsContent value="compliance" className="mt-4 w-full h-full min-h-0">
+          <Card className="w-full h-full">
             <CardContent className="p-4">
               <IAGovernancaComplianceSection />
             </CardContent>

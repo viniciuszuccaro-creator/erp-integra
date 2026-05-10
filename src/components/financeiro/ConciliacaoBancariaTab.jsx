@@ -8,26 +8,44 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Zap, Upload, CheckCircle, AlertTriangle, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function ConciliacaoBancariaTab() {
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext } = useContextoVisual();
+  const { canCreate, canEdit, hasPermission } = usePermissions();
   const [periodo, setPeriodo] = useState({
     inicio: new Date(new Date().setDate(1)).toISOString().split('T')[0],
     fim: new Date().toISOString().split('T')[0]
   });
+  const [contaSelecionadaId, setContaSelecionadaId] = useState("");
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeConciliar = canCreate('Financeiro', 'ConciliaÃ§Ã£o BancÃ¡ria') ||
+    canEdit('Financeiro', 'ConciliaÃ§Ã£o BancÃ¡ria') ||
+    hasPermission('Financeiro', 'ConciliacaoBancaria', 'criar') ||
+    hasPermission('Financeiro', 'ConciliacaoBancaria', 'editar');
+  const controlesBloqueados = !contextoValido || !podeConciliar;
 
   const { data: conciliacoes = [], isLoading } = useQuery({
-    queryKey: ["conciliacao-bancaria"],
-    queryFn: () => base44.entities.ConciliacaoBancaria.list(),
+    queryKey: ["conciliacao-bancaria", contextKey],
+    queryFn: () => filterInContext('ConciliacaoBancaria', {}, '-data_conciliacao', 100),
+    enabled: contextoValido,
   });
 
   const { data: contas = [] } = useQuery({
-    queryKey: ["conta-bancaria-empresa"],
-    queryFn: () => base44.entities.ContaBancariaEmpresa.list(),
+    queryKey: ["conta-bancaria-empresa", contextKey],
+    queryFn: () => filterInContext('ContaBancariaEmpresa', {}, 'banco', 100),
+    enabled: contextoValido,
   });
 
   const gerarConciliacaoIAMutation = useMutation({
     mutationFn: async ({ contaId }) => {
+      if (!contextoValido || !podeConciliar) {
+        throw new Error("Sem contexto ou permissÃ£o para gerar conciliaÃ§Ã£o.");
+      }
       toast.info("🤖 IA analisando extratos e movimentações...");
       
       // Simula análise IA
@@ -75,7 +93,7 @@ Retorne sugestões de conciliação baseadas em valor, data, histórico e simila
         }
       });
 
-      return base44.entities.ConciliacaoBancaria.create({
+      return createInContext('ConciliacaoBancaria', {
         conta_bancaria_id: contaId,
         periodo_inicio: periodo.inicio,
         periodo_fim: periodo.fim,
@@ -90,6 +108,7 @@ Retorne sugestões de conciliação baseadas em valor, data, histórico e simila
       toast.success("✅ Conciliação gerada com IA!");
     },
   });
+  const controlesDesabilitados = controlesBloqueados || gerarConciliacaoIAMutation.isPending;
 
   if (isLoading) return <div className="p-6">Carregando conciliações...</div>;
 
@@ -103,7 +122,12 @@ Retorne sugestões de conciliação baseadas em valor, data, histórico e simila
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label>Conta Bancária</Label>
-              <select className="w-full px-3 py-2 border rounded-lg">
+              <select
+                className="w-full px-3 py-2 border rounded-lg"
+                value={contaSelecionadaId}
+                onChange={(e) => setContaSelecionadaId(e.target.value)}
+                disabled={controlesDesabilitados}
+              >
                 <option value="">Selecione...</option>
                 {contas.map(c => (
                   <option key={c.id} value={c.id}>
@@ -119,6 +143,7 @@ Retorne sugestões de conciliação baseadas em valor, data, histórico e simila
                 type="date"
                 value={periodo.inicio}
                 onChange={(e) => setPeriodo({ ...periodo, inicio: e.target.value })}
+                disabled={controlesDesabilitados}
               />
             </div>
 
@@ -128,6 +153,7 @@ Retorne sugestões de conciliação baseadas em valor, data, histórico e simila
                 type="date"
                 value={periodo.fim}
                 onChange={(e) => setPeriodo({ ...periodo, fim: e.target.value })}
+                disabled={controlesDesabilitados}
               />
             </div>
           </div>
@@ -135,19 +161,20 @@ Retorne sugestões de conciliação baseadas em valor, data, histórico e simila
           <div className="flex gap-3">
             <Button 
               onClick={() => {
-                if (contas.length > 0) {
-                  gerarConciliacaoIAMutation.mutate({ contaId: contas[0].id });
+                const contaId = contaSelecionadaId || contas[0]?.id;
+                if (contaId) {
+                  gerarConciliacaoIAMutation.mutate({ contaId });
                 } else {
                   toast.error("Nenhuma conta bancária cadastrada");
                 }
               }}
-              disabled={gerarConciliacaoIAMutation.isPending}
+              disabled={controlesDesabilitados}
             >
               <Zap className="w-4 h-4 mr-2" />
               Gerar Conciliação com IA
             </Button>
 
-            <Button variant="outline">
+            <Button variant="outline" disabled={controlesDesabilitados}>
               <Upload className="w-4 h-4 mr-2" />
               Importar Extrato OFX
             </Button>

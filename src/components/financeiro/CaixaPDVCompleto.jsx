@@ -13,8 +13,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Wallet, ShoppingCart, CheckCircle2, Trash2, Plus, Truck, Store } from "lucide-react";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
-export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
+export default function CaixaPDVCompleto({ empresaAtual: empresaProp, windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState("venda");
   const [carrinho, setCarrinho] = useState([]);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
@@ -34,6 +36,26 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
   const [saldoInicial, setSaldoInicial] = useState(0);
   
   const queryClient = useQueryClient();
+  const {
+    empresaAtual: empresaContexto,
+    grupoAtual,
+    filterInContext,
+    createInContext,
+    updateInContext
+  } = useContextoVisual();
+  const { canCreate, canEdit, hasPermission } = usePermissions();
+  const empresaAtual = empresaProp || empresaContexto;
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeOperarCaixa = canCreate('Financeiro', 'Caixa') ||
+    canEdit('Financeiro', 'Caixa') ||
+    hasPermission('Financeiro', 'PDV', 'criar') ||
+    hasPermission('Financeiro', 'Caixa Central', 'editar');
+  const podeLiquidarTitulos = canEdit('Financeiro', 'Contas a Receber') ||
+    canEdit('Financeiro', 'Contas a Pagar') ||
+    hasPermission('Financeiro', null, 'baixar');
+  const controlesDesabilitados = !contextoValido || !podeOperarCaixa;
   
   // Hook centralizado de formas de pagamento
   const { formasPagamento, obterFormasPorContexto, obterConfiguracao, isLoading: loadingFormas } = useFormasPagamento({ empresa_id: empresaAtual?.id });
@@ -45,34 +67,39 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos', contextKey],
+    queryFn: () => filterInContext('Produto', {}, 'descricao', 200),
+    enabled: contextoValido,
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryKey: ['clientes', contextKey],
+    queryFn: () => filterInContext('Cliente', {}, 'nome', 200),
+    enabled: contextoValido,
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber'],
-    queryFn: () => base44.entities.ContaReceber.list(),
+    queryKey: ['contasReceber', contextKey],
+    queryFn: () => filterInContext('ContaReceber', {}, 'data_vencimento', 200),
+    enabled: contextoValido,
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contasPagar'],
-    queryFn: () => base44.entities.ContaPagar.list(),
+    queryKey: ['contasPagar', contextKey],
+    queryFn: () => filterInContext('ContaPagar', {}, 'data_vencimento', 200),
+    enabled: contextoValido,
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list(),
+    queryKey: ['pedidos', contextKey],
+    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 200),
+    enabled: contextoValido,
   });
 
   const { data: movimentos = [] } = useQuery({
-    queryKey: ['movimentos-caixa'],
-    queryFn: () => base44.entities.CaixaMovimento.list(),
-    enabled: caixaAberto,
+    queryKey: ['movimentos-caixa', contextKey],
+    queryFn: () => filterInContext('CaixaMovimento', {}, '-data_movimento', 200),
+    enabled: caixaAberto && contextoValido,
     refetchInterval: 10000
   });
 
@@ -125,8 +152,10 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
 
   const abrirCaixa = useMutation({
     mutationFn: async (saldo) => {
-      await base44.entities.CaixaMovimento.create({
-        empresa_id: empresaAtual?.id,
+      if (controlesDesabilitados) throw new Error("Sem contexto ou permissÃ£o para abrir caixa.");
+      await createInContext('CaixaMovimento', {
+        ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
+        ...(groupId ? { group_id: groupId } : {}),
         data_movimento: new Date().toISOString(),
         tipo_movimento: 'Abertura',
         origem: 'Abertura Caixa',
@@ -146,8 +175,10 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
 
   const finalizarVenda = useMutation({
     mutationFn: async () => {
-      const pedido = await base44.entities.Pedido.create({
-        empresa_id: empresaAtual?.id,
+      if (controlesDesabilitados) throw new Error("Sem contexto ou permissÃ£o para finalizar venda.");
+      const pedido = await createInContext('Pedido', {
+        ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
+        ...(groupId ? { group_id: groupId } : {}),
         numero_pedido: `PDV-${Date.now()}`,
         forma_pagamento: formasPagamentoVenda.map(f => f.forma_descricao).join(', '),
         tipo: 'Pedido',
@@ -174,8 +205,9 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
       // Se for entrega, criar registro na entidade Entrega
       if (tipoEntrega === "Entrega" && clienteSelecionado) {
         const enderecoCliente = clienteSelecionado.endereco_principal || {};
-        await base44.entities.Entrega.create({
-          empresa_id: empresaAtual?.id,
+        await createInContext('Entrega', {
+          ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
+          ...(groupId ? { group_id: groupId } : {}),
           pedido_id: pedido.id,
           numero_pedido: pedido.numero_pedido,
           cliente_id: clienteSelecionado.id,
@@ -198,9 +230,10 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
       }
 
       let contaReceber = null;
-      if (emitirBoleto || formasPagamento.some(f => f.forma !== 'Dinheiro')) {
-        contaReceber = await base44.entities.ContaReceber.create({
-          empresa_id: empresaAtual?.id,
+      if (emitirBoleto || formasPagamentoVenda.some(f => f.forma_descricao !== 'Dinheiro')) {
+        contaReceber = await createInContext('ContaReceber', {
+          ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
+          ...(groupId ? { group_id: groupId } : {}),
           descricao: `Venda PDV ${pedido.numero_pedido}`,
           cliente: clienteSelecionado?.nome || 'Cliente Avulso',
           cliente_id: clienteSelecionado?.id,
@@ -209,13 +242,14 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
           data_emissao: hoje,
           data_vencimento: hoje,
           status: emitirBoleto ? 'Pendente' : 'Recebido',
-          forma_recebimento: formasPagamento.map(f => f.forma).join(', '),
+          forma_recebimento: formasPagamentoVenda.map(f => f.forma_descricao).join(', '),
           origem_tipo: 'pedido'
         });
       }
 
       if (emitirNFe && clienteSelecionado) {
-        await base44.entities.NotaFiscal.create({
+        await createInContext('NotaFiscal', {
+          ...(groupId ? { group_id: groupId } : {}),
           empresa_faturamento_id: empresaAtual?.id,
           numero: `${Date.now()}`,
           serie: '1',
@@ -232,8 +266,9 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
 
       for (const fp of formasPagamentoVenda) {
         if (fp.valor > 0 && fp.forma_id) {
-          await base44.entities.CaixaMovimento.create({
-            empresa_id: empresaAtual?.id,
+          await createInContext('CaixaMovimento', {
+            ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
+            ...(groupId ? { group_id: groupId } : {}),
             data_movimento: new Date().toISOString(),
             tipo_movimento: 'Entrada',
             origem: 'Venda PDV',
@@ -274,16 +309,18 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
 
   const liquidarTitulo = useMutation({
     mutationFn: async ({ titulo, tipo, forma }) => {
+      if (!contextoValido || !podeLiquidarTitulos) throw new Error("Sem contexto ou permissÃ£o para liquidar tÃ­tulo.");
       if (tipo === 'receber') {
-        await base44.entities.ContaReceber.update(titulo.id, {
+        await updateInContext('ContaReceber', titulo.id, {
           status: 'Recebido',
           data_recebimento: hoje,
           valor_recebido: titulo.valor,
           forma_recebimento: forma
         });
 
-        await base44.entities.CaixaMovimento.create({
-          empresa_id: empresaAtual?.id,
+        await createInContext('CaixaMovimento', {
+          ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
+          ...(groupId ? { group_id: groupId } : {}),
           data_movimento: new Date().toISOString(),
           tipo_movimento: 'Entrada',
           origem: 'Liquidação Receber',
@@ -295,15 +332,16 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
           caixa_aberto: true
         });
       } else {
-        await base44.entities.ContaPagar.update(titulo.id, {
+        await updateInContext('ContaPagar', titulo.id, {
           status: 'Pago',
           data_pagamento: hoje,
           valor_pago: titulo.valor,
           forma_pagamento: forma
         });
 
-        await base44.entities.CaixaMovimento.create({
-          empresa_id: empresaAtual?.id,
+        await createInContext('CaixaMovimento', {
+          ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
+          ...(groupId ? { group_id: groupId } : {}),
           data_movimento: new Date().toISOString(),
           tipo_movimento: 'Saída',
           origem: 'Liquidação Pagar',
@@ -324,8 +362,10 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
 
   const fecharCaixa = useMutation({
     mutationFn: async () => {
-      await base44.entities.CaixaMovimento.create({
-        empresa_id: empresaAtual?.id,
+      if (controlesDesabilitados) throw new Error("Sem contexto ou permissÃ£o para fechar caixa.");
+      await createInContext('CaixaMovimento', {
+        ...(empresaAtual?.id ? { empresa_id: empresaAtual.id } : {}),
+        ...(groupId ? { group_id: groupId } : {}),
         data_movimento: new Date().toISOString(),
         tipo_movimento: 'Fechamento',
         origem: 'Fechamento Caixa',
@@ -369,12 +409,13 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                 onChange={(e) => setSaldoInicial(parseFloat(e.target.value) || 0)}
                 placeholder="0.00"
                 className="text-lg"
+                disabled={controlesDesabilitados}
               />
             </div>
             <Button
               onClick={() => abrirCaixa.mutate(saldoInicial)}
               className="w-full bg-emerald-600 h-10"
-              disabled={abrirCaixa.isPending}
+              disabled={controlesDesabilitados || abrirCaixa.isPending}
             >
               <CheckCircle2 className="w-4 h-4 mr-2" />
               Abrir Caixa
@@ -401,7 +442,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
             <p className="text-xs text-slate-500">Saldo em Dinheiro</p>
             <p className="text-lg font-bold text-emerald-600">R$ {saldoAtual.toFixed(2)}</p>
           </div>
-          <Button onClick={() => { if (confirm(`Fechar caixa?\nSaldo: R$ ${saldoAtual.toFixed(2)}`)) fecharCaixa.mutate(); }} variant="outline" size="sm">
+          <Button onClick={() => { if (confirm(`Fechar caixa?\nSaldo: R$ ${saldoAtual.toFixed(2)}`)) fecharCaixa.mutate(); }} variant="outline" size="sm" disabled={controlesDesabilitados || fecharCaixa.isPending}>
             Fechar Caixa
           </Button>
         </div>
@@ -454,6 +495,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                   placeholder="🔍 Buscar produto..."
                   value={buscaProduto}
                   onChange={(e) => setBuscaProduto(e.target.value)}
+                  disabled={controlesDesabilitados}
                 />
               </CardHeader>
               <CardContent className="max-h-[500px] overflow-auto">
@@ -462,6 +504,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                     <button
                       key={p.id}
                       onClick={() => {
+                        if (controlesDesabilitados) return;
                         const existe = carrinho.find(i => i.id === p.id);
                         if (existe) {
                           setCarrinho(carrinho.map(i => i.id === p.id ? {...i, quantidade: i.quantidade + 1} : i));
@@ -469,6 +512,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                           setCarrinho([...carrinho, {...p, quantidade: 1}]);
                         }
                       }}
+                      disabled={controlesDesabilitados}
                       className="p-3 border-2 rounded-lg hover:border-blue-500 hover:bg-blue-50 bg-white text-left"
                     >
                       <p className="font-semibold text-sm truncate">{p.descricao}</p>
@@ -498,9 +542,9 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                         <div className="flex-1 mr-2">
                           <p className="text-sm font-medium truncate">{item.descricao}</p>
                           <div className="flex gap-2 mt-1">
-                            <Button size="sm" variant="outline" onClick={() => setCarrinho(carrinho.map(i => i.id === item.id ? {...i, quantidade: i.quantidade - 1} : i).filter(i => i.quantidade > 0))} className="h-7 w-7 p-0">-</Button>
+                            <Button size="sm" variant="outline" disabled={controlesDesabilitados} onClick={() => setCarrinho(carrinho.map(i => i.id === item.id ? {...i, quantidade: i.quantidade - 1} : i).filter(i => i.quantidade > 0))} className="h-7 w-7 p-0">-</Button>
                             <span className="font-bold w-8 text-center">{item.quantidade}</span>
-                            <Button size="sm" variant="outline" onClick={() => setCarrinho(carrinho.map(i => i.id === item.id ? {...i, quantidade: i.quantidade + 1} : i))} className="h-7 w-7 p-0">+</Button>
+                            <Button size="sm" variant="outline" disabled={controlesDesabilitados} onClick={() => setCarrinho(carrinho.map(i => i.id === item.id ? {...i, quantidade: i.quantidade + 1} : i))} className="h-7 w-7 p-0">+</Button>
                           </div>
                         </div>
                         <div className="text-right">
@@ -520,6 +564,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                       value={buscaCliente}
                       onChange={(e) => setBuscaCliente(e.target.value)}
                       className="h-8"
+                      disabled={controlesDesabilitados}
                     />
                     {buscaCliente && clientesFiltrados.length > 0 && (
                       <div className="max-h-24 overflow-auto border rounded mt-1 bg-white">
@@ -714,7 +759,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                     </div>
                   )}
 
-                  <Button onClick={() => finalizarVenda.mutate()} disabled={carrinho.length === 0 || totalPago < totalVenda} className="w-full bg-emerald-600 h-10">
+                  <Button onClick={() => finalizarVenda.mutate()} disabled={controlesDesabilitados || finalizarVenda.isPending || carrinho.length === 0 || totalPago < totalVenda} className="w-full bg-emerald-600 h-10">
                     <CheckCircle2 className="w-4 h-4 mr-2" /> Finalizar Venda
                   </Button>
                   <Button onClick={() => {
@@ -752,7 +797,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                       <TableCell>{p.cliente_nome}</TableCell>
                       <TableCell className="font-bold">R$ {(p.valor_total || 0).toFixed(2)}</TableCell>
                       <TableCell>
-                        <Button size="sm" onClick={() => liquidarTitulo.mutate({ titulo: { id: p.id, cliente: p.cliente_nome, valor: p.valor_total }, tipo: 'receber', forma: 'Dinheiro' })}>
+                        <Button size="sm" disabled={!contextoValido || !podeLiquidarTitulos || liquidarTitulo.isPending} onClick={() => liquidarTitulo.mutate({ titulo: { id: p.id, cliente: p.cliente_nome, valor: p.valor_total }, tipo: 'receber', forma: 'Dinheiro' })}>
                           Receber
                         </Button>
                       </TableCell>

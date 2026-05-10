@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sparkles, TrendingUp, Target, Zap, Brain } from 'lucide-react';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import { useUser } from '@/components/lib/UserContext';
+import { toast } from 'sonner';
 
 /**
  * IA de Vendas Preditivas
@@ -13,18 +16,32 @@ import { Sparkles, TrendingUp, Target, Zap, Brain } from 'lucide-react';
 export default function IAVendasPreditivas({ empresaId }) {
   const [previsoes, setPrevisoes] = useState([]);
   const [analisando, setAnalisando] = useState(false);
+  const { contexto, empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
+  const { user } = useUser();
+  const eId = empresaId || (contexto === 'grupo' ? null : empresaAtual?.id);
+  const gId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const contextoValido = !!(eId || gId);
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryKey: ['clientes', 'ia-vendas-preditivas', eId || 'sem', gId || 'sem'],
+    queryFn: () => filterInContext('Cliente', {}, 'nome', 1000),
+    enabled: contextoValido,
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-data_pedido', 500),
+    queryKey: ['pedidos', 'ia-vendas-preditivas', eId || 'sem', gId || 'sem'],
+    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 500),
+    enabled: contextoValido,
   });
 
-  const analisarProbabilidadeRecompra = () => {
+  const analisarProbabilidadeRecompra = async () => {
+    if (!contextoValido) {
+      toast.error('Selecione um grupo ou empresa antes de executar a analise.');
+      return;
+    }
+
     setAnalisando(true);
 
     const hoje = new Date();
@@ -79,6 +96,34 @@ export default function IAVendasPreditivas({ empresaId }) {
       });
 
     setPrevisoes(previsoesGeradas.sort((a, b) => b.probabilidade - a.probabilidade));
+    try {
+      await base44.entities.LogsIA.create({
+        tipo_ia: 'IA_Vendas_Preditivas',
+        contexto_execucao: 'Comercial',
+        entidade_relacionada: 'Cliente',
+        resultado: 'Automatico',
+        confianca_ia: 82,
+        dados_entrada: { clientes: clientes.length, pedidos: pedidos.length },
+        dados_saida: { previsoes: previsoesGeradas.length },
+        empresa_id: eId || null,
+        group_id: gId || null,
+      });
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Sistema',
+        usuario_id: user?.id || null,
+        empresa_id: eId || null,
+        group_id: gId || null,
+        acao: 'Analise',
+        modulo: 'IA',
+        entidade: 'IA_Vendas_Preditivas',
+        descricao: 'Analise de probabilidade de recompra executada',
+        dados_novos: { previsoes: previsoesGeradas.length },
+        sucesso: true,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.warn('[IA] Falha ao registrar log de vendas preditivas:', error);
+    }
     setAnalisando(false);
   };
 
@@ -96,8 +141,9 @@ export default function IAVendasPreditivas({ empresaId }) {
       <CardContent className="p-6 space-y-4">
         <Button
           onClick={analisarProbabilidadeRecompra}
-          disabled={analisando}
+          disabled={analisando || !contextoValido}
           className="w-full bg-purple-600 hover:bg-purple-700"
+          data-action="IA.VendasPreditivas.analisar"
         >
           {analisando ? (
             <>
@@ -170,6 +216,9 @@ export default function IAVendasPreditivas({ empresaId }) {
                         size="sm"
                         className="w-full mt-3"
                         variant="outline"
+                        disabled
+                        title="Acao ainda nao conectada ao fluxo de campanhas"
+                        data-action="IA.VendasPreditivas.campanha.placeholder"
                       >
                         <Zap className="w-4 h-4 mr-1" />
                         Criar Campanha Direcionada

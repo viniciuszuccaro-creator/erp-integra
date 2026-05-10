@@ -12,6 +12,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, DollarSign, Plus, Calculator, Sparkles, Package, Search, X, Save, Factory, Award, Boxes, TrendingUp, CheckCircle2, Trash2, Power, PowerOff } from "lucide-react";
 import { toast } from "sonner";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.0 - TABELA DE PREÇO RECONSTRUÍDA
@@ -24,6 +26,21 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
   const queryClient = useQueryClient();
   const [salvando, setSalvando] = useState(false);
   const [user, setUser] = useState(null);
+  const {
+    empresaAtual,
+    grupoAtual,
+    filterInContext,
+    createInContext,
+    updateInContext,
+    deleteInContext
+  } = useContextoVisual();
+  const { canCreate, canEdit, canDelete } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeCriar = canCreate("Cadastros", "Tabela de Preco") || canCreate("Cadastros", "TabelaPreco") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "Tabela de Preco") || canEdit("Cadastros", "TabelaPreco") || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", "Tabela de Preco") || canDelete("Cadastros", "TabelaPreco") || canDelete("Cadastros", null);
   
   useEffect(() => {
     const loadUser = async () => {
@@ -40,7 +57,8 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
     data_inicio: tabela?.data_inicio || new Date().toISOString().split('T')[0],
     data_fim: tabela?.data_fim || '',
     ativo: tabela?.ativo !== undefined ? tabela.ativo : true,
-    empresa_id: tabela?.empresa_id || user?.empresa_selecionada_id || '',
+    empresa_id: tabela?.empresa_id || empresaAtual?.id || user?.empresa_selecionada_id || '',
+    group_id: tabela?.group_id || groupId || '',
     compartilhar_grupo: tabela?.compartilhar_grupo || false
   });
 
@@ -51,31 +69,35 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode =
   const [itensTabela, setItensTabela] = useState([]);
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list()
+    queryKey: ['produtos', contextKey],
+    queryFn: () => filterInContext('Produto', {}, 'descricao', 500),
+    enabled: contextoValido,
   });
 
   const { data: setoresAtividade = [] } = useQuery({
-    queryKey: ['setores-atividade'],
-    queryFn: () => base44.entities.SetorAtividade.list()
+    queryKey: ['setores-atividade', contextKey],
+    queryFn: () => filterInContext('SetorAtividade', {}, 'nome', 200),
+    enabled: contextoValido,
   });
 
   const { data: gruposProduto = [] } = useQuery({
-    queryKey: ['grupos-produto'],
-    queryFn: () => base44.entities.GrupoProduto.list()
+    queryKey: ['grupos-produto', contextKey],
+    queryFn: () => filterInContext('GrupoProduto', {}, 'nome', 200),
+    enabled: contextoValido,
   });
 
   const { data: marcas = [] } = useQuery({
-    queryKey: ['marcas'],
-    queryFn: () => base44.entities.Marca.list()
+    queryKey: ['marcas', contextKey],
+    queryFn: () => filterInContext('Marca', {}, 'nome', 200),
+    enabled: contextoValido,
   });
 
   const { data: itensExistentes = [] } = useQuery({
-    queryKey: ['tabela-preco-itens', tabela?.id],
+    queryKey: ['tabela-preco-itens', tabela?.id, contextKey],
     queryFn: () => tabela?.id 
-      ? base44.entities.TabelaPrecoItem.filter({ tabela_preco_id: tabela.id })
+      ? filterInContext('TabelaPrecoItem', { tabela_preco_id: tabela.id }, 'produto_descricao', 1000)
       : Promise.resolve([]),
-    enabled: !!tabela?.id
+    enabled: !!tabela?.id && contextoValido
   });
 
   useEffect(() => {
@@ -320,6 +342,14 @@ RETORNE:
     if (!window.confirm(`Tem certeza que deseja excluir a tabela "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
+    if (!podeExcluir) {
+      toast.error('Seu perfil nao permite excluir tabelas de preco');
+      return;
+    }
+    if (tabela?.id) {
+      await deleteInContext('TabelaPreco', tabela.id);
+      queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
+    }
     if (onSubmit) {
       onSubmit({ ...formData, _action: 'delete' });
     }
@@ -336,30 +366,40 @@ RETORNE:
       return;
     }
 
+    if (!contextoValido) {
+      toast.error('Selecione um grupo ou empresa antes de salvar a tabela de preco');
+      return;
+    }
+    if (tabela?.id ? !podeEditar : !podeCriar) {
+      toast.error('Seu perfil nao permite salvar tabelas de preco');
+      return;
+    }
+
     setSalvando(true);
 
     try {
       const dadosTabela = {
         ...formData,
-        empresa_id: user?.empresa_selecionada_id || user?.empresa_id || '1',
+        empresa_id: empresaAtual?.id || formData.empresa_id || user?.empresa_selecionada_id || user?.empresa_id,
+        group_id: groupId || formData.group_id,
         criado_por: user?.email || 'sistema'
       };
 
       let tabelaId = tabela?.id;
       
       if (!tabelaId) {
-        const tabelaCriada = await base44.entities.TabelaPreco.create(dadosTabela);
+        const tabelaCriada = await createInContext('TabelaPreco', dadosTabela);
         tabelaId = tabelaCriada.id;
         console.log('✅ Tabela criada:', tabelaId);
       } else {
-        await base44.entities.TabelaPreco.update(tabelaId, dadosTabela);
+        await updateInContext('TabelaPreco', tabelaId, dadosTabela);
         console.log('✅ Tabela atualizada:', tabelaId);
       }
 
       if (tabela?.id && itensExistentes.length > 0) {
         console.log('🗑️ Deletando itens antigos...');
         for (const itemAntigo of itensExistentes) {
-          await base44.entities.TabelaPrecoItem.delete(itemAntigo.id);
+          await deleteInContext('TabelaPrecoItem', itemAntigo.id);
         }
       }
 
@@ -381,7 +421,7 @@ RETORNE:
             markup_aplicado_ia: item.markup_aplicado_ia || null
           };
           
-          await base44.entities.TabelaPrecoItem.create(itemData);
+          await createInContext('TabelaPrecoItem', itemData);
         }
       }
 
@@ -980,6 +1020,7 @@ RETORNE:
                 type="button"
                 variant="outline"
                 onClick={handleAlternarStatus}
+                disabled={!podeEditar || !contextoValido}
                 className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
               >
                 {formData.ativo ? (
@@ -998,18 +1039,19 @@ RETORNE:
                 type="button"
                 variant="destructive"
                 onClick={handleExcluir}
+                disabled={!podeExcluir || !contextoValido}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Excluir
               </Button>
             </>
           )}
-          <Button 
-            type="button" 
-            onClick={handleSalvar}
-            disabled={salvando || !podeAvancar} 
-            className="bg-green-600 hover:bg-green-700 min-w-[180px]"
-          >
+            <Button 
+              type="button" 
+              onClick={handleSalvar}
+              disabled={salvando || !podeAvancar || !contextoValido || (tabela?.id ? !podeEditar : !podeCriar)} 
+              className="bg-green-600 hover:bg-green-700 min-w-[180px]"
+            >
             {salvando && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {!salvando && <Save className="w-4 h-4 mr-2" />}
             {tabela ? 'Salvar Alterações' : 'Criar Tabela'}

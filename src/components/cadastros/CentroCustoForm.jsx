@@ -5,12 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Receipt, Trash2, Power, PowerOff } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.1.2 - WINDOW MODE READY
  */
 export default function CentroCustoForm({ centroCusto, item, data, initialData, defaultValues, onSubmit, onSave, onClose, isSubmitting, windowMode = false }) {
   const dadosCentroCusto = item || data || initialData || defaultValues || centroCusto;
+  const { canCreate, canEdit, canDelete } = usePermissions();
+  const podeCriar = canCreate("Cadastros", "CentroCusto") || canCreate("Financeiro", "CentroCusto") || canCreate("Cadastros", null);
+  const podeEditar = canEdit("Cadastros", "CentroCusto") || canEdit("Financeiro", "CentroCusto") || canEdit("Cadastros", null);
+  const podeExcluir = canDelete("Cadastros", "CentroCusto") || canDelete("Financeiro", "CentroCusto") || canDelete("Cadastros", null);
   const [formData, setFormData] = useState(dadosCentroCusto || {
     codigo: "",
     descricao: "",
@@ -32,6 +37,14 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (dadosCentroCusto?.id && !podeEditar) {
+      alert("Sem permissao para editar centros de custo.");
+      return;
+    }
+    if (!dadosCentroCusto?.id && !podeCriar) {
+      alert("Sem permissao para criar centros de custo.");
+      return;
+    }
     const dataToSubmit = {
       ...formData,
       orcamento_mensal: formData.orcamento_mensal ? parseFloat(formData.orcamento_mensal) : null,
@@ -47,6 +60,10 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
   };
 
   const handleExcluir = () => {
+    if (!podeExcluir) {
+      alert("Sem permissao para excluir centros de custo.");
+      return;
+    }
     if (!window.confirm(`Tem certeza que deseja excluir o centro de custo "${formData.descricao}"? Esta ação não pode ser desfeita.`)) {
       return;
     }
@@ -177,6 +194,9 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
               type="button"
               variant="outline"
               onClick={handleAlternarStatus}
+              disabled={!podeEditar}
+              data-permission="Cadastros.CentroCusto.alterarStatus"
+              data-sensitive
               className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
             >
               {formData.status === 'Ativo' ? (
@@ -185,12 +205,25 @@ export default function CentroCustoForm({ centroCusto, item, data, initialData, 
                 <><Power className="w-4 h-4 mr-2" />Ativar</>
               )}
             </Button>
-            <Button type="button" variant="destructive" onClick={handleExcluir}>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleExcluir}
+              disabled={!podeExcluir}
+              data-permission="Cadastros.CentroCusto.excluir"
+              data-sensitive
+            >
               <Trash2 className="w-4 h-4 mr-2" />Excluir
             </Button>
           </>
         )}
-        <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700">
+        <Button
+          type="submit"
+          disabled={isSubmitting || (dadosCentroCusto?.id ? !podeEditar : !podeCriar)}
+          className="bg-purple-600 hover:bg-purple-700"
+          data-permission="Cadastros.CentroCusto.salvar"
+          data-sensitive
+        >
           {isSubmitting ? 'Salvando...' : 'Salvar'}
         </Button>
       </div>

@@ -7,6 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Warehouse, MapPin } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { toast } from "sonner";
 
 /**
  * FORMULÁRIO DE LOCAL DE ESTOQUE V21.2 - FASE 2
@@ -20,6 +23,13 @@ export default function LocalEstoqueForm({
   onCancel 
 }) {
   const dadosIniciais = localEstoque || local;
+  const { hasPermission } = usePermissions();
+  const { empresaAtual, grupoAtual, contextoAtual } = useContextoVisual();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || dadosIniciais?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || dadosIniciais?.empresa_id || dadosIniciais?.group_id);
+  const podeCriar = hasPermission?.("Cadastros.LocalEstoque.criar") || hasPermission?.("Estoque.LocalEstoque.criar");
+  const podeEditar = hasPermission?.("Cadastros.LocalEstoque.editar") || hasPermission?.("Estoque.LocalEstoque.editar");
+  const podeSalvar = dadosIniciais?.id ? podeEditar : podeCriar;
   const [formData, setFormData] = useState({
     nome: "",
     codigo: "",
@@ -39,8 +49,20 @@ export default function LocalEstoqueForm({
 
   const handleSubmitForm = (e) => {
     e.preventDefault();
+    if (!contextoValido) {
+      toast.error("Selecione um grupo ou empresa antes de salvar.");
+      return;
+    }
+    if (!podeSalvar) {
+      toast.error("Sem permissão para salvar local de estoque.");
+      return;
+    }
     if (onSubmit) {
-      onSubmit(formData);
+      onSubmit({
+        ...formData,
+        group_id: groupId || formData.group_id,
+        empresa_id: contextoAtual === "empresa" ? empresaAtual?.id : formData.empresa_id
+      });
     }
   };
 
@@ -119,6 +141,9 @@ export default function LocalEstoqueForm({
                 <Label>Tem Corredores?</Label>
                 <Switch
                   checked={formData.estrutura_fisica?.tem_corredores}
+                  disabled={!podeSalvar}
+                  data-permission="Cadastros.LocalEstoque.editar"
+                  data-sensitive="true"
                   onCheckedChange={(checked) => setFormData({
                     ...formData,
                     estrutura_fisica: { ...formData.estrutura_fisica, tem_corredores: checked }
@@ -147,6 +172,9 @@ export default function LocalEstoqueForm({
                 <Label>Tem Prateleiras?</Label>
                 <Switch
                   checked={formData.estrutura_fisica?.tem_prateleiras}
+                  disabled={!podeSalvar}
+                  data-permission="Cadastros.LocalEstoque.editar"
+                  data-sensitive="true"
                   onCheckedChange={(checked) => setFormData({
                     ...formData,
                     estrutura_fisica: { ...formData.estrutura_fisica, tem_prateleiras: checked }
@@ -158,6 +186,9 @@ export default function LocalEstoqueForm({
                 <Label>Controla Temperatura?</Label>
                 <Switch
                   checked={formData.controla_temperatura}
+                  disabled={!podeSalvar}
+                  data-permission="Cadastros.LocalEstoque.editar"
+                  data-sensitive="true"
                   onCheckedChange={(checked) => setFormData({
                     ...formData,
                     controla_temperatura: checked
@@ -180,6 +211,9 @@ export default function LocalEstoqueForm({
             <div className="flex items-center gap-2">
               <Switch
                 checked={formData.ativo}
+                disabled={!podeSalvar}
+                data-permission="Cadastros.LocalEstoque.alterarStatus"
+                data-sensitive="true"
                 onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })}
               />
               <Label>Local Ativo</Label>
@@ -191,7 +225,13 @@ export default function LocalEstoqueForm({
                   Cancelar
                 </Button>
               )}
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              <Button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={!contextoValido || !podeSalvar}
+                data-permission="Cadastros.LocalEstoque.salvar"
+                data-sensitive="true"
+              >
                 <Warehouse className="w-4 h-4 mr-2" />
                 {dadosIniciais ? 'Atualizar' : 'Criar'} Local
               </Button>

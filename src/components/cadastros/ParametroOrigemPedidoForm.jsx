@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Save, X, Settings, Zap } from "lucide-react";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * Formulário para configurar origens de pedido por canal
@@ -27,6 +28,14 @@ export default function ParametroOrigemPedidoForm({
   windowMode = false 
 }) {
   const queryClient = useQueryClient();
+  const { empresaAtual, grupoAtual, createInContext, updateInContext } = useContextoVisual();
+  const { canCreate, canEdit } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
+  const contextKey = empresaAtual?.id || groupId || "sem-contexto";
+  const contextoValido = contextKey !== "sem-contexto";
+  const podeSalvar = parametro?.id
+    ? (canEdit("Cadastros", "ParametroOrigemPedido") || canEdit("Cadastros", "Canais de Origem") || canEdit("Cadastros", null))
+    : (canCreate("Cadastros", "ParametroOrigemPedido") || canCreate("Cadastros", "Canais de Origem") || canCreate("Cadastros", null));
   
   const [formData, setFormData] = useState({
     nome: parametro?.nome || '',
@@ -40,14 +49,23 @@ export default function ParametroOrigemPedidoForm({
     ativo: parametro?.ativo ?? true,
     descricao: parametro?.descricao || '',
     cor_badge: parametro?.cor_badge || 'blue',
+    empresa_id: parametro?.empresa_id || empresaAtual?.id || '',
+    group_id: parametro?.group_id || groupId || '',
   });
 
   const mutation = useMutation({
     mutationFn: (data) => {
+      if (!contextoValido) throw new Error("Selecione um grupo ou empresa antes de salvar.");
+      if (!podeSalvar) throw new Error("Seu perfil nao permite salvar canais de origem.");
+      const payload = {
+        ...data,
+        ...(empresaAtual?.id && !data.empresa_id ? { empresa_id: empresaAtual.id } : {}),
+        ...(groupId && !data.group_id ? { group_id: groupId } : {})
+      };
       if (parametro?.id) {
-        return base44.entities.ParametroOrigemPedido.update(parametro.id, data);
+        return updateInContext('ParametroOrigemPedido', parametro.id, payload);
       }
-      return base44.entities.ParametroOrigemPedido.create(data);
+      return createInContext('ParametroOrigemPedido', payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['parametros-origem-pedido'] });
@@ -312,7 +330,7 @@ export default function ParametroOrigemPedidoForm({
                 Cancelar
               </Button>
             )}
-            <Button type="submit" disabled={mutation.isPending}>
+            <Button type="submit" disabled={mutation.isPending || !contextoValido || !podeSalvar}>
               <Save className="w-4 h-4 mr-2" />
               {mutation.isPending ? 'Salvando...' : parametro ? 'Atualizar' : 'Criar'}
             </Button>
@@ -329,7 +347,7 @@ export default function ParametroOrigemPedidoForm({
               Cancelar
             </Button>
           )}
-          <Button onClick={handleSubmit} disabled={mutation.isPending}>
+          <Button onClick={handleSubmit} disabled={mutation.isPending || !contextoValido || !podeSalvar}>
             <Save className="w-4 h-4 mr-2" />
             {mutation.isPending ? 'Salvando...' : parametro ? 'Atualizar' : 'Criar'}
           </Button>

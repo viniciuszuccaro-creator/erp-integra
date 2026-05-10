@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '../lib/UserContext';
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * Gerenciador de Sessões Ativas
@@ -29,20 +30,31 @@ import { useUser } from '../lib/UserContext';
  */
 export default function GerenciadorSessoes() {
   const { user } = useUser();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
   const queryClient = useQueryClient();
   const [encerrandoTodas, setEncerrandoTodas] = useState(false);
+  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const sessaoLocalId = (() => {
+    try { return localStorage.getItem('sessao_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = empresaAtual?.id || null;
+  const scopeAtivo = !!(grupoAtivoId || empresaAtivaId);
 
   const { data: sessoes = [], isLoading } = useQuery({
-    queryKey: ['sessoes-usuario', user?.id],
+    queryKey: ['sessoes-usuario', user?.id, empresaAtivaId, grupoAtivoId],
     queryFn: async () => {
       const result = await base44.entities.SessaoUsuario.filter({
         usuario_id: user.id,
-        ativa: true
+        ativa: true,
+        ...(empresaAtivaId ? { empresa_id: empresaAtivaId } : {}),
+        ...(!empresaAtivaId && grupoAtivoId ? { group_id: grupoAtivoId } : {})
       }, '-data_hora_ultimo_acesso');
       
       return result;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && scopeAtivo,
     refetchInterval: 30000 // 30 segundos
   });
 
@@ -56,6 +68,21 @@ export default function GerenciadorSessoes() {
         data_hora_encerramento: now,
         motivo_encerramento: 'Logout Remoto'
       });
+      try {
+        await base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuario',
+          usuario_id: user?.id || null,
+          acao: 'Encerramento',
+          modulo: 'Seguranca',
+          entidade: 'SessaoUsuario',
+          registro_id: sessaoId,
+          empresa_id: empresaAtivaId,
+          group_id: grupoAtivoId || null,
+          descricao: 'Sessao encerrada remotamente',
+          dados_novos: { sessao_id: sessaoId, motivo_encerramento: 'Logout Remoto' },
+          data_hora: now
+        });
+      } catch {}
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sessoes-usuario'] });
@@ -70,7 +97,7 @@ export default function GerenciadorSessoes() {
   const encerrarTodasMutation = useMutation({
     mutationFn: async () => {
       const sessoesParaEncerrar = sessoes.filter(s => 
-        s.id !== localStorage.getItem('sessao_id')
+        s.id !== sessaoLocalId
       );
 
       for (const sessao of sessoesParaEncerrar) {
@@ -81,6 +108,21 @@ export default function GerenciadorSessoes() {
           motivo_encerramento: 'Logout Todas Sessões'
         });
       }
+
+      try {
+        await base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuario',
+          usuario_id: user?.id || null,
+          acao: 'Revogacao',
+          modulo: 'Seguranca',
+          entidade: 'SessaoUsuario',
+          empresa_id: empresaAtivaId,
+          group_id: grupoAtivoId || null,
+          descricao: `${sessoesParaEncerrar.length} sessoes revogadas pelo usuario`,
+          dados_novos: { quantidade: sessoesParaEncerrar.length },
+          data_hora: new Date().toISOString()
+        });
+      } catch {}
 
       return sessoesParaEncerrar.length;
     },
@@ -105,9 +147,9 @@ export default function GerenciadorSessoes() {
   }
 
   const sessaoAtual = sessoes.length > 0 
-    ? [...sessoes].sort((a,b) => new Date(b.data_hora_ultimo_acesso || b.data_hora_inicio) - new Date(a.data_hora_ultimo_acesso || a.data_hora_inicio))[0]
+    ? (sessoes.find((s) => s.id === sessaoLocalId) || [...sessoes].sort((a,b) => new Date(b.data_hora_ultimo_acesso || b.data_hora_inicio) - new Date(a.data_hora_ultimo_acesso || a.data_hora_inicio))[0])
     : null;
-  const outrasSessoes = sessaoAtual ? sessoes.filter(s => s.id !== sessaoAtual.id) : [];
+  const outrasSessoes = sessoes.filter(s => s.id !== sessaoAtual?.id && s.id !== sessaoLocalId);
 
   const getDispositivoIcon = (tipo) => {
     if (tipo === 'Mobile') return Smartphone;
@@ -152,6 +194,7 @@ export default function GerenciadorSessoes() {
                 disabled={encerrandoTodas || encerrarTodasMutation.isPending}
                 variant="outline"
                 className="bg-white"
+                data-action="Seguranca.Sessao.encerrarTodasOutras"
               >
                 {encerrandoTodas ? 'Encerrando...' : 'Encerrar Todas (Outras)'}
               </Button>
@@ -321,6 +364,7 @@ export default function GerenciadorSessoes() {
                           }}
                           disabled={encerrarSessaoMutation.isPending}
                           className="text-red-600 hover:text-red-700"
+                          data-action="Seguranca.Sessao.encerrar"
                         >
                           <LogOut className="w-4 h-4 mr-1" />
                           Encerrar
@@ -337,7 +381,7 @@ export default function GerenciadorSessoes() {
       )}
 
       {/* Histórico de Sessões Recentes */}
-      <HistoricoSessoesRecentes usuarioId={user?.id} />
+      <HistoricoSessoesRecentes usuarioId={user?.id} empresaId={empresaAtivaId} grupoId={grupoAtivoId} />
 
       {outrasSessoes.length === 0 && (
         <Card className="border-0 shadow-md">
@@ -357,18 +401,20 @@ export default function GerenciadorSessoes() {
 /**
  * Histórico de Sessões Recentes (últimas 10)
  */
-function HistoricoSessoesRecentes({ usuarioId }) {
+function HistoricoSessoesRecentes({ usuarioId, empresaId, grupoId }) {
   const { data: historico = [], isLoading } = useQuery({
-    queryKey: ['sessoes-historico', usuarioId],
+    queryKey: ['sessoes-historico', usuarioId, empresaId, grupoId],
     queryFn: async () => {
       const result = await base44.entities.SessaoUsuario.filter({
         usuario_id: usuarioId,
-        ativa: false
+        ativa: false,
+        ...(empresaId ? { empresa_id: empresaId } : {}),
+        ...(!empresaId && grupoId ? { group_id: grupoId } : {})
       }, '-data_hora_inicio', 10);
       
       return result;
     },
-    enabled: !!usuarioId
+    enabled: !!usuarioId && !!(empresaId || grupoId)
   });
 
   if (isLoading || historico.length === 0) return null;

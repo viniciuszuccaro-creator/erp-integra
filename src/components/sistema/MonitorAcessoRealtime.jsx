@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import {
   Activity,
   Users,
@@ -24,6 +25,32 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 export default function MonitorAcessoRealtime() {
   const [tempoReal, setTempoReal] = useState(new Date());
+  const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
+  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
+  const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
+  const scopeKey = empresaAtivaId || grupoAtivoId || 'sem-contexto';
+  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
+    .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
+    .filter(Boolean);
+
+  const usuarioNoEscopo = (u) => {
+    if (!u) return false;
+    const vinculadas = normalizeEmpresaIds(u.empresas_vinculadas);
+    const temMarcacaoEscopo = u.group_id || u.grupo_id || u.grupo_atual_id || u.empresa_id || u.empresa_atual_id || vinculadas.length > 0;
+    if (!temMarcacaoEscopo) return true;
+    if (contexto === 'grupo') {
+      const empresasIds = empresasDoGrupo.map((e) => e.id);
+      return u.group_id === grupoAtivoId ||
+        u.grupo_id === grupoAtivoId ||
+        u.grupo_atual_id === grupoAtivoId ||
+        vinculadas.some((id) => empresasIds.includes(id));
+    }
+    return u.empresa_id === empresaAtivaId ||
+      u.empresa_atual_id === empresaAtivaId ||
+      vinculadas.includes(empresaAtivaId);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -34,14 +61,21 @@ export default function MonitorAcessoRealtime() {
   }, []);
 
   const { data: usuarios = [] } = useQuery({
-    queryKey: ['usuarios-monitor'],
-    queryFn: () => base44.entities.User.list(),
+    queryKey: ['usuarios-monitor', scopeKey],
+    queryFn: async () => {
+      const rows = await base44.entities.User.list();
+      return rows.filter(usuarioNoEscopo);
+    },
+    enabled: !!scopeKey && scopeKey !== 'sem-contexto',
   });
 
   const { data: auditoriaRecente = [] } = useQuery({
-    queryKey: ['auditoria-realtime', tempoReal],
-    queryFn: () => base44.entities.AuditoriaAcesso.list('-created_date', 100),
+    queryKey: ['auditoria-realtime', scopeKey, tempoReal],
+    queryFn: () => filterInContext('AuditoriaAcesso', {}, '-created_date', 100),
+    enabled: !!scopeKey && scopeKey !== 'sem-contexto',
   });
+
+  const getDataEvento = (evento) => evento?.data_hora || evento?.created_date || evento?.updated_date;
 
   // Usuários Online (últimos 5 minutos)
   const usuariosOnline = usuarios.filter(u => {
@@ -52,8 +86,11 @@ export default function MonitorAcessoRealtime() {
 
   // Acessos negados nas últimas 24h
   const acessosNegados24h = auditoriaRecente.filter(a => {
-    const diff = Date.now() - new Date(a.created_date).getTime();
-    return diff < 24 * 60 * 60 * 1000 && a.status === 'negado';
+    const dataEvento = getDataEvento(a);
+    if (!dataEvento) return false;
+    const diff = Date.now() - new Date(dataEvento).getTime();
+    const status = String(a.status || a.resultado || '').toLowerCase();
+    return diff < 24 * 60 * 60 * 1000 && ['negado', 'bloqueado', 'falha'].includes(status);
   });
 
   // Tentativas de login falhas
@@ -70,7 +107,9 @@ export default function MonitorAcessoRealtime() {
     hora.setHours(hora.getHours() - (23 - i), 0, 0, 0);
     
     const count = auditoriaRecente.filter(a => {
-      const aHora = new Date(a.created_date);
+      const dataEvento = getDataEvento(a);
+      if (!dataEvento) return false;
+      const aHora = new Date(dataEvento);
       return aHora.getHours() === hora.getHours() &&
              aHora.getDate() === hora.getDate();
     }).length;
@@ -254,7 +293,7 @@ export default function MonitorAcessoRealtime() {
                     {acesso.usuario_nome || acesso.created_by} tentou acessar {acesso.recurso || acesso.modulo}
                   </p>
                   <p className="text-xs text-red-600 mt-1">
-                    {new Date(acesso.created_date).toLocaleString('pt-BR')}
+                    {new Date(getDataEvento(acesso)).toLocaleString('pt-BR')}
                   </p>
                 </div>
               ))}

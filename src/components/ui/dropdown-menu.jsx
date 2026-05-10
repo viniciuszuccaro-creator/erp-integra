@@ -2,8 +2,6 @@ import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { uiAuditWrap } from "@/components/lib/uiAudit";
-import usePermissions from "@/components/lib/usePermissions";
 
 const DropdownMenu = DropdownMenuPrimitive.Root
 
@@ -60,51 +58,20 @@ const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, ...pr
 ))
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
-const DropdownMenuItem = React.forwardRef(({ className, inset, ...props }, ref) => {
-  const { hasPermission } = usePermissions();
-  const perm = props?.['data-permission'];
-  const cleanProps = { ...props };
-  if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
-  if (cleanProps.__wrapped_audit) delete cleanProps.__wrapped_audit;
-  if (typeof cleanProps.onSelect === 'function') {
-    const original = cleanProps.onSelect;
-    cleanProps.onSelect = uiAuditWrap(cleanProps['data-action'] || 'DropdownMenuItem.onSelect', (event) => original(event), { kind: 'dropdown' });
-  }
-  if ('data-action' in cleanProps) delete cleanProps['data-action'];
-  if (perm) {
-    const [m,s,a] = String(perm).split('.');
-    const allowed = hasPermission(m, s || null, a || 'visualizar');
-    if (!allowed) return <span className="inline-flex items-center rounded border border-dashed px-2 py-1 text-[10px] text-slate-400 select-none">Acesso negado</span>;
-  }
-  return (
-    <DropdownMenuPrimitive.Item
-      ref={ref}
-      className={cn(
-        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        inset && "pl-8",
-        className
-      )}
-      {...cleanProps}
-    />
-  )
-})
+const DropdownMenuItem = React.forwardRef(({ className, inset, ...props }, ref) => (
+  <DropdownMenuPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      inset && "pl-8",
+      className
+    )}
+    {...props}
+  />
+))
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
-const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checked, ...props }, ref) => {
-  const cleanProps = { ...props };
-  const { hasPermission } = usePermissions();
-  const perm = cleanProps?.['data-permission'];
-  if (typeof cleanProps.onCheckedChange === 'function') {
-    cleanProps.onCheckedChange = uiAuditWrap(cleanProps['data-action'] || 'DropdownMenuCheckboxItem.onCheckedChange', cleanProps.onCheckedChange, { kind: 'dropdown-checkbox' });
-  }
-  if ('data-action' in cleanProps) delete cleanProps['data-action'];
-  if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
-  if (perm) {
-    const [m,s,a] = String(perm).split('.');
-    const allowed = hasPermission(m, s || null, a || 'visualizar');
-    if (!allowed) return <span className="inline-flex items-center rounded border border-dashed px-2 py-1 text-[10px] text-slate-400 select-none">Acesso negado</span>;
-  }
-  return (
+const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checked, ...props }, ref) => (
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
@@ -112,7 +79,7 @@ const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checke
       className
     )}
     checked={checked}
-    {...cleanProps}
+    {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <DropdownMenuPrimitive.ItemIndicator>
@@ -121,32 +88,17 @@ const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checke
     </span>
     {children}
   </DropdownMenuPrimitive.CheckboxItem>
-  )
-})
+))
 DropdownMenuCheckboxItem.displayName = DropdownMenuPrimitive.CheckboxItem.displayName
 
-const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props }, ref) => {
-  const { hasPermission } = usePermissions();
-  const cleanProps = { ...props };
-  const perm = cleanProps?.['data-permission'];
-  if (typeof cleanProps.onSelect === 'function') {
-    cleanProps.onSelect = uiAuditWrap(cleanProps['data-action'] || 'DropdownMenuRadioItem.onSelect', cleanProps.onSelect, { kind: 'dropdown-radio' });
-  }
-  if ('data-action' in cleanProps) delete cleanProps['data-action'];
-  if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
-  if (perm) {
-    const [m,s,a] = String(perm).split('.');
-    const allowed = hasPermission(m, s || null, a || 'visualizar');
-    if (!allowed) return <span className="inline-flex items-center rounded border border-dashed px-2 py-1 text-[10px] text-slate-400 select-none">Acesso negado</span>;
-  }
-  return (
+const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props }, ref) => (
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
       "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
-    {...cleanProps}
+    {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <DropdownMenuPrimitive.ItemIndicator>
@@ -155,8 +107,7 @@ const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props 
     </span>
     {children}
   </DropdownMenuPrimitive.RadioItem>
-  )
-})
+))
 DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName
 
 const DropdownMenuLabel = React.forwardRef(({ className, inset, ...props }, ref) => (

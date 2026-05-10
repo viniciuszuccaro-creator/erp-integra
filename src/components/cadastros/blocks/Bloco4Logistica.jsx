@@ -15,7 +15,13 @@ import LocalEstoqueForm from "@/components/cadastros/LocalEstoqueForm";
 import RotaPadraoForm from "@/components/cadastros/RotaPadraoForm";
 import ModeloDocumentoForm from "@/components/cadastros/ModeloDocumentoForm";
 
-export default function Bloco4Logistica({ allCounts, isLoading }) {
+function filterTiles(tiles, searchTerm) {
+  const q = String(searchTerm || "").trim().toLowerCase();
+  if (!q) return tiles;
+  return tiles.filter(({ k, t }) => `${k} ${t}`.toLowerCase().includes(q));
+}
+
+export default function Bloco4Logistica({ allCounts, isLoading, searchTerm = "" }) {
   const { openWindow } = useWindow();
   const { hasPermission } = usePermissions();
   const openList = (entidade, titulo, Icon, campos, FormComp) => () =>
@@ -30,6 +36,14 @@ export default function Bloco4Logistica({ allCounts, isLoading }) {
     { k: 'RotaPadrao',      t: 'Rotas Padrão',                    i: MapPin,   c: ['nome','nome_rota','origem','destino'],         f: RotaPadraoForm },
     { k: 'ModeloDocumento', t: 'Modelos de Documento Logístico',  i: FileText, c: ['nome','nome_modelo','tipo_documento','ativo'], f: ModeloDocumentoForm },
   ];
+  const filteredTiles = filterTiles(tiles, searchTerm);
+  const canViewEntity = (entidade) =>
+    hasPermission("Cadastros", entidade, "visualizar") ||
+    hasPermission("Cadastros", null, "visualizar") ||
+    hasPermission("Expedicao", entidade, "visualizar") ||
+    hasPermission("Expedicao", null, "visualizar") ||
+    hasPermission("Expedição", entidade, "visualizar") ||
+    hasPermission("Expedição", null, "visualizar");
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -44,9 +58,11 @@ export default function Bloco4Logistica({ allCounts, isLoading }) {
         <CardContent className="p-4 text-sm text-slate-600">Total consolidado do grupo.</CardContent>
       </Card>
 
-      {tiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
+      {filteredTiles.map(({ k, t, i: Icon, c, f: FormComp }) => (
         <Card key={k} className="rounded-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group border"
-          onClick={hasPermission('Expedição', null, 'visualizar') ? openList(k, t, Icon, c, FormComp) : undefined}>
+          onClick={canViewEntity(k) ? openList(k, t, Icon, c, FormComp) : undefined}
+          data-permission={`Cadastros.${k}.visualizar`}
+          data-action={`Cadastros.${k}.abrir`}>
           <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2 text-slate-700">
@@ -59,13 +75,18 @@ export default function Bloco4Logistica({ allCounts, isLoading }) {
               <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                 {k === 'Motorista' && (
                   <Button variant="outline" size="sm" className="rounded-sm text-xs h-7"
-                    onClick={() => openWindow(AppEntregasMotorista, {}, { title: 'App Motorista', width: 420, height: 800 })}>
+                    onClick={() => openWindow(AppEntregasMotorista, {}, { title: 'App Motorista', width: 420, height: 800 })}
+                    disabled={!canViewEntity(k)}
+                    data-permission="Cadastros.Motorista.visualizar"
+                    data-action="Cadastros.Motorista.app">
                     App
                   </Button>
                 )}
                 <Button size="sm" className="bg-blue-600 hover:bg-blue-700 rounded-sm text-xs h-7"
                   onClick={() => openList(k, t, Icon, c, FormComp)()}
-                  disabled={!hasPermission('Expedição', null, 'visualizar')}>
+                  disabled={!canViewEntity(k)}
+                  data-permission={`Cadastros.${k}.visualizar`}
+                  data-action={`Cadastros.${k}.abrir`}>
                   Abrir
                 </Button>
               </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, Suspense } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
@@ -138,6 +138,8 @@ function LayoutContent({ children, currentPageName }) {
         const { user } = useUser();
         const { empresaAtual, filterInContext, grupoAtual, contexto } = useContextoVisual();
         const { hasPermission } = usePermissions();
+        const contextRef = React.useRef({ user, empresaAtual, grupoAtual, contexto, moduleName });
+        contextRef.current = { user, empresaAtual, grupoAtual, contexto, moduleName };
 
 
         const [pesquisaOpen, setPesquisaOpen] = useState(false);
@@ -147,15 +149,6 @@ function LayoutContent({ children, currentPageName }) {
         const { prefetch: prefetchModule } = usePrefetchModuleData();
         const AUDIT_BUSINESS_ONLY = true;
         const queryClient = useQueryClient();
-        const [isAuthed, setIsAuthed] = React.useState(false);
-
-        React.useEffect(() => {
-          let mounted = true;
-          base44.auth.isAuthenticated().then((ok) => {
-            if (mounted) setIsAuthed(!!ok);
-          });
-          return () => { mounted = false; };
-        }, []);
 
         // Fase 2: Barramento de invalidação seletiva — substitui broadcast global por keys específicas
         useInvalidationBus([
@@ -163,7 +156,7 @@ function LayoutContent({ children, currentPageName }) {
           'Pedido', 'ContaReceber', 'ContaPagar', 'Entrega', 'NotaFiscal',
           'OrdemCompra', 'MovimentacaoEstoque', 'Oportunidade', 'Representante',
           'ContatoB2B', 'SegmentoCliente', 'RegiaoAtendimento',
-        ], { enabled: isAuthed });
+        ], { enabled: true });
 
         // Fase 3: Rastreamento de histórico + prefetch preditivo
         useNavHistory();
@@ -245,7 +238,6 @@ function LayoutContent({ children, currentPageName }) {
 
         const prefetchForItem = (title) => {
                         try {
-                          if (!isAuthed) return;
                           switch (title) {
                             case 'Dashboard':
                               queryClient.prefetchQuery({ queryKey: ['dash', 'kpis'], queryFn: () => base44.entities.AuditLog.filter({}, '-data_hora', 5) });
@@ -339,7 +331,7 @@ function LayoutContent({ children, currentPageName }) {
     let cancelled = false;
     (async () => {
       try {
-        if (!isAuthed || !empresaAtual?.id) { if (!cancelled) setIntegracoesOk(true); return; }
+        if (!empresaAtual?.id) { if (!cancelled) setIntegracoesOk(true); return; }
         // Apenas perfis com permissão de Sistema visualizam alerta
         const allowed = hasPermission('Sistema', null, 'ver');
         if (!allowed) { if (!cancelled) setIntegracoesOk(true); return; }
@@ -359,7 +351,7 @@ function LayoutContent({ children, currentPageName }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [empresaAtual?.id, isAuthed]);
+  }, [empresaAtual?.id]);
 
   // PWA-lite: injeta manifest em runtime e tenta registrar service worker (se disponível)
   useEffect(() => {
@@ -645,7 +637,7 @@ function LayoutContent({ children, currentPageName }) {
   ` : '';
 
   useEffect(() => {
-    if (!user || !isAuthed) return;
+    if (!user) return;
     const entityToModule = {
       Cliente: 'CRM',
       Oportunidade: 'CRM',
@@ -757,13 +749,14 @@ function LayoutContent({ children, currentPageName }) {
 
   // Global Phase 4 patch: multiempresa stamping + audit on entity writes
   useEffect(() => {
-    if (!base44?.entities || !isAuthed) return;
+    if (!base44?.entities) return;
 
     const stamp = (dados) => {
       const out = { ...(dados || {}) };
       try {
-        if (grupoAtual?.id && !out.group_id) out.group_id = grupoAtual.id;
-        if (contexto !== 'grupo' && empresaAtual?.id && !out.empresa_id) out.empresa_id = empresaAtual.id;
+        const ctx = contextRef.current;
+        if (ctx.grupoAtual?.id && !out.group_id) out.group_id = ctx.grupoAtual.id;
+        if (ctx.contexto !== 'grupo' && ctx.empresaAtual?.id && !out.empresa_id) out.empresa_id = ctx.empresaAtual.id;
       } catch (_) {}
       return out;
     };
@@ -771,12 +764,11 @@ function LayoutContent({ children, currentPageName }) {
     const getScope = () => {
       const scope = {};
       try {
-        const storedContexto = localStorage.getItem('contexto_atual') || contexto;
-        const storedEmpresaId = localStorage.getItem('empresa_atual_id') || empresaAtual?.id;
-        const storedGrupoId = localStorage.getItem('group_atual_id') || grupoAtual?.id;
-        if (storedGrupoId) scope.group_id = storedGrupoId;
-        if (storedContexto !== 'grupo' && storedEmpresaId) scope.empresa_id = storedEmpresaId;
-        if (storedContexto !== 'grupo' && !storedEmpresaId) scope.__blocked = true;
+        const ctx = contextRef.current;
+        if (ctx.grupoAtual?.id) scope.group_id = ctx.grupoAtual.id;
+        if (ctx.contexto !== 'grupo' && ctx.empresaAtual?.id) scope.empresa_id = ctx.empresaAtual.id;
+        // Strict scope: mark blocked when no empresa in empresa-context
+        if (ctx.contexto !== 'grupo' && !ctx.empresaAtual?.id) scope.__blocked = true;
       } catch (_) {}
       return scope;
     };
@@ -792,7 +784,7 @@ function LayoutContent({ children, currentPageName }) {
           if (['criar','editar','excluir'].includes(action)) throw new Error('RBAC: entidade protegida');
         }
         // Admin sempre permitido (sem chamada backend)
-        if (user?.role === 'admin') return;
+        if (contextRef.current.user?.role === 'admin') return;
 
         const map = {
           Cliente: 'CRM', Oportunidade: 'CRM', Interacao: 'CRM',
@@ -930,7 +922,8 @@ function LayoutContent({ children, currentPageName }) {
       // Multiempresa em list/filter por padrão + STRICT empresa_id
       if (orig.filter) {
         api.filter = async (criteria = {}, order, limit, skip) => {
-          if (contexto !== 'grupo' && !empresaAtual?.id) { return []; }
+          const ctx = contextRef.current;
+          if (ctx.contexto !== 'grupo' && !ctx.empresaAtual?.id) { return []; }
           const scope = getScope();
           // Se o filtro já contém $or/$and ou campos de escopo, não injetar AND adicional
           const hasScope = !!criteria?.empresa_id || !!criteria?.group_id || !!criteria?.$or || !!criteria?.$and;
@@ -941,7 +934,8 @@ function LayoutContent({ children, currentPageName }) {
 
       if (orig.list) {
         api.list = async (order, limit, skip) => {
-          if (contexto !== 'grupo' && !empresaAtual?.id) { return []; }
+          const ctx = contextRef.current;
+          if (ctx.contexto !== 'grupo' && !ctx.empresaAtual?.id) { return []; }
           if (orig.filter) {
             return await orig.filter(getScope(), order, limit, skip);
           }
@@ -981,7 +975,7 @@ function LayoutContent({ children, currentPageName }) {
             try {
               const scope = getScope();
               const guardPayload = {
-                module: moduleName || 'Sistema',
+                module: contextRef.current.moduleName || 'Sistema',
                 section: 'Funções',
                 action: 'executar',
                 function_name: functionName,
@@ -991,7 +985,7 @@ function LayoutContent({ children, currentPageName }) {
               const res = await origInvoke('entityGuard', guardPayload);
               if (res?.data && res.data.allowed === false) {
                 try { await base44.entities.AuditLog.create({
-                  acao: 'Bloqueio', modulo: moduleName || 'Sistema', tipo_auditoria: 'seguranca',
+                  acao: 'Bloqueio', modulo: contextRef.current.moduleName || 'Sistema', tipo_auditoria: 'seguranca',
                   entidade: 'Function', descricao: `Acesso negado à função ${functionName}`, data_hora: new Date().toISOString(),
                 }); } catch {}
                 throw new Error('RBAC backend: ação negada');
@@ -1011,7 +1005,7 @@ function LayoutContent({ children, currentPageName }) {
               params = { ...params };
               if (ctx?.group_id && (params.group_id === undefined || params.group_id === null)) params.group_id = ctx.group_id;
               // aceitar alias empresaId, mas padronizar empresa_id
-              const hasEmpresa = params.empresa_id != null || params.empresaId != null;
+              const hasEmpresa = !(params.empresa_id === undefined || params.empresa_id === null) || !(params.empresaId === undefined || params.empresaId === null);
               if (ctx?.empresa_id && !hasEmpresa) params.empresa_id = ctx.empresa_id;
             }
           } catch (_) {}
@@ -1095,7 +1089,7 @@ function LayoutContent({ children, currentPageName }) {
 
   // Auditoria de navegação entre páginas
   useEffect(() => {
-    if (!user || !isAuthed) return;
+    if (!user) return;
     try {
       (async () => {
         try {
@@ -1117,9 +1111,9 @@ function LayoutContent({ children, currentPageName }) {
       })();
     } catch (_) {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, user?.id, empresaAtual?.id, moduleName, isAuthed]);
+  }, [location.pathname, user?.id, empresaAtual?.id, moduleName]);
   useEffect(() => {
-            if (!user || !isAuthed) return;
+            if (!user) return;
             if (AUDIT_BUSINESS_ONLY) return;
             const handlerClick = (e) => {
       try {
@@ -1175,7 +1169,7 @@ function LayoutContent({ children, currentPageName }) {
       document.removeEventListener('click', handlerClick, true);
       document.removeEventListener('change', handlerChange, true);
     };
-  }, [user?.id, empresaAtual?.id, moduleName, isAuthed]);
+  }, [user?.id, empresaAtual?.id, moduleName]);
 
   const handleIAEstoque = async () => {
           try {
@@ -1204,7 +1198,7 @@ function LayoutContent({ children, currentPageName }) {
 
   // Idle prefetch common datasets (multiempresa-aware)
   useEffect(() => {
-    const can = isAuthed && ((contexto === 'grupo') || !!empresaAtual?.id);
+    const can = (contexto === 'grupo') || !!empresaAtual?.id;
     if (!can) return;
     const run = () => {
       try {
@@ -1224,7 +1218,7 @@ function LayoutContent({ children, currentPageName }) {
     } else {
       setTimeout(run, 1500);
     }
-  }, [empresaAtual?.id, grupoAtual?.id, contexto, isAuthed]);
+  }, [empresaAtual?.id, grupoAtual?.id, contexto]);
 
   // Fase 3: Limpeza do IDB expirado no idle (uma vez por sessão)
   useEffect(() => {
@@ -1293,7 +1287,7 @@ function LayoutContent({ children, currentPageName }) {
     "Recursos Humanos": "RH",
   };
 
-  const itemsFiltrados = !isAuthed ? [] : navigationItems.filter(item => {
+  const itemsFiltrados = navigationItems.filter(item => {
     if (item.adminOnly && user?.role !== 'admin') return false;
     const mod = titleToModule[item.title];
     if (!mod) return true; // itens públicos ou informativos continuam visíveis
@@ -1301,7 +1295,7 @@ function LayoutContent({ children, currentPageName }) {
   });
 
   useEffect(() => {
-    if (!moduleName || !isAuthed || !user) return;
+    if (!moduleName) return;
     const key = `audit_block_${moduleName}`;
     try {
       const allowed = hasPermission(moduleName, null, 'ver');
@@ -1320,7 +1314,7 @@ function LayoutContent({ children, currentPageName }) {
                       });
       }
     } catch (e) {}
-  }, [moduleName, currentPageName, user?.id, empresaAtual?.id, isAuthed]);
+  }, [moduleName, currentPageName, user?.id, empresaAtual?.id]);
 
 
 
@@ -1333,12 +1327,16 @@ function LayoutContent({ children, currentPageName }) {
     publico: itemsFiltrados.filter(item => item.group === "publico"),
   };
 
-  const content = isMobilePage ? (
-    <>
-      {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
-      <div className="w-full h-full min-h-screen">{children}</div>
-    </>
-  ) : (
+  if (isMobilePage) {
+    return (
+      <>
+        {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
+        <div className="w-full h-full min-h-screen">{children}</div>
+      </>
+    );
+  }
+
+  return (
     <SidebarProvider>
       {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
       
@@ -1476,17 +1474,17 @@ function LayoutContent({ children, currentPageName }) {
                 <AcoesRapidasGlobal />
 
                 <NotificationCenter />
-                {isAuthed && hasPermission('Estoque', null, 'visualizar') && (
+                {hasPermission('Estoque', null, 'visualizar') && (
                   <button onClick={handleIAEstoque} className="px-2 py-1 rounded-lg hover:bg-slate-100 text-sm text-slate-600 hidden lg:inline" title="Previsões de Estoque (IA)">
                     IA Estoque
                   </button>
                 )}
-                {isAuthed && hasPermission('Financeiro', null, 'visualizar') && (
+                {hasPermission('Financeiro', null, 'visualizar') && (
                   <button onClick={handleIAFinanceiro} className="px-2 py-1 rounded-lg hover:bg-slate-100 text-sm text-slate-600 hidden lg:inline" title="Anomalias Financeiras (IA)">
                     IA Financeiro
                   </button>
                 )}
-                {isAuthed && hasPermission('Comercial', null, 'visualizar') && (
+                {hasPermission('Comercial', null, 'visualizar') && (
                   <Link to={createPageUrl('Comercial')} className="px-2 py-1 rounded-lg hover:bg-slate-100 text-sm text-slate-600 hidden lg:inline" title="Funil e KPIs Comerciais">
                     Funil/KPIs
                   </Link>
@@ -1509,7 +1507,7 @@ function LayoutContent({ children, currentPageName }) {
                 Selecione uma empresa para carregar os dados. O acesso está bloqueado sem empresa selecionada.
               </div>
               )}
-              {isAuthed && !integracoesOk && hasPermission('Sistema', null, 'ver') && (
+              {!integracoesOk && hasPermission('Sistema', null, 'ver') && (
               <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
                 Integrações fiscais pendentes nesta empresa. <Link to={createPageUrl("AdministracaoSistema?tab=integracoes")} className="underline">Configurar agora</Link>.
               </div>
@@ -1545,10 +1543,8 @@ function LayoutContent({ children, currentPageName }) {
         <MinimizedWindowsBar />
         </div>
         </SidebarProvider>
-  );
-
-  return content;
-}
+        );
+        }
 
 
 export default function Layout({ children, currentPageName }) {

@@ -11,24 +11,32 @@ import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DollarSign, CreditCard, Settings, Zap, CheckCircle2, Percent, Calendar, Landmark, Building2, Globe } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from "@/components/lib/usePermissions";
 import FormWrapper from "@/components/common/FormWrapper";
 import { toast } from 'sonner';
 
 export default function FormaPagamentoFormCompleto({ formaPagamento, item, data, onSubmit, onSave, onClose, windowMode = false }) {
   const formaPagamentoNorm = formaPagamento || item || data;
   const [abaAtiva, setAbaAtiva] = useState('geral');
-  const { empresaAtual, contextoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, contextoAtual, filterInContext } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || formaPagamentoNorm?.group_id || null;
+  const contextoValido = Boolean(empresaAtual?.id || groupId || formaPagamentoNorm?.empresa_id || formaPagamentoNorm?.group_id);
+  const podeCriar = hasPermission?.("Cadastros.FormaPagamento.criar") || hasPermission?.("Financeiro.FormaPagamento.criar");
+  const podeEditar = hasPermission?.("Cadastros.FormaPagamento.editar") || hasPermission?.("Financeiro.FormaPagamento.editar");
+  const podeSalvar = formaPagamentoNorm?.id ? podeEditar : podeCriar;
   
   const { data: bancos = [] } = useQuery({
-    queryKey: ['bancos'],
-    queryFn: () => base44.entities.Banco.list(),
+    queryKey: ['bancos', groupId, empresaAtual?.id],
+    queryFn: () => filterInContext('Banco', {}, 'nome_banco', 200),
+    enabled: contextoValido,
   });
 
   const { data: gateways = [] } = useQuery({
-    queryKey: ['gateways-pagamento'],
-    queryFn: () => base44.entities.GatewayPagamento.filter({ ativo: true }),
+    queryKey: ['gateways-pagamento', groupId, empresaAtual?.id],
+    queryFn: () => filterInContext('GatewayPagamento', { ativo: true }, 'nome', 200),
+    enabled: contextoValido,
   });
 
   const [formData, setFormData] = useState(() => formaPagamentoNorm || {
@@ -104,7 +112,20 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
       toast.error('Preencha código e descrição');
       return;
     }
-    if (onSubmit) onSubmit(formData);
+    if (!contextoValido) {
+      toast.error('Selecione um grupo ou empresa antes de salvar.');
+      return;
+    }
+    if (!podeSalvar) {
+      toast.error('Sem permissão para salvar forma de pagamento.');
+      return;
+    }
+    const payload = {
+      ...formData,
+      group_id: groupId || formData.group_id,
+      empresa_id: contextoAtual === 'empresa' ? empresaAtual?.id : formData.empresa_id,
+    };
+    if (onSubmit) onSubmit(payload);
     if (onSave) onSave();
     if (onClose) onClose();
   };
@@ -234,6 +255,9 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
               <Switch
                 checked={formData.ativa}
                 onCheckedChange={(v) => setFormData({...formData, ativa: v})}
+                disabled={!podeSalvar}
+                data-permission="Cadastros.FormaPagamento.alterarStatus"
+                data-sensitive="true"
               />
               <Label>Ativa</Label>
             </div>
@@ -680,7 +704,13 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, item, data,
 
       {/* BOTÃO SUBMIT */}
       <div className="flex justify-end gap-3 pt-6 border-t mt-6">
-        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 px-8">
+        <Button
+          type="submit"
+          className="bg-blue-600 hover:bg-blue-700 px-8"
+          disabled={!contextoValido || !podeSalvar}
+          data-permission="Cadastros.FormaPagamento.salvar"
+          data-sensitive="true"
+        >
           <CheckCircle2 className="w-4 h-4 mr-2" />
           {formaPagamentoNorm ? 'Atualizar Forma' : 'Criar Forma'}
         </Button>

@@ -4,10 +4,9 @@
  * ✅ Suporta grupo + empresa com $or automático
  * ✅ Cache de 30s no servidor
  */
-import { createClientFromRequest } from "npm:@base44/sdk@0.8.25";
+import { createClientFromRequest } from "npm:@base44/sdk@0.8.20";
 
 const FIELD_MAP = {
-  Banco: "empresa_id",
   Cliente: "empresa_id",
   Fornecedor: "empresa_dona_id",
   Transportadora: "empresa_dona_id",
@@ -16,41 +15,10 @@ const FIELD_MAP = {
   CentroCusto: "empresa_id",
 };
 
-const SHARED_ENTITIES = new Set(["Cliente", "Fornecedor", "Transportadora", "Produto"]);
-const SCOPED_ENTITIES = new Set([
-  "Banco", "Cliente", "Fornecedor", "Transportadora", "Colaborador", "Produto", "Pedido",
-  "ContaPagar", "ContaReceber", "Entrega", "NotaFiscal", "OrdemCompra",
-  "MovimentacaoEstoque", "CentroCusto", "PlanoDeContas", "PlanoContas"
-]);
-
-const stableStringify = (value) => {
-  try {
-    if (!value || typeof value !== "object") return JSON.stringify(value);
-    if (Array.isArray(value)) return JSON.stringify(value.map((item) => JSON.parse(stableStringify(item))));
-    return JSON.stringify(Object.keys(value).sort().reduce((acc, key) => ({ ...acc, [key]: value[key] }), {}));
-  } catch (_) {
-    return String(value);
-  }
-};
+const SHARED_ENTITIES = new Set(["Cliente", "Fornecedor", "Transportadora"]);
 
 const serverCache = new Map();
 const CACHE_TTL = 30_000;
-
-async function countPaged(api, countFilter) {
-  let total = 0;
-  let skip = 0;
-  const pageSize = 1000;
-
-  while (true) {
-    const rows = await api.filter(countFilter, undefined, pageSize, skip);
-    const page = Array.isArray(rows) ? rows : [];
-    total += page.length;
-    if (page.length < pageSize) break;
-    skip += pageSize;
-  }
-
-  return total;
-}
 
 Deno.serve(async (req) => {
   try {
@@ -76,8 +44,8 @@ Deno.serve(async (req) => {
 
       if (!entity) continue;
 
-      // Verificar cache incluindo filtro para evitar contagem cruzada entre telas/contextos
-      const cacheKey = `${entity}|${groupId || ""}|${empresaId || ""}|${stableStringify(filter)}`;
+      // Verificar cache
+      const cacheKey = `${entity}|${groupId}|${empresaId}`;
       const cached = serverCache.get(cacheKey);
       if (cached && now - cached.ts < CACHE_TTL) {
         result[entity] = cached.count;
@@ -89,42 +57,24 @@ Deno.serve(async (req) => {
       const campo = FIELD_MAP[entity] || "empresa_id";
       const orConditions = [];
 
-      if (!empresaId && !groupId && SCOPED_ENTITIES.has(entity)) {
-        result[entity] = 0;
-        continue;
-      }
-
       if (empresaId) {
-        orConditions.push({ [campo]: empresaId }, { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresa_alocada_id: empresaId });
+        orConditions.push({ [campo]: empresaId });
         if (SHARED_ENTITIES.has(entity)) {
           orConditions.push({ empresas_compartilhadas_ids: { $in: [empresaId] } });
         }
       }
       if (groupId) {
         orConditions.push({ group_id: groupId });
-        const empresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, "-created_date", 200);
-        const empresasIds = (empresas || []).map((empresa) => empresa.id).filter(Boolean);
-        if (empresasIds.length) {
-          orConditions.push({ [campo]: { $in: empresasIds } }, { empresa_id: { $in: empresasIds } }, { empresa_dona_id: { $in: empresasIds } }, { empresa_alocada_id: { $in: empresasIds } });
-          if (SHARED_ENTITIES.has(entity)) {
-            orConditions.push({ empresas_compartilhadas_ids: { $in: empresasIds } });
-          }
-        }
       }
 
       if (orConditions.length > 0) {
-        if (Array.isArray(countFilter.$or) && countFilter.$or.length) {
-          countFilter.$and = [{ $or: countFilter.$or }, { $or: orConditions }];
-          delete countFilter.$or;
-        } else {
-          countFilter.$or = orConditions;
-        }
+        countFilter.$or = orConditions;
       }
 
       // Contar
       try {
         const api = base44.asServiceRole.entities[entity];
-        const count = await countPaged(api, countFilter);
+        const count = await api.filter(countFilter, undefined, 0).then((res) => res?.length || 0);
 
         result[entity] = count;
 

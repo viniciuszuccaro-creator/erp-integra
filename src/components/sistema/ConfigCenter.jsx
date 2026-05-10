@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { Settings, Sparkles, Cloud, Key, CheckCircle } from 'lucide-react';
-import { useToggleConfig } from '@/components/lib/useToggleConfig';
+import { loadScopedConfiguracaoSistema, useToggleConfig } from '@/components/lib/useToggleConfig';
 import ToggleRow from '@/components/sistema/ToggleRow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
@@ -18,29 +18,21 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 export default function ConfigCenter({ empresaId: empresaIdProp }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext } = useContextoVisual();
   const eId = empresaIdProp || empresaAtual?.id;
-  const gId = grupoAtual?.id;
+  const gId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
+    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
+  })();
   const canLoad = Boolean(eId || gId);
 
   const queryKey = ['config-center-v2', eId ?? 'sem', gId ?? 'sem'];
   const { saving, handleToggle, getToggleValue } = useToggleConfig(eId, gId, queryKey);
 
-  // Carrega configs via getEntityRecord (asServiceRole, bypassa wrapper)
+  // Carrega configs diretamente por escopo para manter heranca grupo/empresa apos refresh.
   const { data: configs = [], refetch, isFetching } = useQuery({
     queryKey,
     queryFn: async () => {
-      const orConds = [];
-      if (gId) orConds.push({ group_id: gId });
-      if (eId) orConds.push({ empresa_id: eId });
-      const filter = orConds.length > 1 ? { $or: orConds } : (orConds[0] || {});
-      const res = await base44.functions.invoke('getEntityRecord', {
-        entityName: 'ConfiguracaoSistema',
-        filter,
-        limit: 200,
-        _bust: Date.now(),
-      });
-      return Array.isArray(res?.data) ? res.data : [];
+      return loadScopedConfiguracaoSistema({ empresaId: eId, grupoId: gId, limit: 200 });
     },
     enabled: canLoad,
     staleTime: 0,
@@ -50,8 +42,9 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
 
   // IA configs para listagem
   const { data: configsIA = [] } = useQuery({
-    queryKey: ['configs-ia-geral'],
-    queryFn: () => base44.entities.IAConfig.list(),
+    queryKey: ['configs-ia-geral', eId ?? 'sem', gId ?? 'sem'],
+    queryFn: () => filterInContext('IAConfig', {}, '-updated_date', 500),
+    enabled: canLoad,
   });
 
   const getConfig = (chave) => {
@@ -92,7 +85,7 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
       </Card>
 
       <div className="flex justify-end">
-        <Button variant="outline" size="sm" onClick={() => { queryClient.invalidateQueries({ queryKey: ['config-center-v2'] }); refetch(); }}>
+        <Button variant="outline" size="sm" disabled={isFetching || !canLoad} onClick={() => { queryClient.invalidateQueries({ queryKey: ['config-center-v2'] }); refetch(); }} data-action="ConfigCenter.atualizar">
           🔄 Atualizar
         </Button>
       </div>
@@ -111,10 +104,10 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
               <CardTitle className="text-base">Configurações de Segurança</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <ToggleRow configs={configs} chave="cc_auditoria_automatica" categoria="Seguranca" label="Auditoria Automática" desc="Registra todas as ações dos usuários automaticamente" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
-              <ToggleRow configs={configs} chave="cc_ia_seguranca_ativa" categoria="Seguranca" label="IA de Segurança" desc="Detecta anomalias e comportamentos suspeitos" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
-              <ToggleRow configs={configs} chave="cc_exigir_mfa" categoria="Seguranca" label="Autenticação de Dois Fatores (MFA)" desc="Exige verificação adicional no login" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
-              <ToggleRow configs={configs} chave="cc_bloquear_ips_suspeitos" categoria="Seguranca" label="Bloquear IPs Suspeitos" desc="Bloqueia automaticamente IPs com comportamento anômalo" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
+              <ToggleRow configs={configs} chave="cc_auditoria_automatica" categoria="Seguranca" label="Auditoria Automática" desc="Registra todas as ações dos usuários automaticamente" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" disabled={!canLoad} />
+              <ToggleRow configs={configs} chave="cc_ia_seguranca_ativa" categoria="Seguranca" label="IA de Segurança" desc="Detecta anomalias e comportamentos suspeitos" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" disabled={!canLoad} />
+              <ToggleRow configs={configs} chave="cc_exigir_mfa" categoria="Seguranca" label="Autenticação de Dois Fatores (MFA)" desc="Exige verificação adicional no login" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" disabled={!canLoad} />
+              <ToggleRow configs={configs} chave="cc_bloquear_ips_suspeitos" categoria="Seguranca" label="Bloquear IPs Suspeitos" desc="Bloqueia automaticamente IPs com comportamento anômalo" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" disabled={!canLoad} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -128,10 +121,10 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <ToggleRow configs={configs} chave="cc_ia_preditiva_vendas" categoria="Sistema" label="IA Preditiva de Vendas" desc="Previsão de demanda e churn de clientes" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
-              <ToggleRow configs={configs} chave="cc_ia_conciliacao" categoria="Sistema" label="IA Conciliação Bancária" desc="Conciliação automática de extratos" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
-              <ToggleRow configs={configs} chave="cc_ia_producao" categoria="Sistema" label="IA Produção" desc="Otimização de ordens de produção" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
-              <ToggleRow configs={configs} chave="cc_ia_leitura_projetos" categoria="Sistema" label="IA Leitura de Projetos" desc="Análise automática de projetos de engenharia" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" />
+              <ToggleRow configs={configs} chave="cc_ia_preditiva_vendas" categoria="Sistema" label="IA Preditiva de Vendas" desc="Previsão de demanda e churn de clientes" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" disabled={!canLoad} />
+              <ToggleRow configs={configs} chave="cc_ia_conciliacao" categoria="Sistema" label="IA Conciliação Bancária" desc="Conciliação automática de extratos" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" disabled={!canLoad} />
+              <ToggleRow configs={configs} chave="cc_ia_producao" categoria="Sistema" label="IA Produção" desc="Otimização de ordens de produção" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" disabled={!canLoad} />
+              <ToggleRow configs={configs} chave="cc_ia_leitura_projetos" categoria="Sistema" label="IA Leitura de Projetos" desc="Análise automática de projetos de engenharia" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} accentColor="purple" disabled={!canLoad} />
 
               {Object.keys(modulosIA).length > 0 && (
                 <div className="mt-4 space-y-3">
@@ -165,8 +158,8 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
               <CardTitle className="text-base">Backup e Retenção de Dados</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <ToggleRow configs={configs} chave="cc_backup_automatico" categoria="Sistema" label="Backup Automático Diário" desc="Backup incremental de todas as entidades" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
-              <ToggleRow configs={configs} chave="cc_criptografia_dados" categoria="Seguranca" label="Criptografia de Dados Sensíveis" desc="Criptografa CPF, CNPJ e salários (AES-256)" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} />
+              <ToggleRow configs={configs} chave="cc_backup_automatico" categoria="Sistema" label="Backup Automático Diário" desc="Backup incremental de todas as entidades" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} disabled={!canLoad} />
+              <ToggleRow configs={configs} chave="cc_criptografia_dados" categoria="Seguranca" label="Criptografia de Dados Sensíveis" desc="Criptografa CPF, CNPJ e salários (AES-256)" saving={saving} isFetching={isFetching} onToggle={handleToggle} getToggleValue={getToggleValue} disabled={!canLoad} />
 
               {getConfig('cc_backup_automatico')?.updated_date && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -186,3 +179,4 @@ export default function ConfigCenter({ empresaId: empresaIdProp }) {
     </div>
   );
 }
+

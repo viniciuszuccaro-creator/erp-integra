@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { base44, isApiKeyMode } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import {
   Select,
@@ -40,18 +40,25 @@ export default function EmpresaSwitcher() {
   const { data: gruposDisponiveis = [] } = useQuery({
     queryKey: ['grupos-usuario', user?.id],
     queryFn: async () => {
-      const authed = await base44.auth.isAuthenticated();
-      if (!authed) return [];
+      if (isApiKeyMode || user?.role === 'admin') {
+        const grupos = await base44.entities.GrupoEmpresarial.list();
+        return grupos.filter(g => !g.status || g.status === 'Ativo');
+      }
+
       if (!user?.grupos_vinculados || user.grupos_vinculados.length === 0) {
         return [];
       }
-
-      const grupos = await Promise.all(
-        user.grupos_vinculados
-          .filter((vinculo) => vinculo.ativo)
-          .map((vinculo) => base44.entities.GrupoEmpresarial.get(vinculo.grupo_id).catch(() => null))
-      );
-      return grupos.filter((grupo) => grupo && grupo.status === 'Ativo');
+      
+      const grupos = [];
+      for (const vinculo of user.grupos_vinculados) {
+        if (vinculo.ativo) {
+          const grupo = await base44.entities.GrupoEmpresarial.get(vinculo.grupo_id);
+          if (grupo && grupo.status === 'Ativo') {
+            grupos.push(grupo);
+          }
+        }
+      }
+      return grupos;
     },
     enabled: !!user,
   });
@@ -60,8 +67,6 @@ export default function EmpresaSwitcher() {
   const { data: empresasDisponiveis = [] } = useQuery({
     queryKey: ['empresas-usuario', user?.id],
     queryFn: async () => {
-      const authed = await base44.auth.isAuthenticated();
-      if (!authed) return [];
       // Se admin, listar todas as empresas ativas
       if (user?.role === 'admin') {
         const todasEmpresas = await base44.entities.Empresa.list();
@@ -74,8 +79,11 @@ export default function EmpresaSwitcher() {
       // Se usuário tem empresas_vinculadas
       if (user?.empresas_vinculadas && user.empresas_vinculadas.length > 0) {
         const empresas = [];
-        for (const vinculo of user.empresas_vinculadas) {
-          if (vinculo.ativo && vinculo.empresa_id) {
+        for (const rawVinculo of user.empresas_vinculadas) {
+          const vinculo = typeof rawVinculo === 'string'
+            ? { empresa_id: rawVinculo, ativo: true }
+            : rawVinculo;
+          if (vinculo?.ativo !== false && vinculo?.empresa_id) {
             try {
               const empresa = await base44.entities.Empresa.get(vinculo.empresa_id);
               if (empresa && empresa.status === 'Ativa') {
@@ -84,7 +92,9 @@ export default function EmpresaSwitcher() {
                   nivel_acesso: vinculo.nivel_acesso || 'Operacional'
                 });
               }
-            } catch (_) {}
+            } catch (error) {
+              console.warn(`Empresa ${vinculo.empresa_id} não encontrada:`, error);
+            }
           }
         }
         return empresas;
@@ -116,10 +126,7 @@ export default function EmpresaSwitcher() {
     );
   }
 
-  const handleSelecaoContexto = async (value) => {
-    const authed = await base44.auth.isAuthenticated();
-    if (!authed) return;
-
+  const handleSelecaoContexto = (value) => {
     const [tipo, id] = value.split(':');
     
     if (tipo === 'grupo') {

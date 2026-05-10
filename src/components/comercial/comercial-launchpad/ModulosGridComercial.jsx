@@ -16,6 +16,8 @@ export default function ModulosGridComercial({ modules, onModuleClick }) {
               onClick={() => onModuleClick(module)}
               color={module.color}
               badge={module.badge}
+              dataPermission={module.permissionKey}
+              dataAction={`Comercial.${module.sectionKey || module.title}.abrir`}
             />
           ))}
         </div>

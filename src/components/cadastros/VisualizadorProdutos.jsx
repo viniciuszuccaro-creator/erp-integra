@@ -11,23 +11,32 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
 import { base44 } from '@/api/base44Client';
+import usePermissions from '@/components/lib/usePermissions';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 export default function VisualizadorProdutos(props) {
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
+  const { empresaAtual, grupoAtual, filterInContext, updateInContext } = useContextoVisual();
+  const { canEdit } = usePermissions();
   const [selectedProdutos, setSelectedProdutos] = useState(new Set());
   const [isSetorModalOpen, setIsSetorModalOpen] = useState(false);
   const [targetSetorId, setTargetSetorId] = useState(null);
+  const contextoValido = Boolean(empresaAtual?.id || grupoAtual?.id);
+  const podeEditarProduto = canEdit('Cadastros', 'Produto') || canEdit('Cadastros', null) || canEdit('Estoque', 'Produto') || canEdit('Estoque', null);
 
   const { data: setores = [] } = useQuery({
-    queryKey: ['setores-atividade'],
-    queryFn: () => base44.entities.SetorAtividade.list(),
+    queryKey: ['setores-atividade', empresaAtual?.id || null, grupoAtual?.id || null],
+    queryFn: () => filterInContext('SetorAtividade', {}, 'nome', 200),
+    enabled: contextoValido,
   });
 
   const updateSetorMutation = useMutation({
     mutationFn: async ({ setorId, setorNome }) => {
+      if (!contextoValido) throw new Error('Selecione um grupo ou empresa antes de atualizar produtos.');
+      if (!podeEditarProduto) throw new Error('Seu perfil nao permite editar produtos.');
       const updates = Array.from(selectedProdutos).map(produtoId => 
-        base44.entities.Produto.update(produtoId, {
+        updateInContext('Produto', produtoId, {
           setor_atividade_id: setorId,
           setor_atividade_nome: setorNome,
         })
@@ -98,7 +107,12 @@ export default function VisualizadorProdutos(props) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsSetorModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleUpdateSetor} disabled={!targetSetorId || updateSetorMutation.isPending}>
+            <Button
+              onClick={handleUpdateSetor}
+              disabled={!targetSetorId || updateSetorMutation.isPending || !contextoValido || !podeEditarProduto}
+              data-permission="Cadastros.Produto.editar"
+              data-sensitive
+            >
               {updateSetorMutation.isPending ? 'Atualizando...' : 'Atualizar Produtos'}
             </Button>
           </DialogFooter>

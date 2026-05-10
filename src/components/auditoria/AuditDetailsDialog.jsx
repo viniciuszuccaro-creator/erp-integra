@@ -39,7 +39,7 @@ export default function AuditDetailsDialog({ open, onOpenChange, selected, isAdm
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} data-action="AuditDetails.fechar">Fechar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
