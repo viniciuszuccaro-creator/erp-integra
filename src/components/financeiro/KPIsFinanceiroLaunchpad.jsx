@@ -67,7 +67,7 @@ export default function KPIsFinanceiroLaunchpad({
         </CardHeader>
         <CardContent className="px-2 pb-2">
           <div className="text-base font-bold text-orange-600">
-            {vencidasReceber + vencidasPagar
+            {vencidasReceber + vencidasPagar}
           </div>
           <p className="text-xs text-slate-500">Vencidas</p>
         </CardContent>

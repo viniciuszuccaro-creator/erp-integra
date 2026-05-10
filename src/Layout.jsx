@@ -68,6 +68,7 @@ import { useInvalidationBus } from "@/components/lib/useInvalidationBus";
 import { useNavHistory } from "@/components/lib/useNavHistory";
 import { usePredictivePrefetch } from "@/components/lib/usePredictivePrefetch";
 import { idbClearExpired } from "@/components/lib/useIndexedDBCache";
+import ModuleImprovementBar from "@/components/layout/ModuleImprovementBar";
 
 
 const navigationItems = [
@@ -1525,6 +1526,7 @@ function LayoutContent({ children, currentPageName }) {
                     <GuardRails currentPageName={currentPageName}>
                       <div className="w-full h-full">
                         <div className="max-w-[1400px] mx-auto px-4 md:px-6 py-4 space-y-4">
+                          <ModuleImprovementBar moduleName={moduleName || 'Sistema'} />
                           {children}
                         </div>
                       </div>
