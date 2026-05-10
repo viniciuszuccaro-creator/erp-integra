@@ -6,6 +6,9 @@ import PlanoMelhoriaNextSteps from '@/components/sistema/plano-melhoria/PlanoMel
 import PlanoMelhoriaLiveBacklog from '@/components/sistema/plano-melhoria/PlanoMelhoriaLiveBacklog';
 import PlanoMelhoriaModuleMatrix from '@/components/sistema/plano-melhoria/PlanoMelhoriaModuleMatrix';
 import PlanoMelhoriaAutomationPanel from '@/components/sistema/plano-melhoria/PlanoMelhoriaAutomationPanel';
+import PlanoMelhoriaExecutionBoard from '@/components/sistema/plano-melhoria/PlanoMelhoriaExecutionBoard';
+import PlanoMelhoriaSprintPanel from '@/components/sistema/plano-melhoria/PlanoMelhoriaSprintPanel';
+import PlanoMelhoriaRiskPanel from '@/components/sistema/plano-melhoria/PlanoMelhoriaRiskPanel';
 import { melhoriaPlanPhases } from '@/components/sistema/plano-melhoria/melhoriaPlanData';
 
 export default function PlanoMelhoria() {
@@ -17,8 +20,11 @@ export default function PlanoMelhoria() {
     <div className="flex h-full w-full flex-col gap-6">
       <PlanoMelhoriaHeader totalProgress={totalProgress} />
       <PlanoMelhoriaGovernanca />
+      <PlanoMelhoriaExecutionBoard />
+      <PlanoMelhoriaSprintPanel />
       <PlanoMelhoriaAutomationPanel />
       <PlanoMelhoriaModuleMatrix />
+      <PlanoMelhoriaRiskPanel />
       <PlanoMelhoriaLiveBacklog />
       <div className="grid w-full gap-4 md:grid-cols-2 xl:grid-cols-3">
         {melhoriaPlanPhases.map((phase) => (
