@@ -71,6 +71,7 @@ import AdvancedAnalysisSection from "@/components/dashboard/AdvancedAnalysisSect
 import QuickAccessModulesGrid from "@/components/dashboard/QuickAccessModulesGrid";
 import FinancialSummary from "@/components/dashboard/FinancialSummary";
 import WidgetEstoqueCritico from "@/components/estoque/WidgetEstoqueCritico";
+import DashboardStabilityNotice from "@/components/dashboard/DashboardStabilityNotice";
 import ResizableRow from "@/components/dashboard/ResizableRow";
 import { ResizablePanelGroup as PanelGroup, ResizablePanel as Panel, ResizableHandle as PanelResizeHandle } from "@/components/ui/resizable";
 import useDashboardDerivedData from "@/components/dashboard/hooks/useDashboardDerivedData";
@@ -100,19 +101,21 @@ export default function Dashboard() {
   });
 
   // Removed visualizacao state as it's replaced by Tabs
+  const dashboardTabsPermitidas = ["resumo"];
   const [activeTab, setActiveTab] = useState("resumo");
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
     if (!initial) { try { initial = localStorage.getItem('Dashboard_tab'); } catch {} }
-    if (initial) setActiveTab(initial);
+    setActiveTab(dashboardTabsPermitidas.includes(initial) ? initial : "resumo");
   }, []);
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    const nextTab = dashboardTabsPermitidas.includes(value) ? value : "resumo";
+    setActiveTab(nextTab);
     const url = new URL(window.location.href);
-    url.searchParams.set('tab', value);
+    url.searchParams.set('tab', nextTab);
     window.history.replaceState({}, '', url.toString());
-    try { localStorage.setItem('Dashboard_tab', value); } catch {}
+    try { localStorage.setItem('Dashboard_tab', nextTab); } catch {}
   }; // New state for active tab
 
   useEffect(() => {
@@ -280,6 +283,7 @@ export default function Dashboard() {
   });
 
   const { data: totalColaboradoresDash = 0 } = useQuery({
+    enabled: Boolean(hasContextoAtivo && canSeeRH),
     queryKey: ['colaboradores-count-dash', empresaAtual?.id, grupoAtual?.id],
     queryFn: async () => {
       try {
@@ -440,6 +444,7 @@ export default function Dashboard() {
 
   // Command Center metrics (24h window) from AuditLog
   const { data: ccMetrics = { errors: 0, funcs: 0, secAlerts: 0 } } = useQuery({
+    enabled: Boolean(hasContextoAtivo),
     queryKey: ['command-center', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       const since = Date.now() - 24 * 60 * 60 * 1000;
@@ -459,6 +464,7 @@ export default function Dashboard() {
 
   // KPIs Chatbot / SLA últimas 24h
   const { data: botMetrics = { chats: 0, sla_ok: 0, sla_total: 0 } } = useQuery({
+    enabled: Boolean(hasContextoAtivo),
     queryKey: ['bot-metrics-24h', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       const since = Date.now() - 24 * 60 * 60 * 1000;
@@ -712,6 +718,8 @@ export default function Dashboard() {
         periodo={periodo}
         setPeriodo={setPeriodo}
       />
+
+      <DashboardStabilityNotice hasContextoAtivo={hasContextoAtivo} activeTab={activeTab} />
 
       <ErrorBoundary>
         <Tabs value={activeTab} onValueChange={handleTabChange}>

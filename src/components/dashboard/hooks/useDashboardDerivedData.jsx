@@ -1,7 +1,9 @@
 export default function useDashboardDerivedData({ pedidos = [], contasReceber = [], contasPagar = [], entregas = [], ordensProducao = [], colaboradores = [], clientes = [], produtos = [], periodo = "mes" }) {
   const filtrarPorPeriodo = (data) => {
+    if (!data) return false;
     const hoje = new Date();
     const dataComparacao = new Date(data);
+    if (Number.isNaN(dataComparacao.getTime())) return false;
 
     if (periodo === "dia") {
       return dataComparacao.toDateString() === hoje.toDateString();
@@ -41,9 +43,11 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
 
   const fluxoCaixa = receitasPendentes - despesasPendentes;
 
-  const produtosBaixoEstoque = produtos.filter(
-    (p) => p.estoque_atual <= p.estoque_minimo && p.status === "Ativo"
-  ).length;
+  const produtosBaixoEstoque = produtos.filter((p) => {
+    const estoqueAtual = Number(p.estoque_atual || 0);
+    const estoqueMinimo = Number(p.estoque_minimo || 0);
+    return estoqueMinimo > 0 && estoqueAtual <= estoqueMinimo && p.status === "Ativo";
+  }).length;
 
   const colaboradoresAtivos = colaboradores.filter((c) => (c.status || 'Ativo') !== 'Inativo' && (c.status || 'Ativo') !== 'Afastado').length;
   const clientesAtivos = clientes.filter((c) => (c.status || 'Ativo') !== 'Inativo' && (c.status || 'Ativo') !== 'Bloqueado').length;
