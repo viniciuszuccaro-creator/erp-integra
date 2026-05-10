@@ -1,0 +1,80 @@
+{
+  "name": "PlanoMelhoriaItem",
+  "type": "object",
+  "properties": {
+    "group_id": {
+      "type": "string",
+      "description": "ID do grupo empresarial"
+    },
+    "empresa_id": {
+      "type": "string",
+      "description": "ID da empresa"
+    },
+    "fase": {
+      "type": "string",
+      "description": "Fase do plano de melhoria"
+    },
+    "modulo": {
+      "type": "string",
+      "description": "M\u00f3dulo relacionado"
+    },
+    "titulo": {
+      "type": "string",
+      "description": "T\u00edtulo da melhoria"
+    },
+    "descricao": {
+      "type": "string",
+      "description": "Descri\u00e7\u00e3o objetiva da melhoria"
+    },
+    "prioridade": {
+      "type": "string",
+      "enum": [
+        "Baixa",
+        "M\u00e9dia",
+        "Alta",
+        "Cr\u00edtica"
+      ],
+      "default": "M\u00e9dia"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Planejado",
+        "Em Execu\u00e7\u00e3o",
+        "Validando",
+        "Conclu\u00eddo"
+      ],
+      "default": "Planejado"
+    },
+    "percentual": {
+      "type": "number",
+      "default": 0
+    },
+    "tipo": {
+      "type": "string",
+      "enum": [
+        "Estabilidade",
+        "Multiempresa",
+        "Acesso",
+        "Performance",
+        "UX",
+        "IA",
+        "Integra\u00e7\u00e3o",
+        "Governan\u00e7a"
+      ],
+      "default": "Governan\u00e7a"
+    },
+    "impacto": {
+      "type": "string",
+      "description": "Impacto esperado no sistema"
+    },
+    "observacoes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "fase",
+    "modulo",
+    "titulo"
+  ]
+}

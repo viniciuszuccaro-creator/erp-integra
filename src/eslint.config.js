@@ -37,6 +37,22 @@ const documentationMirrorPatterns = [
   "**/src/**/DOC*",
   "**/src/**/UnidadesDeMedida*",
   "**/src/**/rhf_zod_report*",
+  "**/components/**/README*",
+  "**/components/**/CERTIFICADO*",
+  "**/components/**/CERTIFICACAO*",
+  "**/components/**/MANIFESTO*",
+  "**/components/**/STATUS*",
+  "**/components/**/VALIDACAO*",
+  "**/components/**/CHECKLIST*",
+  "**/components/**/ETAPA*",
+  "**/components/**/FASE*",
+  "**/components/**/PROVA*",
+  "**/components/**/SISTEMA*",
+  "**/components/**/BLOQUEIO*",
+  "**/components/**/BOTOES*",
+  "**/components/**/INTEGRACAO*",
+  "**/components/**/UnidadesDeMedida*",
+  "**/components/**/rhf_zod_report*",
 ];
 
 export default [
