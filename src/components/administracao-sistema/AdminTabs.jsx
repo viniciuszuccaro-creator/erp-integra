@@ -11,6 +11,7 @@ import { useUser } from "@/components/lib/UserContext";
 
 // Lazy sub-modules para não carregar tudo ao mesmo tempo
 import AdminStatusBar from "@/components/administracao-sistema/AdminStatusBar";
+import AdminCriticalCommandCenter from "@/components/administracao-sistema/critical/AdminCriticalCommandCenter";
 import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configuracoes-gerais/ConfiguracoesGeraisIndex";
 import IntegracoesIndex from "@/components/administracao-sistema/IntegracoesIndex";
 import AuditoriaLogsIndex from "@/components/administracao-sistema/auditoria-logs/AuditoriaLogsIndex";
@@ -88,8 +89,9 @@ export default function AdminTabs({ initialTab, isAdmin, empresaAtual, grupoAtua
       </TabsList>
 
       {/* ── STATUS BAR GLOBAL ── */}
-      <div className="mt-3">
+      <div className="mt-3 space-y-3">
         <AdminStatusBar />
+        <AdminCriticalCommandCenter />
       </div>
 
       {/* ── PARÂMETROS GERAIS ── */}

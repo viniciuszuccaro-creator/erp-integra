@@ -1,5 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
-import { sendEmail } from './_lib/notificationUtils.js';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Agregado de alertas de segurança com envio de e-mail para administradores
 // Heurísticas simples: alto volume de Exclusões, alterações em perfis, bloqueios de acesso em curto período
@@ -119,8 +118,12 @@ Deno.serve(async (req) => {
         `Total de eventos analisados: ${recent.length}`
       ].join('\n');
 
-      // Enviar e-mail para cada admin (via helper)
-      await Promise.all(toList.map((to) => sendEmail(base44, to, subject, body)));
+      await Promise.all(toList.map((to) => base44.asServiceRole.integrations.Core.SendEmail({
+        to,
+        subject,
+        body,
+        from_name: 'ERP Zuccaro Segurança'
+      })));
     }
 
     // Slack (opcional) - tenta Webhook primeiro; se ausente, tenta App Connector 'slackbot'
