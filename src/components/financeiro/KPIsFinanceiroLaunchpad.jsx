@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, DollarSign, AlertCircle } from 'lucide-react';
+import { safeNumber, formatMoneyShort } from '@/components/financeiro/utils/financeiroSafeData';
 
 export default function KPIsFinanceiroLaunchpad({ 
   receberPendente, 
@@ -9,6 +10,12 @@ export default function KPIsFinanceiroLaunchpad({
   contasReceberVencidas,
   contasPagarVencidas 
 }) {
+  const receber = safeNumber(receberPendente);
+  const pagar = safeNumber(pagarPendente);
+  const saldoPrevisto = safeNumber(saldo);
+  const vencidasReceber = safeNumber(contasReceberVencidas);
+  const vencidasPagar = safeNumber(contasPagarVencidas);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
       <Card className="border-0 shadow-sm min-h-[90px] max-h-[90px] transition-shadow hover:shadow-md">
@@ -18,10 +25,10 @@ export default function KPIsFinanceiroLaunchpad({
         </CardHeader>
         <CardContent className="px-2 pb-2">
           <div className="text-base font-bold text-green-600 truncate">
-            R$ {(receberPendente / 1000).toFixed(0)}k
+            {formatMoneyShort(receber)}
           </div>
-          {contasReceberVencidas > 0 && (
-            <p className="text-xs text-red-600">{contasReceberVencidas} venc.</p>
+          {vencidasReceber > 0 && (
+            <p className="text-xs text-red-600">{vencidasReceber} venc.</p>
           )}
         </CardContent>
       </Card>
@@ -33,10 +40,10 @@ export default function KPIsFinanceiroLaunchpad({
         </CardHeader>
         <CardContent className="px-2 pb-2">
           <div className="text-base font-bold text-red-600 truncate">
-            R$ {(pagarPendente / 1000).toFixed(0)}k
+            {formatMoneyShort(pagar)}
           </div>
-          {contasPagarVencidas > 0 && (
-            <p className="text-xs text-red-600">{contasPagarVencidas} venc.</p>
+          {vencidasPagar > 0 && (
+            <p className="text-xs text-red-600">{vencidasPagar} venc.</p>
           )}
         </CardContent>
       </Card>
@@ -44,11 +51,11 @@ export default function KPIsFinanceiroLaunchpad({
       <Card className="border-0 shadow-sm min-h-[90px] max-h-[90px] transition-shadow hover:shadow-md">
         <CardHeader className="flex flex-row items-center justify-between pb-1 px-2 pt-2">
           <CardTitle className="text-xs font-medium text-slate-600 truncate">Saldo Prev.</CardTitle>
-          <DollarSign className={`w-3 h-3 flex-shrink-0 ${saldo >= 0 ? 'text-emerald-600' : 'text-orange-600'}`} />
+          <DollarSign className={`w-3 h-3 flex-shrink-0 ${saldoPrevisto >= 0 ? 'text-emerald-600' : 'text-orange-600'}`} />
         </CardHeader>
         <CardContent className="px-2 pb-2">
-          <div className={`text-base font-bold truncate ${saldo >= 0 ? 'text-emerald-600' : 'text-orange-600'}`}>
-            R$ {(saldo / 1000).toFixed(0)}k
+          <div className={`text-base font-bold truncate ${saldoPrevisto >= 0 ? 'text-emerald-600' : 'text-orange-600'}`}>
+            {formatMoneyShort(saldoPrevisto)}
           </div>
         </CardContent>
       </Card>
@@ -60,7 +67,7 @@ export default function KPIsFinanceiroLaunchpad({
         </CardHeader>
         <CardContent className="px-2 pb-2">
           <div className="text-base font-bold text-orange-600">
-            {contasReceberVencidas + contasPagarVencidas}
+            {vencidasReceber + vencidasPagar
           </div>
           <p className="text-xs text-slate-500">Vencidas</p>
         </CardContent>

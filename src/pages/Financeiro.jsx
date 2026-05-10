@@ -19,6 +19,7 @@ import MetricasSecundariasLaunchpad from "@/components/financeiro/MetricasSecund
 import ModulosGridFinanceiro from "@/components/financeiro/ModulosGridFinanceiro";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import useFinanceiroDerivedData from "@/components/financeiro/hooks/useFinanceiroDerivedData";
+import { FINANCEIRO_CONFIG_LIMIT, FINANCEIRO_LIST_LIMIT, FINANCEIRO_SMALL_LIST_LIMIT, financeiroCountQueryDefaults, financeiroQueryDefaults } from "@/components/financeiro/config/financeiroQueryConfig";
 
 const CaixaCentralLiquidacao = React.lazy(() => import("../components/financeiro/CaixaCentralLiquidacao"));
 const ContasReceberTab = React.lazy(() => import("../components/financeiro/ContasReceberTab"));
@@ -58,14 +59,13 @@ export default function Financeiro() {
     queryKey: ['contasReceber', contextKey],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('ContaReceber', {}, 'data_vencimento', 100);
+        return await filtrarPorContexto('ContaReceber', {}, 'data_vencimento', FINANCEIRO_LIST_LIMIT);
       } catch (err) {
         console.error('Erro ao buscar contas a receber:', err);
         return [];
       }
     },
-    staleTime: 120000,
-    retry: 2,
+    ...financeiroQueryDefaults,
     enabled: canSeeFinanceiro && contextoValido
   });
 
@@ -91,14 +91,13 @@ export default function Financeiro() {
     queryKey: ['contasPagar', contextKey],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('ContaPagar', {}, 'data_vencimento', 100);
+        return await filtrarPorContexto('ContaPagar', {}, 'data_vencimento', FINANCEIRO_LIST_LIMIT);
       } catch (err) {
         console.error('Erro ao buscar contas a pagar:', err);
         return [];
       }
     },
-    staleTime: 120000,
-    retry: 2,
+    ...financeiroQueryDefaults,
     enabled: canSeeFinanceiro && contextoValido
   });
 
@@ -124,14 +123,13 @@ export default function Financeiro() {
     queryKey: ['rateios', contextKey],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('RateioFinanceiro', {}, '-created_date', 50);
+        return await filtrarPorContexto('RateioFinanceiro', {}, '-created_date', FINANCEIRO_SMALL_LIST_LIMIT);
       } catch (err) {
         console.error('Erro ao buscar rateios:', err);
         return [];
       }
     },
-    staleTime: 120000,
-    retry: 1,
+    ...financeiroQueryDefaults,
     enabled: canSeeFinanceiro && contextoValido
   });
 
@@ -139,14 +137,13 @@ export default function Financeiro() {
     queryKey: ['extratos', contextKey],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('ExtratoBancario', {}, '-data_movimento', 100);
+        return await filtrarPorContexto('ExtratoBancario', {}, '-data_movimento', FINANCEIRO_LIST_LIMIT);
       } catch (err) {
         console.error('Erro ao buscar extratos:', err);
         return [];
       }
     },
-    staleTime: 120000,
-    retry: 1,
+    ...financeiroQueryDefaults,
     enabled: canSeeFinanceiro && contextoValido
   });
 
@@ -154,14 +151,13 @@ export default function Financeiro() {
     queryKey: ['configs-gateway', contextKey],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('ConfiguracaoGatewayPagamento', {}, '-created_date', 9999);
+        return await filtrarPorContexto('ConfiguracaoGatewayPagamento', {}, '-created_date', FINANCEIRO_CONFIG_LIMIT);
       } catch (err) {
         console.error('Erro ao buscar configs gateway:', err);
         return [];
       }
     },
-    staleTime: 120000,
-    retry: 1,
+    ...financeiroQueryDefaults,
     enabled: canSeeFinanceiro && contextoValido
   });
 
@@ -169,14 +165,13 @@ export default function Financeiro() {
     queryKey: ['caixa-ordens-liquidacao', contextKey],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('CaixaOrdemLiquidacao', {}, '-created_date', 50);
+        return await filtrarPorContexto('CaixaOrdemLiquidacao', {}, '-created_date', FINANCEIRO_SMALL_LIST_LIMIT);
       } catch (err) {
         console.error('Erro ao buscar ordens de liquidação:', err);
         return [];
       }
     },
-    staleTime: 120000,
-    retry: 1,
+    ...financeiroQueryDefaults,
     enabled: canSeeFinanceiro && contextoValido
   });
 
@@ -184,14 +179,13 @@ export default function Financeiro() {
     queryKey: ['pedidos-pendentes-aprovacao', contextKey],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('Pedido', { status_aprovacao: 'pendente' }, '-created_date', 50);
+        return await filtrarPorContexto('Pedido', { status_aprovacao: 'pendente' }, '-created_date', FINANCEIRO_SMALL_LIST_LIMIT);
       } catch (err) {
         console.error('Erro ao buscar pedidos pendentes:', err);
         return [];
       }
     },
-    staleTime: 120000,
-    retry: 1,
+    ...financeiroQueryDefaults,
     enabled: canSeeFinanceiro && contextoValido
   });
 
@@ -385,15 +379,18 @@ export default function Financeiro() {
    const handleModuleClick = (module) => {
     React.startTransition(() => {
       // Auditoria de abertura de seção
-      base44.entities.AuditLog.create({
+      void base44.entities.AuditLog.create({
         usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id || null,
+        empresa_id: empresaAtual?.id || null,
+        group_id: groupId || null,
         acao: 'Visualização',
         modulo: 'Financeiro',
         tipo_auditoria: 'acesso',
         entidade: 'Seção',
         descricao: `Abrir seção: ${module.title}`,
         data_hora: new Date().toISOString(),
-      });
+      }).catch(() => {});
       openWindow(
         module.component,
         { 
