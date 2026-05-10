@@ -60,6 +60,10 @@ const documentationMirrorPatterns = [
   "**/components/**/INTEGRACAO*",
   "**/components/**/UnidadesDeMedida*",
   "**/components/**/rhf_zod_report*",
+  "src/components/**/*.{md,json,config}.jsx",
+  "src/components/**/*.{md,json,config}.*",
+  "src/components/**/[A-Z0-9_]*.jsx",
+  "src/components/**/[A-Z0-9_]*.md.jsx",
 ];
 
 export default [
