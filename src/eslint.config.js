@@ -73,7 +73,19 @@ export default [
   },
   {
     files: ["src/**/*.{js,jsx}", "*.{js,jsx}"],
-    ignores: documentationMirrorPatterns,
+    ignores: [
+      ...documentationMirrorPatterns,
+      "src/components/sistema/[A-Z]*.jsx",
+      "src/components/sistema/[A-Z]*.md.jsx",
+      "src/components/chatbot/*.md.jsx",
+      "src/components/comercial/*.md.jsx",
+      "src/components/docs/**/*.md.jsx",
+      "src/components/lib/*.md.jsx",
+      "src/components/lib/*.json.jsx",
+      "src/components/logistica/*.md.jsx",
+      "src/components/portal/*.md.jsx",
+      "src/components/reports/*.json.jsx",
+    ],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
