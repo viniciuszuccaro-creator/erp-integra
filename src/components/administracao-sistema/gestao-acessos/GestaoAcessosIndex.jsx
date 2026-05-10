@@ -11,6 +11,13 @@ import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChe
 import UsuariosTab from "@/components/administracao-sistema/gestao-acessos/UsuariosTab";
 import AccessGovernancePanel from "@/components/administracao-sistema/gestao-acessos/AccessGovernancePanel";
 import AccessImprovementChecklist from "@/components/administracao-sistema/gestao-acessos/AccessImprovementChecklist";
+import AccessScopeSummary from "@/components/administracao-sistema/gestao-acessos/AccessScopeSummary";
+import AccessRiskMatrix from "@/components/administracao-sistema/gestao-acessos/AccessRiskMatrix";
+import AccessAuditTimeline from "@/components/administracao-sistema/gestao-acessos/AccessAuditTimeline";
+import AccessActionPlan from "@/components/administracao-sistema/gestao-acessos/AccessActionPlan";
+import AccessCoverageMap from "@/components/administracao-sistema/gestao-acessos/AccessCoverageMap";
+import AccessAutomationPanel from "@/components/administracao-sistema/gestao-acessos/AccessAutomationPanel";
+import AccessMaturityRoadmap from "@/components/administracao-sistema/gestao-acessos/AccessMaturityRoadmap";
 import { Shield, Users, BarChart3, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -67,6 +74,13 @@ export default function GestaoAcessosIndex() {
     queryKey: ['empresas-ga', scopeKey],
     queryFn: () => filterInContext('Empresa', {}, 'nome_fantasia', 500),
     enabled: podeVer && !!scopeKey,
+  });
+
+  const { data: auditoriasAcesso = [] } = useQuery({
+    queryKey: ['auditoria-acessos', scopeKey],
+    queryFn: () => base44.entities.AuditLog.filter({ modulo: 'Sistema' }, '-data_hora', 30),
+    enabled: podeVer && !!scopeKey,
+    staleTime: 60000,
   });
 
   if (!podeVer) {
@@ -177,7 +191,21 @@ export default function GestaoAcessosIndex() {
 
         <TabsContent value="governanca" className="mt-3 w-full">
           <div className="w-full space-y-3">
+            <AccessScopeSummary
+              accessScope={accessScope}
+              empresaAtual={empresaAtual}
+              grupoAtual={grupoAtual}
+              empresasDoGrupo={empresasDoGrupo}
+              usuarios={usuariosNoEscopo}
+              perfis={perfis}
+            />
             <AccessGovernancePanel perfis={perfis} usuarios={usuariosNoEscopo} empresas={empresas} accessScope={accessScope} />
+            <AccessMaturityRoadmap perfis={perfis} usuarios={usuariosNoEscopo} />
+            <AccessRiskMatrix perfis={perfis} usuarios={usuariosNoEscopo} auditorias={auditoriasAcesso} />
+            <AccessCoverageMap perfis={perfis} />
+            <AccessAutomationPanel accessScope={accessScope} />
+            <AccessActionPlan perfis={perfis} usuarios={usuariosNoEscopo} />
+            <AccessAuditTimeline auditorias={auditoriasAcesso} />
             <AccessImprovementChecklist perfis={perfis} usuarios={usuariosNoEscopo} />
           </div>
         </TabsContent>
