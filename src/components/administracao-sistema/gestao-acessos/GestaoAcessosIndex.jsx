@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import usePermissions from "@/components/lib/usePermissions";
 import CentralPerfisAcesso from "@/components/sistema/CentralPerfisAcesso";
@@ -9,6 +9,8 @@ import { useUser } from "@/components/lib/UserContext";
 import { useQuery } from "@tanstack/react-query";
 import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChecker";
 import UsuariosTab from "@/components/administracao-sistema/gestao-acessos/UsuariosTab";
+import AccessGovernancePanel from "@/components/administracao-sistema/gestao-acessos/AccessGovernancePanel";
+import AccessImprovementChecklist from "@/components/administracao-sistema/gestao-acessos/AccessImprovementChecklist";
 import { Shield, Users, BarChart3, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +21,7 @@ export default function GestaoAcessosIndex() {
   const podeVer = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'visualizar');
   const { filterInContext, empresaAtual, grupoAtual, contexto, empresasDoGrupo = [] } = useContextoVisual();
   const { user } = useUser();
-  const [tab, setTab] = React.useState('perfis');
+  const [tab, setTab] = React.useState('governanca');
   const accessScope = getAccessScope({ contexto, empresaAtual, grupoAtual, empresasDoGrupo });
   const groupId = accessScope.groupId;
   const scopeKey = accessScope.scopeKey;
@@ -146,6 +148,10 @@ export default function GestaoAcessosIndex() {
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
         <div className="w-full overflow-x-auto pb-1 -mx-1 px-1">
           <TabsList className="inline-flex h-auto gap-1 flex-nowrap min-w-max bg-slate-100 p-1 rounded-lg">
+            <TabsTrigger value="governanca" data-action="RBAC.tab.governanca" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+              Governança
+            </TabsTrigger>
             <TabsTrigger value="perfis" data-action="RBAC.tab.perfis" className="text-xs px-2.5 sm:px-4 py-1.5 whitespace-nowrap rounded-md data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Shield className="w-3.5 h-3.5 mr-1" />
               Perfis RBAC
@@ -168,6 +174,13 @@ export default function GestaoAcessosIndex() {
             </TabsTrigger>
           </TabsList>
         </div>
+
+        <TabsContent value="governanca" className="mt-3 w-full">
+          <div className="w-full space-y-3">
+            <AccessGovernancePanel perfis={perfis} usuarios={usuariosNoEscopo} empresas={empresas} accessScope={accessScope} />
+            <AccessImprovementChecklist perfis={perfis} usuarios={usuariosNoEscopo} />
+          </div>
+        </TabsContent>
 
         <TabsContent value="perfis" className="mt-3 w-full">
           <div className="w-full overflow-x-auto">
