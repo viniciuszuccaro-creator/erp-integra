@@ -23,7 +23,8 @@ import {
         MessageCircle,
         CheckCircle2,
         Trophy,
-        Zap
+        Zap,
+        Rocket
       } from "lucide-react";
 import {
   Sidebar,
@@ -90,6 +91,7 @@ const navigationItems = [
   { title: "Gestão de Contratos", url: createPageUrl("Contratos"), icon: FileText, group: "administrativo" },
   { title: "Administração do Sistema", url: createPageUrl("AdministracaoSistema?tab=integracoes"), icon: Settings, group: "sistema" },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
+  { title: "Plano de Melhoria", url: createPageUrl("PlanoMelhoria"), icon: Rocket, group: "sistema" },
   
   
   
@@ -131,6 +133,7 @@ function LayoutContent({ children, currentPageName }) {
     Cadastros: 'Cadastros',
     Contratos: 'Contratos',
     AdministracaoSistema: 'Sistema',
+    PlanoMelhoria: 'Sistema',
   };
   const moduleName = pageToModule?.[currentPageName] || 'Sistema';
               // AppLayout + Sidebar + Topbar padrão já implementados; reforço de h-full/scroll interno preservado

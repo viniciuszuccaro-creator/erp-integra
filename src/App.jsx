@@ -7,6 +7,7 @@ import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
+import PlanoMelhoria from './pages/PlanoMelhoria';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ErrorBoundary from '@/components/lib/ErrorBoundary';
@@ -61,6 +62,11 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
+      <Route path="/PlanoMelhoria" element={
+        <LayoutWrapper currentPageName="PlanoMelhoria">
+          <PlanoMelhoria />
+        </LayoutWrapper>
+      } />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

@@ -1,4 +1,13 @@
 const documentationMirrorPatterns = [
+  "**/*.md",
+  "**/*.json",
+  "**/*.config",
+  "**/*.md.*",
+  "**/*.json.*",
+  "**/*.config.*",
+  "**/*.md.jsx",
+  "**/*.json.jsx",
+  "**/commitlint.config.jsx",
   "**/src/**/*.md",
   "**/src/**/*.json",
   "**/src/**/*.config",
