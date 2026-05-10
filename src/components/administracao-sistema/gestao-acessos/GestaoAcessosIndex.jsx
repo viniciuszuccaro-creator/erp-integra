@@ -12,6 +12,7 @@ import UsuariosTab from "@/components/administracao-sistema/gestao-acessos/Usuar
 import { Shield, Users, BarChart3, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { getAccessScope, isUserInAccessScope } from "@/components/administracao-sistema/gestao-acessos/accessScope";
 
 export default function GestaoAcessosIndex() {
   const { hasPermission, isAdmin } = usePermissions();
@@ -19,11 +20,9 @@ export default function GestaoAcessosIndex() {
   const { filterInContext, empresaAtual, grupoAtual, contexto, empresasDoGrupo = [] } = useContextoVisual();
   const { user } = useUser();
   const [tab, setTab] = React.useState('perfis');
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const scopeKey = contexto === 'grupo' ? (groupId || 'sem-grupo') : (empresaAtual?.id || groupId || 'sem-contexto');
-  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
-    .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
-    .filter(Boolean);
+  const accessScope = getAccessScope({ contexto, empresaAtual, grupoAtual, empresasDoGrupo });
+  const groupId = accessScope.groupId;
+  const scopeKey = accessScope.scopeKey;
 
   const handleTabChange = (next) => {
     setTab(next);
@@ -58,23 +57,7 @@ export default function GestaoAcessosIndex() {
     queryKey: ['usuarios', scopeKey],
     queryFn: async () => {
       const rows = await base44.entities.User.list();
-      return rows.filter((u) => {
-        const empresasVinculadas = normalizeEmpresaIds(u.empresas_vinculadas);
-        const temMarcadorEscopo = Boolean(
-          u.group_id || u.grupo_id || u.grupo_atual_id || u.empresa_id || u.empresa_atual_id || empresasVinculadas.length
-        );
-        if (!temMarcadorEscopo) return true;
-        if (contexto === 'grupo') {
-          const empresasIds = empresasDoGrupo.map((e) => e.id);
-          return u.group_id === groupId
-            || u.grupo_id === groupId
-            || u.grupo_atual_id === groupId
-            || empresasVinculadas.some((id) => empresasIds.includes(id));
-        }
-        return u.empresa_id === empresaAtual?.id
-          || u.empresa_atual_id === empresaAtual?.id
-          || empresasVinculadas.includes(empresaAtual?.id);
-      });
+      return rows.filter((u) => isUserInAccessScope(u, accessScope, contexto, empresaAtual));
     },
     enabled: podeVer && scopeKey !== 'sem-contexto',
   });
@@ -213,4 +196,3 @@ export default function GestaoAcessosIndex() {
     </div>
   );
 }
-

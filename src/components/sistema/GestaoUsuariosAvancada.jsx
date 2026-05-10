@@ -17,16 +17,12 @@ import {
   UserPlus,
   Building2,
   Shield,
-  Key,
   CheckCircle,
-  Ban,
   Fingerprint,
-  Mail,
-  Phone,
-  Briefcase,
   Settings,
   Eye
 } from "lucide-react";
+import { getAccessScope, normalizeEmpresaIds, buildAccessAudit } from "@/components/administracao-sistema/gestao-acessos/accessScope";
 
 export default function GestaoUsuariosAvancada({ 
   usuario, 
@@ -39,13 +35,11 @@ export default function GestaoUsuariosAvancada({
   const queryClient = useQueryClient();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const { user: operador } = useUser();
-  const groupId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const empresaId = contexto === "grupo" ? null : empresaAtual?.id || null;
-  const contextoValido = contexto === "grupo" ? !!groupId : !!empresaId;
+  const accessScope = getAccessScope({ contexto, empresaAtual, grupoAtual });
+  const groupId = accessScope.groupId;
+  const empresaId = accessScope.empresaId;
+  const contextoValido = accessScope.contextoValido;
   const controlesDesabilitados = !contextoValido || !canEdit;
-  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
-    .map((item) => (typeof item === "string" ? item : item?.empresa_id || item?.id))
-    .filter(Boolean);
   const [formData, setFormData] = useState({
     perfil_acesso_id: usuario?.perfil_acesso_id || "sem-perfil",
     empresas_vinculadas: normalizeEmpresaIds(usuario?.empresas_vinculadas),
@@ -88,25 +82,22 @@ export default function GestaoUsuariosAvancada({
       };
       const result = await base44.entities.User.update(usuario.id, payload);
       try {
-        await base44.entities.AuditLog.create({
-          usuario: operador?.full_name || operador?.email || "Usuario local",
-          usuario_id: operador?.id || null,
-          empresa_id: empresaId,
-          group_id: groupId,
+        await base44.entities.AuditLog.create(buildAccessAudit({
+          operador,
+          scope: accessScope,
+          empresaAtual,
           acao: "Edicao",
-          modulo: "Controle de Acesso",
           entidade: "User",
-          registro_id: usuario.id,
+          registroId: usuario.id,
           descricao: `Configuracao de acesso alterada para ${usuario?.email || usuario?.full_name || usuario.id}`,
-          dados_antigos: {
+          dadosAnteriores: {
             perfil_acesso_id: usuario?.perfil_acesso_id || null,
             empresas_vinculadas: usuario?.empresas_vinculadas || [],
             autenticacao_dois_fatores: usuario?.autenticacao_dois_fatores || false,
             restricoes_adicionais: usuario?.restricoes_adicionais || null
           },
-          dados_novos: payload,
-          data_hora: new Date().toISOString()
-        });
+          dadosNovos: payload
+        }));
       } catch (error) {
         console.warn("Falha ao auditar alteracao de usuario:", error);
       }

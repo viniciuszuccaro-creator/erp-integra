@@ -23,6 +23,7 @@ import {
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getAccessScope, isUserInAccessScope, buildAccessAudit } from "@/components/administracao-sistema/gestao-acessos/accessScope";
 
 const ESTRUTURA_SISTEMA = {
   dashboard: { nome: "Dashboard", icone: LayoutDashboard, cor: "blue", secoes: { principal: { nome: "Visão Geral", abas: ["kpis", "graficos", "alertas"] }, corporativo: { nome: "Dashboard Corporativo", abas: ["multiempresa", "consolidado"] } } },
@@ -62,19 +63,14 @@ export default function CentralPerfisAcesso() {
   const queryClient = useQueryClient();
   const { contexto, empresaAtual, grupoAtual, empresasDoGrupo = [], filterInContext } = useContextoVisual();
   const { user, hasPermission, isAdmin } = usePermissions();
-  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
-    try { return localStorage.getItem('group_atual_id'); } catch { return null; }
-  })();
-  const empresaAtivaId = contexto === 'grupo' ? null : empresaAtual?.id;
-  const scopeKey = empresaAtivaId || grupoAtivoId || 'sem-contexto';
-  const contextoValido = scopeKey !== 'sem-contexto';
+  const accessScope = getAccessScope({ contexto, empresaAtual, grupoAtual, empresasDoGrupo });
+  const grupoAtivoId = accessScope.groupId;
+  const empresaAtivaId = accessScope.empresaId;
+  const scopeKey = accessScope.scopeKey;
+  const contextoValido = accessScope.contextoValido;
   const podeCriarPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'criar');
   const podeEditarPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'editar');
   const podeExcluirPerfil = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'excluir');
-  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
-    .map((item) => (typeof item === 'string' ? item : item?.empresa_id || item?.id))
-    .filter(Boolean);
-
   const { data: perfis = [] } = useQuery({
     queryKey: ['perfis-acesso', scopeKey],
     queryFn: async () => {
@@ -84,22 +80,7 @@ export default function CentralPerfisAcesso() {
     },
     enabled: true,
   });
-  const usuarioNoEscopo = (u) => {
-    if (!u) return false;
-    const vinculadas = normalizeEmpresaIds(u.empresas_vinculadas);
-    const temMarcacaoEscopo = u.group_id || u.grupo_id || u.grupo_atual_id || u.empresa_id || u.empresa_atual_id || vinculadas.length > 0;
-    if (!temMarcacaoEscopo) return true;
-    if (contexto === 'grupo') {
-      const empresasIds = empresasDoGrupo.map((e) => e.id);
-      return u.group_id === grupoAtivoId ||
-        u.grupo_id === grupoAtivoId ||
-        u.grupo_atual_id === grupoAtivoId ||
-        vinculadas.some((id) => empresasIds.includes(id));
-    }
-    return u.empresa_id === empresaAtivaId ||
-      u.empresa_atual_id === empresaAtivaId ||
-      vinculadas.includes(empresaAtivaId);
-  };
+  const usuarioNoEscopo = (u) => isUserInAccessScope(u, accessScope, contexto, empresaAtual);
 
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios', scopeKey],
@@ -125,20 +106,17 @@ export default function CentralPerfisAcesso() {
       const foiCriacao = perfilAberto?.novo;
       toast.success(foiCriacao ? "Perfil criado com sucesso!" : "Perfil atualizado com sucesso!");
       try {
-        base44.entities.AuditLog.create({
-          usuario: user?.full_name || user?.email || 'Usuario',
-          usuario_id: user?.id || null,
-          empresa_id: empresaAtivaId || null,
-          group_id: grupoAtivoId || null,
+        base44.entities.AuditLog.create(buildAccessAudit({
+          operador: user,
+          scope: accessScope,
+          empresaAtual,
           acao: foiCriacao ? 'Criacao' : 'Edicao',
-          modulo: 'Controle de Acesso',
           entidade: 'PerfilAcesso',
-          registro_id: result?.id || perfilAberto?.id,
+          registroId: result?.id || perfilAberto?.id,
           descricao: (foiCriacao ? 'Criacao' : 'Atualizacao') + ` do perfil "${result?.nome_perfil || formPerfil.nome_perfil}"`,
-          dados_novos: result || formPerfil,
-          sucesso: true,
-          data_hora: new Date().toISOString()
-        });
+          dadosAnteriores: foiCriacao ? null : perfilAberto,
+          dadosNovos: result || formPerfil
+        }));
       } catch {}
       setTimeout(() => { setPerfilAberto(null); resetForm(); }, 300);
     },
@@ -156,19 +134,15 @@ export default function CentralPerfisAcesso() {
       queryClient.invalidateQueries({ queryKey: ['perfis-acesso', scopeKey] });
       toast.success("Perfil excluido!");
       try {
-        base44.entities.AuditLog.create({
-          usuario: user?.full_name || user?.email || 'Usuario',
-          usuario_id: user?.id || null,
+        base44.entities.AuditLog.create(buildAccessAudit({
+          operador: user,
+          scope: accessScope,
+          empresaAtual,
           acao: 'Exclusao',
-          modulo: 'Controle de Acesso',
           entidade: 'PerfilAcesso',
-          registro_id: id,
-          empresa_id: empresaAtivaId || null,
-          group_id: grupoAtivoId || null,
-          descricao: 'Perfil de acesso excluido',
-          sucesso: true,
-          data_hora: new Date().toISOString()
-        });
+          registroId: id,
+          descricao: 'Perfil de acesso excluido'
+        }));
       } catch {}
     },
     onError: (error) => toast.error("Erro: " + error.message),
@@ -439,5 +413,3 @@ export default function CentralPerfisAcesso() {
     </div>
   );
 }
-
-

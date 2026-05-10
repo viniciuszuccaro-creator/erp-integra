@@ -7,30 +7,28 @@ import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { getAccessScope, buildAccessAudit } from "@/components/administracao-sistema/gestao-acessos/accessScope";
 
 export default function RelatorioPermissoes({ perfis = [], usuarios = [], empresas = [] }) {
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const { user, isAdmin, hasPermission } = usePermissions();
-  const grupoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || null;
-  const empresaId = contexto === "grupo" ? null : empresaAtual?.id || null;
-  const contextoValido = !!(grupoId || empresaId);
+  const accessScope = getAccessScope({ contexto, empresaAtual, grupoAtual });
+  const grupoId = accessScope.groupId;
+  const empresaId = accessScope.empresaId;
+  const contextoValido = accessScope.contextoValido;
   const podeExportar = isAdmin() || hasPermission("Sistema", "Controle de Acesso", "exportar");
 
   const auditarExportacao = async (formato, resumo) => {
     try {
-      await base44.entities.AuditLog.create({
-        usuario: user?.full_name || user?.email || "Sistema",
-        usuario_id: user?.id || null,
-        group_id: grupoId,
-        empresa_id: empresaId,
+      await base44.entities.AuditLog.create(buildAccessAudit({
+        operador: user,
+        scope: accessScope,
+        empresaAtual,
         acao: "Exportacao",
-        modulo: "Controle de Acesso",
         entidade: "RelatorioPermissoes",
         descricao: `Exportacao de relatorio de permissoes em ${formato}`,
-        dados_novos: resumo,
-        sucesso: true,
-        data_hora: new Date().toISOString(),
-      });
+        dadosNovos: resumo
+      }));
     } catch (error) {
       console.warn("[RBAC] Falha ao auditar exportacao:", error);
     }

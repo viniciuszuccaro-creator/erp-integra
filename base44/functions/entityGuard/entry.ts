@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Rate-limit por IP
 const __RL = globalThis.__egRate || (globalThis.__egRate = new Map());
@@ -94,9 +94,26 @@ Deno.serve(async (req) => {
     const section = body?.section || null;
     const desired = normalize(body?.action || 'visualizar');
 
+    const normalizeKey = (value) => String(value || '')
+      .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
+
+    const sectionAliases = {
+      controledeacesso: 'acessos', gestaoacessos: 'acessos', acessos: 'acessos', perfis: 'acessos', usuarios: 'acessos',
+      configuracoesgerais: 'configuracoes', configuracoes: 'configuracoes', integracoes: 'integracoes', ia: 'ia', seguranca: 'seguranca', auditoria: 'auditoria'
+    };
+
+    const findNode = (root, key) => {
+      if (!root || typeof root !== 'object') return undefined;
+      const target = sectionAliases[normalizeKey(key)] || normalizeKey(key);
+      const found = Object.keys(root).find((candidate) => normalizeKey(candidate) === target || sectionAliases[normalizeKey(candidate)] === target);
+      return found ? root[found] : undefined;
+    };
+
     // Proteção de entidades críticas
     const targetEntity = body?.entity_name;
-    if (targetEntity && (targetEntity === 'AuditLog' || targetEntity === 'PerfilAcesso')) {
+    if (targetEntity && targetEntity === 'AuditLog') {
       if (['criar', 'editar', 'excluir'].includes(desired)) {
         return Response.json({ allowed: false }, { status: 403 });
       }
@@ -109,7 +126,7 @@ Deno.serve(async (req) => {
         const perfil = await base44.asServiceRole.entities.PerfilAcesso.get(user.perfil_acesso_id);
         const perms = perfil?.permissoes;
         if (perms) {
-          const modNode = perms[moduleName];
+          const modNode = findNode(perms, moduleName);
           if (modNode) {
             if (!section) {
               allowed = Object.values(modNode).some((node) => {
@@ -120,7 +137,7 @@ Deno.serve(async (req) => {
             } else {
               const path = Array.isArray(section) ? section : String(section).split('.').filter(Boolean);
               let cursor = modNode;
-              for (const seg of path) { if (!cursor) break; cursor = cursor[seg]; }
+              for (const seg of path) { if (!cursor) break; cursor = findNode(cursor, seg); }
               if (Array.isArray(cursor)) allowed = cursor.includes(desired) || cursor.includes('visualizar');
               else if (cursor && typeof cursor === 'object') {
                 const stack = [cursor];

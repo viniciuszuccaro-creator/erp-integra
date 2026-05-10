@@ -780,7 +780,7 @@ function LayoutContent({ children, currentPageName }) {
     const checkRBAC = async (entityName, action, sectionHint = null, op = null) => {
       try {
         // Proteção imediata de entidades críticas (sem chamada backend)
-        if (entityName === 'AuditLog' || entityName === 'PerfilAcesso') {
+        if (entityName === 'AuditLog') {
           if (['criar','editar','excluir'].includes(action)) throw new Error('RBAC: entidade protegida');
         }
         // Admin sempre permitido (sem chamada backend)

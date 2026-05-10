@@ -13,6 +13,7 @@ import { Search, UserCog, Mail, Shield, Building2 } from "lucide-react";
 import GestaoUsuariosAvancada from "@/components/sistema/GestaoUsuariosAvancada";
 import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
+import { getAccessScope, isUserInAccessScope, normalizeEmpresaIds, buildAccessAudit } from "@/components/administracao-sistema/gestao-acessos/accessScope";
 
 export default function UsuariosTab() {
   const { contexto, filterInContext, empresaAtual, grupoAtual, empresasDoGrupo = [] } = useContextoVisual();
@@ -24,32 +25,12 @@ export default function UsuariosTab() {
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [roleFilter, setRoleFilter] = useState("todos");
-  const grupoAtivoId = grupoAtual?.id || empresaAtual?.group_id || empresaAtual?.grupo_id || (() => {
-    try { return localStorage.getItem("group_atual_id"); } catch { return null; }
-  })();
-  const scopeKey = (contexto === "grupo" ? grupoAtivoId : empresaAtual?.id) || "sem-contexto";
-  const contextoValido = scopeKey !== "sem-contexto";
-  const normalizeEmpresaIds = (values = []) => (Array.isArray(values) ? values : [])
-    .map((item) => (typeof item === "string" ? item : item?.empresa_id || item?.id))
-    .filter(Boolean);
+  const accessScope = getAccessScope({ contexto, empresaAtual, grupoAtual, empresasDoGrupo });
+  const grupoAtivoId = accessScope.groupId;
+  const scopeKey = accessScope.scopeKey;
+  const contextoValido = accessScope.contextoValido;
 
-  const usuarioNoEscopo = (u) => {
-    const empresasVinculadas = normalizeEmpresaIds(u.empresas_vinculadas);
-    const temMarcadorEscopo = Boolean(
-      u.group_id || u.grupo_id || u.grupo_atual_id || u.empresa_id || u.empresa_atual_id || empresasVinculadas.length
-    );
-    if (!temMarcadorEscopo) return true;
-    if (contexto === "grupo") {
-      const empresasIds = empresasDoGrupo.map((e) => e.id);
-      return u.group_id === grupoAtivoId
-        || u.grupo_id === grupoAtivoId
-        || u.grupo_atual_id === grupoAtivoId
-        || empresasVinculadas.some((id) => empresasIds.includes(id));
-    }
-    return u.empresa_id === empresaAtual?.id
-      || u.empresa_atual_id === empresaAtual?.id
-      || empresasVinculadas.includes(empresaAtual?.id);
-  };
+  const usuarioNoEscopo = (u) => isUserInAccessScope(u, accessScope, contexto, empresaAtual);
 
   const { data: usuarios = [], isLoading: loadingUsers } = useQuery({
     queryKey: ["usuarios-gestao", scopeKey],
@@ -88,19 +69,16 @@ export default function UsuariosTab() {
     try {
       await base44.users.inviteUser(email, "user");
       try {
-        await base44.entities.AuditLog.create({
-          usuario: user?.full_name || user?.email || "Usuario local",
-          usuario_id: user?.id || null,
-          empresa_id: contexto === "grupo" ? null : empresaAtual?.id || null,
-          group_id: grupoAtivoId || null,
+        await base44.entities.AuditLog.create(buildAccessAudit({
+          operador: user,
+          scope: accessScope,
+          empresaAtual,
           acao: "Convite",
-          modulo: "Controle de Acesso",
           entidade: "User",
-          registro_id: email,
+          registroId: email,
           descricao: `Convite enviado para usuario ${email}`,
-          dados_novos: { email, role: "user", contexto, empresa_id: empresaAtual?.id || null, group_id: grupoAtivoId || null },
-          data_hora: new Date().toISOString()
-        });
+          dadosNovos: { email, role: "user", contexto, empresa_id: empresaAtual?.id || null, group_id: grupoAtivoId || null }
+        }));
       } catch (auditError) {
         console.warn("Falha ao auditar convite de usuario:", auditError);
       }
