@@ -1,8 +1,12 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, ShoppingCart, TrendingUp, FileText } from 'lucide-react';
+import { safeNumber } from '@/components/comercial/utils/comercialSafeData';
 
 export default function KPIsComercial({ totalClientes, clientesAtivos, totalPedidos, totalVendas, ticketMedio }) {
+  const vendas = safeNumber(totalVendas);
+  const ticket = safeNumber(ticketMedio);
+
   return (
     <div className="grid grid-cols-4 gap-2 min-h-[90px] max-h-[90px]">
       <Card className="border-0 shadow-sm">
@@ -33,7 +37,7 @@ export default function KPIsComercial({ totalClientes, clientesAtivos, totalPedi
         </CardHeader>
         <CardContent className="px-3 pb-2">
           <div className="text-2xl font-bold text-green-600">
-            R$ {totalVendas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            R$ {vendas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </div>
         </CardContent>
       </Card>
@@ -45,7 +49,7 @@ export default function KPIsComercial({ totalClientes, clientesAtivos, totalPedi
         </CardHeader>
         <CardContent className="px-3 pb-2">
           <div className="text-2xl font-bold text-orange-600">
-            R$ {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            R$ {ticket.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </div>
         </CardContent>
       </Card>

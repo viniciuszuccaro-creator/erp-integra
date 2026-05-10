@@ -18,6 +18,7 @@ import ModuleTabs from "@/components/layout/ModuleTabs";
 import { Button } from "@/components/ui/button";
 import useCRMDerivedData from "@/components/crm/hooks/useCRMDerivedData";
 import { useUser } from "@/components/lib/UserContext";
+import { CRM_CAMPAIGN_LIMIT, CRM_LIST_LIMIT, crmQueryDefaults } from "@/components/crm/config/crmQueryConfig";
 
 const FunilVisual = React.lazy(() => import("../components/crm/FunilVisual"));
 const FunilComercialInteligente = React.lazy(() => import("@/components/crm/FunilComercialInteligente"));
@@ -27,90 +28,55 @@ const IAChurnDetection = React.lazy(() => import("../components/crm/IAChurnDetec
 
 export default function CRMPage() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { filtrarPorContexto, filterInContext, getFiltroContexto, empresaAtual, estaNoGrupo } = useContextoVisual();
+  const { filterInContext, getFiltroContexto, empresaAtual, estaNoGrupo, grupoAtual } = useContextoVisual();
   const bloqueadoSemEmpresa = !estaNoGrupo && !empresaAtual;
   const { openWindow } = useWindow();
   const { user } = useUser();
 
   const { data: oportunidades = [] } = useQuery({
-    queryKey: ['oportunidades', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filtrarPorContexto('Oportunidade', {}, '-created_date', 100);
-      } catch (err) {
-        console.error('Erro ao buscar oportunidades:', err);
-        return [];
-      }
-    },
-    staleTime: 30000,
-    retry: 2,
+    queryKey: ['oportunidades', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: () => filterInContext('Oportunidade', {}, '-created_date', CRM_LIST_LIMIT),
+    ...crmQueryDefaults,
     enabled: !bloqueadoSemEmpresa
   });
 
   const { data: interacoes = [] } = useQuery({
-    queryKey: ['interacoes', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filtrarPorContexto('Interacao', {}, '-created_date', 100);
-      } catch (err) {
-        console.error('Erro ao buscar interações:', err);
-        return [];
-      }
-    },
-    staleTime: 30000,
-    retry: 1,
+    queryKey: ['interacoes', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: () => filterInContext('Interacao', {}, '-created_date', CRM_LIST_LIMIT),
+    ...crmQueryDefaults,
     enabled: !bloqueadoSemEmpresa
   });
 
   const { data: campanhas = [] } = useQuery({
-    queryKey: ['campanhas', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
-        return await filtrarPorContexto('Campanha', {}, '-created_date', 50, 'empresa_dona_id');
-      } catch (err) {
-        console.error('Erro ao buscar campanhas:', err);
-        return [];
-      }
-    },
-    staleTime: 30000,
-    retry: 1,
+    queryKey: ['campanhas', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: () => filterInContext('Campanha', {}, '-created_date', CRM_CAMPAIGN_LIMIT, 'empresa_dona_id'),
+    ...crmQueryDefaults,
     enabled: !bloqueadoSemEmpresa
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filtrarPorContexto('Cliente', {}, '-created_date', 100);
-      } catch (err) {
-        console.error('Erro ao buscar clientes:', err);
-        return [];
-      }
-    },
-    staleTime: 30000,
-    retry: 1,
+    queryKey: ['clientes', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
+    queryFn: () => filterInContext('Cliente', {}, '-created_date', CRM_LIST_LIMIT),
+    ...crmQueryDefaults,
     enabled: !bloqueadoSemEmpresa
   });
 
   const { data: totalClientes = 0 } = useQuery({
-    queryKey: ['clientes-count-crm', empresaAtual?.id],
+    queryKey: ['clientes-count-crm', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
     queryFn: async () => {
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
-          filter: getFiltroContexto('empresa_id')
+          filter: getFiltroContexto('empresa_id', true)
         });
         return response.data?.count || clientes.length;
       } catch {
         return clientes.length;
       }
     },
-    staleTime: 60000,
-    retry: 1
+    staleTime: 300000,
+    retry: false,
+    enabled: !bloqueadoSemEmpresa
   });
 
   // Dados já vêm filtrados do servidor
@@ -232,15 +198,18 @@ export default function CRMPage() {
   const handleModuleClick = (module) => {
     React.startTransition(() => {
       // Auditoria de abertura de seção
-      base44.entities.AuditLog.create({
+      void base44.entities.AuditLog.create({
         usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id || null,
+        empresa_id: empresaAtual?.id || null,
+        group_id: grupoAtual?.id || null,
         acao: 'Visualização',
         modulo: 'CRM',
         tipo_auditoria: 'acesso',
         entidade: 'Seção',
         descricao: `Abrir seção: ${module.title}`,
         data_hora: new Date().toISOString(),
-      });
+      }).catch(() => {});
       openWindow(
         module.component,
         { 

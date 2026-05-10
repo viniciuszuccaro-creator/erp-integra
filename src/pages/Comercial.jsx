@@ -22,6 +22,13 @@ import KPIsComercial from "@/components/comercial/comercial-launchpad/KPIsComerc
 import ModulosGridComercial from "@/components/comercial/comercial-launchpad/ModulosGridComercial";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import useComercialDerivedData from "@/components/comercial/hooks/useComercialDerivedData";
+import {
+  COMERCIAL_COMPANY_LIMIT,
+  COMERCIAL_EXTERNAL_LIMIT,
+  COMERCIAL_LIST_LIMIT,
+  COMERCIAL_SHORT_LIMIT,
+  comercialQueryDefaults,
+} from "@/components/comercial/config/comercialQueryConfig";
 
 const ClientesTab = React.lazy(() => import("../components/comercial/ClientesTab"));
 const PedidosTab = React.lazy(() => import("../components/comercial/PedidosTab"));
@@ -53,10 +60,9 @@ export default function Comercial() {
     queryKey: ['clientes', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      return await filterInContext('Cliente', {}, '-created_date', 100);
+      return await filterInContext('Cliente', {}, '-created_date', COMERCIAL_LIST_LIMIT);
     },
-    staleTime: 30000,
-    retry: 2,
+    ...comercialQueryDefaults,
     enabled: !bloqueadoSemEmpresa && canSeeComercial
   });
 
@@ -64,10 +70,9 @@ export default function Comercial() {
     queryKey: ['pedidos', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      return await filterInContext('Pedido', {}, '-created_date', 100);
+      return await filterInContext('Pedido', {}, '-created_date', COMERCIAL_LIST_LIMIT);
     },
-    staleTime: 30000,
-    retry: 2,
+    ...comercialQueryDefaults,
     enabled: !bloqueadoSemEmpresa && canSeeComercial
   });
 
@@ -105,10 +110,9 @@ export default function Comercial() {
     queryKey: ['comissoes', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      return await filterInContext('Comissao', {}, '-created_date', 50);
+      return await filterInContext('Comissao', {}, '-created_date', COMERCIAL_SHORT_LIMIT);
     },
-    staleTime: 30000,
-    retry: 1,
+    ...comercialQueryDefaults,
     enabled: !bloqueadoSemEmpresa && canSeeComercial
   });
 
@@ -116,10 +120,9 @@ export default function Comercial() {
     queryKey: ['notasFiscais', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      return await filterInContext('NotaFiscal', {}, '-created_date', 50, 'empresa_faturamento_id');
+      return await filterInContext('NotaFiscal', {}, '-created_date', COMERCIAL_SHORT_LIMIT, 'empresa_faturamento_id');
     },
-    staleTime: 30000,
-    retry: 1,
+    ...comercialQueryDefaults,
     enabled: !bloqueadoSemEmpresa && canSeeComercial
   });
 
@@ -127,10 +130,9 @@ export default function Comercial() {
     queryKey: ['tabelas-preco', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      return await filterInContext('TabelaPreco', {}, '-updated_date', 50);
+      return await filterInContext('TabelaPreco', {}, '-updated_date', COMERCIAL_SHORT_LIMIT);
     },
-    staleTime: 30000,
-    retry: 1,
+    ...comercialQueryDefaults,
     enabled: !bloqueadoSemEmpresa && canSeeComercial
   });
 
@@ -138,10 +140,9 @@ export default function Comercial() {
     queryKey: ['empresas', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      return await filterInContext('Empresa', {}, '-created_date', 9999);
+      return await filterInContext('Empresa', {}, '-created_date', COMERCIAL_COMPANY_LIMIT);
     },
-    staleTime: 60000,
-    retry: 1,
+    ...comercialQueryDefaults,
     enabled: Boolean(canSeeComercial && (empresaAtual?.id || estaNoGrupo))
   });
 
@@ -149,10 +150,9 @@ export default function Comercial() {
     queryKey: ['pedidos-externos', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       if (!(empresaAtual?.id || estaNoGrupo)) return [];
-      return await filterInContext('PedidoExterno', {}, '-created_date', 30);
+      return await filterInContext('PedidoExterno', {}, '-created_date', COMERCIAL_EXTERNAL_LIMIT);
     },
-    staleTime: 30000,
-    retry: 1,
+    ...comercialQueryDefaults,
     enabled: !bloqueadoSemEmpresa && canSeeComercial
   });
 
