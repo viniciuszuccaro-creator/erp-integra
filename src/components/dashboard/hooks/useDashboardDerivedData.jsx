@@ -1,4 +1,15 @@
+import { safeArray, safeNumber, safeDate } from "@/components/dashboard/utils/dashboardSafeData";
+
 export default function useDashboardDerivedData({ pedidos = [], contasReceber = [], contasPagar = [], entregas = [], ordensProducao = [], colaboradores = [], clientes = [], produtos = [], periodo = "mes" }) {
+  pedidos = safeArray(pedidos);
+  contasReceber = safeArray(contasReceber);
+  contasPagar = safeArray(contasPagar);
+  entregas = safeArray(entregas);
+  ordensProducao = safeArray(ordensProducao);
+  colaboradores = safeArray(colaboradores);
+  clientes = safeArray(clientes);
+  produtos = safeArray(produtos);
+
   const filtrarPorPeriodo = (data) => {
     if (!data) return false;
     const hoje = new Date();
