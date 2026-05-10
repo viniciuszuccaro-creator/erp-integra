@@ -16,6 +16,8 @@ export default function ModulosGridEstoque({ modules, onModuleClick }) {
               onClick={() => onModuleClick(module)}
               color={module.color}
               badge={module.badge}
+              dataPermission={module.permissionKey}
+              dataAction={`Estoque.${module.sectionKey || module.title}.abrir`}
             />
           ))}
         </div>

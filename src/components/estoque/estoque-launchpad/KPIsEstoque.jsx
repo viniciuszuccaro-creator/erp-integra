@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Box, AlertTriangle, PackageOpen, TrendingUp, ShoppingCart, Factory } from 'lucide-react';
 import ProtectedField from '@/components/security/ProtectedField';
+import { safeNumber } from '@/components/estoque/utils/estoqueSafeData';
 
 export default function KPIsEstoque({ 
   produtosAtivos, 
@@ -11,6 +12,9 @@ export default function KPIsEstoque({
   produtosRevenda = 0,
   produtosProducao = 0
 }) {
+  const reservado = safeNumber(totalReservado);
+  const disponivel = safeNumber(estoqueDisponivel);
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 min-h-[90px] max-h-[90px]">
       <Card className="border-0 shadow-sm">
@@ -65,7 +69,7 @@ export default function KPIsEstoque({
         <CardContent className="px-3 pb-2">
           <div className="text-xl font-bold text-blue-900">
             <ProtectedField module="Estoque" submodule="KPIs" field="valores" action="ver" asText>
-              R$ {totalReservado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              R$ {reservado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </ProtectedField>
           </div>
         </CardContent>
@@ -79,7 +83,7 @@ export default function KPIsEstoque({
         <CardContent className="px-3 pb-2">
           <div className="text-xl font-bold text-green-900">
             <ProtectedField module="Estoque" submodule="KPIs" field="valores" action="ver" asText>
-              R$ {estoqueDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              R$ {disponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </ProtectedField>
           </div>
         </CardContent>

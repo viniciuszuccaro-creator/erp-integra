@@ -1,11 +1,14 @@
+import { safeArray, safeNumber, getProdutoEstoqueDisponivel } from "@/components/estoque/utils/estoqueSafeData";
+
 export default function useEstoqueDerivedData({ movimentacoes = [], produtos = [] }) {
-  const totalReservado = produtos.reduce((sum, p) => sum + ((p.estoque_reservado || 0) * (p.custo_aquisicao || 0)), 0);
-  const estoqueDisponivel = produtos.reduce((sum, p) => {
-    const disp = (p.estoque_atual || 0) - (p.estoque_reservado || 0);
-    return sum + (disp * (p.custo_aquisicao || 0));
+  const listaProdutos = safeArray(produtos);
+  const listaMovimentacoes = safeArray(movimentacoes);
+  const totalReservado = listaProdutos.reduce((sum, p) => sum + (safeNumber(p?.estoque_reservado) * safeNumber(p?.custo_aquisicao || p?.custo_medio)), 0);
+  const estoqueDisponivel = listaProdutos.reduce((sum, p) => {
+    return sum + (getProdutoEstoqueDisponivel(p) * safeNumber(p?.custo_aquisicao || p?.custo_medio));
   }, 0);
-  const recebimentos = movimentacoes.filter(m => m.tipo_movimento === 'entrada' && (m.origem_movimento === 'compra' || m.documento?.startsWith('REC-')));
-  const requisicoesAlmoxarifado = movimentacoes.filter(m => m.tipo_movimento === 'saida' && m.documento?.startsWith('REQ-ALM-'));
+  const recebimentos = listaMovimentacoes.filter((m) => m?.tipo_movimento === 'entrada' && (m?.origem_movimento === 'compra' || String(m?.documento || '').startsWith('REC-')));
+  const requisicoesAlmoxarifado = listaMovimentacoes.filter((m) => m?.tipo_movimento === 'saida' && String(m?.documento || '').startsWith('REQ-ALM-'));
 
   return { totalReservado, estoqueDisponivel, recebimentos, requisicoesAlmoxarifado };
 }

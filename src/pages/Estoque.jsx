@@ -19,6 +19,8 @@ import ModulosGridEstoque from "@/components/estoque/estoque-launchpad/ModulosGr
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import useEstoqueDerivedData from "@/components/estoque/hooks/useEstoqueDerivedData";
 import TransferenciaEntreEmpresasForm from "../components/estoque/TransferenciaEntreEmpresasForm";
+import { ESTOQUE_BATCH_SIZE, ESTOQUE_LIST_LIMIT, ESTOQUE_PRODUCTS_LIMIT, estoqueQueryDefaults } from "@/components/estoque/config/estoqueQueryConfig";
+import { isProdutoEstoqueBaixo } from "@/components/estoque/utils/estoqueSafeData";
 
 const ProdutosTab = React.lazy(() => import("../components/estoque/ProdutosTab"));
 const MovimentacoesTab = React.lazy(() => import("../components/estoque/MovimentacoesTab"));
@@ -54,7 +56,7 @@ export default function Estoque() {
       // Buscar TODOS os produtos para contagem correta
       let todosProdutos = [];
       let skip = 0;
-      const batchSize = 500;
+      const batchSize = ESTOQUE_BATCH_SIZE;
       let hasMore = true;
       
       while (hasMore) {
@@ -74,17 +76,15 @@ export default function Estoque() {
       const total = todosProdutos.length;
       const revenda = todosProdutos.filter(p => p.tipo_item === 'Revenda').length;
       const producao = todosProdutos.filter(p => p.tipo_item === 'Matéria-Prima Produção').length;
-      const estoqueBaixo = todosProdutos.filter(p => 
-        p.status === 'Ativo' && (p.estoque_disponivel || 0) <= (p.estoque_minimo || 0)
-      ).length;
-
-      console.log(`✅ CONTAGENS CORRETAS: Total=${total}, Revenda=${revenda}, Produção=${producao}, EstoqueBaixo=${estoqueBaixo}`);
+      const estoqueBaixo = todosProdutos.filter((p) => isProdutoEstoqueBaixo(p)).length;
 
       return { total, revenda, producao, estoqueBaixo };
     },
-    staleTime: Infinity,
+    staleTime: 300000,
+    gcTime: 600000,
     refetchOnWindowFocus: false,
     refetchInterval: false,
+    retry: false,
     enabled: canSeeEstoque && contextoValido
   });
 
@@ -100,16 +100,13 @@ export default function Estoque() {
     queryKey: ['movimentacoes', contextKey],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('MovimentacaoEstoque', {}, '-data_movimentacao', 50);
+        return await filtrarPorContexto('MovimentacaoEstoque', {}, '-data_movimentacao', ESTOQUE_LIST_LIMIT);
       } catch (err) {
         console.error('Erro ao buscar movimentações:', err);
         return [];
       }
     },
-    staleTime: 30000,
-    gcTime: 60000,
-    refetchOnWindowFocus: false,
-    retry: 1,
+    ...estoqueQueryDefaults,
     enabled: canSeeEstoque && contextoValido
   });
 
@@ -117,16 +114,13 @@ export default function Estoque() {
     queryKey: ['solicitacoes', contextKey],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('SolicitacaoCompra', {}, '-data_solicitacao', 50);
+        return await filtrarPorContexto('SolicitacaoCompra', {}, '-data_solicitacao', ESTOQUE_LIST_LIMIT);
       } catch (err) {
         console.error('Erro ao buscar solicitações:', err);
         return [];
       }
     },
-    staleTime: 30000,
-    gcTime: 60000,
-    refetchOnWindowFocus: false,
-    retry: 1,
+    ...estoqueQueryDefaults,
     enabled: canSeeEstoque && contextoValido
   });
 
@@ -134,16 +128,13 @@ export default function Estoque() {
     queryKey: ['ordensCompra', contextKey],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('OrdemCompra', {}, '-data_solicitacao', 50);
+        return await filtrarPorContexto('OrdemCompra', {}, '-data_solicitacao', ESTOQUE_LIST_LIMIT);
       } catch (err) {
         console.error('Erro ao buscar ordens:', err);
         return [];
       }
     },
-    staleTime: 30000,
-    gcTime: 60000,
-    refetchOnWindowFocus: false,
-    retry: 1,
+    ...estoqueQueryDefaults,
     enabled: canSeeEstoque && contextoValido
   });
 
@@ -152,16 +143,13 @@ export default function Estoque() {
     queryKey: ['produtos-kpis', contextKey],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('Produto', {}, undefined, 5000);
+        return await filtrarPorContexto('Produto', {}, undefined, ESTOQUE_PRODUCTS_LIMIT);
       } catch (err) {
         console.error('Erro ao buscar produtos para KPIs:', err);
         return [];
       }
     },
-    staleTime: 60000,
-    gcTime: 120000,
-    refetchOnWindowFocus: false,
-    retry: 1,
+    ...estoqueQueryDefaults,
     enabled: canSeeEstoque && contextoValido
   });
 
@@ -318,15 +306,18 @@ export default function Estoque() {
    const handleModuleClick = (module) => {
     React.startTransition(() => {
       // Auditoria de abertura de seção
-      base44.entities.AuditLog.create({
+      void base44.entities.AuditLog.create({
         usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id || null,
+        empresa_id: empresaAtual?.id || null,
+        group_id: groupId || null,
         acao: 'Visualização',
         modulo: 'Estoque',
         tipo_auditoria: 'acesso',
         entidade: 'Seção',
         descricao: `Abrir seção: ${module.title}`,
         data_hora: new Date().toISOString(),
-      });
+      }).catch(() => {});
       openWindow(
         module.component,
         { ...(module.props || {}), windowMode: true },
