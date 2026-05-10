@@ -73,9 +73,11 @@ import FinancialSummary from "@/components/dashboard/FinancialSummary";
 import WidgetEstoqueCritico from "@/components/estoque/WidgetEstoqueCritico";
 import DashboardStabilityNotice from "@/components/dashboard/DashboardStabilityNotice";
 import DashboardStickyKpis from "@/components/dashboard/DashboardStickyKpis";
+import PedidosResumoPanel from "@/components/dashboard/PedidosResumoPanel";
 import ResizableRow from "@/components/dashboard/ResizableRow";
 import { ResizablePanelGroup as PanelGroup, ResizablePanel as Panel, ResizableHandle as PanelResizeHandle } from "@/components/ui/resizable";
 import useDashboardDerivedData from "@/components/dashboard/hooks/useDashboardDerivedData";
+import { DASHBOARD_LIST_LIMIT, DASHBOARD_REFETCH_INTERVAL_MS } from "@/components/dashboard/config/dashboardQueryConfig";
 
 
 export default function Dashboard() {
@@ -131,14 +133,14 @@ export default function Dashboard() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const queryClient = useQueryClient();
   const hasContextoAtivo = Boolean(empresaAtual?.id || estaNoGrupo || grupoAtual?.id);
-  const refetchInterval = (empresaAtual?.id || estaNoGrupo) ? ((activeTab === 'resumo' && autoRefresh) ? 60000 : 0) : false; // evita zero-dados sem contexto
+  const refetchInterval = (empresaAtual?.id || estaNoGrupo) ? ((activeTab === 'resumo' && autoRefresh) ? DASHBOARD_REFETCH_INTERVAL_MS : 0) : false; // evita zero-dados sem contexto
 
   const { data: pedidos = [] } = useQuery({
       enabled: Boolean(canSeeComercial && hasContextoAtivo),
       queryKey: ['pedidos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
-        return await filterInContext('Pedido', {}, '-created_date', 9999);
+        return await filterInContext('Pedido', {}, '-created_date', DASHBOARD_LIST_LIMIT);
       },
     refetchInterval,
     staleTime: 120000,
@@ -154,7 +156,7 @@ export default function Dashboard() {
       queryKey: ['contasReceber', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
-        return await filterInContext('ContaReceber', {}, '-data_vencimento', 9999);
+        return await filterInContext('ContaReceber', {}, '-data_vencimento', DASHBOARD_LIST_LIMIT);
       },
     refetchInterval,
     staleTime: 120000,
@@ -170,7 +172,7 @@ export default function Dashboard() {
       queryKey: ['contasPagar', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
-        return await filterInContext('ContaPagar', {}, '-data_vencimento', 9999);
+        return await filterInContext('ContaPagar', {}, '-data_vencimento', DASHBOARD_LIST_LIMIT);
       },
     refetchInterval,
     staleTime: 120000,
@@ -186,7 +188,7 @@ export default function Dashboard() {
       queryKey: ['entregas', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
-        return await filterInContext('Entrega', {}, '-created_date', 9999);
+        return await filterInContext('Entrega', {}, '-created_date', DASHBOARD_LIST_LIMIT);
       },
     refetchInterval,
     staleTime: 120000,
@@ -202,7 +204,7 @@ export default function Dashboard() {
       queryKey: ['colaboradores', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
-        return await filterInContext('Colaborador', {}, '-created_date', 9999);
+        return await filterInContext('Colaborador', {}, '-created_date', DASHBOARD_LIST_LIMIT);
       },
     refetchInterval,
     staleTime: 120000,
@@ -218,7 +220,7 @@ export default function Dashboard() {
       queryKey: ['produtos', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
-        return await filterInContext('Produto', {}, '-created_date', 9999);
+        return await filterInContext('Produto', {}, '-created_date', DASHBOARD_LIST_LIMIT);
       },
     refetchInterval,
     staleTime: 120000,
@@ -244,8 +246,8 @@ export default function Dashboard() {
         return produtos.length;
       }
     },
-    staleTime: 120000,
-    retry: 1,
+    staleTime: 300000,
+    retry: false,
   });
 
   const { data: clientes = [] } = useQuery({
@@ -253,7 +255,7 @@ export default function Dashboard() {
       queryKey: ['clientes', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
-        return await filterInContext('Cliente', {}, '-created_date', 9999);
+        return await filterInContext('Cliente', {}, '-created_date', DASHBOARD_LIST_LIMIT);
       },
     refetchInterval,
     staleTime: 120000,
@@ -279,8 +281,8 @@ export default function Dashboard() {
         return clientes.length;
       }
     },
-    staleTime: 120000,
-    retry: 1,
+    staleTime: 300000,
+    retry: false,
   });
 
   const { data: totalColaboradoresDash = 0 } = useQuery({
@@ -298,8 +300,8 @@ export default function Dashboard() {
         return colaboradores.length;
       }
     },
-    staleTime: 120000,
-    retry: 1,
+    staleTime: 300000,
+    retry: false,
   });
 
   const { data: ordensProducao = [] } = useQuery({
@@ -307,7 +309,7 @@ export default function Dashboard() {
       queryKey: ['ordensProducao', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
-        return await filterInContext('OrdemProducao', {}, '-data_emissao', 9999);
+        return await filterInContext('OrdemProducao', {}, '-data_emissao', DASHBOARD_LIST_LIMIT);
       },
     refetchInterval,
     staleTime: 120000,
@@ -323,7 +325,7 @@ export default function Dashboard() {
       queryKey: ['notasFiscais', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
-        return await filterInContext('NotaFiscal', {}, '-created_date', 9999);
+        return await filterInContext('NotaFiscal', {}, '-created_date', DASHBOARD_LIST_LIMIT);
       },
     refetchInterval,
     staleTime: 120000,
@@ -340,7 +342,7 @@ export default function Dashboard() {
       queryKey: ['cobrancas', empresaAtual?.id, grupoAtual?.id, estaNoGrupo],
       queryFn: async () => {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
-        return await filterInContext('ContaReceber', {}, '-data_vencimento', 9999);
+        return await filterInContext('ContaReceber', {}, '-data_vencimento', DASHBOARD_LIST_LIMIT);
       },
     refetchInterval,
     staleTime: 120000,
@@ -460,7 +462,7 @@ export default function Dashboard() {
       const secAlerts = within.filter(l => (l?.tipo_auditoria || '').toLowerCase() === 'seguranca').length;
       return { errors, funcs, secAlerts };
     },
-    staleTime: 60000,
+    staleTime: 180000,
   });
 
   // KPIs Chatbot / SLA últimas 24h
@@ -478,7 +480,7 @@ export default function Dashboard() {
       }, { ok: 0, total: 0 });
       return { chats: within.length, sla_ok: sla.ok, sla_total: sla.total };
     },
-    staleTime: 60000,
+    staleTime: 180000,
   });
 
   // Assinaturas realtime locais (reforço) para invalidar KPIs do Dashboard
@@ -768,77 +770,12 @@ export default function Dashboard() {
           </div>
 
           {canSeeComercial && (
-            <Card className="bg-white/80 backdrop-blur-sm rounded-md shadow-sm">
-              <CardHeader>
-                <CardTitle>Pedidos (Recentes, Pendentes, Aprovação)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Recentes */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-slate-900">Recentes</h3>
-                      <Badge variant="outline">{pedidosRecentes.length}</Badge>
-                    </div>
-                    <div className="space-y-2 max-h-64 overflow-auto">
-                      {pedidosRecentes.map((p) => (
-                        <div key={p.id} className="flex items-center justify-between p-2 rounded border border-slate-200 bg-white">
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium text-slate-900 truncate">#{p.numero_pedido} • {p.cliente_nome}</div>
-                            <div className="text-xs text-slate-500">{p.data_pedido ? new Date(p.data_pedido).toLocaleDateString('pt-BR') : '-'} • {p.status}</div>
-                          </div>
-                          <div className="text-sm font-semibold text-blue-600">R$ {(p.valor_total||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-                        </div>
-                      ))}
-                      {pedidosRecentes.length === 0 && (<p className="text-sm text-slate-500">Sem pedidos.</p>)}
-                    </div>
-                  </div>
-
-                  {/* Pendentes */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-slate-900">Pendentes</h3>
-                      <Badge className="bg-amber-100 text-amber-700">{pedidosPendentes.length}</Badge>
-                    </div>
-                    <div className="space-y-2 max-h-64 overflow-auto">
-                      {pedidosPendentes.map((p) => (
-                        <div key={p.id} className="flex items-center justify-between p-2 rounded border border-slate-200 bg-white">
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium text-slate-900 truncate">#{p.numero_pedido} • {p.cliente_nome}</div>
-                            <div className="text-xs text-slate-500">{p.data_pedido ? new Date(p.data_pedido).toLocaleDateString('pt-BR') : '-'} • {p.status}</div>
-                          </div>
-                          <div className="text-sm font-semibold text-slate-700">R$ {(p.valor_total||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-                        </div>
-                      ))}
-                      {pedidosPendentes.length === 0 && (<p className="text-sm text-slate-500">Sem pendências.</p>)}
-                    </div>
-                  </div>
-
-                  {/* Aguardando Aprovação */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-slate-900">Aguardando Aprovação</h3>
-                      <Badge className="bg-red-100 text-red-700">{pedidosAguardandoAprovacao.length}</Badge>
-                    </div>
-                    <div className="space-y-2 max-h-64 overflow-auto">
-                      {pedidosAguardandoAprovacao.map((p) => (
-                        <div key={p.id} className="flex items-center justify-between p-2 rounded border border-slate-200 bg-white">
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium text-slate-900 truncate">#{p.numero_pedido} • {p.cliente_nome}</div>
-                            <div className="text-xs text-slate-500">solicit.: {p.vendedor || '-'} • desc {p.desconto_solicitado_percentual ?? 0}%</div>
-                          </div>
-                          <Badge className="bg-rose-100 text-rose-700 text-[10px]">{p.status_aprovacao || 'pendente'}</Badge>
-                        </div>
-                      ))}
-                      {pedidosAguardandoAprovacao.length === 0 && (<p className="text-sm text-slate-500">Sem aprovações pendentes.</p>)}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end mt-3">
-                  <Button variant="outline" onClick={() => handleDrillDown(createPageUrl('Comercial'))}>Ver todos</Button>
-                </div>
-              </CardContent>
-            </Card>
+            <PedidosResumoPanel
+              pedidosRecentes={pedidosRecentes}
+              pedidosPendentes={pedidosPendentes}
+              pedidosAguardandoAprovacao={pedidosAguardandoAprovacao}
+              onVerTodos={() => handleDrillDown(createPageUrl('Comercial'))}
+            />
           )}
 
 

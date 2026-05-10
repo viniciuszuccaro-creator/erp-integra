@@ -1,4 +1,4 @@
-import { safeArray, safeNumber, safeDate } from "@/components/dashboard/utils/dashboardSafeData";
+import { safeArray, safeNumber, safeDate, safeDateKey, isBefore, isBeforeOrEqual } from "@/components/dashboard/utils/dashboardSafeData";
 
 export default function useDashboardDerivedData({ pedidos = [], contasReceber = [], contasPagar = [], entregas = [], ordensProducao = [], colaboradores = [], clientes = [], produtos = [], periodo = "mes" }) {
   pedidos = safeArray(pedidos);
@@ -40,23 +40,23 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
   const pedidosPeriodo = pedidos.filter((p) => p.data_pedido && filtrarPorPeriodo(p.data_pedido));
   const totalVendas = pedidosPeriodo
     .filter((p) => p.status !== "Cancelado")
-    .reduce((sum, p) => sum + (p.valor_total || 0), 0);
+    .reduce((sum, p) => sum + safeNumber(p.valor_total), 0);
 
   const ticketMedio = pedidosPeriodo.length > 0 ? totalVendas / pedidosPeriodo.length : 0;
 
   const receitasPendentes = contasReceber
     .filter((c) => c.status === "Pendente")
-    .reduce((sum, c) => sum + (c.valor || 0), 0);
+    .reduce((sum, c) => sum + safeNumber(c.valor), 0);
 
   const despesasPendentes = contasPagar
     .filter((c) => c.status === "Pendente")
-    .reduce((sum, c) => sum + (c.valor || 0), 0);
+    .reduce((sum, c) => sum + safeNumber(c.valor), 0);
 
   const fluxoCaixa = receitasPendentes - despesasPendentes;
 
   const produtosBaixoEstoque = produtos.filter((p) => {
-    const estoqueAtual = Number(p.estoque_atual || 0);
-    const estoqueMinimo = Number(p.estoque_minimo || 0);
+    const estoqueAtual = safeNumber(p.estoque_atual);
+    const estoqueMinimo = safeNumber(p.estoque_minimo);
     return estoqueMinimo > 0 && estoqueAtual <= estoqueMinimo && p.status === "Ativo";
   }).length;
 
@@ -72,7 +72,7 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
   const entregasConcluidas = entregas.filter((e) => e.status === "Entregue" && e.data_entrega);
   const entregasNoPrazo = entregasConcluidas.filter((e) => {
     if (!e.data_previsao || !e.data_entrega) return false;
-    return new Date(e.data_entrega) <= new Date(e.data_previsao);
+    return isBeforeOrEqual(e.data_entrega, e.data_previsao);
   });
   const otd = entregasConcluidas.length > 0
     ? ((entregasNoPrazo.length / entregasConcluidas.length) * 100).toFixed(1)
@@ -103,7 +103,7 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
   // Inadimplência (%)
   const contasVencidas = contasReceber.filter((c) => {
     if (c.status !== "Pendente" || !c.data_vencimento) return false;
-    return new Date(c.data_vencimento) < new Date();
+    return isBefore(c.data_vencimento);
   });
   const valorVencido = contasVencidas.reduce((sum, c) => sum + (c.valor || 0), 0);
   const totalContas = contasReceber.filter((c) => c.status === "Pendente").reduce((sum, c) => sum + (c.valor || 0), 0);
@@ -113,7 +113,7 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
   const vendasPorStatus = pedidosPeriodo.reduce((acc, p) => {
     const status = p.status || "Indefinido";
     if (!acc[status]) acc[status] = { nome: status, valor: 0, quantidade: 0 };
-    acc[status].valor += p.valor_total || 0;
+    acc[status].valor += safeNumber(p.valor_total);
     acc[status].quantidade += 1;
     return acc;
   }, {});
@@ -125,8 +125,8 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
     const dataStr = data.toISOString().split("T")[0];
 
     const vendasDia = pedidos
-      .filter((p) => p.data_pedido === dataStr && p.status !== "Cancelado")
-      .reduce((sum, p) => sum + (p.valor_total || 0), 0);
+      .filter((p) => safeDateKey(p.data_pedido) === dataStr && p.status !== "Cancelado")
+      .reduce((sum, p) => sum + safeNumber(p.valor_total), 0);
 
     return { dia: `${data.getDate()}/${data.getMonth() + 1}`, valor: vendasDia };
   });
@@ -137,12 +137,12 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
     const dataStr = data.toISOString().split("T")[0];
 
     const recebimentos = contasReceber
-      .filter((c) => c.data_recebimento === dataStr)
-      .reduce((sum, c) => sum + (c.valor || 0), 0);
+      .filter((c) => safeDateKey(c.data_recebimento) === dataStr)
+      .reduce((sum, c) => sum + safeNumber(c.valor), 0);
 
     const pagamentos = contasPagar
-      .filter((c) => c.data_pagamento === dataStr)
-      .reduce((sum, c) => sum + (c.valor || 0), 0);
+      .filter((c) => safeDateKey(c.data_pagamento) === dataStr)
+      .reduce((sum, c) => sum + safeNumber(c.valor), 0);
 
     return { dia: `${data.getDate()}/${data.getMonth() + 1}`, receitas: recebimentos, despesas: pagamentos, saldo: recebimentos - pagamentos };
   });
@@ -151,10 +151,10 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
     .filter((p) => p.itens && p.data_pedido && filtrarPorPeriodo(p.data_pedido))
     .flatMap((p) => p.itens || [])
     .reduce((acc, item) => {
-      const key = item.descricao;
+      const key = item.descricao || "Produto não informado";
       if (!acc[key]) acc[key] = { nome: key, quantidade: 0, valor: 0 };
-      acc[key].quantidade += item.quantidade || 0;
-      acc[key].valor += item.valor_total || 0;
+      acc[key].quantidade += safeNumber(item.quantidade);
+      acc[key].valor += safeNumber(item.valor_total);
       return acc;
     }, {});
   const topProdutos = Object.values(produtosComMovimento).sort((a, b) => b.valor - a.valor).slice(0, 5);
@@ -167,7 +167,7 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
         if (date.toString() !== "Invalid Date" && date.getFullYear() === new Date().getFullYear()) {
           const mesKey = date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
           if (!meses[mesKey]) meses[mesKey] = { mes: mesKey, valor: 0 };
-          meses[mesKey].valor += p.valor_total || 0;
+          meses[mesKey].valor += safeNumber(p.valor_total);
         }
       }
     });
@@ -192,7 +192,7 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
       if (p.status !== "Cancelado" && p.cliente_nome) {
         const cliente = p.cliente_nome;
         if (!porCliente[cliente]) porCliente[cliente] = 0;
-        porCliente[cliente] += p.valor_total || 0;
+        porCliente[cliente] += safeNumber(p.valor_total);
       }
     });
     return Object.entries(porCliente)
@@ -216,8 +216,8 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
     const currentYear = new Date().getFullYear();
 
     const getMonthKey = (dateString) => {
-      const date = new Date(dateString);
-      if (date.toString() === "Invalid Date") return null;
+      const date = safeDate(dateString);
+      if (!date) return null;
       if (date.getFullYear() !== currentYear) return null;
       return date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
     };
@@ -228,7 +228,7 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
         const mesKey = getMonthKey(c.data_recebimento);
         if (mesKey) {
           if (!meses[mesKey]) meses[mesKey] = { mes: mesKey, entradas: 0, saidas: 0 };
-          meses[mesKey].entradas += c.valor_recebido || c.valor || 0;
+          meses[mesKey].entradas += safeNumber(c.valor_recebido || c.valor);
         }
       });
 
@@ -238,7 +238,7 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
         const mesKey = getMonthKey(c.data_pagamento);
         if (mesKey) {
           if (!meses[mesKey]) meses[mesKey] = { mes: mesKey, entradas: 0, saidas: 0 };
-          meses[mesKey].saidas += c.valor_pago || c.valor || 0;
+          meses[mesKey].saidas += safeNumber(c.valor_pago || c.valor);
         }
       });
 

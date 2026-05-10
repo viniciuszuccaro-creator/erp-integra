@@ -73,6 +73,7 @@ export default [
   },
   {
     files: ["src/**/*.{js,jsx}", "*.{js,jsx}"],
+    ignores: documentationMirrorPatterns,
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
