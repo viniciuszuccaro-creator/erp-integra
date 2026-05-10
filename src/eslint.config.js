@@ -90,6 +90,17 @@ export default [
   {
     files: ["src/**/*.{js,jsx}", "*.{js,jsx}"],
     ignores: [
+      "src/components/**/*.md.jsx",
+      "src/components/**/*.json.jsx",
+      "src/components/**/*.config.jsx",
+      "src/components/**/*README*.jsx",
+      "src/components/**/*CERTIFIC*.jsx",
+      "src/components/**/*CHECKLIST*.jsx",
+      "src/components/**/*MANIFESTO*.jsx",
+      "src/components/**/*VALIDACAO*.jsx",
+      "src/components/**/*BLOQUEIO*.jsx",
+      "src/components/**/*BOTOES*.jsx",
+      "src/components/**/*INTEGRACAO*.jsx",
       ...documentationMirrorPatterns,
       "src/components/sistema/[A-Z]*.jsx",
       "src/components/sistema/[A-Z]*.md.jsx",

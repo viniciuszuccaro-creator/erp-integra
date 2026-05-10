@@ -9,6 +9,8 @@ import PlanoMelhoriaAutomationPanel from '@/components/sistema/plano-melhoria/Pl
 import PlanoMelhoriaExecutionBoard from '@/components/sistema/plano-melhoria/PlanoMelhoriaExecutionBoard';
 import PlanoMelhoriaSprintPanel from '@/components/sistema/plano-melhoria/PlanoMelhoriaSprintPanel';
 import PlanoMelhoriaRiskPanel from '@/components/sistema/plano-melhoria/PlanoMelhoriaRiskPanel';
+import PlanoMelhoriaCriticalCommandCenter from '@/components/sistema/plano-melhoria/PlanoMelhoriaCriticalCommandCenter';
+import PlanoMelhoriaCriticalCompletionSuite from '@/components/sistema/plano-melhoria/PlanoMelhoriaCriticalCompletionSuite';
 import { melhoriaPlanPhases } from '@/components/sistema/plano-melhoria/melhoriaPlanData';
 
 export default function PlanoMelhoria() {
@@ -19,6 +21,8 @@ export default function PlanoMelhoria() {
   return (
     <div className="flex h-full w-full flex-col gap-6">
       <PlanoMelhoriaHeader totalProgress={totalProgress} />
+      <PlanoMelhoriaCriticalCommandCenter />
+      <PlanoMelhoriaCriticalCompletionSuite />
       <PlanoMelhoriaGovernanca />
       <PlanoMelhoriaExecutionBoard />
       <PlanoMelhoriaSprintPanel />
