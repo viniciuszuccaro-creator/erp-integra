@@ -58,7 +58,7 @@ export const planoExecutionPillars = [
 ];
 
 export const planoModuleSprints = [
-  { module: 'Dashboard', focus: 'KPIs por empresa/grupo + prefetch', owner: 'Sistema', priority: 'Alta', status: 'Em execução' },
+  { module: 'Dashboard', focus: 'Estabilidade de queries + KPIs por empresa/grupo corrigidos', owner: 'Sistema', priority: 'Alta', status: 'Validando' },
   { module: 'CRM', focus: 'Clientes, oportunidades e churn com escopo multiempresa', owner: 'Comercial', priority: 'Alta', status: 'Em execução' },
   { module: 'Comercial', focus: 'Pedido completo, reserva de estoque, aprovação e fechamento', owner: 'Vendas', priority: 'Crítica', status: 'Em execução' },
   { module: 'Estoque', focus: 'Inventário em KG, movimentações auditadas e IA de reposição', owner: 'Operação', priority: 'Crítica', status: 'Em execução' },

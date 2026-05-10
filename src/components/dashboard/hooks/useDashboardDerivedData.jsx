@@ -1,4 +1,5 @@
 import { safeArray, safeNumber, safeDate, safeDateKey, isBefore, isBeforeOrEqual } from "@/components/dashboard/utils/dashboardSafeData";
+import { getPedidoItens } from "@/components/dashboard/utils/dashboardOrderItems";
 
 export default function useDashboardDerivedData({ pedidos = [], contasReceber = [], contasPagar = [], entregas = [], ordensProducao = [], colaboradores = [], clientes = [], produtos = [], periodo = "mes" }) {
   pedidos = safeArray(pedidos);
@@ -83,19 +84,19 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
     (op) => op.status === "Concluída" && op.data_conclusao_real && filtrarPorPeriodo(op.data_conclusao_real)
   );
   const pesoProduzido = opsConcluidas.reduce((sum, op) => {
-    return sum + ((op.quantidade_produzida || 0) * (op.peso_unitario_kg || 0));
+    return sum + (safeNumber(op.quantidade_produzida) * safeNumber(op.peso_unitario_kg));
   }, 0);
 
   // Aproveitamento de Barra (%)
   const totalPlanejado = ordensProducao
     .filter((op) => op.data_emissao && filtrarPorPeriodo(op.data_emissao))
-    .reduce((sum, op) => sum + (op.quantidade_planejada || 0), 0);
+    .reduce((sum, op) => sum + safeNumber(op.quantidade_planejada), 0);
   const totalProduzido = ordensProducao
     .filter((op) => op.data_emissao && filtrarPorPeriodo(op.data_emissao))
-    .reduce((sum, op) => sum + (op.quantidade_produzida || 0), 0);
+    .reduce((sum, op) => sum + safeNumber(op.quantidade_produzida), 0);
   const totalRefugado = ordensProducao
     .filter((op) => op.data_emissao && filtrarPorPeriodo(op.data_emissao))
-    .reduce((sum, op) => sum + (op.quantidade_refugada || 0), 0);
+    .reduce((sum, op) => sum + safeNumber(op.quantidade_refugada), 0);
   const aproveitamentoBarra = totalPlanejado > 0
     ? (((totalProduzido - totalRefugado) / totalPlanejado) * 100).toFixed(1)
     : 0;
@@ -105,8 +106,8 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
     if (c.status !== "Pendente" || !c.data_vencimento) return false;
     return isBefore(c.data_vencimento);
   });
-  const valorVencido = contasVencidas.reduce((sum, c) => sum + (c.valor || 0), 0);
-  const totalContas = contasReceber.filter((c) => c.status === "Pendente").reduce((sum, c) => sum + (c.valor || 0), 0);
+  const valorVencido = contasVencidas.reduce((sum, c) => sum + safeNumber(c.valor), 0);
+  const totalContas = contasReceber.filter((c) => c.status === "Pendente").reduce((sum, c) => sum + safeNumber(c.valor), 0);
   const taxaInadimplencia = totalContas > 0 ? ((valorVencido / totalContas) * 100).toFixed(1) : 0;
 
   // Dados para gráficos e listas
@@ -148,10 +149,10 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
   });
 
   const produtosComMovimento = pedidos
-    .filter((p) => p.itens && p.data_pedido && filtrarPorPeriodo(p.data_pedido))
-    .flatMap((p) => p.itens || [])
+    .filter((p) => p.data_pedido && filtrarPorPeriodo(p.data_pedido))
+    .flatMap((p) => getPedidoItens(p))
     .reduce((acc, item) => {
-      const key = item.descricao || "Produto não informado";
+      const key = item.descricao || item.produto_descricao || "Produto não informado";
       if (!acc[key]) acc[key] = { nome: key, quantidade: 0, valor: 0 };
       acc[key].quantidade += safeNumber(item.quantidade);
       acc[key].valor += safeNumber(item.valor_total);

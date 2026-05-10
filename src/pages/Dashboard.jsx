@@ -77,7 +77,7 @@ import PedidosResumoPanel from "@/components/dashboard/PedidosResumoPanel";
 import ResizableRow from "@/components/dashboard/ResizableRow";
 import { ResizablePanelGroup as PanelGroup, ResizablePanel as Panel, ResizableHandle as PanelResizeHandle } from "@/components/ui/resizable";
 import useDashboardDerivedData from "@/components/dashboard/hooks/useDashboardDerivedData";
-import { DASHBOARD_LIST_LIMIT, DASHBOARD_REFETCH_INTERVAL_MS } from "@/components/dashboard/config/dashboardQueryConfig";
+import { DASHBOARD_LIST_LIMIT, DASHBOARD_REFETCH_INTERVAL_MS, dashboardQueryDefaults } from "@/components/dashboard/config/dashboardQueryConfig";
 
 
 export default function Dashboard() {
@@ -133,7 +133,7 @@ export default function Dashboard() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const queryClient = useQueryClient();
   const hasContextoAtivo = Boolean(empresaAtual?.id || estaNoGrupo || grupoAtual?.id);
-  const refetchInterval = (empresaAtual?.id || estaNoGrupo) ? ((activeTab === 'resumo' && autoRefresh) ? DASHBOARD_REFETCH_INTERVAL_MS : 0) : false; // evita zero-dados sem contexto
+  const refetchInterval = (empresaAtual?.id || estaNoGrupo) ? ((activeTab === 'resumo' && autoRefresh) ? DASHBOARD_REFETCH_INTERVAL_MS : false) : false; // evita zero-dados sem contexto
 
   const { data: pedidos = [] } = useQuery({
       enabled: Boolean(canSeeComercial && hasContextoAtivo),
@@ -142,13 +142,8 @@ export default function Dashboard() {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('Pedido', {}, '-created_date', DASHBOARD_LIST_LIMIT);
       },
-    refetchInterval,
-    staleTime: 120000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: false,
-    initialData: []
+    ...dashboardQueryDefaults,
+    refetchInterval
   });
 
   const { data: contasReceber = [] } = useQuery({
@@ -158,13 +153,8 @@ export default function Dashboard() {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('ContaReceber', {}, '-data_vencimento', DASHBOARD_LIST_LIMIT);
       },
-    refetchInterval,
-    staleTime: 120000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: false,
-    initialData: []
+    ...dashboardQueryDefaults,
+    refetchInterval
   });
 
   const { data: contasPagar = [] } = useQuery({
@@ -174,13 +164,8 @@ export default function Dashboard() {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('ContaPagar', {}, '-data_vencimento', DASHBOARD_LIST_LIMIT);
       },
-    refetchInterval,
-    staleTime: 120000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: false,
-    initialData: []
+    ...dashboardQueryDefaults,
+    refetchInterval
   });
 
   const { data: entregas = [] } = useQuery({
@@ -190,13 +175,8 @@ export default function Dashboard() {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('Entrega', {}, '-created_date', DASHBOARD_LIST_LIMIT);
       },
-    refetchInterval,
-    staleTime: 120000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: false,
-    initialData: []
+    ...dashboardQueryDefaults,
+    refetchInterval
   });
 
   const { data: colaboradores = [] } = useQuery({
@@ -206,13 +186,8 @@ export default function Dashboard() {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('Colaborador', {}, '-created_date', DASHBOARD_LIST_LIMIT);
       },
-    refetchInterval,
-    staleTime: 120000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: false,
-    initialData: []
+    ...dashboardQueryDefaults,
+    refetchInterval
   });
 
   const { data: produtos = [] } = useQuery({
@@ -222,13 +197,8 @@ export default function Dashboard() {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('Produto', {}, '-created_date', DASHBOARD_LIST_LIMIT);
       },
-    refetchInterval,
-    staleTime: 120000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: false,
-    initialData: []
+    ...dashboardQueryDefaults,
+    refetchInterval
   });
 
   const { data: totalProdutos = 0 } = useQuery({
@@ -257,13 +227,8 @@ export default function Dashboard() {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('Cliente', {}, '-created_date', DASHBOARD_LIST_LIMIT);
       },
-    refetchInterval,
-    staleTime: 120000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: false,
-    initialData: []
+    ...dashboardQueryDefaults,
+    refetchInterval
   });
 
   const { data: totalClientes = 0 } = useQuery({
@@ -311,13 +276,8 @@ export default function Dashboard() {
         if (!(empresaAtual?.id || estaNoGrupo || grupoAtual?.id)) return [];
         return await filterInContext('OrdemProducao', {}, '-data_emissao', DASHBOARD_LIST_LIMIT);
       },
-    refetchInterval,
-    staleTime: 120000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    retry: false,
-    initialData: []
+    ...dashboardQueryDefaults,
+    refetchInterval
   });
 
   const { data: notasFiscais = [] } = useQuery({
