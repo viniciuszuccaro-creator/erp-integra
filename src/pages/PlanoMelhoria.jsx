@@ -12,6 +12,7 @@ import PlanoMelhoriaRiskPanel from '@/components/sistema/plano-melhoria/PlanoMel
 import PlanoMelhoriaCriticalCommandCenter from '@/components/sistema/plano-melhoria/PlanoMelhoriaCriticalCommandCenter';
 import PlanoMelhoriaCriticalExecutor from '@/components/sistema/plano-melhoria/PlanoMelhoriaCriticalExecutor';
 import PlanoMelhoriaCriticalCompletionSuite from '@/components/sistema/plano-melhoria/PlanoMelhoriaCriticalCompletionSuite';
+import PlanoMelhoriaFullExecutionCenter from '@/components/sistema/plano-melhoria/PlanoMelhoriaFullExecutionCenter';
 import { melhoriaPlanPhases } from '@/components/sistema/plano-melhoria/melhoriaPlanData';
 
 export default function PlanoMelhoria() {
@@ -22,6 +23,7 @@ export default function PlanoMelhoria() {
   return (
     <div className="flex h-full w-full flex-col gap-6">
       <PlanoMelhoriaHeader totalProgress={totalProgress} />
+      <PlanoMelhoriaFullExecutionCenter />
       <PlanoMelhoriaCriticalCommandCenter />
       <PlanoMelhoriaCriticalExecutor />
       <PlanoMelhoriaCriticalCompletionSuite />
